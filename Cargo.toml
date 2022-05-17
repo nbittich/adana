@@ -2,7 +2,11 @@
 name = "karsher"
 version = "0.1.0"
 edition = "2021"
-
+authors = ["Nordine Bittich"]
+license = "MIT"
+description = "karsher is a dumb cache written in rust"
+homepage = "https://github.com/nbittich/karsher"
+readme = "README.md"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
