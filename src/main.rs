@@ -113,7 +113,7 @@ fn parse_command(command: &str) -> IResult<&str, CacheCommand> {
                         take_while1(|s: char| s.is_alphanumeric() || s == '-'),
                     ),
                 ),
-                |key| CacheCommand::Remove(key),
+                CacheCommand::Remove,
             ),
             map(
                 preceded(
@@ -123,7 +123,7 @@ fn parse_command(command: &str) -> IResult<&str, CacheCommand> {
                         take_while1(|s: char| s.is_alphanumeric() || s == '-'),
                     ),
                 ),
-                |key| CacheCommand::Get(key),
+                CacheCommand::Get,
             ),
         )),
     )(command)
