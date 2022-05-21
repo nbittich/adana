@@ -7,14 +7,14 @@ pub struct Cache {
     cache_aliases: BTreeMap<u64, u64>,
 }
 #[derive(Default)]
-pub struct CacheManager<'a> {
-    caches: HashMap<&'a str, Cache>,
+pub struct CacheManager {
+    caches: HashMap<String, Cache>,
 }
 
-impl<'a> CacheManager<'a> {
-    pub fn get_mut_or_insert(&'a mut self, key: &'a str) -> Option<&'a mut Cache> {
+impl CacheManager {
+    pub fn get_mut_or_insert(&mut self, key: &str) -> Option<&mut Cache> {
         if !self.caches.contains_key(key) {
-            let _ = self.caches.insert(key, Default::default());
+            let _ = self.caches.insert(key.into(), Default::default());
         }
         self.caches.get_mut(key)
     }

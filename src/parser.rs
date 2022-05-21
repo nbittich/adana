@@ -1,3 +1,5 @@
+use nom::combinator::{cut, verify};
+
 use crate::prelude::*;
 
 type Res<'a, T> = IResult<&'a str, T>;
@@ -9,6 +11,7 @@ pub enum CacheCommand<'a> {
     },
     Remove(&'a str),
     Get(&'a str),
+    Using(&'a str),
 }
 
 fn remove_spaces<'a, P>(parser: P) -> impl Fn(&'a str) -> Res<&'a str>
@@ -25,10 +28,16 @@ fn add_command(command: &str) -> Res<CacheCommand> {
                 remove_spaces(tag_no_case("ADD")),
                 many0(preceded(
                     remove_spaces(tag_no_case("-a")),
-                    preceded(multispace0, take_while(|c: char| c.is_alphanumeric())),
+                    preceded(
+                        multispace0,
+                        cut(verify(
+                            take_while(|c: char| c.is_alphanumeric()),
+                            |s: &str| s.len() != 0,
+                        )),
+                    ),
                 )),
             ),
-            rest.map(|s: &str| s.trim()),
+            cut(verify(rest.map(|s: &str| s.trim()), |s: &str| s.len() != 0)),
         ),
         |(aliases, value)| CacheCommand::Add { aliases, value },
     )(command)
@@ -58,6 +67,22 @@ fn get_command(command: &str) -> Res<CacheCommand> {
     )(command)
 }
 
+fn using_command(command: &str) -> Res<CacheCommand> {
+    map(
+        preceded(
+            tag_no_case("USING"),
+            preceded(
+                multispace0,
+                take_while1(|s: char| s.is_alphanumeric() || s == '-'),
+            ),
+        ),
+        CacheCommand::Using,
+    )(command)
+}
+
 pub fn parse_command(command: &str) -> Res<CacheCommand> {
-    preceded(multispace0, alt((add_command, del_command, get_command)))(command)
+    preceded(
+        multispace0,
+        alt((add_command, del_command, get_command, using_command)),
+    )(command)
 }
