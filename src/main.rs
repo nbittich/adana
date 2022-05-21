@@ -1,5 +1,4 @@
 #![feature(let_chains, btree_drain_filter)]
-#![allow(dead_code)]
 
 mod cache;
 mod parser;
