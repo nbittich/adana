@@ -1,12 +1,14 @@
+use serde::{Deserialize, Serialize};
+
 pub use crate::prelude::*;
 use crate::utils::calculate_hash;
 
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct Cache {
     cache: BTreeMap<u64, String>,
     cache_aliases: BTreeMap<u64, u64>,
 }
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct CacheManager {
     caches: HashMap<String, Cache>,
 }

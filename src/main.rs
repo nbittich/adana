@@ -6,13 +6,13 @@ mod parser;
 mod prelude;
 mod utils;
 
-use cache::{CacheManager};
+use cache::CacheManager;
 use nom::error::ErrorKind;
 pub use parser::{parse_command, CacheCommand};
 pub use prelude::*;
 use utils::write_cursor_and_flush;
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let mut cache_manager: CacheManager = Default::default();
     let mut current_cache = String::from("DEFAULT");
     write_cursor_and_flush();
@@ -23,34 +23,46 @@ fn main() {
         match parse_command(&line) {
             Ok((_, command)) => match command {
                 CacheCommand::Add { aliases, value } => {
-                    let cache = cache_manager
-                        .get_mut_or_insert(&current_cache)
-                        .expect("cache not found");
-                    let key = cache.insert(aliases, value);
-                    println!("added {value} with hash key {key}");
-                }
-                CacheCommand::Remove(key) => {
-                    let cache = cache_manager
-                        .get_mut_or_insert(&current_cache)
-                        .expect("cache not found");
-                    if let Some(v) = cache.remove(key) {
-                        println!("removed {v} with hash key {key}");
+                    if let Some(cache) =cache_manager
+                    .get_mut_or_insert(&current_cache) {
+                        let key = cache.insert(aliases, value);
+                        println!("added {value} with hash key {key}");
                     }
-                }
+                },
+                CacheCommand::Remove(key) => {
+                    if let Some(cache) =cache_manager
+                    .get_mut_or_insert(&current_cache) && let Some(v) = cache.remove(key) {
+                        println!("removed {v} with hash key {key}");
+                    }else {
+                        println!("key {key} not found in current cache {current_cache}");
+                    }
+                },
                 CacheCommand::Get(key) => {
-                    let cache = cache_manager
-                        .get_mut_or_insert(&current_cache)
-                        .expect("cache not found");
-
-                    if let Some(value) = cache.get(key) {
+                    if let Some(cache) =cache_manager
+                    .get_mut_or_insert(&current_cache) && let Some(value) = cache.get(key) {
                         println!("found {value}");
                     } else {
                         println!("{key} not found");
                     }
-                }
+                },
                 CacheCommand::Using(key) => {
                     current_cache = key.into();
+                    println!("current cache: {key}");
+                },
+                CacheCommand::Dump(key) => {
+                    if let Some(key) = key {
+                            if let Some(cache) = cache_manager.get(key) {
+                                   let cache = serde_json::to_string_pretty(&cache)?;
+                                   println!("{cache}")
+                            }else{
+                                eprintln!("cache {key} not found");
+                            }
+                    } else{
+                        let caches = serde_json::to_string_pretty(&cache_manager)?;
+                        println!("{caches}")
+                    }
                 }
+
             },
             Err(e) => {
                 match e {
