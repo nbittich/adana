@@ -7,19 +7,19 @@ pub struct Cache {
     cache_aliases: BTreeMap<u64, u64>,
 }
 #[derive(Default)]
-struct CacheManager<'a> {
+pub struct CacheManager<'a> {
     caches: HashMap<&'a str, Cache>,
 }
 
 impl<'a> CacheManager<'a> {
-    fn get_mut_or_insert(&'a mut self, key: &'a str) -> Option<&'a mut Cache> {
+    pub fn get_mut_or_insert(&'a mut self, key: &'a str) -> Option<&'a mut Cache> {
         if !self.caches.contains_key(key) {
             let _ = self.caches.insert(key, Default::default());
         }
         self.caches.get_mut(key)
     }
 
-    fn get(&self, key: &str) -> Option<&Cache> {
+    pub fn get(&self, key: &str) -> Option<&Cache> {
         self.caches.get(key)
     }
 }
