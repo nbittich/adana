@@ -1,4 +1,7 @@
-use nom::combinator::{cut, verify};
+use nom::{
+    character::complete::multispace1,
+    combinator::{cut, verify},
+};
 
 use crate::prelude::*;
 
@@ -14,22 +17,15 @@ pub enum CacheCommand<'a> {
     Using(&'a str),
 }
 
-fn remove_spaces<'a, P>(parser: P) -> impl Fn(&'a str) -> Res<&'a str>
-where
-    P: Fn(&'a str) -> IResult<&'a str, &'a str>,
-{
-    move |s| delimited(multispace0, &parser, multispace0)(s)
-}
-
 fn add_command(command: &str) -> Res<CacheCommand> {
     map(
         pair(
             preceded(
-                remove_spaces(tag_no_case("ADD")),
+                preceded(multispace0,tag_no_case("ADD")),
                 many0(preceded(
-                    remove_spaces(tag_no_case("-a")),
+                    preceded(multispace1, tag_no_case("-a")),
                     preceded(
-                        multispace0,
+                        multispace1,
                         cut(verify(
                             take_while(|c: char| c.is_alphanumeric()),
                             |s: &str| s.len() != 0,
@@ -37,7 +33,7 @@ fn add_command(command: &str) -> Res<CacheCommand> {
                     ),
                 )),
             ),
-            cut(verify(rest.map(|s: &str| s.trim()), |s: &str| s.len() != 0)),
+            preceded(multispace1, cut(verify(rest.map(|s: &str| s.trim()), |s: &str| s.len() != 0))),
         ),
         |(aliases, value)| CacheCommand::Add { aliases, value },
     )(command)
