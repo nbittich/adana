@@ -6,7 +6,7 @@ use crate::utils::calculate_hash;
 #[derive(Default, Serialize, Deserialize)]
 pub struct Cache {
     cache: BTreeMap<u64, String>,
-    cache_aliases: BTreeMap<u64, u64>,
+    cache_aliases: BTreeMap<String, u64>,
 }
 #[derive(Default, Serialize, Deserialize)]
 pub struct CacheManager {
@@ -31,27 +31,26 @@ impl Cache {
         let key = calculate_hash(&value);
         self.cache.insert(key, value.to_owned());
 
-        let aliases: Vec<(u64, &str)> = aliases
+        let aliases: Vec<&str> = aliases
             .iter()
             .filter_map(|alias| {
-                let k = calculate_hash(alias);
-                if !self.cache_aliases.contains_key(&k) {
-                    Some((k, *alias))
+                if !self.cache_aliases.contains_key(*alias) {
+                    Some(*alias)
                 } else {
                     None
                 }
             })
             .collect();
 
-        for (hash_alias, _) in &aliases {
-            self.cache_aliases.insert(*hash_alias, key);
+        for hash_alias in &aliases {
+            self.cache_aliases.insert(hash_alias.to_string(), key);
         }
         key
     }
 
     pub fn get(&self, key: &str) -> Option<&str> {
         let parsed_key = {
-            if let Some(actual_key) = self.cache_aliases.get(&calculate_hash(&key)) {
+            if let Some(actual_key) = self.cache_aliases.get(key) {
                 Some(*actual_key)
             } else {
                 key.parse::<u64>().ok()
@@ -64,9 +63,13 @@ impl Cache {
             None
         }
     }
+
+    pub fn list(&self) -> Vec<&String> {
+        self.cache.values().collect()
+    }
     pub fn remove(&mut self, key: &str) -> Option<String> {
         let key = {
-            if let Some(actual_key) = self.cache_aliases.remove(&calculate_hash(&key)) {
+            if let Some(actual_key) = self.cache_aliases.remove(key) {
                 Some(actual_key)
             } else {
                 key.parse::<u64>().ok()

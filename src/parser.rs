@@ -5,6 +5,7 @@ pub enum CacheCommand<'a> {
         aliases: Vec<&'a str>,
         value: &'a str,
     },
+    List,
     Remove(&'a str),
     Get(&'a str),
     Exec(&'a str),
@@ -54,6 +55,16 @@ fn exec_command(command: &str) -> Res<CacheCommand> {
     map(extract_key(tag_no_case("EXEC")), CacheCommand::Exec)(command)
 }
 
+fn list_command(command: &str) -> Res<CacheCommand> {
+    map(
+        preceded(
+            alt((tag_no_case("LIST"), tag("ls"))),
+            cut(verify(rest, |s: &str| s.trim().is_empty() || s == "\n")),
+        ),
+        |_| CacheCommand::List,
+    )(command)
+}
+
 fn extract_key<'a, F>(parser: F) -> impl Fn(&'a str) -> Res<&'a str>
 where
     F: Fn(&'a str) -> Res<&'a str>,
@@ -98,6 +109,7 @@ pub fn parse_command(command: &str) -> Res<CacheCommand> {
             get_command,
             using_command,
             dump_command,
+            list_command,
             exec_command,
         )),
     )(command)

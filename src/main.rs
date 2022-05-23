@@ -84,6 +84,13 @@ fn main() -> anyhow::Result<()> {
                         let caches = serde_json::to_string_pretty(&cache_manager)?;
                         println!("{caches}")
                     }
+                },
+                CacheCommand::List => {
+                    if let Some(cache) = cache_manager.get(&current_cache){
+                        for ele in cache.list() {
+                            println!("> {ele}");
+                        }
+                    }
                 }
 
             },
