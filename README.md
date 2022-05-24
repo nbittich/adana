@@ -1,5 +1,13 @@
 # Karsher -  dumb cache 
 
+### todos
+- listcache / lscache
+- help
+- default cache in cache_manager 
+- set default {cache} set the default cache
+
+
+
 ```
 > using linux
 current cache: linux

@@ -6,17 +6,6 @@ mod parser;
 mod prelude;
 mod utils;
 
-use std::{
-    fs::File,
-    io::BufReader,
-    path::PathBuf,
-    process::ExitCode,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc, Mutex,
-    },
-};
-
 use cache::CacheManager;
 use nom::error::ErrorKind;
 use os_command::exec_command;
