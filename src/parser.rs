@@ -6,6 +6,7 @@ pub enum CacheCommand<'a> {
         value: &'a str,
     },
     List,
+    ListCache,
     Remove(&'a str),
     Get(&'a str),
     Exec(&'a str),
@@ -64,6 +65,15 @@ fn list_command(command: &str) -> Res<CacheCommand> {
         |_| CacheCommand::List,
     )(command)
 }
+fn list_cache_command(command: &str) -> Res<CacheCommand> {
+    map(
+        preceded(
+            alt((tag_no_case("LISTCACHE"), tag("lsch"))),
+            cut(verify(rest, |s: &str| s.trim().is_empty() || s == "\n")),
+        ),
+        |_| CacheCommand::ListCache,
+    )(command)
+}
 
 fn extract_key<'a, F>(parser: F) -> impl Fn(&'a str) -> Res<&'a str>
 where
@@ -115,6 +125,7 @@ pub fn parse_command(command: &str) -> Res<CacheCommand> {
             get_command,
             using_command,
             dump_command,
+            list_cache_command,
             list_command,
             exec_command,
         )),

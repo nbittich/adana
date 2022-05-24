@@ -10,6 +10,7 @@ pub struct Cache {
 }
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct CacheManager {
+    default_cache: Option<String>,
     caches: HashMap<String, Cache>,
 }
 
@@ -21,8 +22,20 @@ impl CacheManager {
         self.caches.get_mut(key)
     }
 
+    pub fn get_default_cache(&self) -> &Option<String> {
+        &self.default_cache
+    }
+
+    pub fn set_default_cache(&mut self, default_cache: &str) {
+        self.default_cache = Some(String::from(default_cache));
+    }
+
     pub fn get(&self, key: &str) -> Option<&Cache> {
         self.caches.get(key)
+    }
+
+    pub fn get_cache_names(&self) -> Vec<&String> {
+        self.caches.keys().into_iter().collect()
     }
 }
 

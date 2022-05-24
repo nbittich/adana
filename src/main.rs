@@ -32,8 +32,15 @@ lazy_static::lazy_static! {
 }
 
 fn main() -> anyhow::Result<()> {
-    let mut current_cache = String::from("DEFAULT");
-
+    let mut current_cache = {
+        let cache_manager = Arc::clone(&*CACHE_MANAGER);
+        let lock = cache_manager
+            .lock()
+            .expect("could not lock cache. Exit abnormally");
+        lock.get_default_cache()
+            .as_ref()
+            .map_or("DEFAULT".into(), |v| v.clone())
+    };
     let exit_lock = setup_ctrlc_handler(Arc::clone(&*CACHE_MANAGER));
 
     write_cursor_and_flush();
@@ -122,8 +129,12 @@ fn process_command(
             CacheCommand::Using(key) => {
                 current_cache.clear();
                 current_cache.push_str(key);
+                cache_manager.set_default_cache(current_cache);
                 println!("current cache: {key}");
             },
+            CacheCommand::ListCache => {
+                println!("> {:?}", cache_manager.get_cache_names());
+            }
             CacheCommand::Dump(key) => {
                 if let Some(key) = key {
                         if let Some(cache) = cache_manager.get(key) {
