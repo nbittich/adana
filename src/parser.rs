@@ -81,7 +81,7 @@ where
 }
 
 fn using_command(command: &str) -> Res<CacheCommand> {
-    map(extract_key(tag_no_case("USING")), CacheCommand::Using)(command)
+    map(alt((extract_key(tag_no_case("USING")), extract_key(tag_no_case("USE")))), CacheCommand::Using)(command)
 }
 
 fn dump_command(command: &str) -> Res<CacheCommand> {
