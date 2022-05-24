@@ -61,10 +61,10 @@ fn setup_ctrlc_handler(cache_manager: Arc<Mutex<CacheManager>>) -> Arc<AtomicBoo
             if let Ok(cache_manager) = cache_manager.lock()  &&  let Ok(json) = serde_json::to_string_pretty(&*cache_manager) {
                 if  std::fs::write(CONFIG_FILE_PATH.as_path(), json).is_ok() {
                     ExitCode::SUCCESS.exit_process();
-                }else {
+                } else {
                     eprintln!("could not write to target conf file. gomenasai");
                 }
-            }else {
+            } else {
                 eprintln!("could not acquire lock or could not serialize to json. sorry! bye.");
             }
             ExitCode::FAILURE.exit_process();
