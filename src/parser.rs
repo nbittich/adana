@@ -178,7 +178,10 @@ pub fn parse_command(command: &str) -> Res<CacheCommand> {
             list_command,
             help_command,
             clear_command,
-            exec_command,
+            alt((
+                exec_command,
+                map(rest.map(|s: &str| s.trim()), CacheCommand::Exec),
+            )),
         )),
     )(command)
 }

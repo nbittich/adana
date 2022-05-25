@@ -11,10 +11,10 @@ readme = "README.md"
 
 [dependencies]
 anyhow = "1.0.57"
-ctrlc = { version = "3.2.2", features = ["termination"] }
 dirs = "4.0.0"
 lazy_static = "1.4.0"
 nom = "7.1.1"
+rustyline = {version= "9.1.2"}
 serde = {version = "1.0.137", features= ['serde_derive']}
 serde_json = "1.0.81"
 strum = { version = "0.24.0", features = ["derive", "strum_macros"] }

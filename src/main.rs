@@ -11,7 +11,7 @@ use nom::error::ErrorKind;
 use os_command::exec_command;
 pub use parser::{parse_command, CacheCommand};
 pub use prelude::*;
-use utils::write_cursor_and_flush;
+use rustyline::{error::ReadlineError, Editor};
 
 use crate::utils::clear_terminal;
 
@@ -23,79 +23,80 @@ lazy_static::lazy_static! {
         conf_dir.push(".karsher.conf.json");
         conf_dir
     };
-
-    static ref CACHE_MANAGER: Arc<Mutex<CacheManager>> = {
-        if let Ok(f) = File::open(CONFIG_FILE_PATH.as_path()) {
-             let reader = BufReader::new(f);
-             if let Ok(cache_manager) = serde_json::from_reader(reader) {
-                 return Arc::new(Mutex::new(cache_manager));
-             }
-        }
-     Default::default()
+    static ref HISTORY_FILE_PATH: PathBuf = {
+        let mut home_dir = dirs::home_dir().expect("home dir not found");
+        home_dir.push(".karsher.history.txt");
+        home_dir
     };
+
 }
 
 fn main() -> anyhow::Result<()> {
+    let mut cache_manager = {
+        let f = File::open(CONFIG_FILE_PATH.as_path()).expect("cannot open config");
+
+        let reader = BufReader::new(f);
+        let cache: Option<CacheManager> = serde_json::from_reader(reader).ok();
+        if let Some(manager) = cache {
+            manager
+        } else {
+            CacheManager::default()
+        }
+    };
+
     let mut current_cache = {
-        let cache_manager = Arc::clone(&*CACHE_MANAGER);
-        let lock = cache_manager
-            .lock()
-            .expect("could not lock cache. Exit abnormally");
-        lock.get_default_cache()
+        cache_manager
+            .get_default_cache()
             .as_ref()
             .map_or("DEFAULT".into(), |v| v.clone())
     };
+
     clear_terminal();
-    println!("> Welcome! Using default cache: '{current_cache}'");
-    let exit_lock = setup_ctrlc_handler(Arc::clone(&*CACHE_MANAGER));
 
-    write_cursor_and_flush();
-    let stdin = std::io::stdin();
-    loop {
-        let mut line = String::new();
-        stdin.read_line(&mut line).expect("read error");
-        process_command(
-            Arc::clone(&*CACHE_MANAGER),
-            &mut current_cache,
-            &line,
-            Arc::clone(&exit_lock),
-        )?;
-        write_cursor_and_flush();
+    println!(">> Welcome! Using default cache: '{current_cache}'");
+
+    let mut rl = Editor::<()>::new();
+
+    if rl.load_history(HISTORY_FILE_PATH.as_path()).is_err() {
+        println!("No previous history.");
     }
-}
 
-fn setup_ctrlc_handler(cache_manager: Arc<Mutex<CacheManager>>) -> Arc<AtomicBool> {
-    let lock = Arc::new(AtomicBool::new(true));
-    let clone = Arc::clone(&lock);
-    ctrlc::set_handler(move || {
-        if !clone.load(Ordering::Relaxed) {
-            println!("received Ctrl+C!");
-        } else {
-            if let Ok(cache_manager) = cache_manager.lock()  &&  let Ok(json) = serde_json::to_string_pretty(&*cache_manager) {
-                if  std::fs::write(CONFIG_FILE_PATH.as_path(), json).is_ok() {
-                    ExitCode::SUCCESS.exit_process();
-                } else {
-                    eprintln!("could not write to target conf file. gomenasai");
-                }
-            } else {
-                eprintln!("could not acquire lock or could not serialize to json. sorry! bye.");
+    loop {
+        let readline = rl.readline(">> ");
+        match readline {
+            Ok(line) => {
+                rl.add_history_entry(line.as_str());
+                process_command(&mut cache_manager, &mut current_cache, &line)?;
             }
-            ExitCode::FAILURE.exit_process();
+            Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
+                break;
+            }
+            Err(err) => {
+                eprintln!("Error: {:?}", err);
+                ExitCode::FAILURE.exit_process();
+            }
         }
-    })
-    .expect("Error setting Ctrl-C handler");
-    lock
+    }
+
+    if let Ok(json) = serde_json::to_string_pretty(&cache_manager) {
+        if std::fs::write(CONFIG_FILE_PATH.as_path(), json).is_err() {
+            eprintln!("could not write to target conf file. gomenasai");
+        }
+    } else {
+        eprintln!("could not acquire lock or could not serialize to json. sorry! bye.");
+    }
+
+    rl.save_history(HISTORY_FILE_PATH.as_path())?;
+
+    println!("BYE");
+    Ok(())
 }
 
 fn process_command(
-    cache_manager: Arc<Mutex<CacheManager>>,
+    cache_manager: &mut CacheManager,
     current_cache: &mut String,
     line: &str,
-    exit_lock: Arc<AtomicBool>,
 ) -> anyhow::Result<()> {
-    let mut cache_manager = cache_manager
-        .lock()
-        .map_err(|e| anyhow::Error::msg(e.to_string()))?;
     match parse_command(line) {
         Ok((_, command)) => match command {
             CacheCommand::Add { aliases, value } => {
@@ -109,7 +110,7 @@ fn process_command(
                 if let Some(cache) = cache_manager
                 .get_mut_or_insert(current_cache) && let Some(v) = cache.remove(key) {
                     println!("removed {v} with hash key {key}");
-                }else {
+                } else  {
                     println!("key {key} not found in current cache {current_cache}");
                 }
             },
@@ -117,18 +118,16 @@ fn process_command(
                 if let Some(cache) = cache_manager
                 .get_mut_or_insert(current_cache) && let Some(value) = cache.get(key) {
                     println!("found {value}");
-                } else {
+                } else{
                     println!("{key} not found");
                 }
             },
             CacheCommand::Exec(key) => {
                 if let Some(cache) = cache_manager
                 .get_mut_or_insert(current_cache) && let Some(value) = cache.get(key) {
-                   exit_lock.store(false, Ordering::Relaxed);
                    let _ = exec_command(value).map_err(|e| anyhow::Error::msg(e.to_string()))?;
-                   exit_lock.store(true, Ordering::Relaxed);
 
-                } else {
+                } else if !key.trim().is_empty(){
                     println!("{key} not found");
                 }
             },
