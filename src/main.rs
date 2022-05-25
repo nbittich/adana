@@ -6,6 +6,8 @@ mod parser;
 mod prelude;
 mod utils;
 
+use std::fs::OpenOptions;
+
 use cache::CacheManager;
 use nom::error::ErrorKind;
 use os_command::exec_command;
@@ -33,7 +35,12 @@ lazy_static::lazy_static! {
 
 fn main() -> anyhow::Result<()> {
     let mut cache_manager = {
-        let f = File::open(CONFIG_FILE_PATH.as_path()).expect("cannot open config");
+
+        let f = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(CONFIG_FILE_PATH.as_path()).expect("cannot open config");
 
         let reader = BufReader::new(f);
         let cache: Option<CacheManager> = serde_json::from_reader(reader).ok();
