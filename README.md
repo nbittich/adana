@@ -1,7 +1,24 @@
-# Karsher -  dumb cache 
+# Karsher -  dumb cache / terminal
+
+Static build using MUSL:
+
+```
+rustup target add x86_64-unknown-linux-musl 
+```
+
+```
+RUSTFLAGS='-C link-arg=-s' cargo build --release --target x86_64-unknown-linux-musl
+```
+
+should be empty:
+
+```
+readelf -d target/x86_64-unknown-linux-musl/release/karsher | grep NEEDED 
+
+```
 
 ### todos
-- help
+- rustyline (https://crates.io/crates/rustyline)
 
 
 

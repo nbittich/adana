@@ -13,6 +13,10 @@ pub use parser::{parse_command, CacheCommand};
 pub use prelude::*;
 use utils::write_cursor_and_flush;
 
+use crate::utils::clear_terminal;
+
+const CACHE_COMMAND_DOC: &[(&str, &str)] = CacheCommand::doc();
+
 lazy_static::lazy_static! {
     static ref CONFIG_FILE_PATH: PathBuf = {
         let mut conf_dir = dirs::config_dir().expect("conf dir not found");
@@ -41,6 +45,8 @@ fn main() -> anyhow::Result<()> {
             .as_ref()
             .map_or("DEFAULT".into(), |v| v.clone())
     };
+    clear_terminal();
+    println!("> Welcome! Using default cache: '{current_cache}'");
     let exit_lock = setup_ctrlc_handler(Arc::clone(&*CACHE_MANAGER));
 
     write_cursor_and_flush();
@@ -154,6 +160,15 @@ fn process_command(
                         println!("> {ele}");
                     }
                 }
+            },
+            CacheCommand::Help => {
+                for doc in CACHE_COMMAND_DOC {
+                    let (command, doc) = doc;
+                    println!("> {command} : {doc}");
+                }
+            },
+            CacheCommand::Clear => {
+               clear_terminal();
             }
 
         },

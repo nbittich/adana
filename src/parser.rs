@@ -1,5 +1,8 @@
+use strum::{EnumString, EnumVariantNames, VariantNames};
+
 use crate::prelude::*;
 
+#[derive(Debug, EnumString, EnumVariantNames)]
 pub enum CacheCommand<'a> {
     Add {
         aliases: Vec<&'a str>,
@@ -12,6 +15,27 @@ pub enum CacheCommand<'a> {
     Exec(&'a str),
     Using(&'a str),
     Dump(Option<&'a str>),
+    Clear,
+    Help,
+}
+
+impl CacheCommand<'_> {
+    pub const fn doc() -> &'static [(&'static str, &'static str)] {
+        const VARIANTS: &[&str] = CacheCommand::VARIANTS;
+        assert!(10 == VARIANTS.len(), "enum doc no longer valid!");
+        &[
+            ("add", "Add a new value to current cache. can have multiple aliases with option '-a'. e.g `add -a drc -a drcomp docker-compose`"),
+            ("list/ls", "List values within the cache."),
+            ("listcache/lsch", "List available caches."),
+            ("del/delete", "Remove value from cache. Accept either a hashkey or an alias. e.g `del drc`"),
+            ("get", "Get value from cache. Accept either a hashkey or an alias. e.g `get drc`"),
+            ("exec/run", "Run a value from the cache as an OS command. Accept either a hashkey or an alias. e.g `run drc`"),
+            ("use/using", "Use another cache context default cache is DEFAULT. e.g `use linux`"),
+            ("dump", "Dump cache(s) as json. Take an optional parameter, the cache name. e.g `dump linux`"),
+            ("clear/cls", "Clear the terminal."),
+            ("help", "Display Help."),
+        ]
+    }
 }
 
 fn add_command(command: &str) -> Res<CacheCommand> {
@@ -53,7 +77,13 @@ fn get_command(command: &str) -> Res<CacheCommand> {
     map(extract_key(tag_no_case("GET")), CacheCommand::Get)(command)
 }
 fn exec_command(command: &str) -> Res<CacheCommand> {
-    map(extract_key(tag_no_case("EXEC")), CacheCommand::Exec)(command)
+    map(
+        alt((
+            extract_key(tag_no_case("EXEC")),
+            extract_key(tag_no_case("RUN")),
+        )),
+        CacheCommand::Exec,
+    )(command)
 }
 
 fn list_command(command: &str) -> Res<CacheCommand> {
@@ -63,6 +93,25 @@ fn list_command(command: &str) -> Res<CacheCommand> {
             cut(verify(rest, |s: &str| s.trim().is_empty() || s == "\n")),
         ),
         |_| CacheCommand::List,
+    )(command)
+}
+
+fn help_command(command: &str) -> Res<CacheCommand> {
+    map(
+        preceded(
+            tag_no_case("HELP"),
+            cut(verify(rest, |s: &str| s.trim().is_empty() || s == "\n")),
+        ),
+        |_| CacheCommand::Help,
+    )(command)
+}
+fn clear_command(command: &str) -> Res<CacheCommand> {
+    map(
+        preceded(
+            alt((tag_no_case("CLS"), tag_no_case("CLEAR"))),
+            cut(verify(rest, |s: &str| s.trim().is_empty() || s == "\n")),
+        ),
+        |_| CacheCommand::Clear,
     )(command)
 }
 fn list_cache_command(command: &str) -> Res<CacheCommand> {
@@ -127,6 +176,8 @@ pub fn parse_command(command: &str) -> Res<CacheCommand> {
             dump_command,
             list_cache_command,
             list_command,
+            help_command,
+            clear_command,
             exec_command,
         )),
     )(command)
