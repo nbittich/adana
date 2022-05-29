@@ -37,6 +37,10 @@ impl CacheManager {
     pub fn get_cache_names(&self) -> Vec<&String> {
         self.caches.keys().into_iter().collect()
     }
+
+    pub fn remove_cache(&mut self, cache_name: &str) -> Option<Cache> {
+        self.caches.remove(cache_name)
+    }
 }
 
 impl Cache {
@@ -77,8 +81,19 @@ impl Cache {
         }
     }
 
-    pub fn list(&self) -> Vec<&String> {
-        self.cache.values().collect()
+    pub fn list(&self) -> Vec<(&String, Vec<&String>)> {
+        self.cache
+            .iter()
+            .map(|(key, value)| {
+                (
+                    value,
+                    self.cache_aliases
+                        .iter()
+                        .filter_map(move |(alias, k)| if key == k { Some(alias) } else { None })
+                        .collect(),
+                )
+            })
+            .collect()
     }
     pub fn remove(&mut self, key: &str) -> Option<String> {
         let key = {

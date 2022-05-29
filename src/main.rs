@@ -35,12 +35,12 @@ lazy_static::lazy_static! {
 
 fn main() -> anyhow::Result<()> {
     let mut cache_manager = {
-
         let f = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .open(CONFIG_FILE_PATH.as_path()).expect("cannot open config");
+            .read(true)
+            .write(true)
+            .create(true)
+            .open(CONFIG_FILE_PATH.as_path())
+            .expect("cannot open config");
 
         let reader = BufReader::new(f);
         let cache: Option<CacheManager> = serde_json::from_reader(reader).ok();
@@ -145,7 +145,10 @@ fn process_command(
                 println!("current cache: {key}");
             },
             CacheCommand::ListCache => {
-                println!("> {:?}", cache_manager.get_cache_names());
+                println!(">> {:?}", cache_manager.get_cache_names());
+            }
+            CacheCommand::CurrentCache => {
+                println!(">> {current_cache}");
             }
             CacheCommand::Dump(key) => {
                 if let Some(key) = key {
@@ -160,10 +163,17 @@ fn process_command(
                     println!("{caches}")
                 }
             },
+            CacheCommand::RemoveCache(key) => {
+                if let Some(cache_name) = key && cache_name != current_cache {
+                        println!("remove {cache_name}: {}", cache_manager.remove_cache(cache_name).is_some());
+                } else{
+                   println!("clear all values from {current_cache}: {}",cache_manager.remove_cache(current_cache).is_some());
+                }
+            },
             CacheCommand::List => {
                 if let Some(cache) = cache_manager.get(current_cache){
-                    for ele in cache.list() {
-                        println!("> {ele}");
+                    for (value, aliases) in cache.list() {
+                        println!("> {aliases:?} => {value}");
                     }
                 }
             },

@@ -9,7 +9,9 @@ pub enum CacheCommand<'a> {
         value: &'a str,
     },
     List,
+    CurrentCache,
     ListCache,
+    RemoveCache(Option<&'a str>),
     Remove(&'a str),
     Get(&'a str),
     Exec(&'a str),
@@ -22,7 +24,7 @@ pub enum CacheCommand<'a> {
 impl CacheCommand<'_> {
     pub const fn doc() -> &'static [(&'static str, &'static str)] {
         const VARIANTS: &[&str] = CacheCommand::VARIANTS;
-        assert!(10 == VARIANTS.len(), "enum doc no longer valid!");
+        assert!(12 == VARIANTS.len(), "enum doc no longer valid!");
         &[
             ("add", "Add a new value to current cache. can have multiple aliases with option '-a'. e.g `add -a drc -a drcomp docker-compose`"),
             ("list/ls", "List values within the cache."),
@@ -33,6 +35,8 @@ impl CacheCommand<'_> {
             ("use/using", "Use another cache context default cache is DEFAULT. e.g `use linux`"),
             ("dump", "Dump cache(s) as json. Take an optional parameter, the cache name. e.g `dump linux`"),
             ("clear/cls", "Clear the terminal."),
+            ("delch/deletecache", "Delete cache or clear current cache value."),
+            ("currch/currentcache", "Current cache."),
             ("help", "Display Help."),
         ]
     }
@@ -93,6 +97,15 @@ fn list_command(command: &str) -> Res<CacheCommand> {
             cut(verify(rest, |s: &str| s.trim().is_empty() || s == "\n")),
         ),
         |_| CacheCommand::List,
+    )(command)
+}
+fn current_cache_command(command: &str) -> Res<CacheCommand> {
+    map(
+        preceded(
+            alt((tag_no_case("CURRCH"), tag("currentcache"))),
+            cut(verify(rest, |s: &str| s.trim().is_empty() || s == "\n")),
+        ),
+        |_| CacheCommand::CurrentCache,
     )(command)
 }
 
@@ -164,6 +177,18 @@ fn dump_command(command: &str) -> Res<CacheCommand> {
         CacheCommand::Dump,
     )(command)
 }
+fn del_cache_command(command: &str) -> Res<CacheCommand> {
+    map(
+        preceded(
+            alt((tag_no_case("DELCH"), tag_no_case("deletecache"))),
+            cut(verify(rest, |s: &str| {
+                s.is_empty() || s.starts_with(' ') || s == "\n"
+            }))
+            .and_then(opt(preceded(multispace1, rest.map(|s: &str| s.trim())))),
+        ),
+        CacheCommand::RemoveCache,
+    )(command)
+}
 
 pub fn parse_command(command: &str) -> Res<CacheCommand> {
     preceded(
@@ -175,6 +200,8 @@ pub fn parse_command(command: &str) -> Res<CacheCommand> {
             using_command,
             dump_command,
             list_cache_command,
+            current_cache_command,
+            del_cache_command,
             list_command,
             help_command,
             clear_command,
