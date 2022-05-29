@@ -18,7 +18,11 @@ pub fn exec_command(command: &str) -> Res<()> {
         .spawn();
 
     match handle.and_then(|mut h| h.wait()) {
-        Ok(status) => println!("{status}"),
+        Ok(status) => {
+            if cfg!(debug_assertions) {
+                println!("{status}");
+            }
+        }
         Err(e) => eprintln!("{program} failed to start with args {args:?}. err: {e}"),
     }
 
