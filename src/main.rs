@@ -129,10 +129,10 @@ fn process_command(
                     println!("{key} not found");
                 }
             },
-            CacheCommand::Exec(key) => {
+            CacheCommand::Exec{key, args} => {
                 if let Some(cache) = cache_manager
                 .get_mut_or_insert(current_cache) && let Some(value) = cache.get(key) {
-                   let _ = exec_command(value).map_err(|e| anyhow::Error::msg(e.to_string()))?;
+                   let _ = exec_command(value, &args).map_err(|e| anyhow::Error::msg(e.to_string()))?;
 
                 } else if !key.trim().is_empty(){
                     println!("{key} not found");

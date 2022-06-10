@@ -14,7 +14,10 @@ pub enum CacheCommand<'a> {
     RemoveCache(Option<&'a str>),
     Remove(&'a str),
     Get(&'a str),
-    Exec(&'a str),
+    Exec {
+        key: &'a str,
+        args: Option<&'a str>,
+    },
     Using(&'a str),
     Dump(Option<&'a str>),
     Clear,
@@ -82,11 +85,15 @@ fn get_command(command: &str) -> Res<CacheCommand> {
 }
 fn exec_command(command: &str) -> Res<CacheCommand> {
     map(
-        alt((
-            extract_key(tag_no_case("EXEC")),
-            extract_key(tag_no_case("RUN")),
-        )),
-        CacheCommand::Exec,
+        pair(
+            alt((
+                extract_key(tag_no_case("EXEC")),
+                extract_key(tag_no_case("RUN")),
+                take_till1(|s: char| s.is_whitespace()),
+            )),
+            opt(rest.map(|r: &str| r.trim())),
+        ),
+        |(key, args)| CacheCommand::Exec { key, args },
     )(command)
 }
 
@@ -205,10 +212,7 @@ pub fn parse_command(command: &str) -> Res<CacheCommand> {
             list_command,
             help_command,
             clear_command,
-            alt((
-                exec_command,
-                map(rest.map(|s: &str| s.trim()), CacheCommand::Exec),
-            )),
+            exec_command,
         )),
     )(command)
 }

@@ -1,15 +1,28 @@
 use crate::prelude::*;
 
-pub fn exec_command(command: &str) -> Res<()> {
-    let (rest, program) = preceded(multispace0, take_while(|s| s != ' '))(command)?;
+pub fn exec_command<'a>(command: &'a str, extra_args: &'a Option<&'a str>) -> Res<'a, ()> {
+    let (remaining, program) = preceded(multispace0, take_while(|s| s != ' '))(command)?;
 
-    let (_, args) = preceded(
-        multispace0,
-        separated_list0(
-            tag(" "),
-            verify(take_while(|s| s != ' '), |s: &str| !s.is_empty()),
-        ),
-    )(rest)?;
+    let extract_args = |s| {
+        preceded(
+            multispace0,
+            separated_list0(
+                tag(" "),
+                alt((
+                    delimited(tag("\""), take_while(|s: char| s != '"'), tag("\"")),
+                    verify(take_while(|s: char| !s.is_whitespace()), |s: &str| {
+                        !s.is_empty()
+                    }),
+                )),
+            ),
+        )(s)
+    };
+    let (_, mut args) = extract_args(remaining)?;
+
+    if let Some(extra_args) = extra_args {
+        let (_, mut extra_args) = extract_args(extra_args)?;
+        args.append(&mut extra_args);
+    }
 
     let handle = Command::new(program)
         .args(&args[..])
