@@ -30,8 +30,8 @@ impl CacheCommand<'_> {
         const VARIANTS: &[&str] = CacheCommand::VARIANTS;
         assert!(14 == VARIANTS.len(), "enum doc no longer valid!");
         &[
-            (&["add"], "Add a new value to current cache. can have multiple aliases with option '-a'. e.g `add -a drc -a drcomp docker-compose`"),
-            (&["list","ls"], "List values within the cache."),
+            (&["put"], "Put a new value to current cache. can have multiple aliases with option '-a'. e.g `set -a drc -a drcomp docker-compose`"),
+            (&["describe","ds"], "List values within the cache."),
             (&["listcache","lsch"], "List available caches."),
             (&["del","delete"], "Remove value from cache. Accept either a hashkey or an alias. e.g `del drc`"),
             (&["get"], "Get value from cache. Accept either a hashkey or an alias. e.g `get drc`"),
@@ -52,7 +52,7 @@ fn add_command(command: &str) -> Res<CacheCommand> {
     map(
         pair(
             preceded(
-                preceded(multispace0, tag_no_case("ADD")),
+                preceded(multispace0, tag_no_case("PUT")),
                 many0(preceded(
                     preceded(multispace1, tag_no_case("-a")),
                     preceded(
@@ -121,7 +121,7 @@ fn cd_command(command: &str) -> Res<CacheCommand> {
 fn list_command(command: &str) -> Res<CacheCommand> {
     map(
         preceded(
-            alt((tag_no_case("LIST"), tag("ls"))),
+            alt((tag_no_case("describe"), tag("ds"))),
             verify(rest, |s: &str| s.trim().is_empty() || s == "\n"),
         ),
         |_| CacheCommand::List,
