@@ -1,10 +1,10 @@
-use rustyline::completion::{FilenameCompleter, Completer, Pair};
+use rustyline::completion::{Completer, FilenameCompleter, Pair};
 use rustyline::error::ReadlineError;
 use rustyline::highlight::{Highlighter, MatchingBracketHighlighter};
-use rustyline::hint::{HistoryHinter, Hinter};
+use rustyline::hint::{Hinter, HistoryHinter};
 use rustyline::validate::{self, MatchingBracketValidator, Validator};
-use rustyline::{CompletionType, Config, Context, EditMode, Editor, KeyEvent, Cmd};
-use rustyline_derive::{Helper};
+use rustyline::{Cmd, CompletionType, Config, Context, EditMode, Editor, KeyEvent};
+use rustyline_derive::Helper;
 use std::borrow::Cow::{self, Borrowed, Owned};
 use std::path::PathBuf;
 
@@ -21,7 +21,10 @@ pub fn save_history(rl: &mut Editor<CustomHelper>) -> Result<(), rustyline::erro
     rl.save_history(HISTORY_FILE_PATH.as_path())
 }
 
-pub fn read_line(rl: &mut Editor<CustomHelper>, curr_cache: &str ) -> Result<String, rustyline::error::ReadlineError> {
+pub fn read_line(
+    rl: &mut Editor<CustomHelper>,
+    curr_cache: &str,
+) -> Result<String, rustyline::error::ReadlineError> {
     let p = format!("[{curr_cache}] >> ");
     rl.helper_mut().expect("No helper").colored_prompt = format!("\x1b[1;32m{}\x1b[0m", p);
     rl.readline(&p)
@@ -87,7 +90,6 @@ impl Highlighter for CustomHelper {
     }
 }
 
-
 impl Validator for CustomHelper {
     fn validate(
         &self,
@@ -100,7 +102,6 @@ impl Validator for CustomHelper {
         self.validator.validate_while_typing()
     }
 }
-
 
 impl Completer for CustomHelper {
     type Candidate = Pair;

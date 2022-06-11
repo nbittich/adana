@@ -1,5 +1,5 @@
-use strum::{EnumString, EnumVariantNames, VariantNames};
 use crate::prelude::*;
+use strum::{EnumString, EnumVariantNames, VariantNames};
 
 #[derive(Debug, EnumString, EnumVariantNames)]
 pub enum CacheCommand<'a> {
@@ -25,8 +25,7 @@ pub enum CacheCommand<'a> {
 }
 
 impl CacheCommand<'_> {
-
-    pub const fn doc() -> &'static [(&'static[&'static str], &'static str)] {
+    pub const fn doc() -> &'static [(&'static [&'static str], &'static str)] {
         const VARIANTS: &[&str] = CacheCommand::VARIANTS;
         assert!(13 == VARIANTS.len(), "enum doc no longer valid!");
         &[
@@ -102,7 +101,7 @@ fn cd_command(command: &str) -> Res<CacheCommand> {
     map(
         preceded(
             tag_no_case("CD"),
-            preceded(multispace1,  rest.map(|r: &str| r.trim())),
+            preceded(multispace1, rest.map(|r: &str| r.trim())),
         ),
         CacheCommand::Cd,
     )(command)

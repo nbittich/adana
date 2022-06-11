@@ -81,7 +81,7 @@ impl Cache {
         }
     }
 
-    pub fn list(&self) -> Vec<(&u64,&String, Vec<&String>)> {
+    pub fn list(&self) -> Vec<(&u64, &String, Vec<&String>)> {
         self.cache
             .iter()
             .map(|(key, value)| {

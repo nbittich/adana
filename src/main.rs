@@ -100,13 +100,11 @@ fn process_command(
 
                 if CACHE_COMMAND_DOC.iter().flat_map(|c| c.0).any(|c| aliases.contains(c)) {
                     eprintln!("You cannot use a reserved command name as an alias. check help for list of reserved names.");
-                } else {
-                    if let Some(cache) = cache_manager
+                } else if let Some(cache) = cache_manager
                     .get_mut_or_insert(current_cache) {
                         let key = cache.insert(aliases, value);
                         println!("added {value} with hash key {key}");
                     }
-                }
 
             },
             CacheCommand::Remove(key) => {
