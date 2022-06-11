@@ -14,7 +14,8 @@ anyhow = "1.0.57"
 dirs = "4.0.0"
 lazy_static = "1.4.0"
 nom = "7.1.1"
-rustyline = {version= "9.1.2"}
+rustyline = "9.1.2"
+rustyline-derive = "0.6.0"
 serde = {version = "1.0.137", features= ['serde_derive']}
 serde_json = "1.0.81"
 strum = { version = "0.24.0", features = ["derive", "strum_macros"] }

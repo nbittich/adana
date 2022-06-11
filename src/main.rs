@@ -5,15 +5,15 @@ mod os_command;
 mod parser;
 mod prelude;
 mod utils;
-
+mod editor;
 use std::fs::OpenOptions;
 
 use cache::CacheManager;
 use nom::error::ErrorKind;
 use os_command::exec_command;
 pub use parser::{parse_command, CacheCommand};
+use rustyline::{error::ReadlineError};
 pub use prelude::*;
-use rustyline::{error::ReadlineError, Editor};
 
 use crate::utils::clear_terminal;
 
@@ -24,11 +24,6 @@ lazy_static::lazy_static! {
         let mut conf_dir = dirs::config_dir().expect("conf dir not found");
         conf_dir.push(".karsher.conf.json");
         conf_dir
-    };
-    static ref HISTORY_FILE_PATH: PathBuf = {
-        let mut home_dir = dirs::home_dir().expect("home dir not found");
-        home_dir.push(".karsher.history.txt");
-        home_dir
     };
 
 }
@@ -60,16 +55,11 @@ fn main() -> anyhow::Result<()> {
 
     clear_terminal();
 
-    println!(">> Welcome! Using default cache: '{current_cache}'");
-
-    let mut rl = Editor::<()>::new();
-
-    if rl.load_history(HISTORY_FILE_PATH.as_path()).is_err() {
-        println!("No previous history.");
-    }
+    let mut rl = editor::build_editor();
 
     loop {
-        let readline = rl.readline(">> ");
+        let readline = editor::read_line(&mut rl, &current_cache);
+
         match readline {
             Ok(line) => {
                 rl.add_history_entry(line.as_str());
@@ -93,7 +83,7 @@ fn main() -> anyhow::Result<()> {
         eprintln!("could not acquire lock or could not serialize to json. sorry! bye.");
     }
 
-    rl.save_history(HISTORY_FILE_PATH.as_path())?;
+    editor::save_history(&mut rl)?;
 
     println!("BYE");
     Ok(())
@@ -191,7 +181,7 @@ fn process_command(
         Err(e) => {
             match e {
                 nom::Err::Failure(failure) if failure.code == ErrorKind::Verify => {
-                    eprintln!("invalid command")
+                    eprintln!("invalid command: {failure}")
                 },
                 _ => eprintln!("error parsing command: {e}")
             }

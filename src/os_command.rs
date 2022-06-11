@@ -48,7 +48,7 @@ mod test {
 
     #[test]
     fn test_exec_command() {
-        exec_command("echo 'hello world'").unwrap();
+        exec_command("echo 'hello world'", &None).unwrap();
         println!("bye")
     }
 }

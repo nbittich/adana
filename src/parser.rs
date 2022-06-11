@@ -1,5 +1,4 @@
 use strum::{EnumString, EnumVariantNames, VariantNames};
-
 use crate::prelude::*;
 
 #[derive(Debug, EnumString, EnumVariantNames)]
@@ -101,7 +100,7 @@ fn list_command(command: &str) -> Res<CacheCommand> {
     map(
         preceded(
             alt((tag_no_case("LIST"), tag("ls"))),
-            cut(verify(rest, |s: &str| s.trim().is_empty() || s == "\n")),
+            verify(rest, |s: &str| s.trim().is_empty() || s == "\n"),
         ),
         |_| CacheCommand::List,
     )(command)
