@@ -1,23 +1,23 @@
 #![feature(let_chains, btree_drain_filter, exitcode_exit_method)]
 
 mod cache;
+mod editor;
 mod os_command;
 mod parser;
 mod prelude;
 mod utils;
-mod editor;
 use std::fs::OpenOptions;
 
 use cache::CacheManager;
 use nom::error::ErrorKind;
 use os_command::exec_command;
 pub use parser::{parse_command, CacheCommand};
-use rustyline::{error::ReadlineError};
 pub use prelude::*;
+use rustyline::error::ReadlineError;
 
 use crate::utils::clear_terminal;
 
-const CACHE_COMMAND_DOC: &[(&str, &str)] = CacheCommand::doc();
+const CACHE_COMMAND_DOC: &[(&[&str], &str)] = CacheCommand::doc();
 
 lazy_static::lazy_static! {
     static ref CONFIG_FILE_PATH: PathBuf = {
@@ -97,11 +97,17 @@ fn process_command(
     match parse_command(line) {
         Ok((_, command)) => match command {
             CacheCommand::Add { aliases, value } => {
-                if let Some(cache) = cache_manager
-                .get_mut_or_insert(current_cache) {
-                    let key = cache.insert(aliases, value);
-                    println!("added {value} with hash key {key}");
+
+                if CACHE_COMMAND_DOC.iter().flat_map(|c| c.0).any(|c| aliases.contains(c)) {
+                    eprintln!("You cannot use a reserved command name as an alias. check help for list of reserved names.");
+                } else {
+                    if let Some(cache) = cache_manager
+                    .get_mut_or_insert(current_cache) {
+                        let key = cache.insert(aliases, value);
+                        println!("added {value} with hash key {key}");
+                    }
                 }
+
             },
             CacheCommand::Remove(key) => {
                 if let Some(cache) = cache_manager
@@ -162,15 +168,15 @@ fn process_command(
             },
             CacheCommand::List => {
                 if let Some(cache) = cache_manager.get(current_cache){
-                    for (value, aliases) in cache.list() {
-                        println!("> {aliases:?} => {value}");
+                    for (key, value, aliases) in cache.list() {
+                        println!(">> Key: {key}, Aliases: {aliases:?} => Value: {value}");
                     }
                 }
             },
             CacheCommand::Help => {
                 for doc in CACHE_COMMAND_DOC {
                     let (command, doc) = doc;
-                    println!("> {command} : {doc}");
+                    println!(">> {} : {doc}", command.join("/"));
                 }
             },
             CacheCommand::Clear => {

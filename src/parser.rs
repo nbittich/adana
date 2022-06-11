@@ -24,22 +24,23 @@ pub enum CacheCommand<'a> {
 }
 
 impl CacheCommand<'_> {
-    pub const fn doc() -> &'static [(&'static str, &'static str)] {
+
+    pub const fn doc() -> &'static [(&'static[&'static str], &'static str)] {
         const VARIANTS: &[&str] = CacheCommand::VARIANTS;
         assert!(12 == VARIANTS.len(), "enum doc no longer valid!");
         &[
-            ("add", "Add a new value to current cache. can have multiple aliases with option '-a'. e.g `add -a drc -a drcomp docker-compose`"),
-            ("list/ls", "List values within the cache."),
-            ("listcache/lsch", "List available caches."),
-            ("del/delete", "Remove value from cache. Accept either a hashkey or an alias. e.g `del drc`"),
-            ("get", "Get value from cache. Accept either a hashkey or an alias. e.g `get drc`"),
-            ("exec/run", "Run a value from the cache as an OS command. Accept either a hashkey or an alias. e.g `run drc`"),
-            ("use/using", "Use another cache context default cache is DEFAULT. e.g `use linux`"),
-            ("dump", "Dump cache(s) as json. Take an optional parameter, the cache name. e.g `dump linux`"),
-            ("clear/cls", "Clear the terminal."),
-            ("delch/deletecache", "Delete cache or clear current cache value."),
-            ("currch/currentcache", "Current cache."),
-            ("help", "Display Help."),
+            (&["add"], "Add a new value to current cache. can have multiple aliases with option '-a'. e.g `add -a drc -a drcomp docker-compose`"),
+            (&["list","ls"], "List values within the cache."),
+            (&["listcache","lsch"], "List available caches."),
+            (&["del","delete"], "Remove value from cache. Accept either a hashkey or an alias. e.g `del drc`"),
+            (&["get"], "Get value from cache. Accept either a hashkey or an alias. e.g `get drc`"),
+            (&["exec","run"], "Run a value from the cache as an OS command. Accept either a hashkey or an alias. e.g `run drc`"),
+            (&["use","using"], "Use another cache context default cache is DEFAULT. e.g `use linux`"),
+            (&["dump"], "Dump cache(s) as json. Take an optional parameter, the cache name. e.g `dump linux`"),
+            (&["clear","cls"], "Clear the terminal."),
+            (&["delch","deletecache"], "Delete cache or clear current cache value."),
+            (&["currch","currentcache"], "Current cache."),
+            (&["help"], "Display Help."),
         ]
     }
 }
