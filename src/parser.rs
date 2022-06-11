@@ -164,7 +164,7 @@ where
             &parser,
             preceded(
                 multispace1,
-                take_while1(|s: char| s.is_alphanumeric() || s == '-'),
+                take_while1(|s: char| s.is_alphanumeric() || s == '-' || s == '_'),
             ),
         )(s)
     }
