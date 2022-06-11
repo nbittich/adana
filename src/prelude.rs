@@ -27,3 +27,8 @@ pub use std::{
         Arc, Mutex,
     },
 };
+
+pub mod colors {
+    pub use nu_ansi_term::Color::*;
+    pub use nu_ansi_term::Style;
+}
