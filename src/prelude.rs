@@ -10,8 +10,9 @@ pub use nom::{
     IResult, Parser,
 };
 pub use std::process::{Command, Stdio};
+pub use hashbrown::HashMap;
 pub use std::{
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap},
     io::stdout,
 };
 

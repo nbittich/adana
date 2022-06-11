@@ -12,6 +12,7 @@ readme = "README.md"
 [dependencies]
 anyhow = "1.0.57"
 dirs = "4.0.0"
+hashbrown = { version = "0.12.1", features = ["serde"] }
 lazy_static = "1.4.0"
 nom = "7.1.1"
 nu-ansi-term = "0.46.0"

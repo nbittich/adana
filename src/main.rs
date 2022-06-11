@@ -103,35 +103,38 @@ fn process_command(
     match parse_command(line) {
         Ok((_, command)) => match command {
             CacheCommand::Add { aliases, value } => {
-
-                if CACHE_COMMAND_DOC.iter().flat_map(|c| c.0).any(|c| aliases.contains(c)) {
+                if CACHE_COMMAND_DOC.iter().flat_map(|c| c.0.iter().map(|comm| comm.to_uppercase()))
+                .any(|c| aliases.iter().find(|al| al.to_uppercase() == c).is_some()) {
                     eprintln!("You cannot use a reserved command name as an alias. check help for list of reserved names.");
-                } else if let Some(cache) = cache_manager
-                    .get_mut_or_insert(current_cache) {
+                } else {
+                        let cache = cache_manager
+                        .get_mut_or_insert(current_cache);
                         let key = cache.insert(aliases, value);
                         println!("added {} with hash key {}", colors::Yellow.paint(value), colors::Red.paint(key.to_string()));
                     }
 
             },
             CacheCommand::Remove(key) => {
-                if let Some(cache) = cache_manager
-                .get_mut_or_insert(current_cache) && let Some(v) = cache.remove(key) {
+                let cache = cache_manager.get_mut_or_insert(current_cache);
+                if let Some(v) = cache.remove(key) {
                     println!("removed {} with hash key {}", colors::Yellow.paint(v), colors::Red.paint(key.to_string()));
                 } else  {
                     println!("key {key} not found in current cache {current_cache}");
                 }
             },
             CacheCommand::Get(key) => {
-                if let Some(cache) = cache_manager
-                .get_mut_or_insert(current_cache) && let Some(value) = cache.get(key) {
+                let cache = cache_manager.get_mut_or_insert(current_cache);
+
+                if  let Some(value) = cache.get(key) {
                     println!("found '{}'", colors::Yellow.paint(value));
                 } else{
                     println!("{key} not found");
                 }
             },
             CacheCommand::Exec{key, args} => {
-                if let Some(cache) = cache_manager
-                .get_mut_or_insert(current_cache) && let Some(value) = cache.get(key) {
+                let cache = cache_manager.get_mut_or_insert(current_cache);
+
+                if let Some(value) = cache.get(key) {
                    let _ = exec_command(value, &args).map_err(|e| anyhow::Error::msg(e.to_string()))?;
                 } else if !key.trim().is_empty(){
                     println!("{key} not found");
@@ -141,6 +144,7 @@ fn process_command(
                 current_cache.clear();
                 current_cache.push_str(key);
                 cache_manager.set_default_cache(current_cache);
+                let _ = cache_manager.get_mut_or_insert(current_cache);
                 println!("current cache: {}", colors::LightCyan.paint(key));
             },
             CacheCommand::ListCache => {
@@ -148,6 +152,15 @@ fn process_command(
             }
             CacheCommand::CurrentCache => {
                 println!(">> {}", colors::LightBlue.bold().paint(current_cache.to_string()));
+            },
+            CacheCommand::Concat(key) => {
+                if &key != &current_cache && let Some((current, cache)) = cache_manager.get_mut_pair( current_cache, key) {
+                   current.concat(cache);
+                    println!("cache {} has been merged with cache {}.", colors::Red.bold().paint(&current_cache.to_string()), colors::Yellow.bold().paint(key));
+                } else {
+                    eprintln!("something went wrong!");
+                }
+
             }
             CacheCommand::Dump(key) => {
                 if let Some(key) = key {
@@ -166,7 +179,7 @@ fn process_command(
                 if let Some(cache_name) = key && cache_name != current_cache {
                         println!("remove {cache_name}: {}", cache_manager.remove_cache(cache_name).is_some());
                 } else{
-                   println!("clear all values from {current_cache}: {}",cache_manager.remove_cache(current_cache).is_some());
+                   println!("clear all values from {current_cache}: {}",cache_manager.clear_values(current_cache));
                 }
             },
             CacheCommand::List => {

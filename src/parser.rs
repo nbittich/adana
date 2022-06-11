@@ -12,6 +12,7 @@ pub enum CacheCommand<'a> {
     ListCache,
     RemoveCache(Option<&'a str>),
     Remove(&'a str),
+    Concat(&'a str),
     Get(&'a str),
     Exec {
         key: &'a str,
@@ -27,7 +28,7 @@ pub enum CacheCommand<'a> {
 impl CacheCommand<'_> {
     pub const fn doc() -> &'static [(&'static [&'static str], &'static str)] {
         const VARIANTS: &[&str] = CacheCommand::VARIANTS;
-        assert!(13 == VARIANTS.len(), "enum doc no longer valid!");
+        assert!(14 == VARIANTS.len(), "enum doc no longer valid!");
         &[
             (&["add"], "Add a new value to current cache. can have multiple aliases with option '-a'. e.g `add -a drc -a drcomp docker-compose`"),
             (&["list","ls"], "List values within the cache."),
@@ -41,6 +42,7 @@ impl CacheCommand<'_> {
             (&["delch","deletecache"], "Delete cache or clear current cache value."),
             (&["currch","currentcache"], "Current cache."),
             (&["cd"], "Navigate to a directory"),
+            (&["merge/mergech"], "Merge current with a given cache"),
             (&["help"], "Display Help."),
         ]
     }
@@ -83,6 +85,15 @@ fn del_command(command: &str) -> Res<CacheCommand> {
 }
 fn get_command(command: &str) -> Res<CacheCommand> {
     map(extract_key(tag_no_case("GET")), CacheCommand::Get)(command)
+}
+fn concat_command(command: &str) -> Res<CacheCommand> {
+    map(
+        alt((
+            extract_key(tag_no_case("MERGE")),
+            extract_key(tag_no_case("MERGECH")),
+        )),
+        CacheCommand::Concat,
+    )(command)
 }
 fn exec_command(command: &str) -> Res<CacheCommand> {
     map(
@@ -218,6 +229,7 @@ pub fn parse_command(command: &str) -> Res<CacheCommand> {
             using_command,
             dump_command,
             list_cache_command,
+            concat_command,
             current_cache_command,
             del_cache_command,
             list_command,
