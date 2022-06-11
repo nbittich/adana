@@ -17,6 +17,7 @@ pub enum CacheCommand<'a> {
         key: &'a str,
         args: Option<&'a str>,
     },
+    Cd(&'a str),
     Using(&'a str),
     Dump(Option<&'a str>),
     Clear,
@@ -27,7 +28,7 @@ impl CacheCommand<'_> {
 
     pub const fn doc() -> &'static [(&'static[&'static str], &'static str)] {
         const VARIANTS: &[&str] = CacheCommand::VARIANTS;
-        assert!(12 == VARIANTS.len(), "enum doc no longer valid!");
+        assert!(13 == VARIANTS.len(), "enum doc no longer valid!");
         &[
             (&["add"], "Add a new value to current cache. can have multiple aliases with option '-a'. e.g `add -a drc -a drcomp docker-compose`"),
             (&["list","ls"], "List values within the cache."),
@@ -40,6 +41,7 @@ impl CacheCommand<'_> {
             (&["clear","cls"], "Clear the terminal."),
             (&["delch","deletecache"], "Delete cache or clear current cache value."),
             (&["currch","currentcache"], "Current cache."),
+            (&["cd"], "Navigate to a directory"),
             (&["help"], "Display Help."),
         ]
     }
@@ -94,6 +96,15 @@ fn exec_command(command: &str) -> Res<CacheCommand> {
             opt(rest.map(|r: &str| r.trim())),
         ),
         |(key, args)| CacheCommand::Exec { key, args },
+    )(command)
+}
+fn cd_command(command: &str) -> Res<CacheCommand> {
+    map(
+        preceded(
+            tag_no_case("CD"),
+            preceded(multispace1,  rest.map(|r: &str| r.trim())),
+        ),
+        CacheCommand::Cd,
     )(command)
 }
 
@@ -202,6 +213,7 @@ pub fn parse_command(command: &str) -> Res<CacheCommand> {
         multispace0,
         alt((
             add_command,
+            cd_command,
             del_command,
             get_command,
             using_command,

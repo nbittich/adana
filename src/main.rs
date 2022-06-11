@@ -6,7 +6,7 @@ mod os_command;
 mod parser;
 mod prelude;
 mod utils;
-use std::fs::OpenOptions;
+use std::{fs::OpenOptions, path::Path};
 
 use cache::CacheManager;
 use nom::error::ErrorKind;
@@ -173,6 +173,14 @@ fn process_command(
                     }
                 }
             },
+            CacheCommand::Cd(path) => {
+                if Path::new(path).exists() {
+                    std::env::set_current_dir(path)?;
+                    println!(">> working directory {path}");
+                } else {
+                    eprintln!("path {path} doesn't exist");
+                }
+            }
             CacheCommand::Help => {
                 for doc in CACHE_COMMAND_DOC {
                     let (command, doc) = doc;
