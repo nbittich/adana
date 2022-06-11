@@ -16,16 +16,18 @@ pub struct CacheManager {
 
 impl CacheManager {
     pub fn get_mut_or_insert(&mut self, key: &str) -> &mut Cache {
-        self.caches.entry(key.to_string()).or_insert(Default::default())
+        self.caches
+            .entry(key.to_string())
+            .or_insert(Default::default())
     }
     pub fn get_default_cache(&self) -> &Option<String> {
         &self.default_cache
     }
 
     pub fn get_mut_pair(&mut self, key_1: &str, key_2: &str) -> Option<(&mut Cache, &mut Cache)> {
-        if let Some([c1, c2]) = self.caches.get_many_mut([key_1, key_2]){
-            Some((c1,c2))
-        }else {
+        if let Some([c1, c2]) = self.caches.get_many_mut([key_1, key_2]) {
+            Some((c1, c2))
+        } else {
             None
         }
     }
@@ -45,9 +47,9 @@ impl CacheManager {
     pub fn remove_cache(&mut self, cache_name: &str) -> Option<Cache> {
         self.caches.remove(cache_name)
     }
-    
+
     pub fn clear_values(&mut self, cache_name: &str) -> bool {
-        if let Some(cache) =self.caches.get_mut(cache_name) {
+        if let Some(cache) = self.caches.get_mut(cache_name) {
             cache.cache.clear();
             cache.cache_aliases.clear();
             return true;

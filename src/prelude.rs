@@ -1,3 +1,4 @@
+pub use hashbrown::HashMap;
 pub use nom::{
     branch::alt,
     bytes::complete::{
@@ -10,11 +11,7 @@ pub use nom::{
     IResult, Parser,
 };
 pub use std::process::{Command, Stdio};
-pub use hashbrown::HashMap;
-pub use std::{
-    collections::{BTreeMap},
-    io::stdout,
-};
+pub use std::{collections::BTreeMap, io::stdout};
 
 pub type Res<'a, T> = IResult<&'a str, T>;
 
