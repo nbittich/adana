@@ -104,7 +104,7 @@ fn process_command(
         Ok((_, command)) => match command {
             CacheCommand::Add { aliases, value } => {
                 if CACHE_COMMAND_DOC.iter().flat_map(|c| c.0.iter().map(|comm| comm.to_uppercase()))
-                .any(|c| aliases.iter().find(|al| al.to_uppercase() == c).is_some()) {
+                .any(|c| aliases.iter().any(|al| al.to_uppercase() == c)) {
                     eprintln!("You cannot use a reserved command name as an alias. check help for list of reserved names.");
                 } else {
                         let cache = cache_manager
@@ -154,7 +154,7 @@ fn process_command(
                 println!(">> {}", colors::LightBlue.bold().paint(current_cache.to_string()));
             },
             CacheCommand::Concat(key) => {
-                if &key != &current_cache && let Some((current, cache)) = cache_manager.get_mut_pair( current_cache, key) {
+                if key != current_cache && let Some((current, cache)) = cache_manager.get_mut_pair( current_cache, key) {
                    current.concat(cache);
                     println!("cache {} has been merged with cache {}.", colors::Red.bold().paint(&current_cache.to_string()), colors::Yellow.bold().paint(key));
                 } else {
@@ -215,6 +215,7 @@ fn process_command(
                 nom::Err::Failure(failure) if failure.code == ErrorKind::Verify => {
                     eprintln!("invalid command: {}", colors::Red.paint(failure.to_string()))
                 },
+                nom::Err::Error(err) if err.input.trim().is_empty() => (),
                 _ => eprintln!("error parsing command: {}", colors::Red.paint(e.to_string()))
             }
         },
