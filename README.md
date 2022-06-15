@@ -14,7 +14,7 @@ RUSTFLAGS='-C link-arg=-s' cargo build --release --target x86_64-unknown-linux-m
 should print "statically linked":
 
 ```
-ldd target/x86_64-unknown-linux-musl/release/karsher | grep NEEDED 
+ldd target/x86_64-unknown-linux-musl/release/karsher 
 
 ```
 
