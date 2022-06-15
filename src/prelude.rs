@@ -1,4 +1,5 @@
 pub use hashbrown::HashMap;
+use nom::error::VerboseError;
 pub use nom::{
     branch::alt,
     bytes::complete::{
@@ -14,6 +15,7 @@ pub use std::process::{Command, Stdio};
 pub use std::{collections::BTreeMap, io::stdout};
 
 pub type Res<'a, T> = IResult<&'a str, T>;
+pub type ResVerbose<'a, T> = IResult<&'a str, T, VerboseError<&'a str>>;
 
 pub use std::{
     fs::File,

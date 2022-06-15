@@ -6,20 +6,20 @@ Static build using MUSL:
 rustup target add x86_64-unknown-linux-musl 
 ```
 
+
 ```
 RUSTFLAGS='-C link-arg=-s' cargo build --release --target x86_64-unknown-linux-musl
 ```
 
-should be empty:
+should print "statically linked":
 
 ```
-readelf -d target/x86_64-unknown-linux-musl/release/karsher | grep NEEDED 
+ldd target/x86_64-unknown-linux-musl/release/karsher | grep NEEDED 
 
 ```
 
 ### todos
 - ~~rustyline (https://crates.io/crates/rustyline)~~
-- make it less dumb
 
 
 

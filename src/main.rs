@@ -1,10 +1,19 @@
-#![feature(let_chains, btree_drain_filter, exitcode_exit_method)]
+#![feature(
+    let_chains,
+    btree_drain_filter,
+    exitcode_exit_method,
+    iter_advance_by,
+    iter_collect_into,
+    if_let_guard
+)]
+#![cfg_attr(test, feature(box_syntax))]
 
 mod cache;
 mod editor;
 mod os_command;
 mod parser;
 mod prelude;
+mod programs;
 mod utils;
 use std::{fs::OpenOptions, path::Path};
 
@@ -18,6 +27,9 @@ use rustyline::error::ReadlineError;
 use crate::utils::clear_terminal;
 
 const CACHE_COMMAND_DOC: &[(&[&str], &str)] = CacheCommand::doc();
+
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
 lazy_static::lazy_static! {
     static ref CONFIG_FILE_PATH: PathBuf = {
@@ -55,6 +67,8 @@ fn main() -> anyhow::Result<()> {
 
     clear_terminal();
 
+    println!("{PKG_NAME} v{VERSION}\n");
+
     let mut rl = editor::build_editor();
 
     loop {
@@ -63,7 +77,9 @@ fn main() -> anyhow::Result<()> {
         match readline {
             Ok(line) => {
                 rl.add_history_entry(line.as_str());
-                process_command(&mut cache_manager, &mut current_cache, &line)?;
+                if process_repl(&line).is_err() {
+                    process_command(&mut cache_manager, &mut current_cache, &line)?;
+                }
             }
             Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
                 break;
@@ -220,5 +236,11 @@ fn process_command(
             }
         },
     }
+    Ok(())
+}
+
+fn process_repl(line: &str) -> anyhow::Result<()> {
+    let calc = crate::programs::compute(line)?;
+    println!("{calc}");
     Ok(())
 }

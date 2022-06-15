@@ -1,6 +1,6 @@
 [package]
 name = "karsher"
-version = "0.3.3"
+version = "0.4.0"
 edition = "2021"
 authors = ["Nordine Bittich"]
 license = "MIT"
@@ -20,6 +20,7 @@ rustyline = "9.1.2"
 rustyline-derive = "0.6.0"
 serde = {version = "1.0.137", features= ['serde_derive']}
 serde_json = "1.0.81"
+slab_tree = "0.3.2"
 strum = { version = "0.24.0", features = ["derive", "strum_macros"] }
 
 
