@@ -12,7 +12,7 @@ pub fn exec_command<'a>(command: &'a str, extra_args: &'a Option<&'a str>) -> Re
         preceded(
             multispace0,
             separated_list0(
-                tag(" "),
+                multispace1,
                 alt((
                     delimited(tag("\""), take_while(|s: char| s != '"'), tag("\"")),
                     verify(take_while(|s: char| !s.is_whitespace()), |s: &str| {
