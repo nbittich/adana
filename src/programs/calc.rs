@@ -244,6 +244,9 @@ fn compute_recur(node: Option<NodeRef<TreeNodeValue>>) -> f64 {
                 compute_recur(node.first_child()) + compute_recur(node.last_child())
             }
             TreeNodeValue::Ops(Operator::Mult) => {
+                if node.children().count() == 1 {
+                    return compute_recur(node.first_child());
+                }
                 compute_recur(node.first_child()) * compute_recur(node.last_child())
             }
             TreeNodeValue::Ops(Operator::Subtr) => {
@@ -253,9 +256,15 @@ fn compute_recur(node: Option<NodeRef<TreeNodeValue>>) -> f64 {
                 compute_recur(node.first_child()) - compute_recur(node.last_child())
             }
             TreeNodeValue::Ops(Operator::Exp) => {
+                if node.children().count() == 1 {
+                    return compute_recur(node.first_child());
+                }
                 compute_recur(node.first_child()).powf(compute_recur(node.last_child()))
             }
             TreeNodeValue::Ops(Operator::Div) => {
+                if node.children().count() == 1 {
+                    return compute_recur(node.first_child());
+                }
                 compute_recur(node.first_child()) / compute_recur(node.last_child())
             }
             TreeNodeValue::Int(v) => *v as f64,
@@ -308,5 +317,9 @@ mod test {
         assert_eq!(-9., compute("-9").unwrap());
         assert_eq!(6. / 2. * (2. + 1.), compute("6/2*(2+1)").unwrap());
         assert_eq!(2. - 1. / 5., compute("2 -1 / 5").unwrap());
+        // todo maybe should panic in these cases
+        assert_eq!(2. * 4., compute("2* * *4").unwrap());
+        assert_eq!(2. * 4., compute("2* ** *4").unwrap());
+        assert_eq!(4., compute("*4").unwrap());
     }
 }
