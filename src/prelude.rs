@@ -8,7 +8,7 @@ pub use nom::{
     character::complete::{multispace0, multispace1, space1},
     combinator::{cut, eof, map, opt, rest, verify},
     multi::{many0, separated_list0},
-    sequence::{delimited, pair, preceded, terminated},
+    sequence::{delimited, pair, preceded, separated_pair, terminated},
     IResult, Parser,
 };
 pub use std::process::{Command, Stdio};

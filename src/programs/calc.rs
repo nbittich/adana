@@ -128,21 +128,18 @@ fn parse_operations(s: &str) -> Res<Value> {
 
 // region: reducers
 fn to_tree(
-    value: &mut Value,
+    value: Value,
     tree: &mut Tree<TreeNodeValue>,
-    curr_node_id: Option<NodeId>,
+    curr_node_id: &Option<NodeId>,
 ) -> Option<NodeId> {
     match value {
         Value::Operations(operations) | Value::BlockParen(operations) => {
-            if operations.is_empty() {
-                return None;
-            }
-            if operations.len() == 1 {
-                return to_tree(&mut operations[0], tree, curr_node_id);
-            }
-
             fn filter_op(op: Operator) -> impl Fn(&Value) -> bool {
                 move |c| matches!(c, Value::Operation(operator) if operator == &op)
+            }
+
+            if operations.len() == 1 {
+                return to_tree(operations[0].clone(), tree, curr_node_id);
             }
 
             let op_pos = None
@@ -153,14 +150,14 @@ fn to_tree(
                 .or_else(|| operations.iter().rposition(filter_op(Operator::Exp)));
 
             if let Some(op_pos) = op_pos {
-                let (left, right) = operations.split_at_mut(op_pos);
+                let (left, right) = operations.split_at(op_pos);
 
-                let mut children_left = if left.len() == 1 {
+                let children_left = if left.len() == 1 {
                     left[0].clone()
                 } else {
                     Value::BlockParen(left.into())
                 };
-                let mut children_right = if right[1..].len() == 1 {
+                let children_right = if right[1..].len() == 1 {
                     right[1].clone()
                 } else {
                     Value::BlockParen(right[1..].into())
@@ -172,9 +169,14 @@ fn to_tree(
                     println!();
                 }
 
-                let curr_node_id = to_tree(&mut operations[op_pos], tree, curr_node_id);
-                to_tree(&mut children_left, tree, curr_node_id);
-                to_tree(&mut children_right, tree, curr_node_id);
+                let operation = operations[op_pos].clone();
+
+                drop(operations);
+
+                let curr_node_id = to_tree(operation, tree, curr_node_id);
+
+                to_tree(children_left, tree, &curr_node_id);
+                to_tree(children_right, tree, &curr_node_id);
 
                 curr_node_id
             } else {
@@ -183,9 +185,9 @@ fn to_tree(
         }
 
         Value::Operation(operator) => {
-            let ops = TreeNodeValue::Ops(*operator);
+            let ops = TreeNodeValue::Ops(operator);
             if let Some(node_id) = curr_node_id {
-                let mut node = tree.get_mut(node_id).expect("node id does not exist!");
+                let mut node = tree.get_mut(*node_id).expect("node id does not exist!");
 
                 let node = node.append(ops);
                 Some(node.node_id())
@@ -199,9 +201,9 @@ fn to_tree(
         }
 
         Value::Decimal(num) => {
-            let double_node = TreeNodeValue::Double(*num);
+            let double_node = TreeNodeValue::Double(num);
             if let Some(node_id) = curr_node_id {
-                let mut node = tree.get_mut(node_id).expect("node id does not exist!");
+                let mut node = tree.get_mut(*node_id).expect("node id does not exist!");
                 node.append(double_node);
                 Some(node.node_id())
             } else if let Some(mut root_node) = tree.root_mut() {
@@ -212,9 +214,9 @@ fn to_tree(
             }
         }
         Value::Integer(num) => {
-            let double_node = TreeNodeValue::Int(*num);
+            let double_node = TreeNodeValue::Int(num);
             let node_id = if let Some(node_id) = curr_node_id {
-                let mut node = tree.get_mut(node_id).expect("node id does not exist!");
+                let mut node = tree.get_mut(*node_id).expect("node id does not exist!");
                 node.append(double_node);
                 Some(node.node_id())
             } else if let Some(mut root_node) = tree.root_mut() {
@@ -266,12 +268,12 @@ fn calculate(node: Option<NodeRef<TreeNodeValue>>) -> f64 {
 
 // region: exposed api
 pub fn compute(s: &str) -> anyhow::Result<f64> {
-    let (rest, mut value) = parse_operations(s).map_err(|e| anyhow::Error::msg(e.to_string()))?;
+    let (rest, value) = parse_operations(s).map_err(|e| anyhow::Error::msg(e.to_string()))?;
 
     anyhow::ensure!(rest.trim().is_empty(), "Invalid operation!");
 
     let mut tree: Tree<TreeNodeValue> = Tree::new();
-    to_tree(&mut value, &mut tree, None);
+    to_tree(value, &mut tree, &None);
 
     let root = tree.root();
 
@@ -288,9 +290,9 @@ mod test {
 
     #[test]
     fn test_calculate_1() {
-        let (_, mut b) = parse_operations("2 -1 / 5").unwrap();
+        let (_, b) = parse_operations("2 -1 / 5").unwrap();
         let mut tree: Tree<TreeNodeValue> = Tree::new();
-        to_tree(&mut b, &mut tree, None);
+        to_tree(b, &mut tree, &None);
 
         let root = tree.root();
 
@@ -300,10 +302,10 @@ mod test {
 
     #[test]
     fn test_calculate_2() {
-        let (_, mut b) = parse_operations("2* (9*(5-(1/2))) ^2 -1 / 5").unwrap(); // expects 3280.3
+        let (_, b) = parse_operations("2* (9*(5-(1/2))) ^2 -1 / 5").unwrap(); // expects 3280.3
 
         let mut tree: Tree<TreeNodeValue> = Tree::new();
-        to_tree(&mut b, &mut tree, None);
+        to_tree(b, &mut tree, &None);
 
         let root = tree.root();
 
@@ -313,11 +315,10 @@ mod test {
 
     #[test]
     fn test_calculate_3() {
-        //2* (9*(5-(1/2))) ^2 -1 / 5 * 8 -4
-        let (_, mut b) = parse_operations("2* (9*(5-(1/2))) ^2 -1 / 5 * 8 - 4").unwrap();
+        let (_, b) = parse_operations("2* (9*(5-(1/2))) ^2 -1 / 5 * 8 - 4").unwrap();
 
         let mut tree: Tree<TreeNodeValue> = Tree::new();
-        to_tree(&mut b, &mut tree, None);
+        to_tree(b, &mut tree, &None);
 
         let mut tree_fmt = String::new();
 
@@ -332,10 +333,10 @@ mod test {
     }
     #[test]
     fn test_calculate_4() {
-        let (_, mut b) = parse_operations("78/5-4.5*(9+7^2.5)-12*4+1-8/3*4-5").unwrap();
+        let (_, b) = parse_operations("78/5-4.5*(9+7^2.5)-12*4+1-8/3*4-5").unwrap();
 
         let mut tree: Tree<TreeNodeValue> = Tree::new();
-        to_tree(&mut b, &mut tree, None);
+        to_tree(b, &mut tree, &None);
 
         let mut tree_fmt = String::new();
 
@@ -350,10 +351,10 @@ mod test {
     }
     #[test]
     fn test_calculate_5() {
-        let (_, mut b) = parse_operations("0").unwrap();
+        let (_, b) = parse_operations("0").unwrap();
 
         let mut tree: Tree<TreeNodeValue> = Tree::new();
-        to_tree(&mut b, &mut tree, None);
+        to_tree(b, &mut tree, &None);
 
         let mut tree_fmt = String::new();
 
@@ -368,10 +369,10 @@ mod test {
     }
     #[test]
     fn test_calculate_6() {
-        let (_, mut b) = parse_operations("9").unwrap();
+        let (_, b) = parse_operations("9").unwrap();
 
         let mut tree: Tree<TreeNodeValue> = Tree::new();
-        to_tree(&mut b, &mut tree, None);
+        to_tree(b, &mut tree, &None);
 
         let mut tree_fmt = String::new();
 
@@ -386,10 +387,10 @@ mod test {
     }
     #[test]
     fn test_calculate_7() {
-        let (_, mut b) = parse_operations("-9").unwrap();
+        let (_, b) = parse_operations("-9").unwrap();
 
         let mut tree: Tree<TreeNodeValue> = Tree::new();
-        to_tree(&mut b, &mut tree, None);
+        to_tree(b, &mut tree, &None);
 
         let mut tree_fmt = String::new();
 
@@ -401,5 +402,25 @@ mod test {
 
         let res = calculate(root);
         assert_eq!(-9.0, res);
+    }
+    #[test]
+    fn test_calculate_8() {
+        let (_, b) =
+            parse_operations("1988*19-(((((((9*2))))+2*4)-3))/6-1^2*1000/(7-4*(3/9-(9+3/2-4)))")
+                .unwrap();
+
+        let mut tree: Tree<TreeNodeValue> = Tree::new();
+        to_tree(b, &mut tree, &None);
+
+        let mut tree_fmt = String::new();
+
+        tree.write_formatted(&mut tree_fmt).unwrap();
+
+        println!("{tree_fmt}");
+
+        let root = tree.root();
+
+        let res = calculate(root);
+        assert_eq!(37736.587719298244, res);
     }
 }
