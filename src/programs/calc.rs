@@ -127,6 +127,7 @@ fn parse_operations(s: &str) -> Res<Value> {
 // endregion: parsers
 
 // region: reducers
+
 fn to_tree(
     value: Value,
     tree: &mut Tree<TreeNodeValue>,
@@ -233,29 +234,29 @@ fn to_tree(
 // endregion: reducers
 
 // region: calculate
-fn calculate(node: Option<NodeRef<TreeNodeValue>>) -> f64 {
+fn compute_recur(node: Option<NodeRef<TreeNodeValue>>) -> f64 {
     if let Some(node) = node {
         match node.data() {
             TreeNodeValue::Ops(Operator::Add) => {
                 if node.children().count() == 1 {
-                    return calculate(node.first_child());
+                    return compute_recur(node.first_child());
                 }
-                calculate(node.first_child()) + calculate(node.last_child())
+                compute_recur(node.first_child()) + compute_recur(node.last_child())
             }
             TreeNodeValue::Ops(Operator::Mult) => {
-                calculate(node.first_child()) * calculate(node.last_child())
+                compute_recur(node.first_child()) * compute_recur(node.last_child())
             }
             TreeNodeValue::Ops(Operator::Subtr) => {
                 if node.children().count() == 1 {
-                    return -calculate(node.first_child());
+                    return -compute_recur(node.first_child());
                 }
-                calculate(node.first_child()) - calculate(node.last_child())
+                compute_recur(node.first_child()) - compute_recur(node.last_child())
             }
             TreeNodeValue::Ops(Operator::Exp) => {
-                calculate(node.first_child()).powf(calculate(node.last_child()))
+                compute_recur(node.first_child()).powf(compute_recur(node.last_child()))
             }
             TreeNodeValue::Ops(Operator::Div) => {
-                calculate(node.first_child()) / calculate(node.last_child())
+                compute_recur(node.first_child()) / compute_recur(node.last_child())
             }
             TreeNodeValue::Int(v) => *v as f64,
             TreeNodeValue::Double(v) => *v,
@@ -278,149 +279,34 @@ pub fn compute(s: &str) -> anyhow::Result<f64> {
     let root = tree.root();
 
     // i don't care if it panics, i catch it later
-    std::panic::catch_unwind(|| calculate(root)).map_err(|_| anyhow::Error::msg("oops panic!"))
+    std::panic::catch_unwind(|| compute_recur(root)).map_err(|_| anyhow::Error::msg("oops panic!"))
 }
 // endregion: exposed api
 
 #[cfg(test)]
 mod test {
-    use slab_tree::Tree;
 
-    use crate::programs::calc::{calculate, parse_operations, to_tree, TreeNodeValue};
-
-    #[test]
-    fn test_calculate_1() {
-        let (_, b) = parse_operations("2 -1 / 5").unwrap();
-        let mut tree: Tree<TreeNodeValue> = Tree::new();
-        to_tree(b, &mut tree, &None);
-
-        let root = tree.root();
-
-        let res = calculate(root);
-        assert_eq!(1.8, res);
-    }
+    use crate::programs::calc::compute;
 
     #[test]
-    fn test_calculate_2() {
-        let (_, b) = parse_operations("2* (9*(5-(1/2))) ^2 -1 / 5").unwrap(); // expects 3280.3
-
-        let mut tree: Tree<TreeNodeValue> = Tree::new();
-        to_tree(b, &mut tree, &None);
-
-        let root = tree.root();
-
-        let res = calculate(root);
-        assert_eq!(3280.3, res);
-    }
-
-    #[test]
-    fn test_calculate_3() {
-        let (_, b) = parse_operations("2* (9*(5-(1/2))) ^2 -1 / 5 * 8 - 4").unwrap();
-
-        let mut tree: Tree<TreeNodeValue> = Tree::new();
-        to_tree(b, &mut tree, &None);
-
-        let mut tree_fmt = String::new();
-
-        tree.write_formatted(&mut tree_fmt).unwrap();
-
-        println!("{tree_fmt}");
-
-        let root = tree.root();
-
-        let res = calculate(root);
-        assert_eq!(3274.9, res);
-    }
-    #[test]
-    fn test_calculate_4() {
-        let (_, b) = parse_operations("78/5-4.5*(9+7^2.5)-12*4+1-8/3*4-5").unwrap();
-
-        let mut tree: Tree<TreeNodeValue> = Tree::new();
-        to_tree(b, &mut tree, &None);
-
-        let mut tree_fmt = String::new();
-
-        tree.write_formatted(&mut tree_fmt).unwrap();
-
-        println!("{tree_fmt}");
-
-        let root = tree.root();
-
-        let res = calculate(root);
-        assert_eq!(-670.9548307564088, res);
-    }
-    #[test]
-    fn test_calculate_5() {
-        let (_, b) = parse_operations("0").unwrap();
-
-        let mut tree: Tree<TreeNodeValue> = Tree::new();
-        to_tree(b, &mut tree, &None);
-
-        let mut tree_fmt = String::new();
-
-        tree.write_formatted(&mut tree_fmt).unwrap();
-
-        println!("{tree_fmt}");
-
-        let root = tree.root();
-
-        let res = calculate(root);
-        assert_eq!(0.0, res);
-    }
-    #[test]
-    fn test_calculate_6() {
-        let (_, b) = parse_operations("9").unwrap();
-
-        let mut tree: Tree<TreeNodeValue> = Tree::new();
-        to_tree(b, &mut tree, &None);
-
-        let mut tree_fmt = String::new();
-
-        tree.write_formatted(&mut tree_fmt).unwrap();
-
-        println!("{tree_fmt}");
-
-        let root = tree.root();
-
-        let res = calculate(root);
-        assert_eq!(9.0, res);
-    }
-    #[test]
-    fn test_calculate_7() {
-        let (_, b) = parse_operations("-9").unwrap();
-
-        let mut tree: Tree<TreeNodeValue> = Tree::new();
-        to_tree(b, &mut tree, &None);
-
-        let mut tree_fmt = String::new();
-
-        tree.write_formatted(&mut tree_fmt).unwrap();
-
-        println!("{tree_fmt}");
-
-        let root = tree.root();
-
-        let res = calculate(root);
-        assert_eq!(-9.0, res);
-    }
-    #[test]
-    fn test_calculate_8() {
-        let (_, b) =
-            parse_operations("1988*19-(((((((9*2))))+2*4)-3))/6-1^2*1000/(7-4*(3/9-(9+3/2-4)))")
-                .unwrap();
-
-        let mut tree: Tree<TreeNodeValue> = Tree::new();
-        to_tree(b, &mut tree, &None);
-
-        let mut tree_fmt = String::new();
-
-        tree.write_formatted(&mut tree_fmt).unwrap();
-
-        println!("{tree_fmt}");
-
-        let root = tree.root();
-
-        let res = calculate(root);
-        assert_eq!(37736.587719298244, res);
+    fn test_compute() {
+        assert_eq!(3280.3, compute("2* (9*(5-(1/2))) ^2 -1 / 5").unwrap());
+        assert_eq!(
+            3274.9,
+            compute("2* (9*(5-(1/2))) ^2 -1 / 5 * 8 - 4").unwrap()
+        );
+        assert_eq!(
+            -670.9548307564088,
+            compute("78/5-4.5*(9+7^2.5)-12*4+1-8/3*4-5").unwrap()
+        );
+        assert_eq!(
+            37736.587719298244,
+            compute("1988*19-(((((((9*2))))+2*4)-3))/6-1^2*1000/(7-4*(3/9-(9+3/2-4)))").unwrap()
+        );
+        assert_eq!(0., compute("0").unwrap());
+        assert_eq!(9., compute("9").unwrap());
+        assert_eq!(-9., compute("-9").unwrap());
+        assert_eq!(6. / 2. * (2. + 1.), compute("6/2*(2+1)").unwrap());
+        assert_eq!(2. - 1. / 5., compute("2 -1 / 5").unwrap());
     }
 }
