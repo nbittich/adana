@@ -1,36 +1,39 @@
 use crate::prelude::*;
+fn extract_args<'a>(s: &'a str) -> Res<Vec<&'a str>> {
+    preceded(
+        multispace0,
+        separated_list0(
+            multispace1,
+            alt((
+                delimited(tag("\""), take_while(|s: char| s != '"'), tag("\"")),
+                verify(take_while(|s: char| !s.is_whitespace()), |s: &str| {
+                    !s.is_empty()
+                }),
+            )),
+        ),
+    )(s)
+}
+
+fn extract_envs<'a>(s: &'a str) -> Res<Vec<(&'a str, &'a str)>> {
+    preceded(
+        multispace0,
+        separated_list0(
+            space1,
+            separated_pair(take_until1("="), tag("="), take_until(" ")),
+        ),
+    )(s)
+}
+
+fn extract_program<'a>(s: &'a str) -> Res<&'a str> {
+    preceded(multispace0, take_while(|s| s != ' '))(s)
+}
 
 pub fn exec_command<'a>(
     command: &'a str,
     extra_args: &'a Option<&'a str>,
 ) -> Res<'a, ()> {
-    let extract_envs = |s| {
-        preceded(multispace0, separated_list0(space1, separated_pair(take_until1("="), tag("="), take_until(" "))))
-    }(s);
-
-    let extract_args = |s| {
-        preceded(
-            multispace0,
-            separated_list0(
-                multispace1,
-                alt((
-                    delimited(
-                        tag("\""),
-                        take_while(|s: char| s != '"'),
-                        tag("\""),
-                    ),
-                    verify(
-                        take_while(|s: char| !s.is_whitespace()),
-                        |s: &str| !s.is_empty(),
-                    ),
-                )),
-            ),
-        )(s)
-    };
-
     let (remaining, envs) = extract_envs(command)?;
-    let (remaining, program) =
-        preceded(multispace0, take_while(|s| s != ' '))(remaining)?;
+    let (remaining, program) = extract_program(remaining)?;
 
     let (_, mut args) = extract_args(remaining)?;
 
@@ -44,6 +47,7 @@ pub fn exec_command<'a>(
         .args(&args[..])
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
+        .stdin(Stdio::null())
         .spawn();
 
     match handle.and_then(|mut h| h.wait()) {
