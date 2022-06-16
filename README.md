@@ -20,7 +20,8 @@ ldd target/x86_64-unknown-linux-musl/release/karsher
 
 ### todos
 - ~~rustyline (https://crates.io/crates/rustyline)~~
-
+- add / store / load env variables
+- autosave: when two shells are open, which one to save? 
 
 
 https://user-images.githubusercontent.com/3816305/173184980-d5152f9e-acf8-4f45-b97f-aeea472d52ac.mp4
