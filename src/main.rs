@@ -1,13 +1,3 @@
-#![feature(
-    let_chains,
-    btree_drain_filter,
-    exitcode_exit_method,
-    iter_advance_by,
-    iter_collect_into,
-    if_let_guard
-)]
-#![cfg_attr(test, feature(box_syntax))]
-
 mod cache;
 mod editor;
 mod os_command;
@@ -78,7 +68,11 @@ fn main() -> anyhow::Result<()> {
             Ok(line) => {
                 rl.add_history_entry(line.as_str());
                 if process_repl(&line).is_err() {
-                    process_command(&mut cache_manager, &mut current_cache, &line)?;
+                    process_command(
+                        &mut cache_manager,
+                        &mut current_cache,
+                        &line,
+                    )?;
                 }
             }
             Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
@@ -86,7 +80,7 @@ fn main() -> anyhow::Result<()> {
             }
             Err(err) => {
                 eprintln!("Error: {:?}", err);
-                ExitCode::FAILURE.exit_process();
+                std::process::exit(1);
             }
         }
     }
@@ -103,10 +97,7 @@ fn main() -> anyhow::Result<()> {
 
     println!(
         "{}",
-        colors::Style::new()
-            .bold()
-            .fg(colors::LightBlue)
-            .paint("BYE")
+        colors::Style::new().bold().fg(colors::LightBlue).paint("BYE")
     );
     Ok(())
 }
@@ -119,98 +110,147 @@ fn process_command(
     match parse_command(line) {
         Ok((_, command)) => match command {
             CacheCommand::Add { aliases, value } => {
-                if CACHE_COMMAND_DOC.iter().flat_map(|c| c.0.iter().map(|comm| comm.to_uppercase()))
-                .any(|c| aliases.iter().any(|al| al.to_uppercase() == c)) {
+                if CACHE_COMMAND_DOC
+                    .iter()
+                    .flat_map(|c| c.0.iter().map(|comm| comm.to_uppercase()))
+                    .any(|c| aliases.iter().any(|al| al.to_uppercase() == c))
+                {
                     eprintln!("You cannot use a reserved command name as an alias. check help for list of reserved names.");
                 } else {
-                        let cache = cache_manager
-                        .get_mut_or_insert(current_cache);
-                        let key = cache.insert(aliases, value);
-                        println!("added {} with hash key {}", colors::Yellow.paint(value), colors::Red.paint(key.to_string()));
-                    }
-
-            },
+                    let cache = cache_manager.get_mut_or_insert(current_cache);
+                    let key = cache.insert(aliases, value);
+                    println!(
+                        "added {} with hash key {}",
+                        colors::Yellow.paint(value),
+                        colors::Red.paint(key.to_string())
+                    );
+                }
+            }
             CacheCommand::Remove(key) => {
                 let cache = cache_manager.get_mut_or_insert(current_cache);
                 if let Some(v) = cache.remove(key) {
-                    println!("removed {} with hash key {}", colors::Yellow.paint(v), colors::Red.paint(key.to_string()));
-                } else  {
-                    println!("key {key} not found in current cache {current_cache}");
+                    println!(
+                        "removed {} with hash key {}",
+                        colors::Yellow.paint(v),
+                        colors::Red.paint(key.to_string())
+                    );
+                } else {
+                    println!(
+                        "key {key} not found in current cache {current_cache}"
+                    );
                 }
-            },
+            }
             CacheCommand::Get(key) => {
                 let cache = cache_manager.get_mut_or_insert(current_cache);
 
-                if  let Some(value) = cache.get(key) {
+                if let Some(value) = cache.get(key) {
                     println!("found '{}'", colors::Yellow.paint(value));
-                } else{
+                } else {
                     println!("{key} not found");
                 }
-            },
-            CacheCommand::Exec{key, args} => {
+            }
+            CacheCommand::Exec { key, args } => {
                 let cache = cache_manager.get_mut_or_insert(current_cache);
 
                 if let Some(value) = cache.get(key) {
-                   let _ = exec_command(value, &args).map_err(|e| anyhow::Error::msg(e.to_string()))?;
-                } else if !key.trim().is_empty(){
+                    let _ = exec_command(value, &args)
+                        .map_err(|e| anyhow::Error::msg(e.to_string()))?;
+                } else if !key.trim().is_empty() {
                     println!("{key} not found");
                 }
-            },
+            }
             CacheCommand::Using(key) => {
                 current_cache.clear();
                 current_cache.push_str(key);
                 cache_manager.set_default_cache(current_cache);
                 let _ = cache_manager.get_mut_or_insert(current_cache);
                 println!("current cache: {}", colors::LightCyan.paint(key));
-            },
+            }
             CacheCommand::ListCache => {
-                println!(">> [ {} ]", cache_manager.get_cache_names().iter().map(|c| colors::Red.bold().paint(*c).to_string()).collect::<Vec<_>>().join(", "));
+                println!(
+                    ">> [ {} ]",
+                    cache_manager
+                        .get_cache_names()
+                        .iter()
+                        .map(|c| colors::Red.bold().paint(*c).to_string())
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                );
             }
             CacheCommand::CurrentCache => {
-                println!(">> {}", colors::LightBlue.bold().paint(current_cache.to_string()));
-            },
+                println!(
+                    ">> {}",
+                    colors::LightBlue.bold().paint(current_cache.to_string())
+                );
+            }
+            CacheCommand::Concat(key) if key == current_cache => {
+                eprintln!("You cannot merge a cache with itself!")
+            }
             CacheCommand::Concat(key) => {
-                if key != current_cache && let Some((current, cache)) = cache_manager.get_mut_pair( current_cache, key) {
-                   current.concat(cache);
-                    println!("cache {} has been merged with cache {}.", colors::Red.bold().paint(&current_cache.to_string()), colors::Yellow.bold().paint(key));
+                if let Some((current, cache)) =
+                    cache_manager.get_mut_pair(current_cache, key)
+                {
+                    current.concat(cache);
+                    println!(
+                        "cache {} has been merged with cache {}.",
+                        colors::Red.bold().paint(&current_cache.to_string()),
+                        colors::Yellow.bold().paint(key)
+                    );
                 } else {
                     eprintln!("something went wrong!");
                 }
-
             }
             CacheCommand::Dump(key) => {
                 if let Some(key) = key {
-                        if let Some(cache) = cache_manager.get(key) {
-                               let cache = serde_json::to_string_pretty(&cache)?;
-                               println!("{cache}")
-                        }else{
-                            eprintln!("cache {key} not found");
-                        }
-                } else{
+                    if let Some(cache) = cache_manager.get(key) {
+                        let cache = serde_json::to_string_pretty(&cache)?;
+                        println!("{cache}")
+                    } else {
+                        eprintln!("cache {key} not found");
+                    }
+                } else {
                     let caches = serde_json::to_string_pretty(&*cache_manager)?;
                     println!("{caches}")
                 }
-            },
+            }
             CacheCommand::RemoveCache(key) => {
-                if let Some(cache_name) = key && cache_name != current_cache {
-                        println!("remove {cache_name}: {}", cache_manager.remove_cache(cache_name).is_some());
-                } else{
-                   println!("clear all values from {current_cache}: {}",cache_manager.clear_values(current_cache));
-                }
-            },
-            CacheCommand::List => {
-                if let Some(cache) = cache_manager.get(current_cache){
-                    for (key, value, aliases) in cache.list() {
-                        println!(">> Key: {}, Aliases: {} => Value: '{}'", colors::Red.paint(key.to_string()),
-                         aliases.iter().map(|a| colors::Yellow.paint(*a).to_string()).collect::<Vec<_>>().join(","),
-                        colors::LightCyan.paint(value));
+                if let Some(cache_name) = key {
+                    if cache_name != current_cache {
+                        println!(
+                            "remove {cache_name}: {}",
+                            cache_manager.remove_cache(cache_name).is_some()
+                        );
+                    } else {
+                        println!(
+                            "clear all values from {current_cache}: {}",
+                            cache_manager.clear_values(current_cache)
+                        );
                     }
                 }
-            },
+            }
+            CacheCommand::List => {
+                if let Some(cache) = cache_manager.get(current_cache) {
+                    for (key, value, aliases) in cache.list() {
+                        println!(
+                            ">> Key: {}, Aliases: {} => Value: '{}'",
+                            colors::Red.paint(key.to_string()),
+                            aliases
+                                .iter()
+                                .map(|a| colors::Yellow.paint(*a).to_string())
+                                .collect::<Vec<_>>()
+                                .join(","),
+                            colors::LightCyan.paint(value)
+                        );
+                    }
+                }
+            }
             CacheCommand::Cd(path) => {
                 if Path::new(path).exists() {
                     std::env::set_current_dir(path)?;
-                    println!(">> working directory {}", colors::LightMagenta.paint(path));
+                    println!(
+                        ">> working directory {}",
+                        colors::LightMagenta.paint(path)
+                    );
                 } else {
                     eprintln!("path {} doesn't exist", colors::Red.paint(path));
                 }
@@ -218,22 +258,33 @@ fn process_command(
             CacheCommand::Help => {
                 for doc in CACHE_COMMAND_DOC {
                     let (command, doc) = doc;
-                    println!(">> {} : {}", command.iter().map(|c| colors::Yellow.paint(*c).to_string()).collect::<Vec<_>>().join("/"), colors::LightBlue.paint(*doc));
+                    println!(
+                        ">> {} : {}",
+                        command
+                            .iter()
+                            .map(|c| colors::Yellow.paint(*c).to_string())
+                            .collect::<Vec<_>>()
+                            .join("/"),
+                        colors::LightBlue.paint(*doc)
+                    );
                 }
-            },
+            }
             CacheCommand::Clear => {
-               clear_terminal();
+                clear_terminal();
             }
-
         },
-        Err(e) => {
-            match e {
-                nom::Err::Failure(failure) if failure.code == ErrorKind::Verify => {
-                    eprintln!("invalid command: {}", colors::Red.paint(failure.to_string()))
-                },
-                nom::Err::Error(err) if err.input.trim().is_empty() => (),
-                _ => eprintln!("error parsing command: {}", colors::Red.paint(e.to_string()))
+        Err(e) => match e {
+            nom::Err::Failure(failure) if failure.code == ErrorKind::Verify => {
+                eprintln!(
+                    "invalid command: {}",
+                    colors::Red.paint(failure.to_string())
+                )
             }
+            nom::Err::Error(err) if err.input.trim().is_empty() => {}
+            _ => eprintln!(
+                "error parsing command: {}",
+                colors::Red.paint(e.to_string())
+            ),
         },
     }
     Ok(())

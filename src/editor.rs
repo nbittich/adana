@@ -3,7 +3,9 @@ use rustyline::error::ReadlineError;
 use rustyline::highlight::{Highlighter, MatchingBracketHighlighter};
 use rustyline::hint::{Hinter, HistoryHinter};
 use rustyline::validate::{self, MatchingBracketValidator, Validator};
-use rustyline::{Cmd, CompletionType, Config, Context, EditMode, Editor, KeyEvent};
+use rustyline::{
+    Cmd, CompletionType, Config, Context, EditMode, Editor, KeyEvent,
+};
 use rustyline_derive::Helper;
 use std::borrow::Cow::{self, Borrowed, Owned};
 use std::path::PathBuf;
@@ -17,7 +19,9 @@ lazy_static::lazy_static! {
 
 }
 
-pub fn save_history(rl: &mut Editor<CustomHelper>) -> Result<(), rustyline::error::ReadlineError> {
+pub fn save_history(
+    rl: &mut Editor<CustomHelper>,
+) -> Result<(), rustyline::error::ReadlineError> {
     rl.save_history(HISTORY_FILE_PATH.as_path())
 }
 
@@ -26,7 +30,8 @@ pub fn read_line(
     curr_cache: &str,
 ) -> Result<String, rustyline::error::ReadlineError> {
     let p = format!("[{curr_cache}] >> ");
-    rl.helper_mut().expect("No helper").colored_prompt = format!("\x1b[1;32m{}\x1b[0m", p);
+    rl.helper_mut().expect("No helper").colored_prompt =
+        format!("\x1b[1;32m{}\x1b[0m", p);
     rl.readline(&p)
 }
 
@@ -119,7 +124,12 @@ impl Completer for CustomHelper {
 impl Hinter for CustomHelper {
     type Hint = String;
 
-    fn hint(&self, line: &str, pos: usize, ctx: &Context<'_>) -> Option<String> {
+    fn hint(
+        &self,
+        line: &str,
+        pos: usize,
+        ctx: &Context<'_>,
+    ) -> Option<String> {
         self.hinter.hint(line, pos, ctx)
     }
 }

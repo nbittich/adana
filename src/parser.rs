@@ -3,10 +3,7 @@ use strum::{EnumString, EnumVariantNames, VariantNames};
 
 #[derive(Debug, EnumString, EnumVariantNames)]
 pub enum CacheCommand<'a> {
-    Add {
-        aliases: Vec<&'a str>,
-        value: &'a str,
-    },
+    Add { aliases: Vec<&'a str>, value: &'a str },
     List,
     CurrentCache,
     ListCache,
@@ -14,10 +11,7 @@ pub enum CacheCommand<'a> {
     Remove(&'a str),
     Concat(&'a str),
     Get(&'a str),
-    Exec {
-        key: &'a str,
-        args: Option<&'a str>,
-    },
+    Exec { key: &'a str, args: Option<&'a str> },
     Cd(&'a str),
     Using(&'a str),
     Dump(Option<&'a str>),
@@ -174,7 +168,9 @@ where
             &parser,
             preceded(
                 multispace1,
-                take_while1(|s: char| s.is_alphanumeric() || s == '-' || s == '_'),
+                take_while1(|s: char| {
+                    s.is_alphanumeric() || s == '-' || s == '_'
+                }),
             ),
         )(s)
     }

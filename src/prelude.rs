@@ -3,7 +3,8 @@ use nom::error::VerboseError;
 pub use nom::{
     branch::alt,
     bytes::complete::{
-        tag, tag_no_case, take_till1, take_until, take_until1, take_while, take_while1,
+        tag, tag_no_case, take_till1, take_until, take_until1, take_while,
+        take_while1,
     },
     character::complete::{multispace0, multispace1, space1},
     combinator::{cut, eof, map, opt, rest, verify},

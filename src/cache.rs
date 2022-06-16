@@ -16,15 +16,17 @@ pub struct CacheManager {
 
 impl CacheManager {
     pub fn get_mut_or_insert(&mut self, key: &str) -> &mut Cache {
-        self.caches
-            .entry(key.to_string())
-            .or_insert(Default::default())
+        self.caches.entry(key.to_string()).or_insert(Default::default())
     }
     pub fn get_default_cache(&self) -> &Option<String> {
         &self.default_cache
     }
 
-    pub fn get_mut_pair(&mut self, key_1: &str, key_2: &str) -> Option<(&mut Cache, &mut Cache)> {
+    pub fn get_mut_pair(
+        &mut self,
+        key_1: &str,
+        key_2: &str,
+    ) -> Option<(&mut Cache, &mut Cache)> {
         if let Some([c1, c2]) = self.caches.get_many_mut([key_1, key_2]) {
             Some((c1, c2))
         } else {
@@ -104,7 +106,7 @@ impl Cache {
             }
         };
 
-        if let Some(key) = parsed_key && let Some(value) = self.cache.get(&key) {
+        if let Some(value) = parsed_key.and_then(|key| self.cache.get(&key)) {
             Some(value)
         } else {
             None
@@ -120,7 +122,15 @@ impl Cache {
                     value,
                     self.cache_aliases
                         .iter()
-                        .filter_map(move |(alias, k)| if key == k { Some(alias) } else { None })
+                        .filter_map(
+                            move |(alias, k)| {
+                                if key == k {
+                                    Some(alias)
+                                } else {
+                                    None
+                                }
+                            },
+                        )
                         .collect(),
                 )
             })
@@ -135,11 +145,22 @@ impl Cache {
             }
         };
 
-        if let Some(key) = key && let Some(v) = self.cache.remove(&key) {
-            self.cache_aliases = self.cache_aliases.drain_filter(|_, v| v != &key)
-            .collect();
+        if let Some((key, v)) =
+            key.and_then(|key| self.cache.remove(&key).map(|v| (key, v)))
+        {
+            self.cache_aliases = self
+                .cache_aliases
+                .iter()
+                .filter_map(|(k, v)| {
+                    if v != &key {
+                        Some((k.clone(), *v))
+                    } else {
+                        None
+                    }
+                })
+                .collect();
             Some(v)
-        }else {
+        } else {
             None
         }
     }

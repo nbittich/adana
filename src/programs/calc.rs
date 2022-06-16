@@ -144,11 +144,21 @@ fn to_tree(
             }
 
             let op_pos = None
-                .or_else(|| operations.iter().rposition(filter_op(Operator::Add)))
-                .or_else(|| operations.iter().rposition(filter_op(Operator::Subtr)))
-                .or_else(|| operations.iter().rposition(filter_op(Operator::Mult)))
-                .or_else(|| operations.iter().rposition(filter_op(Operator::Div)))
-                .or_else(|| operations.iter().rposition(filter_op(Operator::Exp)));
+                .or_else(|| {
+                    operations.iter().rposition(filter_op(Operator::Add))
+                })
+                .or_else(|| {
+                    operations.iter().rposition(filter_op(Operator::Subtr))
+                })
+                .or_else(|| {
+                    operations.iter().rposition(filter_op(Operator::Mult))
+                })
+                .or_else(|| {
+                    operations.iter().rposition(filter_op(Operator::Div))
+                })
+                .or_else(|| {
+                    operations.iter().rposition(filter_op(Operator::Exp))
+                });
 
             if let Some(op_pos) = op_pos {
                 let (left, right) = operations.split_at(op_pos);
@@ -188,7 +198,8 @@ fn to_tree(
         Value::Operation(operator) => {
             let ops = TreeNodeValue::Ops(operator);
             if let Some(node_id) = curr_node_id {
-                let mut node = tree.get_mut(*node_id).expect("node id does not exist!");
+                let mut node =
+                    tree.get_mut(*node_id).expect("node id does not exist!");
 
                 let node = node.append(ops);
                 Some(node.node_id())
@@ -204,7 +215,8 @@ fn to_tree(
         Value::Decimal(num) => {
             let double_node = TreeNodeValue::Double(num);
             if let Some(node_id) = curr_node_id {
-                let mut node = tree.get_mut(*node_id).expect("node id does not exist!");
+                let mut node =
+                    tree.get_mut(*node_id).expect("node id does not exist!");
                 node.append(double_node);
                 Some(node.node_id())
             } else if let Some(mut root_node) = tree.root_mut() {
@@ -217,7 +229,8 @@ fn to_tree(
         Value::Integer(num) => {
             let double_node = TreeNodeValue::Int(num);
             let node_id = if let Some(node_id) = curr_node_id {
-                let mut node = tree.get_mut(*node_id).expect("node id does not exist!");
+                let mut node =
+                    tree.get_mut(*node_id).expect("node id does not exist!");
                 node.append(double_node);
                 Some(node.node_id())
             } else if let Some(mut root_node) = tree.root_mut() {
@@ -241,31 +254,36 @@ fn compute_recur(node: Option<NodeRef<TreeNodeValue>>) -> f64 {
                 if node.children().count() == 1 {
                     return compute_recur(node.first_child());
                 }
-                compute_recur(node.first_child()) + compute_recur(node.last_child())
+                compute_recur(node.first_child())
+                    + compute_recur(node.last_child())
             }
             TreeNodeValue::Ops(Operator::Mult) => {
                 if node.children().count() == 1 {
                     return compute_recur(node.first_child());
                 }
-                compute_recur(node.first_child()) * compute_recur(node.last_child())
+                compute_recur(node.first_child())
+                    * compute_recur(node.last_child())
             }
             TreeNodeValue::Ops(Operator::Subtr) => {
                 if node.children().count() == 1 {
                     return -compute_recur(node.first_child());
                 }
-                compute_recur(node.first_child()) - compute_recur(node.last_child())
+                compute_recur(node.first_child())
+                    - compute_recur(node.last_child())
             }
             TreeNodeValue::Ops(Operator::Exp) => {
                 if node.children().count() == 1 {
                     return compute_recur(node.first_child());
                 }
-                compute_recur(node.first_child()).powf(compute_recur(node.last_child()))
+                compute_recur(node.first_child())
+                    .powf(compute_recur(node.last_child()))
             }
             TreeNodeValue::Ops(Operator::Div) => {
                 if node.children().count() == 1 {
                     return compute_recur(node.first_child());
                 }
-                compute_recur(node.first_child()) / compute_recur(node.last_child())
+                compute_recur(node.first_child())
+                    / compute_recur(node.last_child())
             }
             TreeNodeValue::Int(v) => *v as f64,
             TreeNodeValue::Double(v) => *v,
@@ -278,7 +296,8 @@ fn compute_recur(node: Option<NodeRef<TreeNodeValue>>) -> f64 {
 
 // region: exposed api
 pub fn compute(s: &str) -> anyhow::Result<f64> {
-    let (rest, value) = parse_operations(s).map_err(|e| anyhow::Error::msg(e.to_string()))?;
+    let (rest, value) =
+        parse_operations(s).map_err(|e| anyhow::Error::msg(e.to_string()))?;
 
     anyhow::ensure!(rest.trim().is_empty(), "Invalid operation!");
 
@@ -288,7 +307,8 @@ pub fn compute(s: &str) -> anyhow::Result<f64> {
     let root = tree.root();
 
     // i don't care if it panics, i catch it later
-    std::panic::catch_unwind(|| compute_recur(root)).map_err(|_| anyhow::Error::msg("oops panic!"))
+    std::panic::catch_unwind(|| compute_recur(root))
+        .map_err(|_| anyhow::Error::msg("oops panic!"))
 }
 // endregion: exposed api
 
