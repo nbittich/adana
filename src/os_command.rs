@@ -1,9 +1,6 @@
-use nom::sequence::separated_pair;
-
 use crate::prelude::*;
 
 pub fn exec_command<'a>(command: &'a str, extra_args: &'a Option<&'a str>) -> Res<'a, ()> {
-
     let extract_envs = |s| {
         preceded(multispace0, separated_list0(space1, separated_pair(take_until1("="), tag("="), take_until(" "))))
     }(s);
