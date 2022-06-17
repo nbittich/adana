@@ -47,7 +47,6 @@ pub fn exec_command<'a>(
         .args(&args[..])
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
-        .stdin(Stdio::null())
         .spawn();
 
     match handle.and_then(|mut h| h.wait()) {
