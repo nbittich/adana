@@ -1,73 +1,75 @@
-[{
-  "name": "git",
-  "values": {
-    "16191138680822687126": "git status",
-    "commit": "git commit -m",
-    "checkout": "git checkout",
-    "status": "git status",
-    "mergesquash": "git merge --squash",
-    "3525343877607169263": "git commit -m",
-    "18144989966445320166": "git add",
-    "branchlist": "git branch --sort=-committerdate",
-    "push": "git push",
-    "add": "git add",
-    "10239563504490283127": "git pull",
-    "12321389224630759596": "git checkout -B",
-    "newbranch": "git checkout -B",
-    "12400084391619861239": "git branch --sort=-committerdate",
-    "13556193099488436156": "git push",
-    "3060419828829051574": "git checkout",
-    "pull": "git pull",
-    "3645024507209613703": "git merge --squash"
+[
+  {
+    "name": "git",
+    "values": {
+      "16191138680822687126": "git status",
+      "commit": "git commit -m",
+      "checkout": "git checkout",
+      "status": "git status",
+      "mergesquash": "git merge --squash",
+      "3525343877607169263": "git commit -m",
+      "18144989966445320166": "git add",
+      "branchlist": "git branch --sort=-committerdate",
+      "push": "git push",
+      "add": "git add",
+      "10239563504490283127": "git pull",
+      "12321389224630759596": "git checkout -B",
+      "newbranch": "git checkout -B",
+      "12400084391619861239": "git branch --sort=-committerdate",
+      "13556193099488436156": "git push",
+      "3060419828829051574": "git checkout",
+      "pull": "git pull",
+      "3645024507209613703": "git merge --squash"
+    }
+  },
+  {
+    "name": "rust",
+    "values": {
+      "fmt": "cargo fmt",
+      "7090719469382544140": "pwd",
+      "test": "cargo test -- --nocapture",
+      "pwd": "pwd",
+      "check": "cargo check",
+      "3060419828829051574": "git checkout",
+      "rup": "rustup update",
+      "16411324301305715555": "cargo test -- --nocapture",
+      "14813890704856384048": "cargo publish",
+      "7584083852901653721": "rustup update",
+      "clippy": "cargo clippy",
+      "publish": "cargo publish",
+      "2160900040917961915": "cargo fmt",
+      "2885749666399415944": "cargo clippy",
+      "9181126099950251579": "cargo check"
+    }
+  },
+  {
+    "name": "misc",
+    "values": {
+      "printenv": "printenv",
+      "pwd": "pwd",
+      "2331937944911280975": "ls",
+      "10418968036038561564": "printenv",
+      "3069983010007500772": "bash",
+      "ls": "ls",
+      "vim": "vim",
+      "7090719469382544140": "pwd",
+      "15609331997961958896": "docker-compose",
+      "13409651705568907475": "vim",
+      "bash": "bash",
+      "drc": "docker-compose"
+    }
+  },
+  {
+    "name": "abb_dev",
+    "values": {
+      "servedev": "ember serve --proxy=https://dev.organisaties.abb.lblod.info",
+      "serve": "ember serve --proxy=http://localhost:80",
+      "5164370413807943009": "ember serve --proxy=http://localhost:80",
+      "14587472011003105688": "ember serve --proxy=https://dev.organisaties.abb.lblod.info"
+    }
+  },
+  {
+    "name": "DEFAULT",
+    "values": {}
   }
-},
-{
-  "name": "rust",
-  "values": {
-    "fmt": "cargo fmt",
-    "7090719469382544140": "pwd",
-    "test": "cargo test -- --nocapture",
-    "pwd": "pwd",
-    "check": "cargo check",
-    "3060419828829051574": "git checkout",
-    "rup": "rustup update",
-    "16411324301305715555": "cargo test -- --nocapture",
-    "14813890704856384048": "cargo publish",
-    "7584083852901653721": "rustup update",
-    "clippy": "cargo clippy",
-    "publish": "cargo publish",
-    "2160900040917961915": "cargo fmt",
-    "2885749666399415944": "cargo clippy",
-    "9181126099950251579": "cargo check"
-  }
-},
-{
-  "name": "misc",
-  "values": {
-    "printenv": "printenv",
-    "pwd": "pwd",
-    "2331937944911280975": "ls",
-    "10418968036038561564": "printenv",
-    "3069983010007500772": "bash",
-    "ls": "ls",
-    "vim": "vim",
-    "7090719469382544140": "pwd",
-    "15609331997961958896": "docker-compose",
-    "13409651705568907475": "vim",
-    "bash": "bash",
-    "drc": "docker-compose"
-  }
-},
-{
-  "name": "abb_dev",
-  "values": {
-    "servedev": "ember serve --proxy=https://dev.organisaties.abb.lblod.info",
-    "serve": "ember serve --proxy=http://localhost:80",
-    "5164370413807943009": "ember serve --proxy=http://localhost:80",
-    "14587472011003105688": "ember serve --proxy=https://dev.organisaties.abb.lblod.info"
-  }
-},
-{
-  "name": "DEFAULT",
-  "values": {}
-}]
+]
