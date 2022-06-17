@@ -5,7 +5,7 @@ mod parser;
 mod prelude;
 mod programs;
 mod utils;
-use std::{fs::OpenOptions, path::Path};
+use std::{fs::OpenOptions, path::Path, thread};
 
 use cache::CacheManager;
 use nom::error::ErrorKind;
@@ -13,6 +13,7 @@ use os_command::exec_command;
 pub use parser::{parse_command, CacheCommand};
 pub use prelude::*;
 use rustyline::error::ReadlineError;
+use signal_hook::{consts::SIGINT, iterator::Signals};
 
 use crate::utils::clear_terminal;
 
@@ -31,6 +32,17 @@ lazy_static::lazy_static! {
 }
 
 fn main() -> anyhow::Result<()> {
+    // trap SIGINT when CTRL+C for e.g with docker-compose logs -f
+    let mut signals = Signals::new(&[SIGINT])?;
+
+    thread::spawn(move || {
+        for sig in signals.forever() {
+            if cfg!(debug_assertions) {
+                println!("Received signal {:?}", sig);
+            }
+        }
+    });
+
     let mut cache_manager = {
         let f = OpenOptions::new()
             .read(true)

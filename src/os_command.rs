@@ -44,7 +44,7 @@ pub fn exec_command<'a>(
 
     let handle = Command::new(program)
         .envs(envs)
-        .args(&args[..])
+        .args(&args)
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .spawn();
