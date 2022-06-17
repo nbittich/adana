@@ -1,5 +1,10 @@
 # Karsher -  dumb cache / dumb terminal
 
+- use help for help
+- use static build under dist/musl or use cargo build / cargo run
+- you can populate the db the first time by running restore (you must have the karsherdb.json from this repo saved on your current directory)
+
+
 Static build using MUSL:
 
 ```
@@ -20,8 +25,8 @@ ldd target/x86_64-unknown-linux-musl/release/karsher
 
 ### todos
 - ~~rustyline (https://crates.io/crates/rustyline)~~
+- ~~autosave: when two shells are open, which one to save?~~
 - add / store / load env variables
-- autosave: when two shells are open, which one to save? 
 
 
 

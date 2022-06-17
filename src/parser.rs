@@ -6,6 +6,8 @@ pub enum CacheCommand<'a> {
     Add { aliases: Vec<&'a str>, value: &'a str },
     List,
     CurrentCache,
+    Backup,
+    Restore,
     ListCache,
     RemoveCache(Option<&'a str>),
     Remove(&'a str),
@@ -22,7 +24,7 @@ pub enum CacheCommand<'a> {
 impl CacheCommand<'_> {
     pub const fn doc() -> &'static [(&'static [&'static str], &'static str)] {
         const VARIANTS: &[&str] = CacheCommand::VARIANTS;
-        assert!(14 == VARIANTS.len(), "enum doc no longer valid!");
+        assert!(16 == VARIANTS.len(), "enum doc no longer valid!");
         &[
             (&["put"], "Put a new value to current cache. can have multiple aliases with option '-a'. e.g `set -a drc -a drcomp docker-compose`"),
             (&["describe","ds"], "List values within the cache."),
@@ -35,6 +37,8 @@ impl CacheCommand<'_> {
             (&["clear","cls"], "Clear the terminal."),
             (&["delch","deletecache"], "Delete cache or clear current cache value."),
             (&["currch","currentcache"], "Current cache."),
+            (&["backup","bckp"], "Backup the database of caches to the current directory"),
+            (&["restore"], "Restore the database from current directory"),
             (&["cd"], "Navigate to a directory"),
             (&["merge/mergech"], "Merge current with a given cache"),
             (&["help"], "Display Help."),
@@ -68,6 +72,7 @@ fn add_command(command: &str) -> Res<CacheCommand> {
         |(aliases, value)| CacheCommand::Add { aliases, value },
     )(command)
 }
+
 fn del_command(command: &str) -> Res<CacheCommand> {
     map(
         alt((
@@ -77,9 +82,11 @@ fn del_command(command: &str) -> Res<CacheCommand> {
         CacheCommand::Remove,
     )(command)
 }
+
 fn get_command(command: &str) -> Res<CacheCommand> {
     map(extract_key(tag_no_case("GET")), CacheCommand::Get)(command)
 }
+
 fn concat_command(command: &str) -> Res<CacheCommand> {
     map(
         alt((
@@ -89,6 +96,18 @@ fn concat_command(command: &str) -> Res<CacheCommand> {
         CacheCommand::Concat,
     )(command)
 }
+
+fn backup_command(command: &str) -> Res<CacheCommand> {
+    extract_no_args(
+        |s| alt((tag_no_case("backup"), tag_no_case("bckp")))(s),
+        |_| CacheCommand::Backup,
+    )(command)
+}
+
+fn restore_command(command: &str) -> Res<CacheCommand> {
+    extract_no_args(tag_no_case("restore"), |_| CacheCommand::Restore)(command)
+}
+
 fn exec_command(command: &str) -> Res<CacheCommand> {
     map(
         pair(
@@ -102,6 +121,7 @@ fn exec_command(command: &str) -> Res<CacheCommand> {
         |(key, args)| CacheCommand::Exec { key, args },
     )(command)
 }
+
 fn cd_command(command: &str) -> Res<CacheCommand> {
     map(
         preceded(
@@ -113,52 +133,55 @@ fn cd_command(command: &str) -> Res<CacheCommand> {
 }
 
 fn list_command(command: &str) -> Res<CacheCommand> {
-    map(
-        preceded(
-            alt((tag_no_case("describe"), tag("ds"))),
-            verify(rest, |s: &str| s.trim().is_empty() || s == "\n"),
-        ),
+    extract_no_args(
+        |s| alt((tag_no_case("describe"), tag_no_case("ds")))(s),
         |_| CacheCommand::List,
     )(command)
 }
+
 fn current_cache_command(command: &str) -> Res<CacheCommand> {
-    map(
-        preceded(
-            alt((tag_no_case("CURRCH"), tag("currentcache"))),
-            cut(verify(rest, |s: &str| s.trim().is_empty() || s == "\n")),
-        ),
+    extract_no_args(
+        |s| alt((tag_no_case("CURRCH"), tag_no_case("currentcache")))(s),
         |_| CacheCommand::CurrentCache,
     )(command)
 }
 
 fn help_command(command: &str) -> Res<CacheCommand> {
-    map(
-        preceded(
-            tag_no_case("HELP"),
-            cut(verify(rest, |s: &str| s.trim().is_empty() || s == "\n")),
-        ),
-        |_| CacheCommand::Help,
-    )(command)
+    extract_no_args(tag_no_case("HELP"), |_| CacheCommand::Help)(command)
 }
+
 fn clear_command(command: &str) -> Res<CacheCommand> {
-    map(
-        preceded(
-            alt((tag_no_case("CLS"), tag_no_case("CLEAR"))),
-            cut(verify(rest, |s: &str| s.trim().is_empty() || s == "\n")),
-        ),
+    extract_no_args(
+        |s| alt((tag_no_case("CLEAR"), tag_no_case("CLS")))(s),
         |_| CacheCommand::Clear,
     )(command)
 }
+
 fn list_cache_command(command: &str) -> Res<CacheCommand> {
-    map(
-        preceded(
-            alt((tag_no_case("LISTCACHE"), tag("lsch"))),
-            cut(verify(rest, |s: &str| s.trim().is_empty() || s == "\n")),
-        ),
+    extract_no_args(
+        |s| alt((tag_no_case("LISTCACHE"), tag_no_case("lsch")))(s),
         |_| CacheCommand::ListCache,
     )(command)
 }
 
+fn extract_no_args<'a, F, M>(
+    parser: F,
+    mapper: M,
+) -> impl Fn(&'a str) -> Res<'a, CacheCommand<'a>>
+where
+    F: Fn(&'a str) -> Res<&'a str>,
+    M: Fn(&'a str) -> CacheCommand<'a>,
+{
+    move |s| {
+        map(
+            preceded(
+                &parser,
+                verify(rest, |s: &str| s.trim().is_empty() || s == "\n"),
+            ),
+            &mapper,
+        )(s)
+    }
+}
 fn extract_key<'a, F>(parser: F) -> impl Fn(&'a str) -> Res<&'a str>
 where
     F: Fn(&'a str) -> Res<&'a str>,
@@ -231,6 +254,8 @@ pub fn parse_command(command: &str) -> Res<CacheCommand> {
             list_command,
             help_command,
             clear_command,
+            backup_command,
+            restore_command,
             exec_command,
         )),
     )(command)
