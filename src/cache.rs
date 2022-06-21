@@ -14,7 +14,10 @@ const DEFAULT_CACHE_KEY: &[u8] = b"$___DEF_CACHE_KEY_LOC___$";
 lazy_static::lazy_static! {
     static ref DB_FILE_PATH: PathBuf = {
         let mut db_dir = dirs::data_dir().expect("db not found");
-        db_dir.push(".karsher.db");
+        db_dir.push(".karsher");
+        if !db_dir.exists() {
+            std::fs::create_dir(&db_dir).expect("could not create db directory");
+        }
         db_dir
     };
 
@@ -78,6 +81,7 @@ impl CacheManager {
                 batch.insert(key.as_bytes(), IVec::from(value.as_bytes()));
             }
             tree.apply_batch(batch).ok()?;
+            tree.flush().ok()?;
         }
         Some(())
     }
@@ -127,12 +131,11 @@ impl CacheManager {
         self._db_inner.get(DEFAULT_CACHE_KEY).ok()?.map(|v| i_vec_to_string(&v))
     }
 
-    pub fn set_default_cache(&self, default_cache: &str) -> Option<String> {
+    pub fn set_default_cache(&self, default_cache: &str) -> Option<()> {
         self.check_cache_name(default_cache)?;
-        self._db_inner
-            .insert(DEFAULT_CACHE_KEY, default_cache)
-            .ok()?
-            .map(|v| i_vec_to_string(&v))
+        let _ = self._db_inner.insert(DEFAULT_CACHE_KEY, default_cache).ok()?;
+
+        Some(())
     }
 
     pub fn merge(&self, key_1: &str, key_2: &str) -> Option<()> {
@@ -199,6 +202,7 @@ impl CacheManager {
             batch.insert(hash_alias.as_bytes(), &i_vec);
         }
         tree.apply_batch(batch).ok()?;
+        tree.flush().ok()?;
         Some(uniq_id)
     }
 
@@ -282,7 +286,5 @@ mod test {
             "{:?}",
             i_vec_to_string(&tree.get("general").unwrap().unwrap())
         );
-
-        //db.update_and_fetch("general", c)
     }
 }

@@ -1,4 +1,6 @@
+#![allow(dead_code)]
 mod cache;
+mod db;
 mod editor;
 mod os_command;
 mod parser;
@@ -143,12 +145,13 @@ fn process_command(
                 }
             }
             CacheCommand::Using(key) => {
-                if let Some(previous_cache) =
-                    cache_manager.set_default_cache(key)
-                {
+                if cache_manager.set_default_cache(key).is_some() {
+                    println!(
+                        "previous: {}",
+                        LightCyan.paint(current_cache.as_str())
+                    );
                     current_cache.clear();
                     current_cache.push_str(key);
-                    println!("previous: {}", LightCyan.paint(previous_cache));
                 }
             }
             CacheCommand::ListCache => {
@@ -232,7 +235,7 @@ fn process_command(
                 let backup_path = backup_path.as_path();
                 if let Some(()) = cache_manager.restore(backup_path) {
                     println!(
-                        "db restored from{}",
+                        "db restored from {}",
                         Red.paint(backup_path.to_string_lossy())
                     );
                 }
