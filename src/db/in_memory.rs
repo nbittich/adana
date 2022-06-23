@@ -103,13 +103,19 @@ impl<K: Key + Clone, V: Value + Clone> DbOp<K, V> for InMemoryDb<K, V> {
             .or_else(|| Some(self.default_tree.to_string()))
     }
 
-    fn open_tree(&mut self, tree_name: &str) -> Option<()>{
+    /// return true if the three has to be opened
+    fn open_tree(&mut self, tree_name: &str) -> Option<bool>{
+        if let Some(current_tree) = &self.current_tree {
+            if current_tree == tree_name {
+                return Some(false);
+            }
+        }
         if self.trees.get(tree_name).is_none() {
             self.trees.insert(tree_name.to_string(), Tree::default());
         }
 
         let _ = self.current_tree.insert(tree_name.to_string());
-        Some(())
+        Some(true)
     }
 
     fn tree_names(&self) -> Vec<String> {

@@ -15,7 +15,6 @@ pub struct FileLock {
 impl FileLock {
     pub fn open<P: AsRef<Path>>(path: P) -> anyhow::Result<FileLock> {
         let _lock_p = path.as_ref().with_extension("lock");
-
         if Path::exists(&_lock_p) {
             return Err(anyhow::Error::msg("Could not acquire lock"));
         }

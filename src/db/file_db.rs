@@ -1,4 +1,9 @@
-use std::{path::Path, thread::JoinHandle, vec};
+use std::{
+    path::Path,
+    sync::mpsc::{Receiver, Sender},
+    thread::JoinHandle,
+    vec,
+};
 
 use serde::de::DeserializeOwned;
 
@@ -6,29 +11,34 @@ use crate::prelude::*;
 
 use super::{DbOp, FileLock, InMemoryDb, Key, Op, Value};
 
-const FIXED_SYNC_INTERVAL: Duration = Duration::from_millis(500);
-
 enum Notify {
     Update,
-    Stop
+    Stop,
 }
 
 #[derive(Debug)]
 pub struct FileDb<K: Key, V: Value> {
     __inner: Arc<Mutex<InMemoryDb<K, V>>>,
-    __must_drop: Arc<AtomicBool>,
+    __event_sender: Sender<Notify>,
     __thread_handle: Option<JoinHandle<()>>,
     config: Arc<Config>,
 }
 #[derive(Debug)]
 pub struct Config {
-    pub flush_interval: Duration,
     pub file_lock: FileLock,
 }
 
 trait GuardedDb<K: Key, V: Value> {
     fn get_guard(&self) -> Option<MutexGuard<InMemoryDb<K, V>>>;
+    fn get_sender(&self) -> &Sender<Notify>;
+    fn update<E, F: FnOnce(MutexGuard<InMemoryDb<K,V>>) -> Option<E>>(&self, f: F) -> Option<E> {
+        let guard = self.get_guard()?;
+        let sender = self.get_sender();
+        sender.send(Notify::Update).ok()?;
+        f(guard)
+    }
 }
+
 impl<K: Key, V: Value> GuardedDb<K, V> for FileDb<K, V> {
     fn get_guard(&self) -> Option<MutexGuard<InMemoryDb<K, V>>> {
         match self.__inner.lock() {
@@ -39,6 +49,10 @@ impl<K: Key, V: Value> GuardedDb<K, V> for FileDb<K, V> {
             }
         }
     }
+
+    fn get_sender(&self) -> &Sender<Notify> {
+        &self.__event_sender
+    }
 }
 
 impl<K: Key, V: Value> DbOp<K, V> for FileDb<K, V> {
@@ -47,10 +61,13 @@ impl<K: Key, V: Value> DbOp<K, V> for FileDb<K, V> {
         guard.get_current_tree()
     }
 
-    fn open_tree(&mut self, tree_name: &str) -> Option<()> {
+    fn open_tree(&mut self, tree_name: &str) -> Option<bool> {
         let mut guard = self.get_guard()?;
-        guard.open_tree(tree_name);
-        Some(())
+        let res = guard.open_tree(tree_name)?;
+        if res == true {
+            self.__event_sender.send(Notify::Update).ok()?;
+        }
+        Some(res)
     }
 
     fn tree_names(&self) -> Vec<String> {
@@ -62,17 +79,17 @@ impl<K: Key, V: Value> DbOp<K, V> for FileDb<K, V> {
     }
 
     fn drop_tree(&mut self, tree_name: &str) -> bool {
-        if let Some(mut guard) = self.get_guard() {
-            guard.drop_tree(tree_name)
-        } else {
+        if let Some(res) = self.update(|mut guard| Some(guard.drop_tree(tree_name))) {
+            res
+        }else {
             false
         }
-        
+
     }
 
     fn clear_tree(&mut self, tree_name: &str) -> bool {
-        if let Some(mut guard) = self.get_guard() {
-            guard.clear_tree(tree_name)
+        if let Some(res ) = self.update(|mut guard| Some(guard.clear_tree(tree_name))) {
+            res
         } else {
             false
         }
@@ -83,21 +100,18 @@ impl<K: Key, V: Value> DbOp<K, V> for FileDb<K, V> {
         tree_name_source: &str,
         tree_name_dest: &str,
     ) -> Option<()> {
-        let mut guard = self.get_guard()?;
-        guard.merge_trees(tree_name_source, tree_name_dest)
+        self.update(|mut guard| guard.merge_trees(tree_name_source, tree_name_dest))
     }
 
     fn merge_current_tree_with(
         &mut self,
         tree_name_source: &str,
     ) -> Option<()> {
-        let mut guard = self.get_guard()?;
-        guard.merge_current_tree_with(tree_name_source)
+        self.update(|mut guard| guard.merge_current_tree_with(tree_name_source))
     }
 
     fn apply_batch(&mut self, batch: super::Batch<K, V>) -> Option<()> {
-        let mut guard = self.get_guard()?;
-        guard.apply_batch(batch)
+        self.update(|mut guard| guard.apply_batch(batch))
     }
 
     fn apply_tree(
@@ -105,8 +119,7 @@ impl<K: Key, V: Value> DbOp<K, V> for FileDb<K, V> {
         tree_name: &str,
         consumer: &mut impl FnMut(&mut super::tree::Tree<K, V>) -> Option<V>,
     ) -> Option<V> {
-        let mut guard = self.get_guard()?;
-        guard.apply_tree(tree_name, consumer)
+        self.update(|mut guard| guard.apply_tree(tree_name, consumer))
     }
 }
 
@@ -117,19 +130,15 @@ impl<K: Key, V: Value> Op<K, V> for FileDb<K, V> {
     }
 
     fn insert(&mut self, k: impl Into<K>, v: impl Into<V>) -> Option<V> {
-        let mut guard = self.get_guard()?;
-        guard.insert(k, v)
+        self.update(move |mut guard| guard.insert(k, v) )
     }
 
     fn remove(&mut self, k: impl Into<K>) -> Option<V> {
-        let mut guard = self.get_guard()?;
-        guard.remove(k)
+        self.update(move |mut guard| guard.remove(k)) 
     }
 
     fn clear(&mut self) {
-        if let Some(mut guard) = self.get_guard() {
-            guard.clear();
-        }
+        self.update(|mut guard| Some(guard.clear()));
     }
 
     fn contains(&self, k: &K) -> Option<bool> {
@@ -143,20 +152,19 @@ impl<K: Key, V: Value> Op<K, V> for FileDb<K, V> {
     }
 
     fn keys(&self) -> Vec<K> {
-        if let Some(guard) =self.get_guard() {
+        if let Some(guard) = self.get_guard() {
             guard.keys()
-        }else{
+        } else {
             vec![]
         }
     }
 
     fn list_all(&self) -> BTreeMap<K, V> {
-        if let Some(guard) =self.get_guard() {
+        if let Some(guard) = self.get_guard() {
             guard.list_all()
-        }else{
+        } else {
             BTreeMap::default()
         }
-        
     }
 }
 
@@ -169,7 +177,6 @@ where
         let file_lock = FileLock::open(path)?;
 
         Self::open_with_config(Config {
-            flush_interval: FIXED_SYNC_INTERVAL,
             file_lock,
         })
     }
@@ -189,13 +196,14 @@ where
                 Arc::new(Mutex::new(Default::default()))
             }
         };
+        let (__event_sender, receiver) = std::sync::mpsc::channel();
         let mut db = FileDb {
             config: Arc::new(config),
             __inner,
-            __must_drop: Arc::new(AtomicBool::new(false)),
+            __event_sender,
             __thread_handle: None,
         };
-        db.start_file_db()?;
+        db.start_file_db(receiver)?;
         Ok(db)
     }
 
@@ -204,31 +212,41 @@ where
         file_lock: &FileLock,
     ) -> anyhow::Result<()> {
         trace!("syncing");
-        let db = inner_db.lock().map_err(|e| anyhow::Error::msg(e.to_string()))?;
+        let db =
+            inner_db.lock().map_err(|e| anyhow::Error::msg(e.to_string()))?;
         let bytes = bincode::serialize(&*db)?;
         drop(db); // try to release the lock before writing to the file
         let _ = file_lock.write(&bytes)?;
         trace!("syncing done");
         Ok(())
     }
-    fn start_file_db(&mut self) -> anyhow::Result<()> {
-        let must_drop = self.__must_drop.clone();
+    fn start_file_db(
+        &mut self,
+        receiver: Receiver<Notify>,
+    ) -> anyhow::Result<()> {
         let clone = Arc::clone(&self.__inner);
         let config = self.config.clone();
 
         let handle = std::thread::spawn(move || {
             debug!("start syncing");
 
-            while !must_drop.load(Ordering::SeqCst) {
-                std::thread::sleep(config.flush_interval);
-                if let Err(e) =
-                    Self::__flush(Arc::clone(&clone), &config.file_lock)
-                {
-                    error!(
-                        "could not flush db. Err: '{e}'. will try in next tick"
-                    );
+            for event in receiver.iter() {
+                match event {
+                    Notify::Update => {
+                        info!("receive update!");
+                        if let Err(e) =
+                            Self::__flush(Arc::clone(&clone), &config.file_lock)
+                        {
+                            error!("could not flush db. Err: '{e}'.");
+                        }
+                    }
+                    Notify::Stop => {
+                        info!("receive stop!");
+                        break;
+                    },
                 }
             }
+            
             debug!("DROPPED");
 
             if let Err(e) = Self::__flush(clone, &config.file_lock) {
@@ -243,7 +261,7 @@ where
 impl<K: Key, V: Value> Drop for FileDb<K, V> {
     fn drop(&mut self) {
         debug!("done");
-        self.__must_drop.store(true, Ordering::SeqCst);
+        self.__event_sender.send(Notify::Stop).expect("could not send stop event!!!");  
         if let Some(handle) = self.__thread_handle.take() {
             handle.join().expect("Could not cleanup thread handle!!!");
         }
@@ -270,7 +288,6 @@ mod test {
 
         let mut file_db: FileDb<u64, String> =
             FileDb::open_with_config(Config {
-                flush_interval: Duration::from_millis(500),
                 file_lock: FileLock::open("/tmp/karsher.db").unwrap(),
             })
             .unwrap();
@@ -288,7 +305,6 @@ mod test {
 
         let mut file_db: FileDb<u64, String> =
             FileDb::open_with_config(Config {
-                flush_interval: Duration::from_millis(500),
                 file_lock: FileLock::open("/tmp/karsher.db").unwrap(),
             })
             .unwrap();
