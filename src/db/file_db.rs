@@ -1,4 +1,4 @@
-use std::{path::Path, thread::JoinHandle};
+use std::{path::Path, thread::JoinHandle, vec};
 
 use serde::de::DeserializeOwned;
 
@@ -21,30 +21,56 @@ pub struct Config {
     pub file_lock: FileLock,
 }
 
+trait GuardedDb<K: Key, V: Value> {
+    fn get_guard(&self) -> Option<MutexGuard<InMemoryDb<K, V>>>;
+}
+impl<K: Key, V: Value> GuardedDb<K, V> for FileDb<K, V> {
+    fn get_guard(&self) -> Option<MutexGuard<InMemoryDb<K, V>>> {
+        match self.__inner.lock() {
+            Ok(lock) => Some(lock),
+            Err(e) => {
+                error!("Lock could not be acquired! {e}");
+                None
+            }
+        }
+    }
+}
+
 impl<K: Key, V: Value> DbOp<K, V> for FileDb<K, V> {
     fn get_current_tree(&self) -> Option<String> {
-        let guard = self.__inner.lock();
+        let guard = self.get_guard()?;
         guard.get_current_tree()
     }
 
-    fn open_tree(&mut self, tree_name: &str) {
-        let mut guard = self.__inner.lock();
+    fn open_tree(&mut self, tree_name: &str) -> Option<()> {
+        let mut guard = self.get_guard()?;
         guard.open_tree(tree_name);
+        Some(())
     }
 
     fn tree_names(&self) -> Vec<String> {
-        let guard = self.__inner.lock();
-        guard.tree_names()
+        if let Some(guard) = self.get_guard() {
+            guard.tree_names()
+        } else {
+            vec![]
+        }
     }
 
     fn drop_tree(&mut self, tree_name: &str) -> bool {
-        let mut guard = self.__inner.lock();
-        guard.drop_tree(tree_name)
+        if let Some(mut guard) = self.get_guard() {
+            guard.drop_tree(tree_name)
+        } else {
+            false
+        }
+        
     }
 
     fn clear_tree(&mut self, tree_name: &str) -> bool {
-        let mut guard = self.__inner.lock();
-        guard.clear_tree(tree_name)
+        if let Some(mut guard) = self.get_guard() {
+            guard.clear_tree(tree_name)
+        } else {
+            false
+        }
     }
 
     fn merge_trees(
@@ -52,7 +78,7 @@ impl<K: Key, V: Value> DbOp<K, V> for FileDb<K, V> {
         tree_name_source: &str,
         tree_name_dest: &str,
     ) -> Option<()> {
-        let mut guard = self.__inner.lock();
+        let mut guard = self.get_guard()?;
         guard.merge_trees(tree_name_source, tree_name_dest)
     }
 
@@ -60,12 +86,12 @@ impl<K: Key, V: Value> DbOp<K, V> for FileDb<K, V> {
         &mut self,
         tree_name_source: &str,
     ) -> Option<()> {
-        let mut guard = self.__inner.lock();
+        let mut guard = self.get_guard()?;
         guard.merge_current_tree_with(tree_name_source)
     }
 
     fn apply_batch(&mut self, batch: super::Batch<K, V>) -> Option<()> {
-        let mut guard = self.__inner.lock();
+        let mut guard = self.get_guard()?;
         guard.apply_batch(batch)
     }
 
@@ -74,50 +100,58 @@ impl<K: Key, V: Value> DbOp<K, V> for FileDb<K, V> {
         tree_name: &str,
         consumer: &mut impl FnMut(&mut super::tree::Tree<K, V>) -> Option<V>,
     ) -> Option<V> {
-        let mut guard = self.__inner.lock();
+        let mut guard = self.get_guard()?;
         guard.apply_tree(tree_name, consumer)
     }
 }
 
 impl<K: Key, V: Value> Op<K, V> for FileDb<K, V> {
     fn read(&self, k: impl Into<K>, r: impl Fn(&V) -> Option<V>) -> Option<V> {
-        let guard = self.__inner.lock();
+        let guard = self.get_guard()?;
         guard.read(k, r)
     }
 
     fn insert(&mut self, k: impl Into<K>, v: impl Into<V>) -> Option<V> {
-        let mut guard = self.__inner.lock();
+        let mut guard = self.get_guard()?;
         guard.insert(k, v)
     }
 
     fn remove(&mut self, k: impl Into<K>) -> Option<V> {
-        let mut guard = self.__inner.lock();
+        let mut guard = self.get_guard()?;
         guard.remove(k)
     }
 
     fn clear(&mut self) {
-        let mut guard = self.__inner.lock();
-        guard.clear()
+        if let Some(mut guard) = self.get_guard() {
+            guard.clear();
+        }
     }
 
     fn contains(&self, k: &K) -> Option<bool> {
-        let guard = self.__inner.lock();
+        let guard = self.get_guard()?;
         guard.contains(k)
     }
 
     fn len(&self) -> Option<usize> {
-        let guard = self.__inner.lock();
+        let guard = self.get_guard()?;
         guard.len()
     }
 
     fn keys(&self) -> Vec<K> {
-        let guard = self.__inner.lock();
-        guard.keys()
+        if let Some(guard) =self.get_guard() {
+            guard.keys()
+        }else{
+            vec![]
+        }
     }
 
     fn list_all(&self) -> HashMap<K, V> {
-        let guard = self.__inner.lock();
-        guard.list_all()
+        if let Some(guard) =self.get_guard() {
+            guard.list_all()
+        }else{
+            HashMap::with_capacity(0)
+        }
+        
     }
 }
 
@@ -164,12 +198,12 @@ where
         inner_db: Arc<Mutex<InMemoryDb<K, V>>>,
         file_lock: &FileLock,
     ) -> anyhow::Result<()> {
-        debug!("syncing");
-        let db = inner_db.lock();
+        trace!("syncing");
+        let db = inner_db.lock().map_err(|e| anyhow::Error::msg(e.to_string()))?;
         let bytes = bincode::serialize(&*db)?;
         drop(db); // try to release the lock before writing to the file
         let _ = file_lock.write(&bytes)?;
-        debug!("syncing done");
+        trace!("syncing done");
         Ok(())
     }
     fn start_file_db(&mut self) -> anyhow::Result<()> {

@@ -41,14 +41,13 @@ lazy_static::lazy_static! {
 }
 
 fn main() -> anyhow::Result<()> {
+    env_logger::init();
     // trap SIGINT when CTRL+C for e.g with docker-compose logs -f
     let mut signals = Signals::new(&[SIGINT])?;
 
     thread::spawn(move || {
         for sig in signals.forever() {
-            if cfg!(debug_assertions) {
-                println!("Received signal {:?}", sig);
-            }
+                debug!("Received signal {:?}", sig);
         }
     });
 

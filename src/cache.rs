@@ -13,7 +13,7 @@ pub fn get_value(
     namespace: &str,
     key: &str,
 ) -> Option<String> {
-    db.open_tree(namespace);
+    db.open_tree(namespace)?;
     db.get_value(key)
 }
 
@@ -21,7 +21,7 @@ pub fn list_values(
     db: &mut impl DbOp<String, String>,
     namespace: &str,
 ) -> Option<Vec<(String, String)>> {
-    db.open_tree(namespace);
+    db.open_tree(namespace)?;
     Some(db.list_all().into_iter().collect())
 }
 
@@ -52,7 +52,7 @@ pub fn insert_value(
     aliases: Vec<&str>,
     value: &str,
 ) -> Option<String> {
-    db.open_tree(namespace);
+    db.open_tree(namespace)?;
     let mut batch = crate::db::Batch::default();
     let keys = db.keys();
 
@@ -83,8 +83,9 @@ pub fn insert_value(
 }
 
 pub fn clear_values(db: &mut impl DbOp<String, String>, cache_name: &str) {
-    db.open_tree(cache_name);
-    db.clear();
+    if db.open_tree(cache_name).is_some() {
+        db.clear();
+    }
 }
 
 pub fn remove_cache(
@@ -113,14 +114,14 @@ pub fn set_default_cache(
     default_cache: &str,
 ) -> Option<()> {
     check_cache_name(default_cache)?;
-    db.open_tree(DEFAULT_TREE);
+    db.open_tree(DEFAULT_TREE)?;
     let _ = db.insert(DEFAULT_CACHE_KEY, default_cache);
-    db.open_tree(default_cache);
+    db.open_tree(default_cache)?;
     Some(())
 }
 
 pub fn get_default_cache(db: &mut impl DbOp<String, String>) -> Option<String> {
-    db.open_tree(DEFAULT_TREE);
+    db.open_tree(DEFAULT_TREE)?;
     db.get_value(DEFAULT_CACHE_KEY)
 }
 
@@ -165,7 +166,7 @@ pub fn restore(db: &mut impl DbOp<String, String>, path: &Path) -> Option<()> {
     let caches: Vec<CacheJson> = serde_json::from_reader(buf_reader).ok()?;
     for cache in caches {
         let mut batch = Batch::default();
-        db.open_tree(&cache.name);
+        db.open_tree(&cache.name)?;
 
         for (key, value) in cache.values {
             batch.add_insert(key, value);

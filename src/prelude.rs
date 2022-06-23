@@ -24,7 +24,7 @@ pub type ResVerbose<'a, T> = IResult<&'a str, T, VerboseError<&'a str>>;
 
 pub use std::sync::Arc;
 
-pub use parking_lot::Mutex;
+pub use std::sync::{Mutex, MutexGuard};
 pub use std::ops::Deref;
 pub use std::{
     fs::File,

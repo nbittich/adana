@@ -44,12 +44,7 @@ impl FileLock {
 
 impl Drop for FileLock {
     fn drop(&mut self) {
-        if cfg!(debug_assertions) {
-            debug!(
-                "remove lock for {}",
-                self._lock_p.as_path().to_string_lossy()
-            );
-        }
+        debug!("remove lock for {}", self._lock_p.as_path().to_string_lossy());
         let swp = &self.inner_p.with_extension("swp");
         let _ = File::create(swp).unwrap();
         let _ = File::options()

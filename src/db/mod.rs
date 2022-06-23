@@ -13,11 +13,11 @@ pub use tree::Tree;
 use crate::prelude::*;
 use std::fmt::Debug;
 
-pub trait Key: Hash + Eq + Send + Clone + Serialize + Debug {}
-pub trait Value: Serialize + Send + Clone + Debug {}
+pub trait Key: Hash + Eq + Send + Clone + Serialize + Debug + Sync {}
+pub trait Value: Serialize + Send + Clone + Debug + Sync {}
 
-impl<T: Hash + Eq + Send + Clone + Serialize + Debug> Key for T {}
-impl<T: Serialize + Send + Clone + Debug> Value for T {}
+impl<T: Hash + Eq + Send + Clone + Serialize + Debug + Sync> Key for T {}
+impl<T: Serialize + Send + Clone + Debug + Sync> Value for T {}
 pub trait Op<K: Key, V: Value> {
     fn read(&self, k: impl Into<K>, r: impl Fn(&V) -> Option<V>) -> Option<V>;
 
@@ -46,7 +46,7 @@ pub trait Op<K: Key, V: Value> {
 pub trait DbOp<K: Key, V: Value>: Op<K, V> {
     fn get_current_tree(&self) -> Option<String>;
 
-    fn open_tree(&mut self, tree_name: &str);
+    fn open_tree(&mut self, tree_name: &str) -> Option<()>;
 
     fn tree_names(&self) -> Vec<String>;
 
