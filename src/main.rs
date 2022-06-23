@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 mod cache;
 mod db;
 mod editor;
@@ -7,16 +6,18 @@ mod parser;
 mod prelude;
 mod programs;
 mod utils;
-use std::{path::Path, thread};
 
-use cache::CacheManager;
+use cache::*;
 use colors::*;
+use db::{DbOp, FileDb};
 use nom::error::ErrorKind;
 use os_command::exec_command;
-pub use parser::{parse_command, CacheCommand};
-pub use prelude::*;
 use rustyline::error::ReadlineError;
 use signal_hook::{consts::SIGINT, iterator::Signals};
+use std::{path::Path, thread};
+
+pub use parser::{parse_command, CacheCommand};
+pub use prelude::*;
 
 use crate::utils::clear_terminal;
 
@@ -26,6 +27,18 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
 const BACKUP_FILE_NAME: &str = "karsherdb.json";
+
+lazy_static::lazy_static! {
+    static ref DB_FILE_PATH: PathBuf = {
+        let mut db_dir = dirs::data_dir().expect("db not found");
+        db_dir.push(".karsherdb");
+        if !db_dir.exists() {
+            std::fs::create_dir(&db_dir).expect("could not create db directory");
+        }
+        db_dir.push("karsher.db");
+        db_dir
+    };
+}
 
 fn main() -> anyhow::Result<()> {
     // trap SIGINT when CTRL+C for e.g with docker-compose logs -f
@@ -42,17 +55,24 @@ fn main() -> anyhow::Result<()> {
     clear_terminal();
     println!("{PKG_NAME} v{VERSION}\n");
 
-    let mut cache_manager = CacheManager::default();
+    match FileDb::open(DB_FILE_PATH.as_path()) {
+        Ok(mut db) => start_app(&mut db),
+        Err(e) => {
+            eprintln!(
+                "{} {e} \nAttempt to open a temporary db...\n",
+                colors::Red.paint("Warning!")
+            );
+            let mut db = FileDb::open_temporary()?;
+            start_app(&mut db)
+        }
+    }
+}
 
+fn start_app(db: &mut impl DbOp<String, String>) -> anyhow::Result<()> {
     let mut current_cache = {
-        cache_manager
-            .get_default_cache()
-            .as_ref()
-            .map_or("DEFAULT".into(), |v| v.clone())
+        get_default_cache(db).as_ref().map_or("DEFAULT".into(), |v| v.clone())
     };
-
     let mut rl = editor::build_editor();
-
     loop {
         let readline = editor::read_line(&mut rl, &current_cache);
 
@@ -60,11 +80,7 @@ fn main() -> anyhow::Result<()> {
             Ok(line) => {
                 rl.add_history_entry(line.as_str());
                 if process_repl(&line).is_err() {
-                    process_command(
-                        &mut cache_manager,
-                        &mut current_cache,
-                        &line,
-                    )?;
+                    process_command(db, &mut current_cache, &line)?;
                 }
             }
             Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
@@ -77,10 +93,6 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    if let Err(e) = cache_manager.flush_sync() {
-        eprintln!("could not write to flush db. gomenasai: {e}");
-    }
-
     editor::save_history(&mut rl)?;
 
     println!("{}", Style::new().bold().fg(LightBlue).paint("BYE"));
@@ -88,7 +100,7 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn process_command(
-    cache_manager: &mut CacheManager,
+    db: &mut impl DbOp<String, String>,
     current_cache: &mut String,
     line: &str,
 ) -> anyhow::Result<()> {
@@ -102,20 +114,19 @@ fn process_command(
                 {
                     eprintln!("You cannot use a reserved command name as an alias. check help for list of reserved names.");
                 } else if let Some(key) =
-                    cache_manager.insert_value(current_cache, aliases, value)
+                    insert_value(db, current_cache, aliases, value)
                 {
                     println!(
-                        "added {} with hash key {}",
+                        "added {} with hash keys {}",
                         Yellow.paint(value),
-                        Red.paint(key.to_string())
+                        Red.paint(key)
                     );
                 } else {
                     eprintln!("could not insert!");
                 }
             }
             CacheCommand::Remove(key) => {
-                if let Some(v) = cache_manager.remove_value(current_cache, key)
-                {
+                if let Some(v) = remove_value(db, current_cache, key) {
                     println!(
                         "removed {} with hash key {}",
                         Yellow.paint(v),
@@ -128,16 +139,14 @@ fn process_command(
                 }
             }
             CacheCommand::Get(key) => {
-                if let Some(value) = cache_manager.get_value(current_cache, key)
-                {
+                if let Some(value) = get_value(db, current_cache, key) {
                     println!("found '{}'", Yellow.paint(value));
                 } else {
                     println!("{key} not found");
                 }
             }
             CacheCommand::Exec { key, args } => {
-                if let Some(value) = cache_manager.get_value(current_cache, key)
-                {
+                if let Some(value) = get_value(db, current_cache, key) {
                     let _ = exec_command(&value, &args)
                         .map_err(|e| anyhow::Error::msg(e.to_string()))?;
                 } else if !key.trim().is_empty() {
@@ -145,7 +154,7 @@ fn process_command(
                 }
             }
             CacheCommand::Using(key) => {
-                if cache_manager.set_default_cache(key).is_some() {
+                if set_default_cache(db, key).is_some() {
                     println!(
                         "previous: {}",
                         LightCyan.paint(current_cache.as_str())
@@ -157,8 +166,7 @@ fn process_command(
             CacheCommand::ListCache => {
                 println!(
                     ">> [ {} ]",
-                    cache_manager
-                        .get_cache_names()
+                    get_cache_names(db)
                         .iter()
                         .map(|c| Red.bold().paint(c).to_string())
                         .collect::<Vec<_>>()
@@ -175,7 +183,7 @@ fn process_command(
                 eprintln!("You cannot merge a cache with itself!")
             }
             CacheCommand::Concat(key) => {
-                if cache_manager.merge(key, current_cache).is_some() {
+                if merge(db, key, current_cache).is_some() {
                     println!(
                         "cache {} has been merged with cache {}.",
                         Red.bold().paint(&current_cache.to_string()),
@@ -186,7 +194,7 @@ fn process_command(
                 }
             }
             CacheCommand::Dump(key) => {
-                if let Some(json) = cache_manager.dump(key) {
+                if let Some(json) = dump(db, key) {
                     println!("{json}");
                 } else {
                     println!("cache doesn't exist!");
@@ -197,18 +205,16 @@ fn process_command(
                     if cache_name != current_cache {
                         println!(
                             "remove {cache_name}: {}",
-                            cache_manager.remove_cache(cache_name).is_some()
+                            remove_cache(db, cache_name)
                         );
                     } else {
-                        println!(
-                            "clear all values from {current_cache}: {}",
-                            cache_manager.clear_values(current_cache).is_some()
-                        );
+                        clear_values(db, current_cache);
+                        println!("clear all values from {current_cache}",);
                     }
                 }
             }
             CacheCommand::List => {
-                if let Some(values) = cache_manager.list_values(current_cache) {
+                if let Some(values) = list_values(db, current_cache) {
                     for (key, value) in values {
                         println!(
                             ">> Key: {} => Value: '{}'",
@@ -222,7 +228,7 @@ fn process_command(
                 let backup_path =
                     std::env::current_dir()?.join(BACKUP_FILE_NAME);
                 let backup_path = backup_path.as_path();
-                if let Some(()) = cache_manager.backup(backup_path) {
+                if let Some(()) = backup(db, backup_path) {
                     println!(
                         "db backed up to {}",
                         Red.paint(backup_path.to_string_lossy())
@@ -233,7 +239,7 @@ fn process_command(
                 let backup_path =
                     std::env::current_dir()?.join(BACKUP_FILE_NAME);
                 let backup_path = backup_path.as_path();
-                if let Some(()) = cache_manager.restore(backup_path) {
+                if let Some(()) = restore(db, backup_path) {
                     println!(
                         "db restored from {}",
                         Red.paint(backup_path.to_string_lossy())

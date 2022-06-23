@@ -68,24 +68,29 @@ impl<K: Key, V: Value> DbOp<K, V> for FileDb<K, V> {
         let mut guard = self.__inner.lock();
         guard.apply_batch(batch)
     }
+
+    fn apply_tree(
+        &mut self,
+        tree_name: &str,
+        consumer: &mut impl FnMut(&mut super::tree::Tree<K, V>) -> Option<V>,
+    ) -> Option<V> {
+        let mut guard = self.__inner.lock();
+        guard.apply_tree(tree_name, consumer)
+    }
 }
 
 impl<K: Key, V: Value> Op<K, V> for FileDb<K, V> {
-    fn read<E, K2: Into<K>>(
-        &self,
-        k: K2,
-        r: impl Fn(&V) -> Option<E>,
-    ) -> Option<E> {
+    fn read(&self, k: impl Into<K>, r: impl Fn(&V) -> Option<V>) -> Option<V> {
         let guard = self.__inner.lock();
         guard.read(k, r)
     }
 
-    fn insert<K2: Into<K>, V2: Into<V>>(&mut self, k: K2, v: V2) -> Option<V> {
+    fn insert(&mut self, k: impl Into<K>, v: impl Into<V>) -> Option<V> {
         let mut guard = self.__inner.lock();
         guard.insert(k, v)
     }
 
-    fn remove<K2: Into<K>>(&mut self, k: K2) -> Option<V> {
+    fn remove(&mut self, k: impl Into<K>) -> Option<V> {
         let mut guard = self.__inner.lock();
         guard.remove(k)
     }
@@ -153,10 +158,6 @@ where
         };
         db.start_file_db()?;
         Ok(db)
-    }
-
-    pub fn flush(&self) -> anyhow::Result<()> {
-        Self::__flush(self.__inner.clone(), &self.config.file_lock)
     }
 
     fn __flush(

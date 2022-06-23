@@ -8,36 +8,37 @@ pub use batch::*;
 pub use file_db::*;
 pub use file_lock::*;
 pub use in_memory::*;
+pub use tree::Tree;
 
 use crate::prelude::*;
+use std::fmt::Debug;
 
-pub trait Key: Hash + Eq + Send + Clone + Serialize {}
-pub trait Value: Serialize + Send + Clone {}
+pub trait Key: Hash + Eq + Send + Clone + Serialize + Debug {}
+pub trait Value: Serialize + Send + Clone + Debug {}
 
-impl<T: Hash + Eq + Send + Clone + Serialize> Key for T {}
-impl<T: Serialize + Send + Clone> Value for T {}
-
+impl<T: Hash + Eq + Send + Clone + Serialize + Debug> Key for T {}
+impl<T: Serialize + Send + Clone + Debug> Value for T {}
 pub trait Op<K: Key, V: Value> {
-    fn read<E, K2: Into<K>>(
-        &self,
-        k: K2,
-        r: impl Fn(&V) -> Option<E>,
-    ) -> Option<E>;
+    fn read(&self, k: impl Into<K>, r: impl Fn(&V) -> Option<V>) -> Option<V>;
 
-    fn get_value<E, K2: Into<K>>(&self, k: K2) -> Option<V> {
+    fn get_value(&self, k: impl Into<K>) -> Option<V> {
         self.read(k, |v| Some(v.clone()))
     }
     fn list_all(&self) -> HashMap<K, V>;
 
-    fn read_no_op<K2: Into<K>>(&self, k: K2, r: impl Fn(&V)) -> Option<()> {
+    fn read_no_op(
+        &self,
+        k: impl Into<K>,
+        r: impl Fn(&V) -> Option<V>,
+    ) -> Option<V> {
         self.read(k.into(), |v| {
             r(v);
-            Some(())
+            None
         })
     }
     fn keys(&self) -> Vec<K>;
-    fn insert<K2: Into<K>, V2: Into<V>>(&mut self, k: K2, v: V2) -> Option<V>;
-    fn remove<K2: Into<K>>(&mut self, k: K2) -> Option<V>;
+    fn insert(&mut self, k: impl Into<K>, v: impl Into<V>) -> Option<V>;
+    fn remove(&mut self, k: impl Into<K>) -> Option<V>;
     fn clear(&mut self);
     fn contains(&self, k: &K) -> Option<bool>;
     fn len(&self) -> Option<usize>;
@@ -63,4 +64,19 @@ pub trait DbOp<K: Key, V: Value>: Op<K, V> {
         -> Option<()>;
 
     fn apply_batch(&mut self, batch: Batch<K, V>) -> Option<()>;
+
+    fn apply_tree(
+        &mut self,
+        tree_name: &str,
+        consumer: &mut impl FnMut(&mut Tree<K, V>) -> Option<V>,
+    ) -> Option<V>;
+
+    fn open_tree_and_apply(
+        &mut self,
+        tree_name: &str,
+        consumer: &mut impl FnMut(&mut Tree<K, V>) -> Option<V>,
+    ) -> Option<V> {
+        self.open_tree(tree_name);
+        self.apply_tree(tree_name, consumer)
+    }
 }

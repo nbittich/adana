@@ -26,23 +26,19 @@ impl<K: Key + Clone, V: Value + Clone> InMemoryDb<K, V> {
     }
 }
 
-impl<K: Key + Clone, V: Value + Clone> Op<K, V> for InMemoryDb<K, V> {
-    fn read<E, K2: Into<K>>(
-        &self,
-        k: K2,
-        r: impl Fn(&V) -> Option<E>,
-    ) -> Option<E> {
+impl<K: Key + Clone, V: Value> Op<K, V> for InMemoryDb<K, V> {
+    fn read(&self, k: impl Into<K>, r: impl Fn(&V) -> Option<V>) -> Option<V> {
         let current_tree = self.get_current_tree()?;
 
         let tree = self.trees.get(&current_tree)?;
         tree.read(k, r)
     }
 
-    fn insert<K2: Into<K>, V2: Into<V>>(&mut self, k: K2, v: V2) -> Option<V> {
+    fn insert(&mut self, k: impl Into<K>, v: impl Into<V>) -> Option<V> {
         self.apply_to_current_tree(move |tree| tree.insert(k, v))
     }
 
-    fn remove<K2: Into<K>>(&mut self, k: K2) -> Option<V> {
+    fn remove(&mut self, k: impl Into<K>) -> Option<V> {
         self.apply_to_current_tree(move |tree| tree.remove(k))
     }
 
@@ -146,7 +142,7 @@ impl<K: Key + Clone, V: Value + Clone> DbOp<K, V> for InMemoryDb<K, V> {
             self.trees.get_many_mut([tree_name_source, tree_name_dest])?;
 
         for (k, v) in source.iter() {
-            dest.insert(k.clone(), v.clone())?;
+            dest.insert(k.clone(), v.clone());
         }
 
         Some(())
@@ -165,15 +161,20 @@ impl<K: Key + Clone, V: Value + Clone> DbOp<K, V> for InMemoryDb<K, V> {
         for op in batch.into_iter() {
             match op {
                 super::OpType::Insert((k, v)) => {
-                    self.insert(k, v)?;
-                }
-                super::OpType::Delete(k) => {
-                    self.remove(k)?;
+                    self.insert(k, v);
                 }
             }
         }
-
         Some(())
+    }
+
+    fn apply_tree(
+        &mut self,
+        tree_name: &str,
+        consumer: &mut impl FnMut(&mut Tree<K, V>) -> Option<V>,
+    ) -> Option<V> {
+        let tree = self.trees.get_mut(tree_name)?;
+        consumer(tree)
     }
 }
 
@@ -195,8 +196,9 @@ mod test {
         db.insert("babsa", Box::new(MyString("babuch".into())));
         assert_eq!(Some(1), db.len());
 
-        db.read_no_op("babsa", |v| {
-            assert_eq!(v, &Box::new(MyString("babuch".into())))
+        db.read("babsa", |v| {
+            assert_eq!(v, &Box::new(MyString("babuch".into())));
+            None
         });
 
         db.open_tree("test");
@@ -207,9 +209,9 @@ mod test {
         db.insert("baba", Box::new(MyString("babuch".into())));
         assert_eq!(Some(1), db.len()); // len of the current tree todo maybe it should be better to provide the len of the actual db
 
-        let value = db.read("baba", |v| Some(v.0.to_string()));
+        let value = db.read("baba", |v| Some(v.clone()));
 
-        assert_eq!(value, Some("babuch".to_string()));
+        assert_eq!(value, Some(Box::new(MyString("babuch".to_string()))));
 
         db.drop_tree("test");
 
@@ -252,7 +254,10 @@ mod test {
 
         db.insert(443, "cargo fmt");
 
-        db.read_no_op(66, |v| println!("{v:?}"));
+        db.read_no_op(66, |v| {
+            println!("{v:?}");
+            Some(v.to_string())
+        });
         let value = db.read(443, |v| Some(v.to_string()));
 
         assert_eq!(Some("cargo fmt".into()), value);

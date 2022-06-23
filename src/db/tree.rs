@@ -20,21 +20,21 @@ impl<K: Key, V: Value> Deref for Tree<K, V> {
     }
 }
 
-impl<K: Key + Clone, V: Value + Clone> Op<K, V> for Tree<K, V> {
-    fn read<E, K2: Into<K>>(
+impl<K: Key + Clone, V: Value> Op<K, V> for Tree<K, V> {
+    fn read(
         &self,
-        k: K2,
-        mapper: impl Fn(&V) -> Option<E>,
-    ) -> Option<E> {
+        k: impl Into<K>,
+        mapper: impl Fn(&V) -> Option<V>,
+    ) -> Option<V> {
         let v = self.get(&k.into())?;
         mapper(v)
     }
 
-    fn insert<K2: Into<K>, V2: Into<V>>(&mut self, k: K2, v: V2) -> Option<V> {
+    fn insert(&mut self, k: impl Into<K>, v: impl Into<V>) -> Option<V> {
         self.0.insert(k.into(), v.into())
     }
 
-    fn remove<K2: Into<K>>(&mut self, k: K2) -> Option<V> {
+    fn remove(&mut self, k: impl Into<K>) -> Option<V> {
         self.0.remove(&k.into())
     }
 
