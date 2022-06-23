@@ -4,7 +4,7 @@ pub const DEFAULT_TREE: &str = "__karsher_default";
 
 use super::{tree::Tree, DbOp, Key, Op, Value};
 
-type InnerMap<K, V> = HashMap<String, Tree<K, V>>;
+type InnerMap<K, V> = BTreeMap<String, Tree<K, V>>;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InMemoryDb<K: Key, V: Value> {
@@ -71,7 +71,7 @@ impl<K: Key + Clone, V: Value> Op<K, V> for InMemoryDb<K, V> {
             .collect()
     }
 
-    fn list_all(&self) -> HashMap<K, V> {
+    fn list_all(&self) -> BTreeMap<K, V> {
         self.get_current_tree()
             .and_then(|current_tree| self.trees.get(&current_tree))
             .iter()
@@ -85,7 +85,7 @@ impl<K: Key + Clone, V: Value + Clone> Default for InMemoryDb<K, V> {
         let default_tree = DEFAULT_TREE.to_string();
 
         let mut db = InMemoryDb {
-            trees: HashMap::new(),
+            trees: BTreeMap::new(),
             default_tree,
             current_tree: None,
         };
@@ -139,12 +139,10 @@ impl<K: Key + Clone, V: Value + Clone> DbOp<K, V> for InMemoryDb<K, V> {
         tree_name_source: &str,
         tree_name_dest: &str,
     ) -> Option<()> {
-        let [source, dest] =
-            self.trees.get_many_mut([tree_name_source, tree_name_dest])?;
-
-        for (k, v) in source.iter() {
-            dest.insert(k.clone(), v.clone());
-        }
+        let source = self.trees.remove(tree_name_source)?;
+        let dest = self.trees.get_mut(tree_name_dest)?;
+        dest.extend(source.iter().map(|(k,v)| (k.clone(), v.clone())));
+        let _ = self.trees.insert(tree_name_source.to_string(), source);
 
         Some(())
     }

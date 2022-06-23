@@ -188,5 +188,5 @@ fn check_cache_name(cache_name: &str) -> Option<()> {
 #[derive(Serialize, Deserialize)]
 struct CacheJson {
     name: String,
-    values: HashMap<String, String>,
+    values: BTreeMap<String, String>,
 }

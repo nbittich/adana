@@ -13,10 +13,10 @@ pub use tree::Tree;
 use crate::prelude::*;
 use std::fmt::Debug;
 
-pub trait Key: Hash + Eq + Send + Clone + Serialize + Debug + Sync {}
+pub trait Key: Hash + Eq + Send + Clone + Serialize + Debug + Sync + Ord {}
 pub trait Value: Serialize + Send + Clone + Debug + Sync {}
 
-impl<T: Hash + Eq + Send + Clone + Serialize + Debug + Sync> Key for T {}
+impl<T: Hash + Eq + Send + Clone + Serialize + Debug + Sync + Ord> Key for T {}
 impl<T: Serialize + Send + Clone + Debug + Sync> Value for T {}
 pub trait Op<K: Key, V: Value> {
     fn read(&self, k: impl Into<K>, r: impl Fn(&V) -> Option<V>) -> Option<V>;
@@ -24,7 +24,7 @@ pub trait Op<K: Key, V: Value> {
     fn get_value(&self, k: impl Into<K>) -> Option<V> {
         self.read(k, |v| Some(v.clone()))
     }
-    fn list_all(&self) -> HashMap<K, V>;
+    fn list_all(&self) -> BTreeMap<K, V>;
 
     fn read_no_op(
         &self,

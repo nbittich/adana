@@ -8,6 +8,11 @@ use super::{DbOp, FileLock, InMemoryDb, Key, Op, Value};
 
 const FIXED_SYNC_INTERVAL: Duration = Duration::from_millis(500);
 
+enum Notify {
+    Update,
+    Stop
+}
+
 #[derive(Debug)]
 pub struct FileDb<K: Key, V: Value> {
     __inner: Arc<Mutex<InMemoryDb<K, V>>>,
@@ -145,11 +150,11 @@ impl<K: Key, V: Value> Op<K, V> for FileDb<K, V> {
         }
     }
 
-    fn list_all(&self) -> HashMap<K, V> {
+    fn list_all(&self) -> BTreeMap<K, V> {
         if let Some(guard) =self.get_guard() {
             guard.list_all()
         }else{
-            HashMap::with_capacity(0)
+            BTreeMap::default()
         }
         
     }

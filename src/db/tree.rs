@@ -1,14 +1,16 @@
+use std::ops::DerefMut;
+
 use crate::prelude::*;
 
 use super::{Key, Op, Value};
 
-type InnerMap<K, V> = HashMap<K, V>;
+type InnerMap<K, V> = BTreeMap<K, V>;
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Tree<K: Key, V: Value>(InnerMap<K, V>);
 
 impl<K: Key, V: Value> Default for Tree<K, V> {
     fn default() -> Tree<K, V> {
-        Tree(HashMap::new())
+        Tree(BTreeMap::new())
     }
 }
 
@@ -19,6 +21,12 @@ impl<K: Key, V: Value> Deref for Tree<K, V> {
         &self.0
     }
 }
+impl<K: Key, V: Value> DerefMut for Tree<K, V> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 
 impl<K: Key + Clone, V: Value> Op<K, V> for Tree<K, V> {
     fn read(
@@ -54,7 +62,7 @@ impl<K: Key + Clone, V: Value> Op<K, V> for Tree<K, V> {
         self.0.keys().into_iter().cloned().collect()
     }
 
-    fn list_all(&self) -> HashMap<K, V> {
+    fn list_all(&self) -> BTreeMap<K, V> {
         self.0.clone()
     }
 }

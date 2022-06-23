@@ -1,4 +1,3 @@
-pub use hashbrown::HashMap;
 use nom::error::VerboseError;
 pub use nom::{
     branch::alt,
@@ -15,9 +14,10 @@ pub use nom::{
 
 pub use log::*;
 pub use std::hash::Hash;
+
 pub use std::process::{Command, Stdio};
 pub use std::time::Duration;
-pub use std::{collections::BTreeMap, io::stdout};
+pub use std::{io::stdout};
 
 pub type Res<'a, T> = IResult<&'a str, T>;
 pub type ResVerbose<'a, T> = IResult<&'a str, T, VerboseError<&'a str>>;
@@ -31,6 +31,7 @@ pub use std::{
     io::BufReader,
     path::PathBuf,
     process::ExitCode,
+    collections::BTreeMap,
     sync::atomic::{AtomicBool, Ordering},
 };
 
