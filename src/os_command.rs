@@ -51,9 +51,7 @@ pub fn exec_command<'a>(
 
     match handle.and_then(|mut h| h.wait()) {
         Ok(status) => {
-            if cfg!(debug_assertions) {
-                println!("{status}");
-            }
+            debug!("{status}");
         }
         Err(e) => {
             eprintln!("{program} failed to start with args {args:?}. err: {e}")

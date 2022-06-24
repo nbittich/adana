@@ -1,4 +1,3 @@
-pub use hashbrown::HashMap;
 use nom::error::VerboseError;
 pub use nom::{
     branch::alt,
@@ -12,24 +11,32 @@ pub use nom::{
     sequence::{delimited, pair, preceded, separated_pair, terminated},
     IResult, Parser,
 };
+
+pub use log::*;
+pub use std::hash::Hash;
+
+pub use std::io::stdout;
 pub use std::process::{Command, Stdio};
-pub use std::{collections::BTreeMap, io::stdout};
+pub use std::time::Duration;
 
 pub type Res<'a, T> = IResult<&'a str, T>;
 pub type ResVerbose<'a, T> = IResult<&'a str, T, VerboseError<&'a str>>;
 
+pub use std::sync::Arc;
+
+pub use std::ops::Deref;
+pub use std::sync::{Mutex, MutexGuard};
 pub use std::{
+    collections::BTreeMap,
     fs::File,
     io::BufReader,
     path::PathBuf,
     process::ExitCode,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc, Mutex,
-    },
+    sync::atomic::{AtomicBool, Ordering},
 };
 
 pub mod colors {
     pub use nu_ansi_term::Color::*;
     pub use nu_ansi_term::Style;
 }
+pub use serde::{Deserialize, Serialize};
