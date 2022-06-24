@@ -104,7 +104,7 @@ impl<K: Key + Clone, V: Value + Clone> DbOp<K, V> for InMemoryDb<K, V> {
     }
 
     /// return true if the three has to be opened
-    fn open_tree(&mut self, tree_name: &str) -> Option<bool>{
+    fn open_tree(&mut self, tree_name: &str) -> Option<bool> {
         if let Some(current_tree) = &self.current_tree {
             if current_tree == tree_name {
                 return Some(false);
@@ -147,7 +147,7 @@ impl<K: Key + Clone, V: Value + Clone> DbOp<K, V> for InMemoryDb<K, V> {
     ) -> Option<()> {
         let source = self.trees.remove(tree_name_source)?;
         let dest = self.trees.get_mut(tree_name_dest)?;
-        dest.extend(source.iter().map(|(k,v)| (k.clone(), v.clone())));
+        dest.extend(source.iter().map(|(k, v)| (k.clone(), v.clone())));
         let _ = self.trees.insert(tree_name_source.to_string(), source);
 
         Some(())

@@ -47,7 +47,7 @@ fn main() -> anyhow::Result<()> {
 
     thread::spawn(move || {
         for sig in signals.forever() {
-                debug!("Received signal {:?}", sig);
+            debug!("Received signal {:?}", sig);
         }
     });
 

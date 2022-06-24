@@ -27,7 +27,6 @@ impl<K: Key, V: Value> DerefMut for Tree<K, V> {
     }
 }
 
-
 impl<K: Key + Clone, V: Value> Op<K, V> for Tree<K, V> {
     fn read(
         &self,

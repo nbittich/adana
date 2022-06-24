@@ -31,7 +31,10 @@ pub struct Config {
 trait GuardedDb<K: Key, V: Value> {
     fn get_guard(&self) -> Option<MutexGuard<InMemoryDb<K, V>>>;
     fn get_sender(&self) -> &Sender<Notify>;
-    fn update<E, F: FnOnce(MutexGuard<InMemoryDb<K,V>>) -> Option<E>>(&self, f: F) -> Option<E> {
+    fn update<E, F: FnOnce(MutexGuard<InMemoryDb<K, V>>) -> Option<E>>(
+        &self,
+        f: F,
+    ) -> Option<E> {
         let guard = self.get_guard()?;
         let sender = self.get_sender();
         sender.send(Notify::Update).ok()?;
@@ -79,16 +82,19 @@ impl<K: Key, V: Value> DbOp<K, V> for FileDb<K, V> {
     }
 
     fn drop_tree(&mut self, tree_name: &str) -> bool {
-        if let Some(res) = self.update(|mut guard| Some(guard.drop_tree(tree_name))) {
+        if let Some(res) =
+            self.update(|mut guard| Some(guard.drop_tree(tree_name)))
+        {
             res
-        }else {
+        } else {
             false
         }
-
     }
 
     fn clear_tree(&mut self, tree_name: &str) -> bool {
-        if let Some(res ) = self.update(|mut guard| Some(guard.clear_tree(tree_name))) {
+        if let Some(res) =
+            self.update(|mut guard| Some(guard.clear_tree(tree_name)))
+        {
             res
         } else {
             false
@@ -100,7 +106,9 @@ impl<K: Key, V: Value> DbOp<K, V> for FileDb<K, V> {
         tree_name_source: &str,
         tree_name_dest: &str,
     ) -> Option<()> {
-        self.update(|mut guard| guard.merge_trees(tree_name_source, tree_name_dest))
+        self.update(|mut guard| {
+            guard.merge_trees(tree_name_source, tree_name_dest)
+        })
     }
 
     fn merge_current_tree_with(
@@ -130,11 +138,11 @@ impl<K: Key, V: Value> Op<K, V> for FileDb<K, V> {
     }
 
     fn insert(&mut self, k: impl Into<K>, v: impl Into<V>) -> Option<V> {
-        self.update(move |mut guard| guard.insert(k, v) )
+        self.update(move |mut guard| guard.insert(k, v))
     }
 
     fn remove(&mut self, k: impl Into<K>) -> Option<V> {
-        self.update(move |mut guard| guard.remove(k)) 
+        self.update(move |mut guard| guard.remove(k))
     }
 
     fn clear(&mut self) {
@@ -176,9 +184,7 @@ where
     pub fn open<P: AsRef<Path>>(path: P) -> anyhow::Result<FileDb<K, V>> {
         let file_lock = FileLock::open(path)?;
 
-        Self::open_with_config(Config {
-            file_lock,
-        })
+        Self::open_with_config(Config { file_lock })
     }
 
     pub fn open_temporary() -> anyhow::Result<InMemoryDb<K, V>> {
@@ -238,15 +244,17 @@ where
                             Self::__flush(Arc::clone(&clone), &config.file_lock)
                         {
                             error!("could not flush db. Err: '{e}'.");
+                        } else {
+                            trace!("sync done");
                         }
                     }
                     Notify::Stop => {
                         info!("receive stop!");
                         break;
-                    },
+                    }
                 }
             }
-            
+
             debug!("DROPPED");
 
             if let Err(e) = Self::__flush(clone, &config.file_lock) {
@@ -261,7 +269,9 @@ where
 impl<K: Key, V: Value> Drop for FileDb<K, V> {
     fn drop(&mut self) {
         debug!("done");
-        self.__event_sender.send(Notify::Stop).expect("could not send stop event!!!");  
+        self.__event_sender
+            .send(Notify::Stop)
+            .expect("could not send stop event!!!");
         if let Some(handle) = self.__thread_handle.take() {
             handle.join().expect("Could not cleanup thread handle!!!");
         }

@@ -13,7 +13,10 @@ pub use tree::Tree;
 use crate::prelude::*;
 use std::fmt::Debug;
 
-pub trait Key: Hash + Eq + Send + Clone + Serialize + Debug + Sync + Ord {}
+pub trait Key:
+    Hash + Eq + Send + Clone + Serialize + Debug + Sync + Ord
+{
+}
 pub trait Value: Serialize + Send + Clone + Debug + Sync {}
 
 impl<T: Hash + Eq + Send + Clone + Serialize + Debug + Sync + Ord> Key for T {}
