@@ -67,7 +67,7 @@ impl<K: Key, V: Value> DbOp<K, V> for FileDb<K, V> {
     fn open_tree(&mut self, tree_name: &str) -> Option<bool> {
         let mut guard = self.get_guard()?;
         let res = guard.open_tree(tree_name)?;
-        if res == true {
+        if res {
             self.__event_sender.send(Notify::Update).ok()?;
         }
         Some(res)
@@ -146,7 +146,10 @@ impl<K: Key, V: Value> Op<K, V> for FileDb<K, V> {
     }
 
     fn clear(&mut self) {
-        self.update(|mut guard| Some(guard.clear()));
+        self.update(|mut guard| {
+            guard.clear();
+            Some(())
+        });
     }
 
     fn contains(&self, k: &K) -> Option<bool> {
