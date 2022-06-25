@@ -305,7 +305,7 @@ fn to_tree(
 
                 Ok(node_id)
             } else {
-                return Err(anyhow::Error::msg("invalid variable expression"));
+                Err(anyhow::Error::msg("invalid variable expression"))
             }
         }
     }
