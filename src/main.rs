@@ -14,7 +14,7 @@ use nom::error::ErrorKind;
 use os_command::exec_command;
 use rustyline::error::ReadlineError;
 use signal_hook::{consts::SIGINT, iterator::Signals};
-use std::{path::Path, thread, collections::HashMap};
+use std::{collections::HashMap, path::Path, thread};
 
 pub use parser::{parse_command, CacheCommand};
 pub use prelude::*;
@@ -288,7 +288,10 @@ fn process_command(
     Ok(())
 }
 
-fn process_repl(line: &str, ctx: &mut HashMap<String, f64>) -> anyhow::Result<()> {
+fn process_repl(
+    line: &str,
+    ctx: &mut HashMap<String, f64>,
+) -> anyhow::Result<()> {
     let calc = crate::programs::compute(line, ctx)?;
     println!("{calc}");
     Ok(())
