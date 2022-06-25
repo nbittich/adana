@@ -288,7 +288,7 @@ fn to_tree(
         }
         Value::VariableExpr { name, expr } => {
             anyhow::ensure!(
-                tree.root().is_none() && curr_node_id.is_none(),
+                tree.root().is_none(),
                 "invalid variable assignment "
             );
 
