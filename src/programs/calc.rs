@@ -171,6 +171,9 @@ fn to_tree(
                 move |c| matches!(c, Value::Operation(operator) if operator == &op)
             }
 
+            if operations.is_empty() {
+                return Ok(None);
+            }
             if operations.len() == 1 {
                 return to_tree(ctx, operations[0].clone(), tree, curr_node_id);
             }
@@ -223,7 +226,7 @@ fn to_tree(
 
                 Ok(curr_node_id)
             } else {
-                Ok(None)
+                Err(anyhow::Error::msg("invalid expression!"))
             }
         }
 
@@ -281,6 +284,7 @@ fn to_tree(
                 .get(name)
                 .cloned()
                 .context(format!("variable {name} not found in ctx"))?;
+
             if cfg!(test) {
                 dbg!(value);
             }
@@ -388,7 +392,7 @@ pub fn compute(s: &str, ctx: &mut HashMap<String, f64>) -> anyhow::Result<f64> {
     if cfg!(test) {
         let mut tree_fmt = String::new();
         tree.write_formatted(&mut tree_fmt)?;
-        println!("{tree_fmt}");
+        println!("DEBUG: {tree_fmt}");
     }
 
     let root = tree.root();
@@ -409,12 +413,20 @@ mod test {
     use crate::programs::calc::{compute, parse_str, Operator::*, Value};
 
     #[test]
-    #[should_panic(expected = "Invalid expression!")]
+    #[should_panic(expected = "invalid expression!")]
     fn test_expr_invalid() {
         let expr = "use example";
         let mut ctx = HashMap::from([("x".to_string(), 2.)]);
         compute(expr, &mut ctx).unwrap();
     }
+    #[test]
+    #[should_panic(expected = "invalid expression!")]
+    fn test_expr_invalid_drc() {
+        let expr = "drc logs -f triplestore";
+        let mut ctx = HashMap::from([("x".to_string(), 2.)]);
+        compute(expr, &mut ctx).unwrap();
+    }
+
     #[test]
     #[should_panic(expected = "Invalid operation!")]
     fn test_op_invalid() {
