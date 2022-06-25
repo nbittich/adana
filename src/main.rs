@@ -14,7 +14,7 @@ use nom::error::ErrorKind;
 use os_command::exec_command;
 use rustyline::error::ReadlineError;
 use signal_hook::{consts::SIGINT, iterator::Signals};
-use std::{path::Path, thread};
+use std::{path::Path, thread, collections::HashMap};
 
 pub use parser::{parse_command, CacheCommand};
 pub use prelude::*;
@@ -72,13 +72,14 @@ fn start_app(db: &mut impl DbOp<String, String>) -> anyhow::Result<()> {
         get_default_cache(db).as_ref().map_or("DEFAULT".into(), |v| v.clone())
     };
     let mut rl = editor::build_editor();
+    let mut math_ctx = HashMap::new();
     loop {
         let readline = editor::read_line(&mut rl, &current_cache);
 
         match readline {
             Ok(line) => {
                 rl.add_history_entry(line.as_str());
-                if process_repl(&line).is_err() {
+                if process_repl(&line, &mut math_ctx).is_err() {
                     process_command(db, &mut current_cache, &line)?;
                 }
             }
@@ -287,8 +288,8 @@ fn process_command(
     Ok(())
 }
 
-fn process_repl(line: &str) -> anyhow::Result<()> {
-    let calc = crate::programs::compute(line)?;
+fn process_repl(line: &str, ctx: &mut HashMap<String, f64>) -> anyhow::Result<()> {
+    let calc = crate::programs::compute(line, ctx)?;
     println!("{calc}");
     Ok(())
 }

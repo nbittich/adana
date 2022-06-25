@@ -1,5 +1,8 @@
+use std::collections::HashMap;
+
+use anyhow::Context;
 use nom::{
-    character::complete::i64 as I64,
+    character::complete::{alpha1, alphanumeric1, i64 as I64},
     combinator::{all_consuming, map_parser, value},
     multi::many1,
     number::complete::{double, recognize_float},
@@ -11,12 +14,14 @@ use crate::prelude::*;
 
 // region: structs
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
-enum Value {
-    Operations(Vec<Value>),
+enum Value<'a> {
+    Expression(Vec<Value<'a>>),
     Operation(Operator),
     Decimal(f64),
     Integer(i64),
-    BlockParen(Vec<Value>),
+    BlockParen(Vec<Value<'a>>),
+    Variable(&'a str),
+    VariableExpr { name: Box<Value<'a>>, expr: Box<Value<'a>> },
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Serialize, Deserialize)]
@@ -51,6 +56,10 @@ fn parse_number(s: &str) -> Res<Value> {
     )(s)
 }
 
+fn parse_variable(s: &str) -> Res<Value> {
+    map_parser(alpha1, map(all_consuming(alphanumeric1), Value::Variable))(s)
+}
+
 fn parse_paren(s: &str) -> Res<Value> {
     preceded(
         multispace0,
@@ -80,6 +89,7 @@ fn parse_value(s: &str) -> Res<Value> {
                 parse_add,
                 parse_subtr,
                 parse_number,
+                parse_variable,
             )),
             multispace0,
         ),
@@ -117,10 +127,30 @@ fn parse_subtr(s: &str) -> Res<Value> {
     parse_op(Operator::Subtr)(s)
 }
 
-fn parse_operations(s: &str) -> Res<Value> {
+fn parse_expression(s: &str) -> Res<Value> {
+    map(many1(parse_value), Value::Expression)(s)
+}
+
+fn parse_str(s: &str) -> Res<Value> {
     preceded(
         multispace0,
-        terminated(map(many1(parse_value), Value::Operations), multispace0),
+        terminated(
+            alt((
+                map(
+                    separated_pair(
+                        parse_variable,
+                        tag_no_space("="),
+                        parse_expression,
+                    ),
+                    |(name, expr)| Value::VariableExpr {
+                        name: Box::new(name),
+                        expr: Box::new(expr),
+                    },
+                ),
+                parse_expression,
+            )),
+            multispace0,
+        ),
     )(s)
 }
 
@@ -129,18 +159,19 @@ fn parse_operations(s: &str) -> Res<Value> {
 // region: reducers
 
 fn to_tree(
+    ctx: &mut HashMap<String, f64>,
     value: Value,
     tree: &mut Tree<TreeNodeValue>,
     curr_node_id: &Option<NodeId>,
-) -> Option<NodeId> {
+) -> anyhow::Result<Option<NodeId>> {
     match value {
-        Value::Operations(operations) | Value::BlockParen(operations) => {
+        Value::Expression(operations) | Value::BlockParen(operations) => {
             fn filter_op(op: Operator) -> impl Fn(&Value) -> bool {
                 move |c| matches!(c, Value::Operation(operator) if operator == &op)
             }
 
             if operations.len() == 1 {
-                return to_tree(operations[0].clone(), tree, curr_node_id);
+                return to_tree(ctx, operations[0].clone(), tree, curr_node_id);
             }
 
             let op_pos = None
@@ -184,14 +215,14 @@ fn to_tree(
 
                 drop(operations);
 
-                let curr_node_id = to_tree(operation, tree, curr_node_id);
+                let curr_node_id = to_tree(ctx, operation, tree, curr_node_id)?;
 
-                to_tree(children_left, tree, &curr_node_id);
-                to_tree(children_right, tree, &curr_node_id);
+                to_tree(ctx, children_left, tree, &curr_node_id)?;
+                to_tree(ctx, children_right, tree, &curr_node_id)?;
 
-                curr_node_id
+                Ok(curr_node_id)
             } else {
-                None
+                Ok(None)
             }
         }
 
@@ -202,13 +233,13 @@ fn to_tree(
                     tree.get_mut(*node_id).expect("node id does not exist!");
 
                 let node = node.append(ops);
-                Some(node.node_id())
+                Ok(Some(node.node_id()))
             } else if let Some(mut root_node) = tree.root_mut() {
                 let node = root_node.append(ops);
-                Some(node.node_id())
+                Ok(Some(node.node_id()))
             } else {
                 let _ = tree.set_root(ops);
-                tree.root_id()
+                Ok(tree.root_id())
             }
         }
 
@@ -218,12 +249,12 @@ fn to_tree(
                 let mut node =
                     tree.get_mut(*node_id).expect("node id does not exist!");
                 node.append(double_node);
-                Some(node.node_id())
+                Ok(Some(node.node_id()))
             } else if let Some(mut root_node) = tree.root_mut() {
                 root_node.append(double_node);
-                tree.root_id()
+                Ok(tree.root_id())
             } else {
-                Some(tree.set_root(double_node))
+                Ok(Some(tree.set_root(double_node)))
             }
         }
         Value::Integer(num) => {
@@ -239,8 +270,13 @@ fn to_tree(
             } else {
                 Some(tree.set_root(double_node))
             };
-            node_id
+            Ok(node_id)
         }
+        Value::Variable(name) => {
+            let value = ctx.get(name).cloned().context("variable {name} not found")?;
+            return to_tree(ctx, Value::Decimal(value), tree, curr_node_id);
+        },
+        Value::VariableExpr { name, expr } => todo!(),
     }
 }
 
@@ -295,14 +331,14 @@ fn compute_recur(node: Option<NodeRef<TreeNodeValue>>) -> f64 {
 // endregion: calculate
 
 // region: exposed api
-pub fn compute(s: &str) -> anyhow::Result<f64> {
+pub fn compute(s: &str, ctx: &mut HashMap<String, f64>) -> anyhow::Result<f64> {
     let (rest, value) =
-        parse_operations(s).map_err(|e| anyhow::Error::msg(e.to_string()))?;
+        parse_str(s).map_err(|e| anyhow::Error::msg(e.to_string()))?;
 
     anyhow::ensure!(rest.trim().is_empty(), "Invalid operation!");
 
     let mut tree: Tree<TreeNodeValue> = Tree::new();
-    to_tree(value, &mut tree, &None);
+    to_tree(ctx, value, &mut tree, &None)?;
 
     let root = tree.root();
 
@@ -315,31 +351,90 @@ pub fn compute(s: &str) -> anyhow::Result<f64> {
 #[cfg(test)]
 mod test {
 
-    use crate::programs::calc::compute;
+    use std::collections::HashMap;
+
+    use crate::programs::calc::{
+        compute, parse_str, Operator::*, Value,
+    };
+
+
+    #[test]
+    fn test_compute_with_ctx() {
+        let expr = "x * 5";
+        let mut ctx = HashMap::from([
+            ("x".to_string(), 2. )
+        ]);
+
+        let res = compute(expr, &mut ctx).unwrap();
+        assert_eq!(10., res);
+    }
+
+    #[test]
+    fn test_variable() {
+        let expr = "x*5+9*y/8";
+        let (_, op) = parse_str(expr).unwrap();
+        assert_eq!(
+            op,
+            Value::Expression(vec![
+                Value::Variable("x",),
+                Value::Operation(Mult,),
+                Value::Integer(5,),
+                Value::Operation(Add,),
+                Value::Integer(9,),
+                Value::Operation(Mult,),
+                Value::Variable("y",),
+                Value::Operation(Div,),
+                Value::Integer(8,),
+            ],),
+        );
+    }
+    #[test]
+    fn test_variable_expr() {
+        let expr = "z = x*5+9*y/8";
+        let (_, op) = parse_str(expr).unwrap();
+        assert_eq!(
+            op,
+            Value::VariableExpr { name: Box::new(Value::Variable("z")), expr: Box::new(
+                Value::Expression(vec![
+                    Value::Variable("x",),
+                    Value::Operation(Mult,),
+                    Value::Integer(5,),
+                    Value::Operation(Add,),
+                    Value::Integer(9,),
+                    Value::Operation(Mult,),
+                    Value::Variable("y",),
+                    Value::Operation(Div,),
+                    Value::Integer(8,),
+                ]
+            )
+          )},
+        );
+    }
 
     #[test]
     fn test_compute() {
-        assert_eq!(3280.3, compute("2* (9*(5-(1/2))) ^2 -1 / 5").unwrap());
+        let ctx = &mut HashMap::new();
+        assert_eq!(3280.3, compute("2* (9*(5-(1/2))) ^2 -1 / 5", ctx).unwrap());
         assert_eq!(
             3274.9,
-            compute("2* (9*(5-(1/2))) ^2 -1 / 5 * 8 - 4").unwrap()
+            compute("2* (9*(5-(1/2))) ^2 -1 / 5 * 8 - 4", ctx).unwrap()
         );
         assert_eq!(
             -670.9548307564088,
-            compute("78/5-4.5*(9+7^2.5)-12*4+1-8/3*4-5").unwrap()
+            compute("78/5-4.5*(9+7^2.5)-12*4+1-8/3*4-5", ctx).unwrap()
         );
         assert_eq!(
             37736.587719298244,
-            compute("1988*19-(((((((9*2))))+2*4)-3))/6-1^2*1000/(7-4*(3/9-(9+3/2-4)))").unwrap()
+            compute("1988*19-(((((((9*2))))+2*4)-3))/6-1^2*1000/(7-4*(3/9-(9+3/2-4)))", ctx).unwrap()
         );
-        assert_eq!(0., compute("0").unwrap());
-        assert_eq!(9., compute("9").unwrap());
-        assert_eq!(-9., compute("-9").unwrap());
-        assert_eq!(6. / 2. * (2. + 1.), compute("6/2*(2+1)").unwrap());
-        assert_eq!(2. - 1. / 5., compute("2 -1 / 5").unwrap());
+        assert_eq!(0., compute("0", ctx).unwrap());
+        assert_eq!(9., compute("9", ctx).unwrap());
+        assert_eq!(-9., compute("-9", ctx).unwrap());
+        assert_eq!(6. / 2. * (2. + 1.), compute("6/2*(2+1)", ctx).unwrap());
+        assert_eq!(2. - 1. / 5., compute("2 -1 / 5", ctx).unwrap());
         // todo maybe should panic in these cases
-        assert_eq!(2. * 4., compute("2* * *4").unwrap());
-        assert_eq!(2. * 4., compute("2* ** *4").unwrap());
-        assert_eq!(4., compute("*4").unwrap());
+        assert_eq!(2. * 4., compute("2* * *4", ctx).unwrap());
+        assert_eq!(2. * 4., compute("2* ** *4", ctx).unwrap());
+        assert_eq!(4., compute("*4", ctx).unwrap());
     }
 }
