@@ -168,8 +168,13 @@ fn to_tree(
     match value {
         Value::Expression(mut operations)
         | Value::BlockParen(mut operations) => {
-            fn filter_op(op: Operator) -> impl Fn(&Value) -> bool {
-                move |c| matches!(c, Value::Operation(operator) if operator == &op)
+            fn filter_op<'a>(
+                op: Operator,
+                operations: &'a [Value<'a>],
+            ) -> impl FnOnce() -> Option<usize> + 'a {
+                move || {
+                    operations.iter().rposition(|c| matches!(c, Value::Operation(operator) if operator == &op))
+                }
             }
 
             if operations.is_empty() {
@@ -180,25 +185,16 @@ fn to_tree(
             }
 
             let op_pos = None
-                .or_else(|| {
-                    operations.iter().rposition(filter_op(Operator::Add))
-                })
-                .or_else(|| {
-                    operations.iter().rposition(filter_op(Operator::Subtr))
-                })
-                .or_else(|| {
-                    operations.iter().rposition(filter_op(Operator::Mult))
-                })
-                .or_else(|| {
-                    operations.iter().rposition(filter_op(Operator::Div))
-                })
-                .or_else(|| {
-                    operations.iter().rposition(filter_op(Operator::Exp))
-                });
+                .or_else(filter_op(Operator::Add, &operations))
+                .or_else(filter_op(Operator::Subtr, &operations))
+                .or_else(filter_op(Operator::Mult, &operations))
+                .or_else(filter_op(Operator::Div, &operations))
+                .or_else(filter_op(Operator::Exp, &operations));
 
             if let Some(op_pos) = op_pos {
                 let mut left: Vec<Value> =
                     operations.drain(0..op_pos).collect();
+
                 let operation = operations.remove(0);
 
                 let children_left = if left.len() == 1 {
@@ -206,6 +202,7 @@ fn to_tree(
                 } else {
                     Value::BlockParen(left)
                 };
+
                 let children_right = if operations.len() == 1 {
                     operations.remove(0)
                 } else {
@@ -362,7 +359,7 @@ fn compute_recur(
             TreeNodeValue::Double(v) => *v,
             TreeNodeValue::VariableAssign(name) => {
                 let v = compute_recur(node.first_child(), ctx);
-                ctx.insert(name.clone(), v);
+                ctx.insert(name.to_owned(), v);
                 v
             }
         }
