@@ -3,7 +3,7 @@ use std::{collections::HashMap, panic::AssertUnwindSafe};
 use anyhow::Context;
 use nom::{
     character::complete::{alpha1, alphanumeric1, i64 as I64},
-    combinator::{all_consuming, map_parser, value},
+    combinator::{all_consuming, map_parser},
     multi::many1,
     number::complete::{double, recognize_float},
 };
@@ -13,7 +13,7 @@ use slab_tree::{NodeId, NodeRef, Tree};
 use crate::prelude::*;
 
 // region: structs
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 enum Value<'a> {
     Expression(Vec<Value<'a>>),
     Operation(Operator),
@@ -24,7 +24,7 @@ enum Value<'a> {
     VariableExpr { name: Box<Value<'a>>, expr: Box<Value<'a>> },
 }
 
-#[derive(Debug, Eq, PartialEq, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Eq, Copy, Clone, PartialEq, Serialize, Deserialize)]
 enum Operator {
     Add,
     Subtr,
@@ -33,7 +33,7 @@ enum Operator {
     Exp,
 }
 
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 enum TreeNodeValue {
     VariableAssign(String),
     Ops(Operator),
@@ -105,7 +105,7 @@ fn parse_op<'a>(operation: Operator) -> impl Fn(&'a str) -> Res<Value> {
         Operator::Mult => "*",
         Operator::Exp => "^",
     };
-    move |s| value(Value::Operation(operation), tag_no_space(sep))(s)
+    move |s| map(tag_no_space(sep), |_| Value::Operation(operation))(s)
 }
 
 fn parse_exp(s: &str) -> Res<Value> {
@@ -166,7 +166,8 @@ fn to_tree(
     curr_node_id: &Option<NodeId>,
 ) -> anyhow::Result<Option<NodeId>> {
     match value {
-        Value::Expression(operations) | Value::BlockParen(operations) => {
+        Value::Expression(mut operations)
+        | Value::BlockParen(mut operations) => {
             fn filter_op(op: Operator) -> impl Fn(&Value) -> bool {
                 move |c| matches!(c, Value::Operation(operator) if operator == &op)
             }
@@ -175,7 +176,7 @@ fn to_tree(
                 return Ok(None);
             }
             if operations.len() == 1 {
-                return to_tree(ctx, operations[0].clone(), tree, curr_node_id);
+                return to_tree(ctx, operations.remove(0), tree, curr_node_id);
             }
 
             let op_pos = None
@@ -196,17 +197,19 @@ fn to_tree(
                 });
 
             if let Some(op_pos) = op_pos {
-                let (left, right) = operations.split_at(op_pos);
+                let mut left: Vec<Value> =
+                    operations.drain(0..op_pos).collect();
+                let operation = operations.remove(0);
 
                 let children_left = if left.len() == 1 {
-                    left[0].clone()
+                    left.remove(0)
                 } else {
-                    Value::BlockParen(left.into())
+                    Value::BlockParen(left)
                 };
-                let children_right = if right[1..].len() == 1 {
-                    right[1].clone()
+                let children_right = if operations.len() == 1 {
+                    operations.remove(0)
                 } else {
-                    Value::BlockParen(right[1..].into())
+                    Value::BlockParen(operations)
                 };
 
                 if cfg!(test) {
@@ -214,10 +217,6 @@ fn to_tree(
                     println!("Right => {children_right:?}");
                     println!();
                 }
-
-                let operation = operations[op_pos].clone();
-
-                drop(operations);
 
                 let curr_node_id = to_tree(ctx, operation, tree, curr_node_id)?;
 
@@ -282,7 +281,7 @@ fn to_tree(
         Value::Variable(name) => {
             let value = ctx
                 .get(name)
-                .cloned()
+                .copied()
                 .context(format!("variable {name} not found in ctx"))?;
 
             if cfg!(test) {
