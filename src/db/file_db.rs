@@ -242,7 +242,7 @@ where
             for event in receiver.iter() {
                 match event {
                     Notify::Update => {
-                        info!("receive update!");
+                        debug!("receive update!");
                         if let Err(e) =
                             Self::__flush(Arc::clone(&clone), &config.file_lock)
                         {

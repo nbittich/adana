@@ -2,7 +2,6 @@
 
 - use help for help
 - use static build under dist/musl or use cargo build / cargo run
-- you can populate the db the first time by running restore (you must have the karsherdb.json from this repo saved on your current directory)
 
 
 Static build using MUSL:
@@ -23,13 +22,8 @@ ldd target/x86_64-unknown-linux-musl/release/karsher
 
 ```
 
-### todos
-- ~~rustyline (https://crates.io/crates/rustyline)~~
-- ~~autosave: when two shells are open, which one to save?~~
-- add / store / load env variables
-- add time like in nu
+### install using cargo
+RUSTFLAGS='-C link-arg=-s' cargo install --target x86_64-unknown-linux-musl karsher
 
-
-
-https://user-images.githubusercontent.com/3816305/173921007-761b1a22-00b4-4fe3-a657-4aee0dce344c.mp4
-
+### logs
+RUST_LOG=debug karsher

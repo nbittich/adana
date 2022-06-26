@@ -52,8 +52,10 @@ fn main() -> anyhow::Result<()> {
     });
 
     clear_terminal();
-    println!("{PKG_NAME} v{VERSION}\n");
-
+    println!("{PKG_NAME} v{VERSION}");
+    println!("Db Path: {}", DB_FILE_PATH.as_path().to_string_lossy());
+    println!();
+    
     match FileDb::open(DB_FILE_PATH.as_path()) {
         Ok(mut db) => start_app(&mut db),
         Err(e) => {
