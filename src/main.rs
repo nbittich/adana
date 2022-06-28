@@ -31,6 +31,7 @@ const BACKUP_FILE_NAME: &str = "karsherdb.json";
 lazy_static::lazy_static! {
     static ref DB_FILE_PATH: PathBuf = {
         let mut db_dir = dirs::data_dir().expect("db not found");
+        debug!("db dir: {}", db_dir.as_path().to_string_lossy());
         db_dir.push(".karsherdb");
         if !db_dir.exists() {
             std::fs::create_dir(&db_dir).expect("could not create db directory");
@@ -55,7 +56,7 @@ fn main() -> anyhow::Result<()> {
     println!("{PKG_NAME} v{VERSION}");
     println!("Db Path: {}", DB_FILE_PATH.as_path().to_string_lossy());
     println!();
-    
+
     match FileDb::open(DB_FILE_PATH.as_path()) {
         Ok(mut db) => start_app(&mut db),
         Err(e) => {
