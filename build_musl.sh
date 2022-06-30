@@ -7,5 +7,5 @@ then
   exit 1;
 fi
 
-RUSTFLAGS='-C link-arg=-s' cargo build --release --target x86_64-unknown-linux-musl
+cargo build --release 
 cp target/x86_64-unknown-linux-musl/release/karsher dist/musl/karsher-$1
