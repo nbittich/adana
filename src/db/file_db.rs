@@ -252,7 +252,7 @@ where
                         }
                     }
                     Notify::Stop => {
-                        info!("receive stop!");
+                        debug!("receive stop!");
                         break;
                     }
                 }

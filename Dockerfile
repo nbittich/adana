@@ -1,23 +1,26 @@
 FROM rust:1.61.0 as builder
 
-RUN rustup target add x86_64-unknown-linux-musl 
 
 WORKDIR /app
 RUN cargo new karsher
 WORKDIR /app/karsher
 
+COPY rust-toolchain.toml .
+
 COPY ./Cargo.toml ./Cargo.lock ./
+
+COPY .cargo/config .cargo/config
 
 ENV RUSTFLAGS='-C link-arg=-s'
 
-RUN cargo build --release --target x86_64-unknown-linux-musl
+RUN cargo build --release 
 RUN rm -rf ./src
 
 COPY ./src/ ./src
 
 RUN rm ./target/x86_64-unknown-linux-musl/release/deps/karsher*
 
-RUN cargo build --release --target x86_64-unknown-linux-musl
+RUN cargo build --release 
 
 FROM alpine
 

@@ -1,6 +1,6 @@
 [package]
 name = "karsher"
-version = "0.8.1"
+version = "0.8.2"
 edition = "2021"
 authors = ["Nordine Bittich"]
 license = "MIT"
@@ -30,8 +30,8 @@ version = "0.9.0"
 
 
 [profile.release]
-opt-level = 's'  # Optimize for size.
+opt-level = 'z'  # Optimize for size.
 lto = true # Link Time Optimization (LTO)
 codegen-units = 1 # Set this to 1 to allow for maximum size reduction optimizations:
 panic = 'abort' # removes the need for this extra unwinding code.
-
+strip = "symbols"
