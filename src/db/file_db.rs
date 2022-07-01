@@ -225,7 +225,7 @@ where
             inner_db.lock().map_err(|e| anyhow::Error::msg(e.to_string()))?;
         let bytes = bincode::serialize(&*db)?;
         drop(db); // try to release the lock before writing to the file
-        let _ = file_lock.write(&bytes)?;
+        file_lock.write(&bytes)?;
         trace!("syncing done");
         Ok(())
     }
