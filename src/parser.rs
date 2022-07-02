@@ -56,7 +56,7 @@ fn add_command(command: &str) -> Res<CacheCommand> {
                     preceded(
                         multispace1,
                         cut(verify(
-                            take_while(|c: char| c.is_alphanumeric()),
+                            take_while(|c: char| c.is_alphanumeric() || c == '_'),
                             |s: &str| !s.is_empty(),
                         )),
                     ),
