@@ -1,10 +1,12 @@
 mod batch;
+mod database;
 mod file_db;
 mod file_lock;
 mod in_memory;
 mod tree;
 
 pub use batch::*;
+pub use database::*;
 pub use file_db::*;
 pub use file_lock::*;
 pub use in_memory::*;

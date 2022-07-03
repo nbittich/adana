@@ -1,3 +1,4 @@
+mod args;
 mod cache;
 mod db;
 mod editor;
@@ -7,19 +8,22 @@ mod prelude;
 mod programs;
 mod utils;
 
+use args::*;
 use cache::*;
 use colors::*;
-use db::{DbOp, FileDb};
+use db::DbOp;
 use nom::error::ErrorKind;
 use os_command::exec_command;
 use rustyline::error::ReadlineError;
-use signal_hook::{consts::SIGINT, iterator::Signals};
-use std::{collections::HashMap, path::Path, thread};
+use std::{collections::HashMap, path::Path};
 
 pub use parser::{parse_command, CacheCommand};
 pub use prelude::*;
 
-use crate::utils::clear_terminal;
+use crate::{
+    db::{Config, Db},
+    utils::clear_terminal,
+};
 
 const CACHE_COMMAND_DOC: &[(&[&str], &str)] = CacheCommand::doc();
 
@@ -28,53 +32,57 @@ const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
 const BACKUP_FILE_NAME: &str = "karsherdb.json";
 
-lazy_static::lazy_static! {
-    static ref DB_FILE_PATH: PathBuf = {
-        let mut db_dir = dirs::data_dir().expect("db not found");
-        debug!("db dir: {}", db_dir.as_path().to_string_lossy());
-        db_dir.push(".karsherdb");
-        if !db_dir.exists() {
-            std::fs::create_dir(&db_dir).expect("could not create db directory");
-        }
-        db_dir.push("karsher.db");
-        db_dir
-    };
-}
-
 fn main() -> anyhow::Result<()> {
     env_logger::init();
     // trap SIGINT when CTRL+C for e.g with docker-compose logs -f
-    let mut signals = Signals::new(&[SIGINT])?;
+    ctrlc::set_handler(|| debug!("receive ctrl+c signal 2"))?;
 
-    thread::spawn(move || {
-        for sig in signals.forever() {
-            debug!("Received signal {:?}", sig);
-        }
-    });
+    let args = parse_args(std::env::args())?;
 
     clear_terminal();
     println!("{PKG_NAME} v{VERSION}");
-    println!("Db Path: {}", DB_FILE_PATH.as_path().to_string_lossy());
+
+    let config = if args.is_empty() {
+        Config::default()
+    } else {
+        let in_memory = args.iter().any(|a| matches!(a, Argument::InMemory));
+        let fallback_in_memory =
+            args.iter().any(|a| matches!(a, Argument::FallbackInMemory));
+        let db_path = args.iter().find_map(|a| {
+            if let Argument::DbPath(path) = a {
+                Some(path)
+            } else {
+                None
+            }
+        });
+        Config::new(db_path, in_memory, fallback_in_memory)
+    };
+
+    let history_path = args.iter().find_map(|a| {
+        if let Argument::HistoryPath(path) = a {
+            Some(path)
+        } else {
+            None
+        }
+    });
+
     println!();
 
-    match FileDb::open(DB_FILE_PATH.as_path()) {
-        Ok(mut db) => start_app(&mut db),
-        Err(e) => {
-            eprintln!(
-                "{} {e} \nAttempt to open a temporary db...\n",
-                colors::Red.paint("Warning!")
-            );
-            let mut db = FileDb::open_temporary()?;
-            start_app(&mut db)
-        }
+    match Db::open(config) {
+        Ok(Db::InMemory(mut db)) => start_app(&mut db, history_path),
+        Ok(Db::FileBased(mut db)) => start_app(&mut db, history_path),
+        Err(e) => Err(e),
     }
 }
 
-fn start_app(db: &mut impl DbOp<String, String>) -> anyhow::Result<()> {
+fn start_app(
+    db: &mut impl DbOp<String, String>,
+    history_path: Option<impl AsRef<Path> + Copy>,
+) -> anyhow::Result<()> {
     let mut current_cache = {
         get_default_cache(db).as_ref().map_or("DEFAULT".into(), |v| v.clone())
     };
-    let mut rl = editor::build_editor();
+    let mut rl = editor::build_editor(history_path);
     let mut math_ctx = HashMap::new();
     loop {
         let readline = editor::read_line(&mut rl, &current_cache);
@@ -96,7 +104,7 @@ fn start_app(db: &mut impl DbOp<String, String>) -> anyhow::Result<()> {
         }
     }
 
-    editor::save_history(&mut rl)?;
+    editor::save_history(&mut rl, history_path)?;
 
     println!("{}", Style::new().bold().fg(LightBlue).paint("BYE"));
     Ok(())
