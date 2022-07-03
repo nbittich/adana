@@ -1,12 +1,13 @@
 [package]
 name = "karsher"
-version = "0.8.4"
+version = "0.8.5"
 edition = "2021"
 authors = ["Nordine Bittich"]
 license = "MIT"
 description = "karsher is a dumb cache written in rust"
 homepage = "https://github.com/nbittich/karsher"
 readme = "README.md"
+exclude = ["vscode/","dist/", ".vscode" ]
 
 [dependencies]
 anyhow = "1.0.57"
