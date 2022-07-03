@@ -130,7 +130,7 @@ where
 #[cfg(test)]
 mod test {
 
-    use crate::db::{in_memory, Config, Db, DbOp, Op};
+    use crate::db::{Config, Db, DbOp, Op};
     use crate::prelude::*;
 
     #[derive(Serialize, Debug, PartialEq)]
