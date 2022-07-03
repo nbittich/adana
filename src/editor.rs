@@ -6,6 +6,7 @@ use rustyline::hint::{Hinter, HistoryHinter};
 use rustyline::validate::{self, MatchingBracketValidator, Validator};
 use rustyline::{
     Cmd, CompletionType, Config, Context as Ctx, EditMode, Editor, KeyEvent,
+    Movement,
 };
 use rustyline_derive::Helper;
 use std::borrow::Cow::{self, Borrowed, Owned};
@@ -57,7 +58,7 @@ pub fn build_editor(
     let mut rl = Editor::with_config(config);
     rl.set_helper(Some(h));
     rl.bind_sequence(KeyEvent::ctrl('d'), Cmd::Interrupt);
-    rl.bind_sequence(KeyEvent::ctrl('c'), Cmd::Undo(1));
+    rl.bind_sequence(KeyEvent::ctrl('c'), Cmd::Kill(Movement::WholeBuffer));
     rl.bind_sequence(KeyEvent::ctrl('l'), Cmd::ClearScreen);
     rl.bind_sequence(KeyEvent::alt('n'), Cmd::HistorySearchForward);
     rl.bind_sequence(KeyEvent::alt('p'), Cmd::HistorySearchBackward);

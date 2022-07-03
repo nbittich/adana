@@ -15,8 +15,7 @@ use db::DbOp;
 use nom::error::ErrorKind;
 use os_command::exec_command;
 use rustyline::error::ReadlineError;
-use signal_hook::{consts::SIGINT, iterator::Signals};
-use std::{collections::HashMap, path::Path, thread};
+use std::{collections::HashMap, path::Path};
 
 pub use parser::{parse_command, CacheCommand};
 pub use prelude::*;
@@ -36,13 +35,7 @@ const BACKUP_FILE_NAME: &str = "karsherdb.json";
 fn main() -> anyhow::Result<()> {
     env_logger::init();
     // trap SIGINT when CTRL+C for e.g with docker-compose logs -f
-    let mut signals = Signals::new(&[SIGINT])?;
-
-    thread::spawn(move || {
-        for sig in signals.forever() {
-            debug!("Received signal {:?}", sig);
-        }
-    });
+    ctrlc::set_handler(|| debug!("receive ctrl+c signal 2"))?;
 
     let args = parse_args(std::env::args())?;
 
