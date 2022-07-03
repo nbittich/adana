@@ -26,7 +26,7 @@ impl CacheCommand<'_> {
         const VARIANTS: &[&str] = CacheCommand::VARIANTS;
         assert!(16 == VARIANTS.len(), "enum doc no longer valid!");
         &[
-            (&["put"], "Put a new value to current cache. can have multiple aliases with option '-a'. e.g `set -a drc -a drcomp docker-compose`"),
+            (&["put"], "Put a new value to current cache. can have multiple aliases with option '-a'. e.g `put -a drc -a drcomp docker-compose`"),
             (&["describe","ds"], "List values within the cache."),
             (&["listcache","lsch"], "List available caches."),
             (&["del","delete"], "Remove value from cache. Accept either a hashkey or an alias. e.g `del drc`"),
