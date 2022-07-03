@@ -15,6 +15,9 @@ fn get_default_db_path() -> Option<Box<Path>> {
         std::fs::create_dir(&db_dir).ok()?;
     }
     db_dir.push("karsher.db");
+
+    println!("Db Path: {}", db_dir.to_string_lossy());
+
     Some(db_dir.into_boxed_path())
 }
 
@@ -24,7 +27,6 @@ pub struct Config {
     in_memory: bool,
     fall_back_in_memory: bool,
 }
-
 impl Config {
     pub fn new<P: AsRef<Path>>(
         path: Option<P>,
@@ -37,7 +39,14 @@ impl Config {
             Config {
                 in_memory,
                 path: path
-                    .map(|p| p.as_ref().into())
+                    .map(|p| {
+                        let path: Box<Path> = p.as_ref().into();
+                        println!(
+                            "Db Path: {}",
+                            path.as_ref().to_string_lossy()
+                        );
+                        path
+                    })
                     .or_else(get_default_db_path),
                 fall_back_in_memory,
             }
@@ -91,7 +100,7 @@ where
                             Ok(inner_db) => Arc::new(Mutex::new(inner_db)),
                             Err(e) => {
                                 eprintln!(
-                                        "{} {e:?} \nAttempt to deserialize a corrupt db, fallback to in memory...\n",
+                                        "{} {e:?} \nAttempt to deserialize db, could be because it is the first time you use it\n",
                                         colors::Red.paint("Warning!")
                                     );
                                 Arc::new(Mutex::new(Default::default()))

@@ -1,28 +1,32 @@
+use anyhow::Context;
 use rustyline::completion::{Completer, FilenameCompleter, Pair};
 use rustyline::error::ReadlineError;
 use rustyline::highlight::{Highlighter, MatchingBracketHighlighter};
 use rustyline::hint::{Hinter, HistoryHinter};
 use rustyline::validate::{self, MatchingBracketValidator, Validator};
 use rustyline::{
-    Cmd, CompletionType, Config, Context, EditMode, Editor, KeyEvent,
+    Cmd, CompletionType, Config, Context as Ctx, EditMode, Editor, KeyEvent,
 };
 use rustyline_derive::Helper;
 use std::borrow::Cow::{self, Borrowed, Owned};
-use std::path::PathBuf;
+use std::path::Path;
 
-lazy_static::lazy_static! {
-    static ref HISTORY_FILE_PATH: PathBuf = {
-        let mut home_dir = dirs::home_dir().expect("home dir not found");
-        home_dir.push(".karsher.history.txt");
-        home_dir
-    };
-
+fn get_default_history_path() -> Option<Box<Path>> {
+    let mut home_dir = dirs::home_dir()?;
+    home_dir.push(".karsher.history.txt");
+    Some(home_dir.into_boxed_path())
 }
 
 pub fn save_history(
     rl: &mut Editor<CustomHelper>,
-) -> Result<(), rustyline::error::ReadlineError> {
-    rl.save_history(HISTORY_FILE_PATH.as_path())
+    history_path: Option<impl AsRef<Path>>,
+) -> anyhow::Result<()> {
+    let history_path = history_path
+        .map(|p| p.as_ref().into())
+        .or_else(get_default_history_path)
+        .context("history path not found")?;
+    rl.save_history(history_path.as_ref())
+        .map_err(|e| anyhow::Error::msg(format!("{e}")))
 }
 
 pub fn read_line(
@@ -35,7 +39,9 @@ pub fn read_line(
     rl.readline(&p)
 }
 
-pub fn build_editor() -> Editor<CustomHelper> {
+pub fn build_editor(
+    history_path: Option<impl AsRef<Path>>,
+) -> Editor<CustomHelper> {
     let config = Config::builder()
         .history_ignore_space(true)
         .completion_type(CompletionType::List)
@@ -55,7 +61,17 @@ pub fn build_editor() -> Editor<CustomHelper> {
     rl.bind_sequence(KeyEvent::ctrl('l'), Cmd::ClearScreen);
     rl.bind_sequence(KeyEvent::alt('n'), Cmd::HistorySearchForward);
     rl.bind_sequence(KeyEvent::alt('p'), Cmd::HistorySearchBackward);
-    if rl.load_history(HISTORY_FILE_PATH.as_path()).is_err() {
+    if rl
+        .load_history(
+            history_path
+                .map(|p| p.as_ref().into())
+                .or_else(get_default_history_path)
+                .context("history path missing")
+                .unwrap()
+                .as_ref(),
+        )
+        .is_err()
+    {
         println!("No previous history.");
     }
     rl
@@ -115,7 +131,7 @@ impl Completer for CustomHelper {
         &self,
         line: &str,
         pos: usize,
-        ctx: &Context<'_>,
+        ctx: &Ctx<'_>,
     ) -> Result<(usize, Vec<Pair>), ReadlineError> {
         self.completer.complete(line, pos, ctx)
     }
@@ -124,12 +140,7 @@ impl Completer for CustomHelper {
 impl Hinter for CustomHelper {
     type Hint = String;
 
-    fn hint(
-        &self,
-        line: &str,
-        pos: usize,
-        ctx: &Context<'_>,
-    ) -> Option<String> {
+    fn hint(&self, line: &str, pos: usize, ctx: &Ctx<'_>) -> Option<String> {
         self.hinter.hint(line, pos, ctx)
     }
 }

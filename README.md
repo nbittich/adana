@@ -50,3 +50,20 @@ docker build -t karsher .
 docker run -it karsher 
 
 ```
+
+### Args - override
+
+``` 
+# open an in memory db
+
+karsher --inmemory
+
+```
+
+```
+# override db path & history path + fallback in memory in case of an error (default to false)
+# path must exist! file doesn't have to.
+
+karsher --dbpath /tmp/mydb.db --historypath /tmp/myhistory.txt --fallback
+
+```
