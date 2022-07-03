@@ -1,3 +1,4 @@
+mod args;
 mod cache;
 mod db;
 mod editor;
@@ -6,10 +7,9 @@ mod parser;
 mod prelude;
 mod programs;
 mod utils;
-mod args;
 
-use cache::*;
 use args::*;
+use cache::*;
 use colors::*;
 use db::DbOp;
 use nom::error::ErrorKind;
@@ -58,7 +58,7 @@ fn main() -> anyhow::Result<()> {
         }
     });
 
-    let args = parse_args(std::env::args())?;
+    let _args = parse_args(std::env::args())?;
 
     // todo
 

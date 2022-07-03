@@ -38,7 +38,7 @@ impl Config {
                 in_memory,
                 path: path
                     .map(|p| p.as_ref().into())
-                    .or_else(|| get_default_db_path()),
+                    .or_else(get_default_db_path),
                 fall_back_in_memory,
             }
         }
