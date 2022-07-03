@@ -1,5 +1,4 @@
 use std::{
-    path::Path,
     sync::mpsc::{Receiver, Sender},
     thread::JoinHandle,
     vec,
@@ -11,7 +10,7 @@ use crate::prelude::*;
 
 use super::{DbOp, FileLock, InMemoryDb, Key, Op, Value};
 
-enum Notify {
+pub(super) enum Notify {
     Update,
     Stop,
 }
@@ -21,11 +20,13 @@ pub struct FileDb<K: Key, V: Value> {
     __inner: Arc<Mutex<InMemoryDb<K, V>>>,
     __event_sender: Sender<Notify>,
     __thread_handle: Option<JoinHandle<()>>,
-    config: Arc<Config>,
+    __file_lock: Arc<FileLock>,
 }
+
 #[derive(Debug)]
-pub struct Config {
-    pub file_lock: FileLock,
+pub(super) struct FileDbConfig<K: Key, V: Value> {
+    pub(super) inner: Arc<Mutex<InMemoryDb<K, V>>>,
+    pub(super) file_lock: Arc<FileLock>,
 }
 
 trait GuardedDb<K: Key, V: Value> {
@@ -184,38 +185,6 @@ where
     K: 'static + Key + DeserializeOwned + std::fmt::Debug,
     V: 'static + Value + DeserializeOwned + std::fmt::Debug,
 {
-    pub fn open<P: AsRef<Path>>(path: P) -> anyhow::Result<FileDb<K, V>> {
-        let file_lock = FileLock::open(path)?;
-
-        Self::open_with_config(Config { file_lock })
-    }
-
-    pub fn open_temporary() -> anyhow::Result<InMemoryDb<K, V>> {
-        Ok(Default::default())
-    }
-
-    pub fn open_with_config(config: Config) -> anyhow::Result<FileDb<K, V>> {
-        let __inner = {
-            let reader = config.file_lock.read()?;
-            if let Ok(inner_db) =
-                bincode::deserialize_from::<_, InMemoryDb<K, V>>(reader)
-            {
-                Arc::new(Mutex::new(inner_db))
-            } else {
-                Arc::new(Mutex::new(Default::default()))
-            }
-        };
-        let (__event_sender, receiver) = std::sync::mpsc::channel();
-        let mut db = FileDb {
-            config: Arc::new(config),
-            __inner,
-            __event_sender,
-            __thread_handle: None,
-        };
-        db.start_file_db(receiver)?;
-        Ok(db)
-    }
-
     fn __flush(
         inner_db: Arc<Mutex<InMemoryDb<K, V>>>,
         file_lock: &FileLock,
@@ -234,7 +203,7 @@ where
         receiver: Receiver<Notify>,
     ) -> anyhow::Result<()> {
         let clone = Arc::clone(&self.__inner);
-        let config = self.config.clone();
+        let file_lock = self.__file_lock.clone();
 
         let handle = std::thread::spawn(move || {
             debug!("start syncing");
@@ -244,7 +213,7 @@ where
                     Notify::Update => {
                         debug!("receive update!");
                         if let Err(e) =
-                            Self::__flush(Arc::clone(&clone), &config.file_lock)
+                            Self::__flush(Arc::clone(&clone), &file_lock)
                         {
                             error!("could not flush db. Err: '{e}'.");
                         } else {
@@ -260,7 +229,7 @@ where
 
             debug!("DROPPED");
 
-            if let Err(e) = Self::__flush(clone, &config.file_lock) {
+            if let Err(e) = Self::__flush(clone, &file_lock) {
                 error!("could not flush db. Err: '{e}'.");
             }
         });
@@ -282,50 +251,22 @@ impl<K: Key, V: Value> Drop for FileDb<K, V> {
     }
 }
 
-#[cfg(test)]
-mod test {
+impl<K, V> TryFrom<FileDbConfig<K, V>> for FileDb<K, V>
+where
+    K: 'static + Key + DeserializeOwned + std::fmt::Debug,
+    V: 'static + Value + DeserializeOwned + std::fmt::Debug,
+{
+    type Error = anyhow::Error;
 
-    use crate::db::file_db::{Config, FileDb};
-    use crate::db::file_lock::FileLock;
-    use crate::db::DbOp;
-    use crate::prelude::*;
-
-    use super::Op;
-
-    #[derive(Serialize, Debug, PartialEq)]
-    struct MyString(String);
-
-    #[test]
-    fn test_file_db_lock() {
-        let _ = File::create("/tmp/karsher.db").unwrap();
-
-        let mut file_db: FileDb<u64, String> =
-            FileDb::open_with_config(Config {
-                file_lock: FileLock::open("/tmp/karsher.db").unwrap(),
-            })
-            .unwrap();
-
-        file_db.open_tree("rust");
-
-        for i in 1..100u64 {
-            file_db.insert(i, format!("ok mani{i}"));
-            file_db.insert(i * 100, format!("ok rebenga{i}"));
-            std::thread::sleep(Duration::from_millis(25));
-        }
-        assert_eq!(Some(198), file_db.len());
-
-        drop(file_db); // force destroying the object to flush db
-
-        let mut file_db: FileDb<u64, String> =
-            FileDb::open_with_config(Config {
-                file_lock: FileLock::open("/tmp/karsher.db").unwrap(),
-            })
-            .unwrap();
-
-        file_db.open_tree("rust");
-
-        file_db.insert(3991u64, format!("new!"));
-
-        assert_eq!(Some(199), file_db.len());
+    fn try_from(config: FileDbConfig<K, V>) -> Result<Self, Self::Error> {
+        let (__event_sender, receiver) = std::sync::mpsc::channel();
+        let mut db = FileDb {
+            __file_lock: config.file_lock,
+            __inner: config.inner,
+            __event_sender,
+            __thread_handle: None,
+        };
+        db.start_file_db(receiver)?;
+        Ok(db)
     }
 }

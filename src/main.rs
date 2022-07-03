@@ -6,10 +6,12 @@ mod parser;
 mod prelude;
 mod programs;
 mod utils;
+mod args;
 
 use cache::*;
+use args::*;
 use colors::*;
-use db::{DbOp, FileDb};
+use db::DbOp;
 use nom::error::ErrorKind;
 use os_command::exec_command;
 use rustyline::error::ReadlineError;
@@ -19,7 +21,10 @@ use std::{collections::HashMap, path::Path, thread};
 pub use parser::{parse_command, CacheCommand};
 pub use prelude::*;
 
-use crate::utils::clear_terminal;
+use crate::{
+    db::{Config, Db},
+    utils::clear_terminal,
+};
 
 const CACHE_COMMAND_DOC: &[(&[&str], &str)] = CacheCommand::doc();
 
@@ -28,6 +33,7 @@ const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
 const BACKUP_FILE_NAME: &str = "karsherdb.json";
 
+// TODO to be removed
 lazy_static::lazy_static! {
     static ref DB_FILE_PATH: PathBuf = {
         let mut db_dir = dirs::data_dir().expect("db not found");
@@ -52,21 +58,19 @@ fn main() -> anyhow::Result<()> {
         }
     });
 
+    let args = parse_args(std::env::args())?;
+
+    // todo
+
     clear_terminal();
     println!("{PKG_NAME} v{VERSION}");
     println!("Db Path: {}", DB_FILE_PATH.as_path().to_string_lossy());
     println!();
 
-    match FileDb::open(DB_FILE_PATH.as_path()) {
-        Ok(mut db) => start_app(&mut db),
-        Err(e) => {
-            eprintln!(
-                "{} {e} \nAttempt to open a temporary db...\n",
-                colors::Red.paint("Warning!")
-            );
-            let mut db = FileDb::open_temporary()?;
-            start_app(&mut db)
-        }
+    match Db::open(Config::default()) {
+        Ok(Db::InMemory(mut db)) => start_app(&mut db),
+        Ok(Db::FileBased(mut db)) => start_app(&mut db),
+        Err(e) => Err(e),
     }
 }
 

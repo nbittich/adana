@@ -1,6 +1,6 @@
 use std::path::Path;
 
-pub use crate::prelude::*;
+use crate::prelude::*;
 use crate::{
     db::{Batch, DbOp, Op, Tree, DEFAULT_TREE},
     utils::calculate_hash,
