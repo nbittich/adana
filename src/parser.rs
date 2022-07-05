@@ -40,7 +40,7 @@ impl CacheCommand<'_> {
             (&["backup","bckp"], "Backup the database of caches to the current directory"),
             (&["restore"], "Restore the database from current directory"),
             (&["cd"], "Navigate to a directory"),
-            (&["merge/mergech"], "Merge current with a given cache"),
+            (&["merge","mergech"], "Merge current with a given cache"),
             (&["help"], "Display Help."),
         ]
     }
