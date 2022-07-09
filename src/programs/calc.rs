@@ -12,6 +12,8 @@ use slab_tree::{NodeId, NodeRef, Tree};
 
 use crate::prelude::*;
 
+use super::primitive::{Pow, Primitive};
+
 // region: structs
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 enum Value<'a> {
@@ -21,6 +23,7 @@ enum Value<'a> {
     Integer(i64),
     BlockParen(Vec<Value<'a>>),
     Variable(&'a str),
+    VariableNegate(&'a str),
     VariableExpr { name: Box<Value<'a>>, expr: Box<Value<'a>> },
 }
 
@@ -30,6 +33,7 @@ enum Operator {
     Subtr,
     Mult,
     Div,
+    Mod,
     Exp,
 }
 
@@ -37,8 +41,7 @@ enum Operator {
 enum TreeNodeValue {
     VariableAssign(String),
     Ops(Operator),
-    Int(i64),
-    Double(f64),
+    Primitive(Primitive),
 }
 // endregion: structs
 
@@ -86,6 +89,7 @@ fn parse_value(s: &str) -> Res<Value> {
                 parse_paren,
                 parse_exp,
                 parse_mult,
+                parse_mod,
                 parse_div,
                 parse_add,
                 parse_subtr,
@@ -104,6 +108,7 @@ fn parse_op<'a>(operation: Operator) -> impl Fn(&'a str) -> Res<Value> {
         Operator::Div => "/",
         Operator::Mult => "*",
         Operator::Exp => "^",
+        Operator::Mod => "%",
     };
     move |s| map(tag_no_space(sep), |_| Value::Operation(operation))(s)
 }
@@ -120,6 +125,9 @@ fn parse_div(s: &str) -> Res<Value> {
     parse_op(Operator::Div)(s)
 }
 
+fn parse_mod(s: &str) -> Res<Value> {
+    parse_op(Operator::Mod)(s)
+}
 fn parse_add(s: &str) -> Res<Value> {
     parse_op(Operator::Add)(s)
 }
@@ -158,9 +166,28 @@ fn parse_str(s: &str) -> Res<Value> {
 // endregion: parsers
 
 // region: reducers
+fn variable_from_ctx<'a>(
+    name: &'a str,
+    negate: bool,
+    ctx: &mut HashMap<String, Primitive>,
+) -> anyhow::Result<Value<'a>> {
+    let value =
+        ctx.get(name).context(format!("variable {name} not found in ctx"))?;
 
+    if cfg!(test) {
+        dbg!(value);
+    }
+
+    let value = match value {
+        Primitive::Int(i) if negate => Value::Integer(-i),
+        Primitive::Int(i) => Value::Integer(*i),
+        Primitive::Double(d) if negate => Value::Decimal(-d),
+        Primitive::Double(d) => Value::Decimal(*d),
+    };
+    Ok(value)
+}
 fn to_tree(
-    ctx: &mut HashMap<String, f64>,
+    ctx: &mut HashMap<String, Primitive>,
     value: Value,
     tree: &mut Tree<TreeNodeValue>,
     curr_node_id: &Option<NodeId>,
@@ -188,6 +215,7 @@ fn to_tree(
                 .or_else(filter_op(Operator::Add, &operations))
                 .or_else(filter_op(Operator::Subtr, &operations))
                 .or_else(filter_op(Operator::Mult, &operations))
+                .or_else(filter_op(Operator::Mod, &operations))
                 .or_else(filter_op(Operator::Div, &operations))
                 .or_else(filter_op(Operator::Exp, &operations));
 
@@ -212,6 +240,7 @@ fn to_tree(
                 if cfg!(test) {
                     println!("Left => {children_left:?}");
                     println!("Right => {children_right:?}");
+                    println!("Op => {operation:?}");
                     println!();
                 }
 
@@ -245,7 +274,7 @@ fn to_tree(
         }
 
         Value::Decimal(num) => {
-            let double_node = TreeNodeValue::Double(num);
+            let double_node = TreeNodeValue::Primitive(Primitive::Double(num));
             if let Some(node_id) = curr_node_id {
                 let mut node = tree
                     .get_mut(*node_id)
@@ -260,7 +289,7 @@ fn to_tree(
             }
         }
         Value::Integer(num) => {
-            let double_node = TreeNodeValue::Int(num);
+            let double_node = TreeNodeValue::Primitive(Primitive::Int(num));
             let node_id = if let Some(node_id) = curr_node_id {
                 let mut node = tree
                     .get_mut(*node_id)
@@ -276,15 +305,12 @@ fn to_tree(
             Ok(node_id)
         }
         Value::Variable(name) => {
-            let value = ctx
-                .get(name)
-                .copied()
-                .context(format!("variable {name} not found in ctx"))?;
-
-            if cfg!(test) {
-                dbg!(value);
-            }
-            return to_tree(ctx, Value::Decimal(value), tree, curr_node_id);
+            let value = variable_from_ctx(name, false, ctx)?;
+            to_tree(ctx, value, tree, curr_node_id)
+        }
+        Value::VariableNegate(name) => {
+            let value = variable_from_ctx(name, true, ctx)?;
+            to_tree(ctx, value, tree, curr_node_id)
         }
         Value::VariableExpr { name, expr } => {
             anyhow::ensure!(
@@ -316,8 +342,8 @@ fn to_tree(
 // region: calculate
 fn compute_recur(
     node: Option<NodeRef<TreeNodeValue>>,
-    ctx: &mut HashMap<String, f64>,
-) -> f64 {
+    ctx: &mut HashMap<String, Primitive>,
+) -> Primitive {
     if let Some(node) = node {
         match node.data() {
             TreeNodeValue::Ops(Operator::Add) => {
@@ -334,6 +360,13 @@ fn compute_recur(
                 compute_recur(node.first_child(), ctx)
                     * compute_recur(node.last_child(), ctx)
             }
+            TreeNodeValue::Ops(Operator::Mod) => {
+                if node.children().count() == 1 {
+                    return compute_recur(node.first_child(), ctx);
+                }
+                compute_recur(node.first_child(), ctx)
+                    % compute_recur(node.last_child(), ctx)
+            }
             TreeNodeValue::Ops(Operator::Subtr) => {
                 if node.children().count() == 1 {
                     return -compute_recur(node.first_child(), ctx);
@@ -346,7 +379,7 @@ fn compute_recur(
                     return compute_recur(node.first_child(), ctx);
                 }
                 compute_recur(node.first_child(), ctx)
-                    .powf(compute_recur(node.last_child(), ctx))
+                    .pow(compute_recur(node.last_child(), ctx))
             }
             TreeNodeValue::Ops(Operator::Div) => {
                 if node.children().count() == 1 {
@@ -355,8 +388,7 @@ fn compute_recur(
                 compute_recur(node.first_child(), ctx)
                     / compute_recur(node.last_child(), ctx)
             }
-            TreeNodeValue::Int(v) => *v as f64,
-            TreeNodeValue::Double(v) => *v,
+            TreeNodeValue::Primitive(p) => *p,
             TreeNodeValue::VariableAssign(name) => {
                 let v = compute_recur(node.first_child(), ctx);
                 ctx.insert(name.to_owned(), v);
@@ -364,13 +396,16 @@ fn compute_recur(
             }
         }
     } else {
-        0.
+        Primitive::Int(0)
     }
 }
 // endregion: calculate
 
 // region: exposed api
-pub fn compute(s: &str, ctx: &mut HashMap<String, f64>) -> anyhow::Result<f64> {
+pub fn compute(
+    s: &str,
+    ctx: &mut HashMap<String, Primitive>,
+) -> anyhow::Result<Primitive> {
     let (rest, value) =
         parse_str(s).map_err(|e| anyhow::Error::msg(e.to_string()))?;
 
@@ -388,7 +423,9 @@ pub fn compute(s: &str, ctx: &mut HashMap<String, f64>) -> anyhow::Result<f64> {
     if cfg!(test) {
         let mut tree_fmt = String::new();
         tree.write_formatted(&mut tree_fmt)?;
-        println!("DEBUG: {tree_fmt}");
+        println!("===================DEBUG TREE==================");
+        print!("{tree_fmt}");
+        println!("===================DEBUG TREE==================");
     }
 
     let root = tree.root();
@@ -406,20 +443,23 @@ mod test {
 
     use std::collections::HashMap;
 
-    use crate::programs::calc::{compute, parse_str, Operator::*, Value};
+    use crate::programs::{
+        calc::{compute, parse_str, Operator::*, Value},
+        Primitive,
+    };
 
     #[test]
     #[should_panic(expected = "invalid expression!")]
     fn test_expr_invalid() {
         let expr = "use example";
-        let mut ctx = HashMap::from([("x".to_string(), 2.)]);
+        let mut ctx = HashMap::from([("x".to_string(), Primitive::Double(2.))]);
         compute(expr, &mut ctx).unwrap();
     }
     #[test]
     #[should_panic(expected = "invalid expression!")]
     fn test_expr_invalid_drc() {
         let expr = "drc logs -f triplestore";
-        let mut ctx = HashMap::from([("x".to_string(), 2.)]);
+        let mut ctx = HashMap::from([("x".to_string(), Primitive::Double(2.))]);
         compute(expr, &mut ctx).unwrap();
     }
 
@@ -427,27 +467,27 @@ mod test {
     #[should_panic(expected = "Invalid operation!")]
     fn test_op_invalid() {
         let expr = "use example = wesh";
-        let mut ctx = HashMap::from([("x".to_string(), 2.)]);
+        let mut ctx = HashMap::from([("x".to_string(), Primitive::Double(2.))]);
         compute(expr, &mut ctx).unwrap();
     }
 
     #[test]
     fn test_compute_with_ctx() {
         let expr = "x * 5";
-        let mut ctx = HashMap::from([("x".to_string(), 2.)]);
+        let mut ctx = HashMap::from([("x".to_string(), Primitive::Double(2.))]);
 
         let res = compute(expr, &mut ctx).unwrap();
-        assert_eq!(10., res);
+        assert_eq!(Primitive::Double(10.), res);
     }
     #[test]
     fn test_compute_assign_with_ctx() {
         let expr = "y = x * 5";
-        let mut ctx = HashMap::from([("x".to_string(), 2.)]);
+        let mut ctx = HashMap::from([("x".to_string(), Primitive::Double(2.))]);
 
         let res = compute(expr, &mut ctx).unwrap();
-        assert_eq!(10., res);
+        assert_eq!(Primitive::Double(10.), res);
 
-        assert_eq!(ctx.get("y"), Some(&10.));
+        assert_eq!(ctx.get("y"), Some(&Primitive::Double(10.)));
     }
 
     #[test]
@@ -493,47 +533,92 @@ mod test {
     }
 
     #[test]
-    fn test_compute() {
+    fn test_modulo() {
         let mut ctx = HashMap::new();
+        assert_eq!(Primitive::Int(1), compute("3%2", &mut ctx).unwrap());
+        assert_eq!(Primitive::Double(1.), compute("3%2.", &mut ctx).unwrap());
         assert_eq!(
-            3280.3,
-            compute("x=2* (9*(5-(1/2))) ^2 -1 / 5", &mut ctx).unwrap()
+            Primitive::Double(0.625),
+            compute("5/8.%2", &mut ctx).unwrap()
         );
         assert_eq!(
-            3274.9,
-            compute("y = 2* (9*(5-(1/2))) ^2 -1 / 5 * 8 - 4", &mut ctx)
+            Primitive::Double(3278.9),
+            compute("2* (9*(5-(1/2.))) ^2 -1 / 5. * 8 - 4 %4", &mut ctx)
                 .unwrap()
         );
         assert_eq!(
-            -670.9548307564088,
-            compute("z = 78/5-4.5*(9+7^2.5)-12*4+1-8/3*4-5", &mut ctx).unwrap()
+            Primitive::Double(-1.1),
+            compute("2* (9*(5-(1/2.))) ^2 %2 -1 / 5. * 8 - 4 %4", &mut ctx)
+                .unwrap()
+        );
+    }
+
+    #[test]
+    fn test_compute() {
+        let mut ctx = HashMap::new();
+        assert_eq!(
+            Primitive::Double(3280.3),
+            compute("x=2* (9*(5-(1./2.))) ^2 -1 / 5.", &mut ctx).unwrap()
         );
         assert_eq!(
-            37736.587719298244,
+            Primitive::Double(3274.9),
+            compute("y = 2* (9*(5-(1/2.))) ^2 -1 / 5. * 8 - 4", &mut ctx)
+                .unwrap()
+        );
+        assert_eq!(
+            Primitive::Double(-670.9548307564088),
+            compute("z = 78/5.-4.5*(9+7^2.5)-12*4+1-8/3.*4-5", &mut ctx)
+                .unwrap()
+        );
+        assert_eq!(
+            Primitive::Int(37737),
             compute("f = 1988*19-(((((((9*2))))+2*4)-3))/6-1^2*1000/(7-4*(3/9-(9+3/2-4)))", &mut ctx).unwrap()
         );
-        assert_eq!(0., compute("0", &mut ctx).unwrap());
-        assert_eq!(9., compute("9", &mut ctx).unwrap());
-        assert_eq!(-9., compute("-9", &mut ctx).unwrap());
         assert_eq!(
-            6. / 2. * (2. + 1.),
+            Primitive::Double(37736.587719298244),
+            compute("f = 1988*19-(((((((9*2))))+2*4)-3))/6.-1^2*1000/(7-4*(3/9.-(9+3/2.-4)))", &mut ctx).unwrap()
+        );
+        assert_eq!(Primitive::Int(0), compute("0", &mut ctx).unwrap());
+        assert_eq!(Primitive::Int(9), compute("9", &mut ctx).unwrap());
+        assert_eq!(Primitive::Int(-9), compute("-9", &mut ctx).unwrap());
+        assert_eq!(
+            Primitive::Int(6 / 2 * (2 + 1)),
             compute("6/2*(2+1)", &mut ctx).unwrap()
         );
-        assert_eq!(2. - 1. / 5., compute("2 -1 / 5", &mut ctx).unwrap());
+        assert_eq!(
+            Primitive::Double(2. - 1. / 5.),
+            compute("2 -1 / 5.", &mut ctx).unwrap()
+        );
         // todo maybe should panic in these cases
-        assert_eq!(2. * 4., compute("2* * *4", &mut ctx).unwrap());
-        assert_eq!(2. * 4., compute("2* ** *4", &mut ctx).unwrap());
-        assert_eq!(4., compute("*4", &mut ctx).unwrap());
+        assert_eq!(
+            Primitive::Int(2 * 4),
+            compute("2* * *4", &mut ctx).unwrap()
+        );
+        assert_eq!(
+            Primitive::Int(2 * 4),
+            compute("2* ** *4", &mut ctx).unwrap()
+        );
+        assert_eq!(Primitive::Int(4), compute("*4", &mut ctx).unwrap());
 
         // compute with variables
         assert_eq!(
-            -4765.37866215695,
-            compute("f = 555*19-(((((((9*2))))+2*f)-x))/6-1^2*y/(z-4*(3/9-(9+3/2-4))) - x", &mut ctx).unwrap()
+            Primitive::Double(-4765.37866215695),
+            compute("f = 555*19-(((((((9*2))))+2*f)-x))/6.-1^2*y/(z-4*(3/9.-(9+3/2.-4))) - x", &mut ctx).unwrap()
         );
 
-        assert_eq!(ctx.get("f"), Some(&-4765.37866215695));
-        assert_eq!(ctx.get("z"), Some(&-670.9548307564088));
-        assert_eq!(ctx.get("y"), Some(&3274.9));
-        assert_eq!(ctx.get("x"), Some(&3280.3));
+        assert_eq!(ctx.get("f"), Some(&Primitive::Double(-4765.37866215695)));
+        assert_eq!(ctx.get("z"), Some(&Primitive::Double(-670.9548307564088)));
+        assert_eq!(ctx.get("y"), Some(&Primitive::Double(3274.9)));
+        assert_eq!(ctx.get("x"), Some(&Primitive::Double(3280.3)));
+    }
+
+    #[test]
+    #[ignore]
+    fn test_bug() {
+        let mut ctx = HashMap::new();
+        assert_eq!(
+            Primitive::Int(-5 / -1),
+            compute("-5/-1", &mut ctx).unwrap()
+        );
     }
 }
