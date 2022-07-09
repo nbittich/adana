@@ -14,6 +14,7 @@ use colors::*;
 use db::DbOp;
 use nom::error::ErrorKind;
 use os_command::exec_command;
+use programs::Primitive;
 use rustyline::error::ReadlineError;
 use std::{collections::HashMap, path::Path};
 
@@ -301,7 +302,7 @@ fn process_command(
 
 fn process_repl(
     line: &str,
-    ctx: &mut HashMap<String, f64>,
+    ctx: &mut HashMap<String, Primitive>,
 ) -> anyhow::Result<()> {
     let calc = crate::programs::compute(line, ctx)?;
     println!("{calc}");
