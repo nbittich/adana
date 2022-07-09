@@ -27,13 +27,16 @@ pub trait Pow {
 }
 
 impl Pow for Primitive {
-    fn pow(&self, n: Self) -> Self {
+    fn pow(&self, rhs: Self) -> Self {
         match self {
-            Primitive::Int(l) if let Primitive::Int(r) = n => Primitive::Int(l.pow(r as u32)),
-            Primitive::Int(l) if let Primitive::Double(r) = n => Primitive::Double((*l as f64).powf(r)),
-            Primitive::Double(l) if let Primitive::Int(r) = n => Primitive::Double(l.powi(r as i32)),
-            Primitive::Double(l) if let Primitive::Double(r) = n => Primitive::Double((*l as f64).powf(r)),
-            Primitive::Int(_) | Primitive::Double(_) => panic!("Pow not allowed {self}")
+            Primitive::Int(l) => match rhs {
+                Primitive::Int(r) => Primitive::Int(l.pow(r as u32)),
+                Primitive::Double(r) => Primitive::Double((*l as f64).powf(r)),
+            },
+            Primitive::Double(l) => match rhs {
+                Primitive::Int(r) => Primitive::Double(l.powi(r as i32)),
+                Primitive::Double(r) =>  Primitive::Double((*l as f64).powf(r)),
+            },
         }
     }
 }
@@ -43,13 +46,14 @@ impl Add for Primitive {
 
     fn add(self, rhs: Self) -> Self::Output {
         match self {
-            Primitive::Int(l) if let Primitive::Int(r) = rhs  => Primitive::Int(l+r),
-            Primitive::Int(l) if let Primitive::Double(r) = rhs  => Primitive::Double(l as f64 +r),
-
-            Primitive::Double(l) if let Primitive::Int(r) = rhs  => Primitive::Double(l+r as f64),
-            Primitive::Double(l) if let Primitive::Double(r) = rhs  => Primitive::Double(l as f64 +r),
-
-            Primitive::Int(_) | Primitive::Double(_) => panic!("Addition not allowed {self}")
+            Primitive::Int(l) => match rhs {
+                Primitive::Int(r) => Primitive::Int(l + r),
+                Primitive::Double(r) => Primitive::Double(l as f64 + r),
+            },
+            Primitive::Double(l) => match rhs {
+                Primitive::Int(r) => Primitive::Double(l + r as f64),
+                Primitive::Double(r) => Primitive::Double(l as f64 + r),
+            },
         }
     }
 }
@@ -59,13 +63,14 @@ impl Sub for Primitive {
 
     fn sub(self, rhs: Self) -> Self::Output {
         match self {
-            Primitive::Int(l) if let Primitive::Int(r) = rhs  => Primitive::Int(l-r),
-            Primitive::Int(l) if let Primitive::Double(r) = rhs  => Primitive::Double(l as f64 - r),
-
-            Primitive::Double(l) if let Primitive::Int(r) = rhs  => Primitive::Double(l-r as f64),
-            Primitive::Double(l) if let Primitive::Double(r) = rhs  => Primitive::Double(l as f64 - r),
-
-            Primitive::Int(_) | Primitive::Double(_) => panic!("Subtract not allowed {self}")
+            Primitive::Int(l) => match rhs {
+                Primitive::Int(r) => Primitive::Int(l - r),
+                Primitive::Double(r) => Primitive::Double(l as f64 - r),
+            },
+            Primitive::Double(l) => match rhs {
+                Primitive::Int(r) => Primitive::Double(l - r as f64),
+                Primitive::Double(r) => Primitive::Double(l as f64 - r),
+            },
         }
     }
 }
@@ -75,13 +80,14 @@ impl std::ops::Rem for Primitive {
 
     fn rem(self, rhs: Self) -> Self::Output {
         match self {
-            Primitive::Int(l) if let Primitive::Int(r) = rhs  => Primitive::Int(l%r),
-            Primitive::Int(l) if let Primitive::Double(r) = rhs  => Primitive::Double(l as f64 % r),
-
-            Primitive::Double(l) if let Primitive::Int(r) = rhs  => Primitive::Double(l%r as f64),
-            Primitive::Double(l) if let Primitive::Double(r) = rhs  => Primitive::Double(l as f64 % r),
-
-            Primitive::Int(_) | Primitive::Double(_) => panic!("Modulo not allowed for {self}") 
+            Primitive::Int(l) => match rhs {
+                Primitive::Int(r) => Primitive::Int(l % r),
+                Primitive::Double(r) => Primitive::Double(l as f64 % r),
+            },
+            Primitive::Double(l) => match rhs {
+                Primitive::Int(r) => Primitive::Double(l % r as f64),
+                Primitive::Double(r) => Primitive::Double(l as f64 % r),
+            },
         }
     }
 }
@@ -90,13 +96,14 @@ impl Mul for Primitive {
 
     fn mul(self, rhs: Self) -> Self::Output {
         match self {
-            Primitive::Int(l) if let  Primitive::Int(r) = rhs  => Primitive::Int(l*r),
-            Primitive::Int(l) if let  Primitive::Double(r) = rhs  => Primitive::Double(l as f64 * r),
-
-            Primitive::Double(l) if let  Primitive::Int(r) = rhs  => Primitive::Double(l*r as f64),
-            Primitive::Double(l) if let  Primitive::Double(r) = rhs  => Primitive::Double(l as f64 * r),
-
-            Primitive::Int(_) | Primitive::Double(_) => panic!("Multiply not allowe {self}")
+            Primitive::Int(l) => match rhs {
+                Primitive::Int(r) => Primitive::Int(l * r),
+                Primitive::Double(r) => Primitive::Double(l as f64 * r),
+            },
+            Primitive::Double(l) => match rhs {
+                Primitive::Int(r) => Primitive::Double(l * r as f64),
+                Primitive::Double(r) => Primitive::Double(l as f64 * r),
+            },
         }
     }
 }
@@ -105,13 +112,14 @@ impl Div for Primitive {
 
     fn div(self, rhs: Self) -> Self::Output {
         match self {
-            Primitive::Int(l) if let Primitive::Int(r) = rhs  => Primitive::Int(l/r),
-            Primitive::Int(l) if let Primitive::Double(r) = rhs  => Primitive::Double(l as f64 / r),
-
-            Primitive::Double(l) if let Primitive::Int(r) = rhs  => Primitive::Double(l/r as f64),
-            Primitive::Double(l) if let Primitive::Double(r) = rhs  => Primitive::Double(l as f64 / r),
-
-            Primitive::Int(_) | Primitive::Double(_) => panic!("Division not allowed for {self}")
+            Primitive::Int(l) => match rhs {
+                Primitive::Int(r) => Primitive::Int(l / r),
+                Primitive::Double(r) => Primitive::Double(l as f64 / r),
+            },
+            Primitive::Double(l) => match rhs {
+                Primitive::Int(r) => Primitive::Double(l % r as f64),
+                Primitive::Double(r) => Primitive::Double(l as f64 / r),
+            },
         }
     }
 }

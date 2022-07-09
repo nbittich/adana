@@ -225,12 +225,35 @@ fn to_tree(
 
                 let operation = operations.remove(0);
 
+                // handle negation
+                if operation == Value::Operation(Operator::Subtr) {
+                    let right_first = match operations.first() {
+                        Some(Value::Decimal(d)) => Some(Value::Decimal(-d)),
+                        Some(Value::Integer(d)) => Some(Value::Integer(-d)),
+                        Some(Value::Variable(d)) => {
+                            Some(Value::VariableNegate(d))
+                        }
+                        _ => None,
+                    };
+                  
+                    if left.is_empty() || matches!(left.last(), Some(Value::Operation(_)))  {
+                        if let Some(first) = right_first  {
+                            operations.remove(0);
+                            operations.insert(0, first);
+                           let curr_node_id = to_tree(ctx, Value::BlockParen(left), tree, curr_node_id)?;
+    
+                           to_tree(ctx, Value::BlockParen(operations), tree, &curr_node_id)?;
+                           return Ok(curr_node_id);
+                        }
+                      
+                    }
+                }
+
                 let children_left = if left.len() == 1 {
                     left.remove(0)
                 } else {
                     Value::BlockParen(left)
                 };
-
                 let children_right = if operations.len() == 1 {
                     operations.remove(0)
                 } else {
@@ -613,12 +636,13 @@ mod test {
     }
 
     #[test]
-    #[ignore]
-    fn test_bug() {
+    fn test_negate() {
         let mut ctx = HashMap::new();
         assert_eq!(
             Primitive::Int(-5 / -1),
             compute("-5/-1", &mut ctx).unwrap()
         );
+        assert_eq!(Primitive::Int(5 / -1), compute("5/-1", &mut ctx).unwrap());
+        assert_eq!(Primitive::Int(--5), compute("--5", &mut ctx).unwrap());
     }
 }

@@ -1,5 +1,3 @@
-#![feature(if_let_guard, let_chains)]
-
 mod args;
 mod cache;
 mod db;
