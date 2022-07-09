@@ -2,7 +2,7 @@ use std::{collections::HashMap, panic::AssertUnwindSafe};
 
 use anyhow::Context;
 use nom::{
-    character::complete::{alpha1, alphanumeric1, i64 as I64},
+    character::complete::{alpha1, alphanumeric1, i128 as I128},
     combinator::{all_consuming, map_parser},
     multi::many1,
     number::complete::{double, recognize_float},
@@ -20,7 +20,7 @@ enum Value<'a> {
     Expression(Vec<Value<'a>>),
     Operation(Operator),
     Decimal(f64),
-    Integer(i64),
+    Integer(i128),
     BlockParen(Vec<Value<'a>>),
     Variable(&'a str),
     VariableNegate(&'a str),
@@ -54,7 +54,7 @@ fn parse_number(s: &str) -> Res<Value> {
     map_parser(
         recognize_float,
         alt((
-            map(all_consuming(I64), Value::Integer),
+            map(all_consuming(I128), Value::Integer),
             map(all_consuming(double), Value::Decimal),
         )),
     )(s)
@@ -195,6 +195,9 @@ fn to_tree(
     match value {
         Value::Expression(mut operations)
         | Value::BlockParen(mut operations) => {
+            if cfg!(test) {
+                dbg!(&operations);
+            }
             fn filter_op<'a>(
                 op: Operator,
                 operations: &'a [Value<'a>],
@@ -235,17 +238,19 @@ fn to_tree(
                         }
                         _ => None,
                     };
-                  
-                    if left.is_empty() || matches!(left.last(), Some(Value::Operation(_)))  {
-                        if let Some(first) = right_first  {
+
+                    if matches!(left.last(), Some(Value::Operation(_))) {
+                        if let Some(first) = right_first {
                             operations.remove(0);
                             operations.insert(0, first);
-                           let curr_node_id = to_tree(ctx, Value::BlockParen(left), tree, curr_node_id)?;
-    
-                           to_tree(ctx, Value::BlockParen(operations), tree, &curr_node_id)?;
-                           return Ok(curr_node_id);
+                            left.append(&mut operations);
+                            return to_tree(
+                                ctx,
+                                Value::BlockParen(left),
+                                tree,
+                                curr_node_id,
+                            );
                         }
-                      
                     }
                 }
 
@@ -594,7 +599,7 @@ mod test {
                 .unwrap()
         );
         assert_eq!(
-            Primitive::Int(37737),
+            Primitive::Double(37737.),
             compute("f = 1988*19-(((((((9*2))))+2*4)-3))/6-1^2*1000/(7-4*(3/9-(9+3/2-4)))", &mut ctx).unwrap()
         );
         assert_eq!(
@@ -644,5 +649,19 @@ mod test {
         );
         assert_eq!(Primitive::Int(5 / -1), compute("5/-1", &mut ctx).unwrap());
         assert_eq!(Primitive::Int(--5), compute("--5", &mut ctx).unwrap());
+    }
+    #[test]
+    fn test_pow() {
+        let mut ctx = HashMap::new();
+        assert_eq!(
+            Primitive::Double(-0.5),
+            compute("-2^-1", &mut ctx).unwrap()
+        );
+        assert_eq!(
+            Primitive::Double(-0.04),
+            compute("-5^-2", &mut ctx).unwrap()
+        );
+        assert_eq!(Primitive::Double(-25.), compute("-5^2", &mut ctx).unwrap());
+        assert_eq!(Primitive::Double(0.04), compute("5^-2", &mut ctx).unwrap());
     }
 }

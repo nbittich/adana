@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum Primitive {
-    Int(i64),
+    Int(i128),
     Double(f64),
 }
 
@@ -30,12 +30,14 @@ impl Pow for Primitive {
     fn pow(&self, rhs: Self) -> Self {
         match self {
             Primitive::Int(l) => match rhs {
-                Primitive::Int(r) => Primitive::Int(l.pow(r as u32)),
+                Primitive::Int(r) => {
+                    Primitive::Double((*l as f64).powf(r as f64))
+                }
                 Primitive::Double(r) => Primitive::Double((*l as f64).powf(r)),
             },
             Primitive::Double(l) => match rhs {
-                Primitive::Int(r) => Primitive::Double(l.powi(r as i32)),
-                Primitive::Double(r) =>  Primitive::Double((*l as f64).powf(r)),
+                Primitive::Int(r) => Primitive::Double(l.powf(r as f64)),
+                Primitive::Double(r) => Primitive::Double((*l as f64).powf(r)),
             },
         }
     }
