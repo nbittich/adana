@@ -233,7 +233,9 @@ fn to_tree(
                 let operation = operations.remove(0);
 
                 // handle negation
-                if operation == Value::Operation(Operator::Subtr) {
+                if operation == Value::Operation(Operator::Subtr)
+                    && matches!(left.last(), Some(Value::Operation(_)))
+                {
                     let right_first = match operations.first() {
                         Some(Value::Decimal(d)) => Some(Value::Decimal(-d)),
                         Some(Value::Integer(d)) => Some(Value::Integer(-d)),
@@ -242,19 +244,16 @@ fn to_tree(
                         }
                         _ => None,
                     };
-
-                    if matches!(left.last(), Some(Value::Operation(_))) {
-                        if let Some(first) = right_first {
-                            operations.remove(0);
-                            operations.insert(0, first);
-                            left.append(&mut operations);
-                            return to_tree(
-                                ctx,
-                                Value::BlockParen(left),
-                                tree,
-                                curr_node_id,
-                            );
-                        }
+                    if let Some(first) = right_first {
+                        operations.remove(0);
+                        operations.insert(0, first);
+                        left.append(&mut operations);
+                        return to_tree(
+                            ctx,
+                            Value::BlockParen(left),
+                            tree,
+                            curr_node_id,
+                        );
                     }
                 }
 
