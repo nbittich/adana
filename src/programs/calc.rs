@@ -186,6 +186,18 @@ fn variable_from_ctx<'a>(
     };
     Ok(value)
 }
+
+fn filter_op<'a>(
+    op: Operator,
+    operations: &'a [Value<'a>],
+) -> impl FnOnce() -> Option<usize> + 'a {
+    move || {
+        operations.iter().rposition(
+            |c| matches!(c, Value::Operation(operator) if operator == &op),
+        )
+    }
+}
+
 fn to_tree(
     ctx: &mut HashMap<String, Primitive>,
     value: Value,
@@ -197,14 +209,6 @@ fn to_tree(
         | Value::BlockParen(mut operations) => {
             if cfg!(test) {
                 dbg!(&operations);
-            }
-            fn filter_op<'a>(
-                op: Operator,
-                operations: &'a [Value<'a>],
-            ) -> impl FnOnce() -> Option<usize> + 'a {
-                move || {
-                    operations.iter().rposition(|c| matches!(c, Value::Operation(operator) if operator == &op))
-                }
             }
 
             if operations.is_empty() {
@@ -254,28 +258,22 @@ fn to_tree(
                     }
                 }
 
-                let children_left = if left.len() == 1 {
-                    left.remove(0)
-                } else {
-                    Value::BlockParen(left)
-                };
-                let children_right = if operations.len() == 1 {
-                    operations.remove(0)
-                } else {
-                    Value::BlockParen(operations)
-                };
-
                 if cfg!(test) {
-                    println!("Left => {children_left:?}");
-                    println!("Right => {children_right:?}");
+                    println!("Left => {left:?}");
+                    println!("Right => {operation:?}");
                     println!("Op => {operation:?}");
                     println!();
                 }
 
                 let curr_node_id = to_tree(ctx, operation, tree, curr_node_id)?;
 
-                to_tree(ctx, children_left, tree, &curr_node_id)?;
-                to_tree(ctx, children_right, tree, &curr_node_id)?;
+                to_tree(ctx, Value::BlockParen(left), tree, &curr_node_id)?;
+                to_tree(
+                    ctx,
+                    Value::BlockParen(operations),
+                    tree,
+                    &curr_node_id,
+                )?;
 
                 Ok(curr_node_id)
             } else {
