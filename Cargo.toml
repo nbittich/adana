@@ -1,6 +1,6 @@
 [package]
 name = "karsher"
-version = "0.8.6"
+version = "0.8.7"
 edition = "2021"
 authors = ["Nordine Bittich"]
 license = "MIT"

@@ -83,8 +83,9 @@ impl std::ops::Rem for Primitive {
     fn rem(self, rhs: Self) -> Self::Output {
         match self {
             Primitive::Int(l) => match rhs {
-                Primitive::Int(r) => Primitive::Int(l % r),
+                Primitive::Int(r) if r != 0 => Primitive::Int(l % r),
                 Primitive::Double(r) => Primitive::Double(l as f64 % r),
+                _ => Primitive::Double(f64::NAN)
             },
             Primitive::Double(l) => match rhs {
                 Primitive::Int(r) => Primitive::Double(l % r as f64),
@@ -115,11 +116,15 @@ impl Div for Primitive {
     fn div(self, rhs: Self) -> Self::Output {
         match self {
             Primitive::Int(l) => match rhs {
-                Primitive::Int(r) => Primitive::Int(l / r),
+                Primitive::Int(r) if r != 0 => Primitive::Int(l / r),
                 Primitive::Double(r) => Primitive::Double(l as f64 / r),
+                Primitive::Int(_) if l >= 1 => Primitive::Double(f64::INFINITY),
+                _ => Primitive::Double(f64::NAN),
+            
+
             },
             Primitive::Double(l) => match rhs {
-                Primitive::Int(r) => Primitive::Double(l % r as f64),
+                Primitive::Int(r) => Primitive::Double(l / r as f64),
                 Primitive::Double(r) => Primitive::Double(l as f64 / r),
             },
         }
