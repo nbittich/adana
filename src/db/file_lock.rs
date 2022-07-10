@@ -4,12 +4,16 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{prelude::debug, utils::pid_exists};
+use crate::prelude::debug;
 
 #[derive(Debug, Clone)]
 pub struct FileLock {
     _lock_p: PathBuf,
     inner_p: PathBuf,
+}
+
+fn pid_exists(pid: u32) -> bool {
+    Path::new(&format!("/proc/{}", pid)).exists()
 }
 
 impl FileLock {

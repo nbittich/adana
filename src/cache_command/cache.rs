@@ -1,12 +1,17 @@
+use std::collections::hash_map::DefaultHasher;
+use std::hash::Hasher;
 use std::path::Path;
 
+use crate::db::{Batch, DbOp, Op, Tree, DEFAULT_TREE};
 use crate::prelude::*;
-use crate::{
-    db::{Batch, DbOp, Op, Tree, DEFAULT_TREE},
-    utils::calculate_hash,
-};
 
 const DEFAULT_CACHE_KEY: &str = "$___DEF_CACHE_KEY_LOC___$";
+
+fn calculate_hash<T: Hash>(t: &T) -> u64 {
+    let mut s = DefaultHasher::new();
+    t.hash(&mut s);
+    s.finish()
+}
 
 pub fn get_value(
     db: &mut impl DbOp<String, String>,
