@@ -1,20 +1,20 @@
 mod args;
 mod cache;
+mod calculator;
 mod db;
 mod editor;
 mod os_command;
 mod parser;
 mod prelude;
-mod programs;
 mod utils;
 
 use args::*;
 use cache::*;
+use calculator::Number;
 use colors::*;
 use db::DbOp;
 use nom::error::ErrorKind;
 use os_command::exec_command;
-use programs::Number;
 use rustyline::error::ReadlineError;
 use std::path::Path;
 
@@ -304,7 +304,7 @@ fn process_repl(
     line: &str,
     ctx: &mut BTreeMap<String, Number>,
 ) -> anyhow::Result<()> {
-    let calc = crate::programs::compute(line, ctx)?;
+    let calc = crate::calculator::compute(line, ctx)?;
     println!("{calc}");
     Ok(())
 }

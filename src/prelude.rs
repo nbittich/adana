@@ -5,10 +5,12 @@ pub use nom::{
         tag, tag_no_case, take_till1, take_until, take_until1, take_while,
         take_while1,
     },
+    character::complete::{
+        alpha1, alphanumeric1, i128 as I128, multispace0, multispace1, space1,
+    },
+    combinator::{all_consuming, cut, eof, map, map_parser, opt, rest, verify},
+    multi::{many0, many1, separated_list0},
     number::complete::{double, recognize_float},
-    character::complete::{multispace0, multispace1, space1, alpha1, alphanumeric1, i128 as I128},
-    combinator::{cut, eof, map, opt, rest, verify, all_consuming, map_parser},
-    multi::{many0,many1, separated_list0},
     sequence::{delimited, pair, preceded, separated_pair, terminated},
     IResult, Parser,
 };
@@ -32,8 +34,8 @@ pub use std::sync::{Mutex, MutexGuard};
 pub use std::{
     collections::BTreeMap,
     fs::File,
-    panic::AssertUnwindSafe,
     io::BufReader,
+    panic::AssertUnwindSafe,
     path::PathBuf,
     process::ExitCode,
     sync::atomic::{AtomicBool, Ordering},

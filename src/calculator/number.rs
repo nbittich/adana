@@ -1,9 +1,10 @@
 use std::{
     fmt::Display,
-    ops::{Add, Div, Mul, Sub}, iter::Sum,
+    iter::Sum,
+    ops::{Add, Div, Mul, Rem, Sub},
 };
 
-use serde::{Deserialize, Serialize};
+use crate::prelude::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum Number {
@@ -30,9 +31,7 @@ impl Pow for Number {
     fn pow(&self, rhs: Self) -> Self {
         match self {
             Number::Int(l) => match rhs {
-                Number::Int(r) => {
-                    Number::Double((*l as f64).powf(r as f64))
-                }
+                Number::Int(r) => Number::Double((*l as f64).powf(r as f64)),
                 Number::Double(r) => Number::Double((*l as f64).powf(r)),
             },
             Number::Double(l) => match rhs {
@@ -87,7 +86,7 @@ impl Sub for Number {
     }
 }
 
-impl std::ops::Rem for Number {
+impl Rem for Number {
     type Output = Number;
 
     fn rem(self, rhs: Self) -> Self::Output {
@@ -95,7 +94,7 @@ impl std::ops::Rem for Number {
             Number::Int(l) => match rhs {
                 Number::Int(r) if r != 0 => Number::Int(l % r),
                 Number::Double(r) => Number::Double(l as f64 % r),
-                _ => Number::Double(f64::NAN)
+                _ => Number::Double(f64::NAN),
             },
             Number::Double(l) => match rhs {
                 Number::Int(r) => Number::Double(l % r as f64),
@@ -130,8 +129,6 @@ impl Div for Number {
                 Number::Double(r) => Number::Double(l as f64 / r),
                 Number::Int(_) if l >= 1 => Number::Double(f64::INFINITY),
                 _ => Number::Double(f64::NAN),
-            
-
             },
             Number::Double(l) => match rhs {
                 Number::Int(r) => Number::Double(l / r as f64),
