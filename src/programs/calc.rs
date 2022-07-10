@@ -12,7 +12,7 @@ use slab_tree::{NodeId, NodeRef, Tree};
 
 use crate::prelude::*;
 
-use super::primitive::{Pow, Primitive};
+use super::number::{Pow, Number};
 
 // region: structs
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -41,7 +41,7 @@ enum Operator {
 enum TreeNodeValue {
     VariableAssign(String),
     Ops(Operator),
-    Primitive(Primitive),
+    Primitive(Number),
 }
 // endregion: structs
 
@@ -140,7 +140,7 @@ fn parse_expression(s: &str) -> Res<Value> {
     map(many1(parse_value), Value::Expression)(s)
 }
 
-fn parse_str(s: &str) -> Res<Value> {
+fn parse_var_expr(s: &str) -> Res<Value> {
     preceded(
         multispace0,
         terminated(
@@ -169,7 +169,7 @@ fn parse_str(s: &str) -> Res<Value> {
 fn variable_from_ctx<'a>(
     name: &'a str,
     negate: bool,
-    ctx: &mut HashMap<String, Primitive>,
+    ctx: &mut HashMap<String, Number>,
 ) -> anyhow::Result<Value<'a>> {
     let value =
         ctx.get(name).context(format!("variable {name} not found in ctx"))?;
@@ -179,10 +179,10 @@ fn variable_from_ctx<'a>(
     }
 
     let value = match value {
-        Primitive::Int(i) if negate => Value::Integer(-i),
-        Primitive::Int(i) => Value::Integer(*i),
-        Primitive::Double(d) if negate => Value::Decimal(-d),
-        Primitive::Double(d) => Value::Decimal(*d),
+        Number::Int(i) if negate => Value::Integer(-i),
+        Number::Int(i) => Value::Integer(*i),
+        Number::Double(d) if negate => Value::Decimal(-d),
+        Number::Double(d) => Value::Decimal(*d),
     };
     Ok(value)
 }
@@ -199,7 +199,7 @@ fn filter_op<'a>(
 }
 
 fn to_tree(
-    ctx: &mut HashMap<String, Primitive>,
+    ctx: &mut HashMap<String, Number>,
     value: Value,
     tree: &mut Tree<TreeNodeValue>,
     curr_node_id: &Option<NodeId>,
@@ -299,7 +299,7 @@ fn to_tree(
         }
 
         Value::Decimal(num) => {
-            let double_node = TreeNodeValue::Primitive(Primitive::Double(num));
+            let double_node = TreeNodeValue::Primitive(Number::Double(num));
             if let Some(node_id) = curr_node_id {
                 let mut node = tree
                     .get_mut(*node_id)
@@ -314,7 +314,7 @@ fn to_tree(
             }
         }
         Value::Integer(num) => {
-            let double_node = TreeNodeValue::Primitive(Primitive::Int(num));
+            let double_node = TreeNodeValue::Primitive(Number::Int(num));
             let node_id = if let Some(node_id) = curr_node_id {
                 let mut node = tree
                     .get_mut(*node_id)
@@ -367,8 +367,8 @@ fn to_tree(
 // region: calculate
 fn compute_recur(
     node: Option<NodeRef<TreeNodeValue>>,
-    ctx: &mut HashMap<String, Primitive>,
-) -> Primitive {
+    ctx: &mut HashMap<String, Number>,
+) -> Number {
     if let Some(node) = node {
         match node.data() {
             TreeNodeValue::Ops(Operator::Add) => {
@@ -421,7 +421,7 @@ fn compute_recur(
             }
         }
     } else {
-        Primitive::Int(0)
+        Number::Int(0)
     }
 }
 // endregion: calculate
@@ -429,10 +429,10 @@ fn compute_recur(
 // region: exposed api
 pub fn compute(
     s: &str,
-    ctx: &mut HashMap<String, Primitive>,
-) -> anyhow::Result<Primitive> {
+    ctx: &mut HashMap<String, Number>,
+) -> anyhow::Result<Number> {
     let (rest, value) =
-        parse_str(s).map_err(|e| anyhow::Error::msg(e.to_string()))?;
+        parse_var_expr(s).map_err(|e| anyhow::Error::msg(e.to_string()))?;
 
     if cfg!(test) {
         dbg!(rest);
@@ -469,22 +469,22 @@ mod test {
     use std::collections::HashMap;
 
     use crate::programs::{
-        calc::{compute, parse_str, Operator::*, Value},
-        Primitive,
+        calc::{compute, parse_var_expr, Operator::*, Value},
+        Number,
     };
 
     #[test]
     #[should_panic(expected = "invalid expression!")]
     fn test_expr_invalid() {
         let expr = "use example";
-        let mut ctx = HashMap::from([("x".to_string(), Primitive::Double(2.))]);
+        let mut ctx = HashMap::from([("x".to_string(), Number::Double(2.))]);
         compute(expr, &mut ctx).unwrap();
     }
     #[test]
     #[should_panic(expected = "invalid expression!")]
     fn test_expr_invalid_drc() {
         let expr = "drc logs -f triplestore";
-        let mut ctx = HashMap::from([("x".to_string(), Primitive::Double(2.))]);
+        let mut ctx = HashMap::from([("x".to_string(), Number::Double(2.))]);
         compute(expr, &mut ctx).unwrap();
     }
 
@@ -492,33 +492,33 @@ mod test {
     #[should_panic(expected = "Invalid operation!")]
     fn test_op_invalid() {
         let expr = "use example = wesh";
-        let mut ctx = HashMap::from([("x".to_string(), Primitive::Double(2.))]);
+        let mut ctx = HashMap::from([("x".to_string(), Number::Double(2.))]);
         compute(expr, &mut ctx).unwrap();
     }
 
     #[test]
     fn test_compute_with_ctx() {
         let expr = "x * 5";
-        let mut ctx = HashMap::from([("x".to_string(), Primitive::Double(2.))]);
+        let mut ctx = HashMap::from([("x".to_string(), Number::Double(2.))]);
 
         let res = compute(expr, &mut ctx).unwrap();
-        assert_eq!(Primitive::Double(10.), res);
+        assert_eq!(Number::Double(10.), res);
     }
     #[test]
     fn test_compute_assign_with_ctx() {
         let expr = "y = x * 5";
-        let mut ctx = HashMap::from([("x".to_string(), Primitive::Double(2.))]);
+        let mut ctx = HashMap::from([("x".to_string(), Number::Double(2.))]);
 
         let res = compute(expr, &mut ctx).unwrap();
-        assert_eq!(Primitive::Double(10.), res);
+        assert_eq!(Number::Double(10.), res);
 
-        assert_eq!(ctx.get("y"), Some(&Primitive::Double(10.)));
+        assert_eq!(ctx.get("y"), Some(&Number::Double(10.)));
     }
 
     #[test]
     fn test_variable() {
         let expr = "x*5+9*y/8";
-        let (_, op) = parse_str(expr).unwrap();
+        let (_, op) = parse_var_expr(expr).unwrap();
         assert_eq!(
             op,
             Value::Expression(vec![
@@ -537,7 +537,7 @@ mod test {
     #[test]
     fn test_variable_expr() {
         let expr = "z = x*5+9*y/8";
-        let (_, op) = parse_str(expr).unwrap();
+        let (_, op) = parse_var_expr(expr).unwrap();
         assert_eq!(
             op,
             Value::VariableExpr {
@@ -560,19 +560,19 @@ mod test {
     #[test]
     fn test_modulo() {
         let mut ctx = HashMap::new();
-        assert_eq!(Primitive::Int(1), compute("3%2", &mut ctx).unwrap());
-        assert_eq!(Primitive::Double(1.), compute("3%2.", &mut ctx).unwrap());
+        assert_eq!(Number::Int(1), compute("3%2", &mut ctx).unwrap());
+        assert_eq!(Number::Double(1.), compute("3%2.", &mut ctx).unwrap());
         assert_eq!(
-            Primitive::Double(0.625),
+            Number::Double(0.625),
             compute("5/8.%2", &mut ctx).unwrap()
         );
         assert_eq!(
-            Primitive::Double(3278.9),
+            Number::Double(3278.9),
             compute("2* (9*(5-(1/2.))) ^2 -1 / 5. * 8 - 4 %4", &mut ctx)
                 .unwrap()
         );
         assert_eq!(
-            Primitive::Double(-1.1),
+            Number::Double(-1.1),
             compute("2* (9*(5-(1/2.))) ^2 %2 -1 / 5. * 8 - 4 %4", &mut ctx)
                 .unwrap()
         );
@@ -582,83 +582,83 @@ mod test {
     fn test_compute() {
         let mut ctx = HashMap::new();
         assert_eq!(
-            Primitive::Double(3280.3),
+            Number::Double(3280.3),
             compute("x=2* (9*(5-(1./2.))) ^2 -1 / 5.", &mut ctx).unwrap()
         );
         assert_eq!(
-            Primitive::Double(3274.9),
+            Number::Double(3274.9),
             compute("y = 2* (9*(5-(1/2.))) ^2 -1 / 5. * 8 - 4", &mut ctx)
                 .unwrap()
         );
         assert_eq!(
-            Primitive::Double(-670.9548307564088),
+            Number::Double(-670.9548307564088),
             compute("z = 78/5.-4.5*(9+7^2.5)-12*4+1-8/3.*4-5", &mut ctx)
                 .unwrap()
         );
         assert_eq!(
-            Primitive::Double(37737.),
+            Number::Double(37737.),
             compute("f = 1988*19-(((((((9*2))))+2*4)-3))/6-1^2*1000/(7-4*(3/9-(9+3/2-4)))", &mut ctx).unwrap()
         );
         assert_eq!(
-            Primitive::Double(37736.587719298244),
+            Number::Double(37736.587719298244),
             compute("f = 1988*19-(((((((9*2))))+2*4)-3))/6.-1^2*1000/(7-4*(3/9.-(9+3/2.-4)))", &mut ctx).unwrap()
         );
-        assert_eq!(Primitive::Int(0), compute("0", &mut ctx).unwrap());
-        assert_eq!(Primitive::Int(9), compute("9", &mut ctx).unwrap());
-        assert_eq!(Primitive::Int(-9), compute("-9", &mut ctx).unwrap());
+        assert_eq!(Number::Int(0), compute("0", &mut ctx).unwrap());
+        assert_eq!(Number::Int(9), compute("9", &mut ctx).unwrap());
+        assert_eq!(Number::Int(-9), compute("-9", &mut ctx).unwrap());
         assert_eq!(
-            Primitive::Int(6 / 2 * (2 + 1)),
+            Number::Int(6 / 2 * (2 + 1)),
             compute("6/2*(2+1)", &mut ctx).unwrap()
         );
         assert_eq!(
-            Primitive::Double(2. - 1. / 5.),
+            Number::Double(2. - 1. / 5.),
             compute("2 -1 / 5.", &mut ctx).unwrap()
         );
         // todo maybe should panic in these cases
         assert_eq!(
-            Primitive::Int(2 * 4),
+            Number::Int(2 * 4),
             compute("2* * *4", &mut ctx).unwrap()
         );
         assert_eq!(
-            Primitive::Int(2 * 4),
+            Number::Int(2 * 4),
             compute("2* ** *4", &mut ctx).unwrap()
         );
-        assert_eq!(Primitive::Int(4), compute("*4", &mut ctx).unwrap());
+        assert_eq!(Number::Int(4), compute("*4", &mut ctx).unwrap());
 
         // compute with variables
         assert_eq!(
-            Primitive::Double(-4765.37866215695),
+            Number::Double(-4765.37866215695),
             compute("f = 555*19-(((((((9*2))))+2*f)-x))/6.-1^2*y/(z-4*(3/9.-(9+3/2.-4))) - x", &mut ctx).unwrap()
         );
 
-        assert_eq!(ctx.get("f"), Some(&Primitive::Double(-4765.37866215695)));
-        assert_eq!(ctx.get("z"), Some(&Primitive::Double(-670.9548307564088)));
-        assert_eq!(ctx.get("y"), Some(&Primitive::Double(3274.9)));
-        assert_eq!(ctx.get("x"), Some(&Primitive::Double(3280.3)));
+        assert_eq!(ctx.get("f"), Some(&Number::Double(-4765.37866215695)));
+        assert_eq!(ctx.get("z"), Some(&Number::Double(-670.9548307564088)));
+        assert_eq!(ctx.get("y"), Some(&Number::Double(3274.9)));
+        assert_eq!(ctx.get("x"), Some(&Number::Double(3280.3)));
     }
 
     #[test]
     fn test_negate() {
         let mut ctx = HashMap::new();
         assert_eq!(
-            Primitive::Int(-5 / -1),
+            Number::Int(-5 / -1),
             compute("-5/-1", &mut ctx).unwrap()
         );
-        assert_eq!(Primitive::Int(5 / -1), compute("5/-1", &mut ctx).unwrap());
-        assert_eq!(Primitive::Int(--5), compute("--5", &mut ctx).unwrap());
+        assert_eq!(Number::Int(5 / -1), compute("5/-1", &mut ctx).unwrap());
+        assert_eq!(Number::Int(--5), compute("--5", &mut ctx).unwrap());
     }
     #[test]
     fn test_pow() {
         let mut ctx = HashMap::new();
         assert_eq!(
-            Primitive::Double(-0.5),
+            Number::Double(-0.5),
             compute("-2^-1", &mut ctx).unwrap()
         );
         assert_eq!(
-            Primitive::Double(-0.04),
+            Number::Double(-0.04),
             compute("-5^-2", &mut ctx).unwrap()
         );
-        assert_eq!(Primitive::Double(-25.), compute("-5^2", &mut ctx).unwrap());
-        assert_eq!(Primitive::Double(0.04), compute("5^-2", &mut ctx).unwrap());
+        assert_eq!(Number::Double(-25.), compute("-5^2", &mut ctx).unwrap());
+        assert_eq!(Number::Double(0.04), compute("5^-2", &mut ctx).unwrap());
     }
 }

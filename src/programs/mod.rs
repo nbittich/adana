@@ -1,4 +1,4 @@
 mod calc;
-mod primitive;
+mod number;
 pub use calc::compute;
-pub use primitive::Primitive;
+pub use number::Number;
