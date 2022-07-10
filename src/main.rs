@@ -16,7 +16,7 @@ use nom::error::ErrorKind;
 use os_command::exec_command;
 use programs::Number;
 use rustyline::error::ReadlineError;
-use std::{collections::HashMap, path::Path};
+use std::path::Path;
 
 pub use parser::{parse_command, CacheCommand};
 pub use prelude::*;
@@ -84,7 +84,7 @@ fn start_app(
         get_default_cache(db).as_ref().map_or("DEFAULT".into(), |v| v.clone())
     };
     let mut rl = editor::build_editor(history_path);
-    let mut math_ctx = HashMap::new();
+    let mut math_ctx = BTreeMap::new();
     loop {
         let readline = editor::read_line(&mut rl, &current_cache);
 
@@ -302,7 +302,7 @@ fn process_command(
 
 fn process_repl(
     line: &str,
-    ctx: &mut HashMap<String, Number>,
+    ctx: &mut BTreeMap<String, Number>,
 ) -> anyhow::Result<()> {
     let calc = crate::programs::compute(line, ctx)?;
     println!("{calc}");

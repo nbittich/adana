@@ -1,13 +1,3 @@
-use std::{collections::HashMap, panic::AssertUnwindSafe};
-
-use anyhow::Context;
-use nom::{
-    character::complete::{alpha1, alphanumeric1, i128 as I128},
-    combinator::{all_consuming, map_parser},
-    multi::many1,
-    number::complete::{double, recognize_float},
-};
-use serde::{Deserialize, Serialize};
 use slab_tree::{NodeId, NodeRef, Tree};
 
 use crate::prelude::*;
@@ -169,7 +159,7 @@ fn parse_var_expr(s: &str) -> Res<Value> {
 fn variable_from_ctx<'a>(
     name: &'a str,
     negate: bool,
-    ctx: &mut HashMap<String, Number>,
+    ctx: &mut BTreeMap<String, Number>,
 ) -> anyhow::Result<Value<'a>> {
     let value =
         ctx.get(name).context(format!("variable {name} not found in ctx"))?;
@@ -199,7 +189,7 @@ fn filter_op<'a>(
 }
 
 fn to_tree(
-    ctx: &mut HashMap<String, Number>,
+    ctx: &mut BTreeMap<String, Number>,
     value: Value,
     tree: &mut Tree<TreeNodeValue>,
     curr_node_id: &Option<NodeId>,
@@ -367,7 +357,7 @@ fn to_tree(
 // region: calculate
 fn compute_recur(
     node: Option<NodeRef<TreeNodeValue>>,
-    ctx: &mut HashMap<String, Number>,
+    ctx: &mut BTreeMap<String, Number>,
 ) -> Number {
     if let Some(node) = node {
         match node.data() {
@@ -429,7 +419,7 @@ fn compute_recur(
 // region: exposed api
 pub fn compute(
     s: &str,
-    ctx: &mut HashMap<String, Number>,
+    ctx: &mut BTreeMap<String, Number>,
 ) -> anyhow::Result<Number> {
     let (rest, value) =
         parse_var_expr(s).map_err(|e| anyhow::Error::msg(e.to_string()))?;
@@ -466,7 +456,7 @@ pub fn compute(
 #[cfg(test)]
 mod test {
 
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
 
     use crate::programs::{
         calc::{compute, parse_var_expr, Operator::*, Value},
@@ -477,14 +467,14 @@ mod test {
     #[should_panic(expected = "invalid expression!")]
     fn test_expr_invalid() {
         let expr = "use example";
-        let mut ctx = HashMap::from([("x".to_string(), Number::Double(2.))]);
+        let mut ctx = BTreeMap::from([("x".to_string(), Number::Double(2.))]);
         compute(expr, &mut ctx).unwrap();
     }
     #[test]
     #[should_panic(expected = "invalid expression!")]
     fn test_expr_invalid_drc() {
         let expr = "drc logs -f triplestore";
-        let mut ctx = HashMap::from([("x".to_string(), Number::Double(2.))]);
+        let mut ctx = BTreeMap::from([("x".to_string(), Number::Double(2.))]);
         compute(expr, &mut ctx).unwrap();
     }
 
@@ -492,14 +482,14 @@ mod test {
     #[should_panic(expected = "Invalid operation!")]
     fn test_op_invalid() {
         let expr = "use example = wesh";
-        let mut ctx = HashMap::from([("x".to_string(), Number::Double(2.))]);
+        let mut ctx = BTreeMap::from([("x".to_string(), Number::Double(2.))]);
         compute(expr, &mut ctx).unwrap();
     }
 
     #[test]
     fn test_compute_with_ctx() {
         let expr = "x * 5";
-        let mut ctx = HashMap::from([("x".to_string(), Number::Double(2.))]);
+        let mut ctx = BTreeMap::from([("x".to_string(), Number::Double(2.))]);
 
         let res = compute(expr, &mut ctx).unwrap();
         assert_eq!(Number::Double(10.), res);
@@ -507,7 +497,7 @@ mod test {
     #[test]
     fn test_compute_assign_with_ctx() {
         let expr = "y = x * 5";
-        let mut ctx = HashMap::from([("x".to_string(), Number::Double(2.))]);
+        let mut ctx = BTreeMap::from([("x".to_string(), Number::Double(2.))]);
 
         let res = compute(expr, &mut ctx).unwrap();
         assert_eq!(Number::Double(10.), res);
@@ -559,7 +549,7 @@ mod test {
 
     #[test]
     fn test_modulo() {
-        let mut ctx = HashMap::new();
+        let mut ctx = BTreeMap::new();
         assert_eq!(Number::Int(1), compute("3%2", &mut ctx).unwrap());
         assert_eq!(Number::Double(1.), compute("3%2.", &mut ctx).unwrap());
         assert_eq!(
@@ -580,7 +570,7 @@ mod test {
 
     #[test]
     fn test_compute() {
-        let mut ctx = HashMap::new();
+        let mut ctx = BTreeMap::new();
         assert_eq!(
             Number::Double(3280.3),
             compute("x=2* (9*(5-(1./2.))) ^2 -1 / 5.", &mut ctx).unwrap()
@@ -639,7 +629,7 @@ mod test {
 
     #[test]
     fn test_negate() {
-        let mut ctx = HashMap::new();
+        let mut ctx = BTreeMap::new();
         assert_eq!(
             Number::Int(-5 / -1),
             compute("-5/-1", &mut ctx).unwrap()
@@ -649,7 +639,7 @@ mod test {
     }
     #[test]
     fn test_pow() {
-        let mut ctx = HashMap::new();
+        let mut ctx = BTreeMap::new();
         assert_eq!(
             Number::Double(-0.5),
             compute("-2^-1", &mut ctx).unwrap()
