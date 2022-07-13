@@ -427,6 +427,7 @@ fn test_simple_condition() {
     );
     assert_eq!(Some(&Primitive::Bool(false)), ctx.get("rrr"));
 }
+
 #[test]
 fn test_simple_logical_and_or() {
     let mut ctx = BTreeMap::new();
@@ -456,4 +457,8 @@ fn test_simple_logical_and_or() {
         compute("s = !(1^1 == 1.) || true", &mut ctx).unwrap()
     );
     assert_eq!(Some(&Primitive::Bool(true)), ctx.get("s"));
+    assert_eq!(
+        Primitive::Bool(true),
+        compute(" 5 < 3 || 4 < 8 && 9*5 == 45", &mut ctx).unwrap()
+    );
 }
