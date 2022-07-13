@@ -10,6 +10,8 @@ pub use compute::compute;
 pub use primitive::Primitive;
 use strum::EnumCount;
 
+pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &["true", "false"];
+
 #[derive(Debug, EnumCount)]
 pub(super) enum MathConstants {
     Pi,
@@ -84,6 +86,13 @@ pub(super) enum Operator {
     Div,
     Mod,
     Pow,
+    Not,
+    Less,
+    Greater,
+    LessOrEqual,
+    GreaterOrEqual,
+    Equal,
+    NotEqual,
 }
 
 #[derive(Debug)]

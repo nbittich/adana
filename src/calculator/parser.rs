@@ -4,7 +4,10 @@ use crate::prelude::{
     separated_pair, tag, tag_no_case, terminated, verify, Res, I128,
 };
 
-use super::{BuiltInFunctionType, MathConstants, Operator, Value};
+use super::{
+    BuiltInFunctionType, MathConstants, Operator, Value,
+    FORBIDDEN_VARIABLE_NAME,
+};
 
 fn tag_no_space<'a>(t: &'a str) -> impl Fn(&'a str) -> Res<&'a str> {
     move |s: &str| delimited(multispace0, tag(t), multispace0)(s)
@@ -35,7 +38,9 @@ fn parse_variable(s: &str) -> Res<Value> {
         alpha1,
         map(
             verify(all_consuming(alphanumeric1), |s: &str| {
-                s.len() != 1 || !MathConstants::get_symbols().contains(s)
+                !FORBIDDEN_VARIABLE_NAME.contains(&s)
+                    && (s.len() != 1
+                        || !MathConstants::get_symbols().contains(s))
             }),
             Value::Variable,
         ),
@@ -98,12 +103,7 @@ fn parse_value(s: &str) -> Res<Value> {
         terminated(
             alt((
                 parse_paren,
-                parse_exp,
-                parse_mult,
-                parse_mod,
-                parse_div,
-                parse_add,
-                parse_subtr,
+                parse_operation,
                 parse_number,
                 parse_bool,
                 parse_fn,
@@ -115,39 +115,40 @@ fn parse_value(s: &str) -> Res<Value> {
     )(s)
 }
 
-fn parse_op<'a>(operation: Operator) -> impl Fn(&'a str) -> Res<Value> {
-    let sep = match &operation {
-        Operator::Add => "+",
-        Operator::Subtr => "-",
-        Operator::Div => "/",
-        Operator::Mult => "*",
-        Operator::Pow => "^",
-        Operator::Mod => "%",
-    };
-    move |s| map(tag_no_space(sep), |_| Value::Operation(operation))(s)
-}
-
-fn parse_exp(s: &str) -> Res<Value> {
-    parse_op(Operator::Pow)(s)
-}
-
-fn parse_mult(s: &str) -> Res<Value> {
-    parse_op(Operator::Mult)(s)
-}
-
-fn parse_div(s: &str) -> Res<Value> {
-    parse_op(Operator::Div)(s)
-}
-
-fn parse_mod(s: &str) -> Res<Value> {
-    parse_op(Operator::Mod)(s)
-}
-fn parse_add(s: &str) -> Res<Value> {
-    parse_op(Operator::Add)(s)
-}
-
-fn parse_subtr(s: &str) -> Res<Value> {
-    parse_op(Operator::Subtr)(s)
+fn parse_operation(s: &str) -> Res<Value> {
+    fn parse_op<'a>(operation: Operator) -> impl Fn(&'a str) -> Res<Value> {
+        let sep: &str = match &operation {
+            Operator::Add => "+",
+            Operator::Subtr => "-",
+            Operator::Div => "/",
+            Operator::Mult => "*",
+            Operator::Pow => "^",
+            Operator::Not => "!",
+            Operator::Mod => "%",
+            Operator::Less => "<",
+            Operator::Greater => ">",
+            Operator::LessOrEqual => "<=",
+            Operator::GreaterOrEqual => ">=",
+            Operator::Equal => "==",
+            Operator::NotEqual => "!=",
+        };
+        move |s| map(tag_no_space(sep), |_| Value::Operation(operation))(s)
+    }
+    alt((
+        parse_op(Operator::Pow),
+        parse_op(Operator::Mult),
+        parse_op(Operator::Mod),
+        parse_op(Operator::Div),
+        parse_op(Operator::Add),
+        parse_op(Operator::Subtr),
+        parse_op(Operator::LessOrEqual),
+        parse_op(Operator::GreaterOrEqual),
+        parse_op(Operator::Less),
+        parse_op(Operator::Greater),
+        parse_op(Operator::Equal),
+        parse_op(Operator::NotEqual),
+        parse_op(Operator::Not),
+    ))(s)
 }
 
 fn parse_expression(s: &str) -> Res<Value> {

@@ -11,7 +11,7 @@ use crate::prelude::{Deserialize, Serialize};
 
 const MAX_U32_AS_I128: i128 = u32::MAX as i128;
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum Primitive {
     Int(i128),
     Bool(bool),
@@ -482,18 +482,6 @@ impl And for Primitive {
     }
 }
 
-impl PartialEq for Primitive {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Int(l0), Self::Int(r0)) => l0 == r0,
-            (Self::Bool(l0), Self::Bool(r0)) => l0 == r0,
-            (Self::Double(l0), Self::Double(r0)) => l0 == r0,
-            (Self::Error(l0), Self::Error(r0)) => l0 == r0,
-            _ => false,
-        }
-    }
-}
-
 impl PartialOrd for Primitive {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match (self, other) {
@@ -507,7 +495,7 @@ impl PartialOrd for Primitive {
             (Primitive::Double(l), Primitive::Double(r)) => l.partial_cmp(r),
             (Primitive::Int(_), Primitive::Error(_)) => None,
             (Primitive::Bool(_), Primitive::Int(_)) => None,
-            (Primitive::Bool(_), Primitive::Bool(_)) => None,
+            (Primitive::Bool(a), Primitive::Bool(b)) => a.partial_cmp(b),
             (Primitive::Bool(_), Primitive::Double(_)) => None,
             (Primitive::Bool(_), Primitive::Error(_)) => None,
             (Primitive::Double(_), Primitive::Bool(_)) => None,

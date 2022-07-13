@@ -23,6 +23,7 @@ fn variable_from_ctx<'a>(
         Primitive::Int(i) => Ok(Value::Integer(*i)),
         Primitive::Double(d) if negate => Ok(Value::Decimal(-d)),
         Primitive::Double(d) => Ok(Value::Decimal(*d)),
+        Primitive::Bool(b) if !negate => Ok(Value::Bool(*b)),
         Primitive::Bool(_b) => {
             Err(anyhow::Error::msg("attempt to negate a bool value"))
         }
@@ -62,12 +63,19 @@ pub(super) fn to_ast(
             }
 
             let op_pos = None
+                .or_else(filter_op(Operator::GreaterOrEqual, &operations))
+                .or_else(filter_op(Operator::LessOrEqual, &operations))
+                .or_else(filter_op(Operator::Greater, &operations))
+                .or_else(filter_op(Operator::Less, &operations))
+                .or_else(filter_op(Operator::Equal, &operations))
+                .or_else(filter_op(Operator::NotEqual, &operations))
                 .or_else(filter_op(Operator::Add, &operations))
                 .or_else(filter_op(Operator::Subtr, &operations))
                 .or_else(filter_op(Operator::Mult, &operations))
                 .or_else(filter_op(Operator::Mod, &operations))
                 .or_else(filter_op(Operator::Div, &operations))
-                .or_else(filter_op(Operator::Pow, &operations));
+                .or_else(filter_op(Operator::Pow, &operations))
+                .or_else(filter_op(Operator::Not, &operations));
 
             if let Some(op_pos) = op_pos {
                 let mut left: Vec<Value> =

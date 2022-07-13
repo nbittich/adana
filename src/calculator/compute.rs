@@ -1,4 +1,4 @@
-use std::ops::Neg;
+use std::ops::{Neg, Not};
 
 use slab_tree::{NodeRef, Tree};
 
@@ -17,6 +17,15 @@ fn compute_recur(
 ) -> anyhow::Result<Primitive> {
     if let Some(node) = node {
         match node.data() {
+            TreeNodeValue::Ops(Operator::Not) => {
+                if node.children().count() != 1 {
+                    return Err(anyhow::Error::msg(
+                        "only one value allowed, no '!' possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx)?;
+                (!left).ok()
+            }
             TreeNodeValue::Ops(Operator::Add) => {
                 if node.children().count() == 1 {
                     return compute_recur(node.first_child(), ctx);
@@ -65,7 +74,66 @@ fn compute_recur(
                 let right = compute_recur(node.last_child(), ctx)?;
                 (left / right).ok()
             }
-
+            TreeNodeValue::Ops(Operator::Equal) => {
+                if node.children().count() == 1 {
+                    return Err(anyhow::Error::msg(
+                        "only one value, no '==' comparison possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx)?;
+                let right = compute_recur(node.last_child(), ctx)?;
+                (left.is_equal(&right)).ok()
+            }
+            TreeNodeValue::Ops(Operator::NotEqual) => {
+                if node.children().count() == 1 {
+                    return Err(anyhow::Error::msg(
+                        "only one value, no '!=' comparison possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx)?;
+                let right = compute_recur(node.last_child(), ctx)?;
+                (left.is_equal(&right).not()).ok()
+            }
+            TreeNodeValue::Ops(Operator::Less) => {
+                if node.children().count() == 1 {
+                    return Err(anyhow::Error::msg(
+                        "only one value, no '<' comparison possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx)?;
+                let right = compute_recur(node.last_child(), ctx)?;
+                (left.is_less_than(&right)).ok()
+            }
+            TreeNodeValue::Ops(Operator::Greater) => {
+                if node.children().count() == 1 {
+                    return Err(anyhow::Error::msg(
+                        "only one value, no '>' comparison possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx)?;
+                let right = compute_recur(node.last_child(), ctx)?;
+                (left.is_greater_than(&right)).ok()
+            }
+            TreeNodeValue::Ops(Operator::GreaterOrEqual) => {
+                if node.children().count() == 1 {
+                    return Err(anyhow::Error::msg(
+                        "only one value, no '>=' comparison possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx)?;
+                let right = compute_recur(node.last_child(), ctx)?;
+                (left.is_greater_or_equal(&right)).ok()
+            }
+            TreeNodeValue::Ops(Operator::LessOrEqual) => {
+                if node.children().count() == 1 {
+                    return Err(anyhow::Error::msg(
+                        "only one value, no '<=' comparison possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx)?;
+                let right = compute_recur(node.last_child(), ctx)?;
+                (left.is_less_or_equal(&right)).ok()
+            }
             TreeNodeValue::Primitive(Primitive::Bool(b)) => {
                 Ok(Primitive::Bool(*b))
             }

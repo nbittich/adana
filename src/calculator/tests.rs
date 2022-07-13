@@ -359,3 +359,56 @@ fn test_simple_bool() {
     assert_eq!(Primitive::Bool(false), compute("g = false", &mut ctx).unwrap());
     assert_eq!(Some(&Primitive::Bool(false)), ctx.get("g"));
 }
+#[test]
+fn test_simple_condition() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(Primitive::Bool(true), compute("g = 5 < 9", &mut ctx).unwrap());
+    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("g"));
+    assert_eq!(Primitive::Bool(false), compute("b = 5 < 1", &mut ctx).unwrap());
+    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("b"));
+    assert_eq!(Primitive::Bool(false), compute("x = 5 > 9", &mut ctx).unwrap());
+    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("x"));
+    assert_eq!(Primitive::Bool(true), compute("x = 9 > 5", &mut ctx).unwrap());
+    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("x"));
+    assert_eq!(Primitive::Bool(true), compute("m = 9 >= 9", &mut ctx).unwrap());
+    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("m"));
+    assert_eq!(Primitive::Bool(false), compute("z = 9 > 9", &mut ctx).unwrap());
+    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("z"));
+    assert_eq!(Primitive::Bool(true), compute("t = 9 == 9", &mut ctx).unwrap());
+    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("t"));
+    assert_eq!(
+        Primitive::Bool(false),
+        compute("et = 9 != 9", &mut ctx).unwrap()
+    );
+    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("et"));
+    assert_eq!(
+        Primitive::Bool(true),
+        compute("zet = 9 != 1", &mut ctx).unwrap()
+    );
+    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("zet"));
+    assert_eq!(
+        Primitive::Bool(true),
+        compute("bzet = 9 <= 9", &mut ctx).unwrap()
+    );
+    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("bzet"));
+    assert_eq!(
+        Primitive::Bool(false),
+        compute("rbzet = 9 < 9", &mut ctx).unwrap()
+    );
+    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("rbzet"));
+    assert_eq!(
+        Primitive::Bool(true),
+        compute("ab = true == true", &mut ctx).unwrap()
+    );
+    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("ab"));
+    assert_eq!(
+        Primitive::Bool(true),
+        compute("bcd = true == ab", &mut ctx).unwrap()
+    );
+    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("bcd"));
+    assert_eq!(
+        Primitive::Bool(true),
+        compute("bcxkcdd = bcd != !ab", &mut ctx).unwrap()
+    );
+    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("bcxkcdd"));
+}
