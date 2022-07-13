@@ -131,6 +131,8 @@ fn parse_operation(s: &str) -> Res<Value> {
             Operator::GreaterOrEqual => ">=",
             Operator::Equal => "==",
             Operator::NotEqual => "!=",
+            Operator::And => "&&",
+            Operator::Or => "||",
         };
         move |s| map(tag_no_space(sep), |_| Value::Operation(operation))(s)
     }
@@ -148,6 +150,8 @@ fn parse_operation(s: &str) -> Res<Value> {
         parse_op(Operator::Equal),
         parse_op(Operator::NotEqual),
         parse_op(Operator::Not),
+        parse_op(Operator::And),
+        parse_op(Operator::Or),
     ))(s)
 }
 

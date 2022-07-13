@@ -93,6 +93,8 @@ pub(super) enum Operator {
     GreaterOrEqual,
     Equal,
     NotEqual,
+    And,
+    Or,
 }
 
 #[derive(Debug)]

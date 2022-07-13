@@ -427,3 +427,33 @@ fn test_simple_condition() {
     );
     assert_eq!(Some(&Primitive::Bool(false)), ctx.get("rrr"));
 }
+#[test]
+fn test_simple_logical_and_or() {
+    let mut ctx = BTreeMap::new();
+
+    assert_eq!(
+        Primitive::Bool(false),
+        compute("s = true && false", &mut ctx).unwrap()
+    );
+    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("s"));
+    assert_eq!(
+        Primitive::Bool(true),
+        compute("s = 1^1 == 1. && true", &mut ctx).unwrap()
+    );
+    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("s"));
+    assert_eq!(
+        Primitive::Bool(false),
+        compute("s = 1^1 == 1. && !true", &mut ctx).unwrap()
+    );
+    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("s"));
+    assert_eq!(
+        Primitive::Bool(true),
+        compute("s = 1^1 == 1. || !true", &mut ctx).unwrap()
+    );
+    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("s"));
+    assert_eq!(
+        Primitive::Bool(true),
+        compute("s = !(1^1 == 1.) || true", &mut ctx).unwrap()
+    );
+    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("s"));
+}

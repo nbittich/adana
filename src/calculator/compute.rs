@@ -7,7 +7,7 @@ use crate::prelude::{AssertUnwindSafe, BTreeMap};
 use super::{
     ast::to_ast,
     parser::parse_var_expr,
-    primitive::{Abs, Cos, Logarithm, Pow, Primitive, Sin, Sqrt, Tan},
+    primitive::{Abs, And, Cos, Logarithm, Or, Pow, Primitive, Sin, Sqrt, Tan},
     Operator, TreeNodeValue,
 };
 
@@ -83,6 +83,26 @@ fn compute_recur(
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
                 (left.is_equal(&right)).ok()
+            }
+            TreeNodeValue::Ops(Operator::And) => {
+                if node.children().count() == 1 {
+                    return Err(anyhow::Error::msg(
+                        "only one value, no '&&' comparison possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx)?;
+                let right = compute_recur(node.last_child(), ctx)?;
+                (left.and(right)).ok()
+            }
+            TreeNodeValue::Ops(Operator::Or) => {
+                if node.children().count() == 1 {
+                    return Err(anyhow::Error::msg(
+                        "only one value, no '||' comparison possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx)?;
+                let right = compute_recur(node.last_child(), ctx)?;
+                (left.or(right)).ok()
             }
             TreeNodeValue::Ops(Operator::NotEqual) => {
                 if node.children().count() == 1 {

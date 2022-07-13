@@ -63,6 +63,8 @@ pub(super) fn to_ast(
             }
 
             let op_pos = None
+                .or_else(filter_op(Operator::Or, &operations))
+                .or_else(filter_op(Operator::And, &operations))
                 .or_else(filter_op(Operator::GreaterOrEqual, &operations))
                 .or_else(filter_op(Operator::LessOrEqual, &operations))
                 .or_else(filter_op(Operator::Greater, &operations))
