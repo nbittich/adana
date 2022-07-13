@@ -6,7 +6,6 @@ mod parser;
 #[cfg(test)]
 mod tests;
 
-use crate::prelude::{Deserialize, Serialize};
 pub use compute::compute;
 pub use number::Number;
 use strum::EnumCount;
@@ -52,7 +51,7 @@ impl MathConstants {
     }
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq)]
 pub(super) enum Value<'a> {
     Expression(Vec<Value<'a>>),
     Operation(Operator),
@@ -65,7 +64,7 @@ pub(super) enum Value<'a> {
     VariableNegate(&'a str),
     VariableExpr { name: Box<Value<'a>>, expr: Box<Value<'a>> },
 }
-#[derive(Debug, PartialEq, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub(super) enum BuiltInFunctionType {
     Sqrt,
     Abs,
@@ -76,7 +75,7 @@ pub(super) enum BuiltInFunctionType {
     Tan,
 }
 
-#[derive(Debug, Eq, Copy, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub(super) enum Operator {
     Add,
     Subtr,
@@ -86,7 +85,7 @@ pub(super) enum Operator {
     Pow,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug)]
 pub(super) enum TreeNodeValue {
     VariableAssign(String),
     Ops(Operator),
