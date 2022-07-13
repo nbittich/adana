@@ -121,7 +121,7 @@ fn test_compute() {
         compute("z = 78/5.-4.5*(9+7^2.5)-12*4+1-8/3.*4-5", &mut ctx).unwrap()
     );
     assert_eq!(
-            Number::Double(37737.),
+            Number::Int(37737),
             compute("f = 1988*19-(((((((9*2))))+2*4)-3))/6-1^2*1000/(7-4*(3/9-(9+3/2-4)))", &mut ctx).unwrap()
         );
     assert_eq!(
@@ -168,6 +168,185 @@ fn test_pow() {
     let mut ctx = BTreeMap::new();
     assert_eq!(Number::Double(-0.5), compute("-2^-1", &mut ctx).unwrap());
     assert_eq!(Number::Double(-0.04), compute("-5^-2", &mut ctx).unwrap());
-    assert_eq!(Number::Double(-25.), compute("-5^2", &mut ctx).unwrap());
+    assert_eq!(Number::Int(-25), compute("-5^2", &mut ctx).unwrap());
     assert_eq!(Number::Double(0.04), compute("5^-2", &mut ctx).unwrap());
+    assert_eq!(Number::Int(3125), compute("5^5", &mut ctx).unwrap());
+    assert_eq!(Number::Int(1), compute("5^0", &mut ctx).unwrap());
+}
+
+#[test]
+fn test_consts() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(
+        Number::Double(std::f64::consts::PI),
+        compute("π", &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Number::Double(std::f64::consts::PI * 2.),
+        compute("π*2", &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Number::Double(std::f64::consts::E),
+        compute("γ", &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Number::Double(std::f64::consts::TAU),
+        compute("τ", &mut ctx).unwrap()
+    );
+}
+#[test]
+fn test_fn_sqrt() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(
+        Number::Double(2.23606797749979),
+        compute("sqrt(5)", &mut ctx).unwrap()
+    );
+    assert_eq!(Number::Double(5.), compute("sqrt(5*5)", &mut ctx).unwrap());
+    assert_eq!(
+        Number::Double(8983.719357816115),
+        compute("sqrt(2*(3/4.-12%5 +7^9) --6/12.*4)", &mut ctx).unwrap()
+    );
+}
+
+#[test]
+fn test_fn_abs() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(Number::Int(5), compute("abs(5)", &mut ctx).unwrap());
+    assert_eq!(Number::Int(25), compute("abs(-5*5)", &mut ctx).unwrap());
+    assert_eq!(
+        Number::Double(80707209.5),
+        compute("abs(-2*(3/4.-12%5 +7^9) --6/12.*4)", &mut ctx).unwrap()
+    );
+}
+#[test]
+fn test_fn_log() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(
+        Number::Double(0.6989700043360189),
+        compute("log(5)", &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Number::Double(1.3979400086720377),
+        compute("log(abs(-5*5))", &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Number::Double(7.906912331577292),
+        compute("log(abs(-2*(3/4.-12%5 +7^9) --6/12.*4))", &mut ctx).unwrap()
+    );
+}
+
+#[test]
+fn test_fn_ln() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(
+        Number::Double(1.6094379124341003),
+        compute("ln(5)", &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Number::Double(3.2188758248682006),
+        compute("ln(abs(-5*5))", &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Number::Double(18.206338466300664),
+        compute("ln(abs(-2*(3/4.-12%5 +7^9) --6/12.*4))", &mut ctx).unwrap()
+    );
+}
+#[test]
+fn test_fn_sin() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(
+        Number::Double(-0.9589242746631385),
+        compute("sin(5)", &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Number::Double(0.13235175009777303),
+        compute("sin(-5*5)", &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Number::Double(-0.8604918893688305),
+        compute("sin(-2*(3/4.-12%5 +7^9) --6/12.*4)", &mut ctx).unwrap()
+    );
+}
+#[test]
+fn test_fn_cos() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(
+        Number::Double(0.28366218546322625),
+        compute("cos(5)", &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Number::Double(0.9912028118634736),
+        compute("cos(abs(-5*5))", &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Number::Double(-0.509464138414531),
+        compute("cos(abs(-2*(3/4.-12%5 +7^9) --6/12.*4))", &mut ctx).unwrap()
+    );
+}
+
+#[test]
+fn test_fn_tan() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(
+        Number::Double(-3.380515006246586),
+        compute("tan(5)", &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Number::Double(-0.13352640702153587),
+        compute("tan(abs(-5*5))", &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Number::Double(-1.6890136606017243),
+        compute("tan(abs(-2*(3/4.-12%5 +7^9) --6/12.*4))", &mut ctx).unwrap()
+    );
+}
+
+#[test]
+fn test_extra() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(
+        Number::Double(44721.45950030539),
+        compute("sqrt((2*10^9-5*abs(8/9.))) + abs(1/10.)", &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Number::Double(161414423.89420456),
+        compute(
+            "
+                2*(3/4.-12%5 +7^9) -6/12.*4 / 
+                sqrt(2*(3/4.-12%5 +7^9) --6/12.*4) + 
+                abs(-2*(3/4.-12%5 +7^9) -6/12.*4 / sqrt(5))
+            ",
+            &mut ctx
+        )
+        .unwrap()
+    );
+    assert_eq!(
+        Number::Double(507098311.0925626),
+        compute(
+            "
+                (2*(3/4.-12%5 +7^9) -6/12.*4 / 
+                sqrt(2*(3/4.-12%5 +7^9) --6/12.*4) + 
+                abs(-2*(3/4.-12%5 +7^9) -6/12.*4 / sqrt(5)) -
+                ln(abs(-2*(3/4.-12%5 +7^9 --8*4^9. % 2) --6/12.*4))) * π
+
+            ",
+            &mut ctx
+        )
+        .unwrap()
+    );
+    assert_eq!(
+        Number::Double(438769845.8328427),
+        compute(
+            "
+                (2*(3/4.-12%5 +7^9) -6/12.*4 / 
+                sqrt(2*(3/4.-12%5 +7^9) --6/12.*4) + 
+                abs(-2*(3/4.-12%5 +7^9) -6/12.*4 / sqrt(5)) -
+                ln(abs(-2*(3/4.-12%5 +7^9 --8*4^9. % 2) --6/12.*4))) * γ
+
+            ",
+            &mut ctx
+        )
+        .unwrap()
+    );
+    assert_eq!(Number::Double(-1.), compute("cos(π)", &mut ctx).unwrap());
 }

@@ -4,7 +4,7 @@ use crate::prelude::{AssertUnwindSafe, BTreeMap};
 
 use super::{
     ast::to_ast,
-    number::{Number, Pow},
+    number::{Abs, Cos, Logarithm, Number, Pow, Sin, Sqrt, Tan},
     parser::parse_var_expr,
     Operator, TreeNodeValue,
 };
@@ -43,7 +43,7 @@ fn compute_recur(
                 compute_recur(node.first_child(), ctx)
                     - compute_recur(node.last_child(), ctx)
             }
-            TreeNodeValue::Ops(Operator::Exp) => {
+            TreeNodeValue::Ops(Operator::Pow) => {
                 if node.children().count() == 1 {
                     return compute_recur(node.first_child(), ctx);
                 }
@@ -62,6 +62,18 @@ fn compute_recur(
                 let v = compute_recur(node.first_child(), ctx);
                 ctx.insert(name.to_owned(), v);
                 v
+            }
+            TreeNodeValue::BuiltInFunction(fn_type) => {
+                let v = compute_recur(node.first_child(), ctx);
+                match fn_type {
+                    super::BuiltInFunctionType::Sqrt => v.sqrt(),
+                    super::BuiltInFunctionType::Abs => v.abs(),
+                    super::BuiltInFunctionType::Log => v.log(),
+                    super::BuiltInFunctionType::Ln => v.ln(),
+                    super::BuiltInFunctionType::Sin => v.sin(),
+                    super::BuiltInFunctionType::Cos => v.cos(),
+                    super::BuiltInFunctionType::Tan => v.tan(),
+                }
             }
         }
     } else {

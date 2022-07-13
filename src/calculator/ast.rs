@@ -2,9 +2,8 @@ use slab_tree::{NodeId, Tree};
 
 use crate::prelude::{BTreeMap, Context};
 
-use super::{Number, Operator, TreeNodeValue, Value};
+use super::{MathConstants, Number, Operator, TreeNodeValue, Value};
 
-// region: reducers
 fn variable_from_ctx<'a>(
     name: &'a str,
     negate: bool,
@@ -63,7 +62,7 @@ pub(super) fn to_ast(
                 .or_else(filter_op(Operator::Mult, &operations))
                 .or_else(filter_op(Operator::Mod, &operations))
                 .or_else(filter_op(Operator::Div, &operations))
-                .or_else(filter_op(Operator::Exp, &operations));
+                .or_else(filter_op(Operator::Pow, &operations));
 
             if let Some(op_pos) = op_pos {
                 let mut left: Vec<Value> =
@@ -196,6 +195,45 @@ pub(super) fn to_ast(
             } else {
                 Err(anyhow::Error::msg("invalid variable expression"))
             }
+        }
+        Value::Const(c) => match c {
+            c if c == MathConstants::Pi.get_symbol() => to_ast(
+                ctx,
+                Value::Decimal(std::f64::consts::PI),
+                tree,
+                curr_node_id,
+            ),
+            c if c == MathConstants::EulerNumber.get_symbol() => to_ast(
+                ctx,
+                Value::Decimal(std::f64::consts::E),
+                tree,
+                curr_node_id,
+            ),
+            c if c == MathConstants::Tau.get_symbol() => to_ast(
+                ctx,
+                Value::Decimal(std::f64::consts::TAU),
+                tree,
+                curr_node_id,
+            ),
+            _ => unreachable!("should never happen or it's a bug"),
+        },
+        Value::BuiltInFunction { fn_type, expr } => {
+            let fn_node = TreeNodeValue::BuiltInFunction(fn_type);
+            let node_id = if let Some(node_id) = curr_node_id {
+                let mut node = tree
+                    .get_mut(*node_id)
+                    .context("node id does not exist!")?;
+
+                let node = node.append(fn_node);
+                Some(node.node_id())
+            } else if let Some(mut root_node) = tree.root_mut() {
+                let node = root_node.append(fn_node);
+                Some(node.node_id())
+            } else {
+                Some(tree.set_root(fn_node))
+            };
+            to_ast(ctx, *expr, tree, &node_id)?;
+            Ok(node_id)
         }
     }
 }
