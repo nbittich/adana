@@ -350,3 +350,12 @@ fn test_extra() {
     );
     assert_eq!(Primitive::Double(-1.), compute("cos(π)", &mut ctx).unwrap());
 }
+
+#[test]
+fn test_simple_bool() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(Primitive::Bool(true), compute("g = true", &mut ctx).unwrap());
+    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("g"));
+    assert_eq!(Primitive::Bool(false), compute("g = false", &mut ctx).unwrap());
+    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("g"));
+}

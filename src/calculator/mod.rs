@@ -58,7 +58,7 @@ pub(super) enum Value<'a> {
     BuiltInFunction { fn_type: BuiltInFunctionType, expr: Box<Value<'a>> },
     Decimal(f64),
     Integer(i128),
-    //Bool(bool),
+    Bool(bool),
     BlockParen(Vec<Value<'a>>),
     Variable(&'a str),
     Const(char),

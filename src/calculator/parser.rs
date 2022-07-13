@@ -23,6 +23,13 @@ fn parse_number(s: &str) -> Res<Value> {
     )(s)
 }
 
+fn parse_bool(s: &str) -> Res<Value> {
+    alt((
+        map(tag_no_space("true"), |_| Value::Bool(true)),
+        map(tag_no_space("false"), |_| Value::Bool(false)),
+    ))(s)
+}
+
 fn parse_variable(s: &str) -> Res<Value> {
     map_parser(
         alpha1,
@@ -98,6 +105,7 @@ fn parse_value(s: &str) -> Res<Value> {
                 parse_add,
                 parse_subtr,
                 parse_number,
+                parse_bool,
                 parse_fn,
                 parse_variable,
                 parse_constant,

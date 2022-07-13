@@ -156,18 +156,34 @@ pub(super) fn to_ast(
             }
         }
         Value::Integer(num) => {
-            let double_node = TreeNodeValue::Primitive(Primitive::Int(num));
+            let int_node = TreeNodeValue::Primitive(Primitive::Int(num));
             let node_id = if let Some(node_id) = curr_node_id {
                 let mut node = tree
                     .get_mut(*node_id)
                     .context("node id does not exist!")?;
-                node.append(double_node);
+                node.append(int_node);
                 Some(node.node_id())
             } else if let Some(mut root_node) = tree.root_mut() {
-                root_node.append(double_node);
+                root_node.append(int_node);
                 tree.root_id()
             } else {
-                Some(tree.set_root(double_node))
+                Some(tree.set_root(int_node))
+            };
+            Ok(node_id)
+        }
+        Value::Bool(bool_v) => {
+            let bool_node = TreeNodeValue::Primitive(Primitive::Bool(bool_v));
+            let node_id = if let Some(node_id) = curr_node_id {
+                let mut node = tree
+                    .get_mut(*node_id)
+                    .context("node id does not exist!")?;
+                node.append(bool_node);
+                Some(node.node_id())
+            } else if let Some(mut root_node) = tree.root_mut() {
+                root_node.append(bool_node);
+                tree.root_id()
+            } else {
+                Some(tree.set_root(bool_node))
             };
             Ok(node_id)
         }
