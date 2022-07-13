@@ -14,6 +14,35 @@ pub enum Number {
     Double(f64),
 }
 
+// region: traits
+
+pub trait Pow {
+    fn pow(&self, n: Self) -> Self;
+}
+
+pub trait Sqrt {
+    fn sqrt(&self) -> Self;
+}
+pub trait Abs {
+    fn abs(&self) -> Self;
+}
+pub trait Logarithm {
+    fn log(&self) -> Self;
+    fn ln(&self) -> Self;
+}
+
+pub trait Sin {
+    fn sin(&self) -> Self;
+}
+pub trait Cos {
+    fn cos(&self) -> Self;
+}
+pub trait Tan {
+    fn tan(&self) -> Self;
+}
+
+// endregion traits
+
 // region: impl primitive
 
 impl Display for Number {
@@ -25,15 +54,46 @@ impl Display for Number {
     }
 }
 
-pub trait Pow {
-    fn pow(&self, n: Self) -> Self;
+impl Sin for Number {
+    fn sin(&self) -> Self {
+        match self {
+            Number::Int(i) => Number::Double((*i as f64).sin()),
+            Number::Double(d) => Number::Double(d.sin()),
+        }
+    }
 }
 
-pub trait Sqrt {
-    fn sqrt(&self) -> Self;
+impl Cos for Number {
+    fn cos(&self) -> Self {
+        match self {
+            Number::Int(i) => Number::Double((*i as f64).cos()),
+            Number::Double(d) => Number::Double(d.cos()),
+        }
+    }
 }
-pub trait Abs {
-    fn abs(&self) -> Self;
+
+impl Tan for Number {
+    fn tan(&self) -> Self {
+        match self {
+            Number::Int(i) => Number::Double((*i as f64).tan()),
+            Number::Double(d) => Number::Double(d.tan()),
+        }
+    }
+}
+
+impl Logarithm for Number {
+    fn log(&self) -> Self {
+        match self {
+            Number::Int(i) => Number::Double((*i as f64).log10()),
+            Number::Double(d) => Number::Double(d.log10()),
+        }
+    }
+    fn ln(&self) -> Self {
+        match self {
+            Number::Int(i) => Number::Double((*i as f64).ln()),
+            Number::Double(d) => Number::Double(d.ln()),
+        }
+    }
 }
 
 impl Sqrt for Number {
@@ -53,13 +113,14 @@ impl Abs for Number {
     }
 }
 
-
-
 impl Pow for Number {
     fn pow(&self, rhs: Self) -> Self {
         match self {
             Number::Int(l) => match rhs {
-                Number::Int(r) if r >= 0 && r < MAX_U32_AS_I128 => Number::Int(l.pow(r as u32)),
+                #[allow(clippy::manual_range_contains)]
+                Number::Int(r) if r >= 0 && r <= MAX_U32_AS_I128 => {
+                    Number::Int(l.pow(r as u32))
+                }
                 Number::Int(r) => Number::Double((*l as f64).powf(r as f64)),
                 Number::Double(r) => Number::Double((*l as f64).powf(r)),
             },

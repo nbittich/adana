@@ -35,7 +35,7 @@ fn parse_variable(s: &str) -> Res<Value> {
     )(s)
 }
 fn parse_constant(s: &str) -> Res<Value> {
-    map(all_consuming(one_of(constants())), Value::Const)(s)
+    map(one_of(constants()), Value::Const)(s)
 }
 
 fn parse_paren(s: &str) -> Res<Value> {
@@ -55,23 +55,32 @@ fn parse_paren(s: &str) -> Res<Value> {
     )(s)
 }
 
-fn parse_fn<'a>(fn_type: Function) -> impl Fn(&'a str) -> Res<Value> {
-    let fn_name = match &fn_type {
-        Function::Sqrt => "sqrt",
-        Function::Abs => "abs",
-    };
-    move |s: &str| {
-        map(preceded(tag_no_space_no_case(fn_name), parse_paren), |expr| {
-            Value::Function { fn_type: fn_type, expr: Box::new(expr) }
-        })(s)
+fn parse_fn(s: &str) -> Res<Value> {
+    fn parse_fn<'a>(fn_type: Function) -> impl Fn(&'a str) -> Res<Value> {
+        let fn_name = match &fn_type {
+            Function::Sqrt => "sqrt",
+            Function::Abs => "abs",
+            Function::Log => "log",
+            Function::Ln => "ln",
+            Function::Sin => "sin",
+            Function::Cos => "cos",
+            Function::Tan => "tan",
+        };
+        move |s: &str| {
+            map(preceded(tag_no_space_no_case(fn_name), parse_paren), |expr| {
+                Value::Function { fn_type, expr: Box::new(expr) }
+            })(s)
+        }
     }
-}
-
-fn parse_sqrt(s: &str) -> Res<Value> {
-    parse_fn(Function::Sqrt)(s)
-}
-fn parse_abs(s: &str) -> Res<Value> {
-    parse_fn(Function::Abs)(s)
+    alt((
+        parse_fn(Function::Sqrt),
+        parse_fn(Function::Abs),
+        parse_fn(Function::Ln),
+        parse_fn(Function::Log),
+        parse_fn(Function::Sin),
+        parse_fn(Function::Cos),
+        parse_fn(Function::Tan),
+    ))(s)
 }
 
 fn parse_value(s: &str) -> Res<Value> {
@@ -88,8 +97,7 @@ fn parse_value(s: &str) -> Res<Value> {
                 parse_subtr,
                 parse_number,
                 parse_constant,
-                parse_sqrt,
-                parse_abs,
+                parse_fn,
                 parse_variable,
             )),
             multispace0,
@@ -103,14 +111,14 @@ fn parse_op<'a>(operation: Operator) -> impl Fn(&'a str) -> Res<Value> {
         Operator::Subtr => "-",
         Operator::Div => "/",
         Operator::Mult => "*",
-        Operator::Exp => "^",
+        Operator::Pow => "^",
         Operator::Mod => "%",
     };
     move |s| map(tag_no_space(sep), |_| Value::Operation(operation))(s)
 }
 
 fn parse_exp(s: &str) -> Res<Value> {
-    parse_op(Operator::Exp)(s)
+    parse_op(Operator::Pow)(s)
 }
 
 fn parse_mult(s: &str) -> Res<Value> {

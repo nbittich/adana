@@ -62,7 +62,7 @@ pub(super) fn to_ast(
                 .or_else(filter_op(Operator::Mult, &operations))
                 .or_else(filter_op(Operator::Mod, &operations))
                 .or_else(filter_op(Operator::Div, &operations))
-                .or_else(filter_op(Operator::Exp, &operations));
+                .or_else(filter_op(Operator::Pow, &operations));
 
             if let Some(op_pos) = op_pos {
                 let mut left: Vec<Value> =

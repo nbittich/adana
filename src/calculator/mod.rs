@@ -15,16 +15,13 @@ pub const EULER_NUMBER: char = 'e';
 
 pub const fn constants() -> &'static str {
     concat!('π', 'e')
-} 
+}
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub(super) enum Value<'a> {
     Expression(Vec<Value<'a>>),
     Operation(Operator),
-    Function{
-        fn_type: Function,
-        expr: Box<Value<'a>>
-    },
+    Function { fn_type: Function, expr: Box<Value<'a>> },
     Decimal(f64),
     Integer(i128),
     BlockParen(Vec<Value<'a>>),
@@ -34,9 +31,14 @@ pub(super) enum Value<'a> {
     VariableExpr { name: Box<Value<'a>>, expr: Box<Value<'a>> },
 }
 #[derive(Debug, PartialEq, Copy, Clone, Serialize, Deserialize)]
-pub (super) enum Function {
+pub(super) enum Function {
     Sqrt,
     Abs,
+    Log,
+    Ln,
+    Sin,
+    Cos,
+    Tan,
 }
 
 #[derive(Debug, Eq, Copy, Clone, PartialEq, Serialize, Deserialize)]
@@ -46,7 +48,7 @@ pub(super) enum Operator {
     Mult,
     Div,
     Mod,
-    Exp,
+    Pow,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
