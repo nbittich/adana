@@ -6,7 +6,7 @@ mod editor;
 mod prelude;
 
 use args::*;
-use calculator::Number;
+use calculator::Primitive;
 use db::DbOp;
 use rustyline::error::ReadlineError;
 use std::path::Path;
@@ -101,7 +101,7 @@ fn start_app(
 
 fn process_repl(
     line: &str,
-    ctx: &mut BTreeMap<String, Number>,
+    ctx: &mut BTreeMap<String, Primitive>,
 ) -> anyhow::Result<()> {
     let calc = crate::calculator::compute(line, ctx)?;
     println!("{calc}");

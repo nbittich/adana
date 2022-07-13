@@ -2,27 +2,28 @@ use slab_tree::{NodeId, Tree};
 
 use crate::prelude::{BTreeMap, Context};
 
-use super::{MathConstants, Number, Operator, TreeNodeValue, Value};
+use super::{MathConstants, Primitive, Operator, TreeNodeValue, Value};
 
 fn variable_from_ctx<'a>(
     name: &'a str,
     negate: bool,
-    ctx: &mut BTreeMap<String, Number>,
+    ctx: &mut BTreeMap<String, Primitive>,
 ) -> anyhow::Result<Value<'a>> {
     let value =
-        ctx.get(name).context(format!("variable {name} not found in ctx"))?;
+        ctx.get(name).context(format!("variable {name} not found in ctx"))?.as_ref_ok()?;
 
     if cfg!(test) {
         dbg!(value);
     }
 
-    let value = match value {
-        Number::Int(i) if negate => Value::Integer(-i),
-        Number::Int(i) => Value::Integer(*i),
-        Number::Double(d) if negate => Value::Decimal(-d),
-        Number::Double(d) => Value::Decimal(*d),
-    };
-    Ok(value)
+    match value {
+        Primitive::Int(i) if negate => Ok(Value::Integer(-i)),
+        Primitive::Int(i) => Ok(Value::Integer(*i)),
+        Primitive::Double(d) if negate => Ok( Value::Decimal(-d)),
+        Primitive::Double(d) => Ok(Value::Decimal(*d)),
+        Primitive::Bool(_b) => Err(anyhow::Error::msg("attempt to negate a bool value")),
+        Primitive::Error(msg) => Err(anyhow::Error::msg(msg.clone())),
+    }
 }
 
 fn filter_op<'a>(
@@ -37,7 +38,7 @@ fn filter_op<'a>(
 }
 
 pub(super) fn to_ast(
-    ctx: &mut BTreeMap<String, Number>,
+    ctx: &mut BTreeMap<String, Primitive>,
     value: Value,
     tree: &mut Tree<TreeNodeValue>,
     curr_node_id: &Option<NodeId>,
@@ -136,7 +137,7 @@ pub(super) fn to_ast(
         }
 
         Value::Decimal(num) => {
-            let double_node = TreeNodeValue::Primitive(Number::Double(num));
+            let double_node = TreeNodeValue::Primitive(Primitive::Double(num));
             if let Some(node_id) = curr_node_id {
                 let mut node = tree
                     .get_mut(*node_id)
@@ -151,7 +152,7 @@ pub(super) fn to_ast(
             }
         }
         Value::Integer(num) => {
-            let double_node = TreeNodeValue::Primitive(Number::Int(num));
+            let double_node = TreeNodeValue::Primitive(Primitive::Int(num));
             let node_id = if let Some(node_id) = curr_node_id {
                 let mut node = tree
                     .get_mut(*node_id)

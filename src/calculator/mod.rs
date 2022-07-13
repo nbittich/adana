@@ -1,13 +1,13 @@
 mod ast;
 mod compute;
-mod number;
+mod primitive;
 mod parser;
 
 #[cfg(test)]
 mod tests;
 
 pub use compute::compute;
-pub use number::Number;
+pub use primitive::Primitive;
 use strum::EnumCount;
 
 #[derive(Debug, EnumCount)]
@@ -58,6 +58,7 @@ pub(super) enum Value<'a> {
     BuiltInFunction { fn_type: BuiltInFunctionType, expr: Box<Value<'a>> },
     Decimal(f64),
     Integer(i128),
+    //Bool(bool),
     BlockParen(Vec<Value<'a>>),
     Variable(&'a str),
     Const(char),
@@ -89,6 +90,6 @@ pub(super) enum Operator {
 pub(super) enum TreeNodeValue {
     VariableAssign(String),
     Ops(Operator),
-    Primitive(Number),
+    Primitive(Primitive),
     BuiltInFunction(BuiltInFunctionType),
 }
