@@ -4,7 +4,7 @@ use crate::prelude::{AssertUnwindSafe, BTreeMap};
 
 use super::{
     ast::to_ast,
-    number::{Number, Pow},
+    number::{Number, Pow, Sqrt, Abs},
     parser::parse_var_expr,
     Operator, TreeNodeValue,
 };
@@ -63,6 +63,13 @@ fn compute_recur(
                 ctx.insert(name.to_owned(), v);
                 v
             }
+            TreeNodeValue::BuiltInFunction(fn_type) => {
+                let v = compute_recur(node.first_child(), ctx);
+                match fn_type {
+                    super::Function::Sqrt => v.sqrt(),
+                    super::Function::Abs => v.abs(),
+                }
+            },
         }
     } else {
         Number::Int(0)

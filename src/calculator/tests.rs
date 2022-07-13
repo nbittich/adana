@@ -121,7 +121,7 @@ fn test_compute() {
         compute("z = 78/5.-4.5*(9+7^2.5)-12*4+1-8/3.*4-5", &mut ctx).unwrap()
     );
     assert_eq!(
-            Number::Double(37737.),
+            Number::Int(37737),
             compute("f = 1988*19-(((((((9*2))))+2*4)-3))/6-1^2*1000/(7-4*(3/9-(9+3/2-4)))", &mut ctx).unwrap()
         );
     assert_eq!(
@@ -168,6 +168,66 @@ fn test_pow() {
     let mut ctx = BTreeMap::new();
     assert_eq!(Number::Double(-0.5), compute("-2^-1", &mut ctx).unwrap());
     assert_eq!(Number::Double(-0.04), compute("-5^-2", &mut ctx).unwrap());
-    assert_eq!(Number::Double(-25.), compute("-5^2", &mut ctx).unwrap());
+    assert_eq!(Number::Int(-25), compute("-5^2", &mut ctx).unwrap());
     assert_eq!(Number::Double(0.04), compute("5^-2", &mut ctx).unwrap());
+    assert_eq!(Number::Int(3125), compute("5^5", &mut ctx).unwrap());
+    assert_eq!(Number::Int(1), compute("5^0", &mut ctx).unwrap());
+}
+
+#[test]
+fn test_consts() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(
+        Number::Double(std::f64::consts::PI),
+        compute("π", &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Number::Double(std::f64::consts::E),
+        compute("e", &mut ctx).unwrap()
+    );
+}
+#[test]
+fn test_fn_sqrt() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(
+        Number::Double(2.23606797749979),
+        compute("sqrt(5)", &mut ctx).unwrap()
+    );
+    assert_eq!(Number::Double(5.), compute("sqrt(5*5)", &mut ctx).unwrap());
+    assert_eq!(
+        Number::Double(8983.719357816115),
+        compute("sqrt(2*(3/4.-12%5 +7^9) --6/12.*4)", &mut ctx).unwrap()
+    );
+}
+
+#[test]
+fn test_fn_abs() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(Number::Int(5), compute("abs(5)", &mut ctx).unwrap());
+    assert_eq!(Number::Int(25), compute("abs(-5*5)", &mut ctx).unwrap());
+    assert_eq!(
+        Number::Double(80707209.5),
+        compute("abs(-2*(3/4.-12%5 +7^9) --6/12.*4)", &mut ctx).unwrap()
+    );
+}
+
+#[test]
+fn test_extra() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(
+        Number::Double(44721.45950030539),
+        compute("sqrt((2*10^9-5*abs(8/9.))) + abs(1/10.)", &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Number::Double(161414423.89420456),
+        compute(
+            "
+                2*(3/4.-12%5 +7^9) -6/12.*4 / 
+                sqrt(2*(3/4.-12%5 +7^9) --6/12.*4) + 
+                abs(-2*(3/4.-12%5 +7^9) -6/12.*4 / sqrt(5))
+            ",
+            &mut ctx
+        )
+        .unwrap()
+    );
 }
