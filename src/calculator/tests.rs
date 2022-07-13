@@ -411,4 +411,19 @@ fn test_simple_condition() {
         compute("bcxkcdd = bcd != !ab", &mut ctx).unwrap()
     );
     assert_eq!(Some(&Primitive::Bool(true)), ctx.get("bcxkcdd"));
+    assert_eq!(
+        Primitive::Bool(true),
+        compute("mmm = !bcd == !ab", &mut ctx).unwrap()
+    );
+    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("bcxkcdd"));
+    assert_eq!(
+        Primitive::Bool(true),
+        compute("xxx = !bcd == (5^2 < 1)", &mut ctx).unwrap()
+    );
+    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("xxx"));
+    assert_eq!(
+        Primitive::Bool(false),
+        compute("rrr = !bcd != (5^2 < 1)", &mut ctx).unwrap()
+    );
+    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("rrr"));
 }
