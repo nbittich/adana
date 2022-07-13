@@ -191,7 +191,7 @@ checksum = "112c678d4050afce233f4f2852bb2eb519230b3cf12f33585275537d7e41578d"
 
 [[package]]
 name = "karsher"
-version = "0.8.7"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "bincode",
