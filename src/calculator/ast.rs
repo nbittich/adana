@@ -2,15 +2,17 @@ use slab_tree::{NodeId, Tree};
 
 use crate::prelude::{BTreeMap, Context};
 
-use super::{MathConstants, Primitive, Operator, TreeNodeValue, Value};
+use super::{MathConstants, Operator, Primitive, TreeNodeValue, Value};
 
 fn variable_from_ctx<'a>(
     name: &'a str,
     negate: bool,
     ctx: &mut BTreeMap<String, Primitive>,
 ) -> anyhow::Result<Value<'a>> {
-    let value =
-        ctx.get(name).context(format!("variable {name} not found in ctx"))?.as_ref_ok()?;
+    let value = ctx
+        .get(name)
+        .context(format!("variable {name} not found in ctx"))?
+        .as_ref_ok()?;
 
     if cfg!(test) {
         dbg!(value);
@@ -19,10 +21,12 @@ fn variable_from_ctx<'a>(
     match value {
         Primitive::Int(i) if negate => Ok(Value::Integer(-i)),
         Primitive::Int(i) => Ok(Value::Integer(*i)),
-        Primitive::Double(d) if negate => Ok( Value::Decimal(-d)),
+        Primitive::Double(d) if negate => Ok(Value::Decimal(-d)),
         Primitive::Double(d) => Ok(Value::Decimal(*d)),
-        Primitive::Bool(_b) => Err(anyhow::Error::msg("attempt to negate a bool value")),
-        Primitive::Error(msg) => Err(anyhow::Error::msg(msg.clone())),
+        Primitive::Bool(_b) => {
+            Err(anyhow::Error::msg("attempt to negate a bool value"))
+        }
+        Primitive::Error(msg) => Err(anyhow::Error::msg(*msg)),
     }
 }
 

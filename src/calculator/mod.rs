@@ -1,7 +1,7 @@
 mod ast;
 mod compute;
-mod primitive;
 mod parser;
+mod primitive;
 
 #[cfg(test)]
 mod tests;

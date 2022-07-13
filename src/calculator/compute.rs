@@ -1,6 +1,5 @@
 use std::ops::Neg;
 
-use anyhow::Context;
 use slab_tree::{NodeRef, Tree};
 
 use crate::prelude::{AssertUnwindSafe, BTreeMap};
@@ -71,7 +70,7 @@ fn compute_recur(
                 Ok(Primitive::Bool(*b))
             }
             TreeNodeValue::Primitive(Primitive::Error(err)) => {
-                Err(anyhow::Error::msg(err.clone()))
+                Err(anyhow::Error::msg(*err))
             }
             TreeNodeValue::Primitive(p) => p.ok(),
             TreeNodeValue::VariableAssign(name) => {
