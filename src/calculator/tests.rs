@@ -187,7 +187,11 @@ fn test_consts() {
     );
     assert_eq!(
         Number::Double(std::f64::consts::E),
-        compute("e", &mut ctx).unwrap()
+        compute("γ", &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Number::Double(std::f64::consts::TAU),
+        compute("τ", &mut ctx).unwrap()
     );
 }
 #[test]
@@ -337,7 +341,7 @@ fn test_extra() {
                 (2*(3/4.-12%5 +7^9) -6/12.*4 / 
                 sqrt(2*(3/4.-12%5 +7^9) --6/12.*4) + 
                 abs(-2*(3/4.-12%5 +7^9) -6/12.*4 / sqrt(5)) -
-                ln(abs(-2*(3/4.-12%5 +7^9 --8*4^9. % 2) --6/12.*4))) * e
+                ln(abs(-2*(3/4.-12%5 +7^9 --8*4^9. % 2) --6/12.*4))) * γ
 
             ",
             &mut ctx

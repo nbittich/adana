@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use strum::{EnumString, EnumVariantNames, VariantNames};
+use strum::EnumCount;
 
 const PUT: &str = "put";
 const GET: &str = "get";
@@ -26,7 +26,7 @@ const CLEAR: &str = "clear";
 const CLEAR_ALT: &str = "cls";
 const HELP: &str = "help";
 
-#[derive(Debug, EnumString, EnumVariantNames)]
+#[derive(Debug, EnumCount)]
 pub enum CacheCommand<'a> {
     Put { aliases: Vec<&'a str>, value: &'a str },
     Describe,
@@ -48,8 +48,9 @@ pub enum CacheCommand<'a> {
 
 impl CacheCommand<'_> {
     pub const fn doc() -> &'static [(&'static [&'static str], &'static str)] {
-        const VARIANTS: &[&str] = CacheCommand::VARIANTS;
-        assert!(16 == VARIANTS.len(), "enum doc no longer valid!");
+        if CacheCommand::COUNT != 16 {
+            panic!("CacheCommand::doc() no longer valid!");
+        }
         &[
             (&[PUT], "Put a new value to current cache. can have multiple aliases with option '-a'. e.g `put -a drc -a drcomp docker-compose`"),
             (&[DESCRIBE,DESCRIBE_ALT], "List values within the cache."),

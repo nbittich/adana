@@ -66,13 +66,13 @@ fn compute_recur(
             TreeNodeValue::BuiltInFunction(fn_type) => {
                 let v = compute_recur(node.first_child(), ctx);
                 match fn_type {
-                    super::Function::Sqrt => v.sqrt(),
-                    super::Function::Abs => v.abs(),
-                    super::Function::Log => v.log(),
-                    super::Function::Ln => v.ln(),
-                    super::Function::Sin => v.sin(),
-                    super::Function::Cos => v.cos(),
-                    super::Function::Tan => v.tan(),
+                    super::BuiltInFunctionType::Sqrt => v.sqrt(),
+                    super::BuiltInFunctionType::Abs => v.abs(),
+                    super::BuiltInFunctionType::Log => v.log(),
+                    super::BuiltInFunctionType::Ln => v.ln(),
+                    super::BuiltInFunctionType::Sin => v.sin(),
+                    super::BuiltInFunctionType::Cos => v.cos(),
+                    super::BuiltInFunctionType::Tan => v.tan(),
                 }
             }
         }

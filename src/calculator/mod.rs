@@ -9,19 +9,54 @@ mod tests;
 use crate::prelude::{Deserialize, Serialize};
 pub use compute::compute;
 pub use number::Number;
+use strum::EnumCount;
 
-pub const PI: char = 'π';
-pub const EULER_NUMBER: char = 'e';
+#[derive(Debug, EnumCount)]
+pub(super) enum MathConstants {
+    Pi,
+    EulerNumber,
+    Tau,
+}
 
-pub const fn constants() -> &'static str {
-    concat!('π', 'e')
+macro_rules! pi {
+    () => {
+        'π'
+    };
+}
+macro_rules! euler_number {
+    () => {
+        'γ'
+    };
+}
+macro_rules! tau {
+    () => {
+        'τ'
+    };
+}
+
+impl MathConstants {
+    pub(super) const fn get_symbol(&self) -> char {
+        match self {
+            MathConstants::Pi => pi!(),
+            MathConstants::EulerNumber => euler_number!(),
+            MathConstants::Tau => tau!(),
+        }
+    }
+    pub(super) const fn get_symbols() -> &'static str {
+        concat!(pi!(), euler_number!(), tau!())
+    }
+
+    pub(super) const fn _get_variants(
+    ) -> &'static [&'static MathConstants; MathConstants::COUNT] {
+        &[&MathConstants::Pi, &MathConstants::EulerNumber, &MathConstants::Tau]
+    }
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub(super) enum Value<'a> {
     Expression(Vec<Value<'a>>),
     Operation(Operator),
-    Function { fn_type: Function, expr: Box<Value<'a>> },
+    BuiltInFunction { fn_type: BuiltInFunctionType, expr: Box<Value<'a>> },
     Decimal(f64),
     Integer(i128),
     BlockParen(Vec<Value<'a>>),
@@ -31,7 +66,7 @@ pub(super) enum Value<'a> {
     VariableExpr { name: Box<Value<'a>>, expr: Box<Value<'a>> },
 }
 #[derive(Debug, PartialEq, Copy, Clone, Serialize, Deserialize)]
-pub(super) enum Function {
+pub(super) enum BuiltInFunctionType {
     Sqrt,
     Abs,
     Log,
@@ -56,5 +91,5 @@ pub(super) enum TreeNodeValue {
     VariableAssign(String),
     Ops(Operator),
     Primitive(Number),
-    BuiltInFunction(Function),
+    BuiltInFunction(BuiltInFunctionType),
 }
