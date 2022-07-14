@@ -2,7 +2,7 @@ use std::ops::{Neg, Not};
 
 use slab_tree::{NodeRef, Tree};
 
-use crate::prelude::{AssertUnwindSafe, BTreeMap};
+use crate::prelude::BTreeMap;
 
 use super::{
     ast::to_ast,
@@ -214,9 +214,5 @@ pub fn compute(
 
     let root = tree.root();
 
-    // i don't care if it panics, i catch it later
-    std::panic::catch_unwind(AssertUnwindSafe(|| {
-        compute_recur(root, ctx).unwrap()
-    }))
-    .map_err(|_| anyhow::Error::msg("could not safely compute the whole thing"))
+    compute_recur(root, ctx)
 }

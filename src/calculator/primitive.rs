@@ -363,7 +363,7 @@ impl Mul for Primitive {
     fn mul(self, rhs: Self) -> Self::Output {
         match self {
             Primitive::Int(l) => match rhs {
-                Primitive::Int(r) => Primitive::Int(l * r),
+                Primitive::Int(r) => Primitive::Int(l.wrapping_mul(r)),
                 Primitive::Double(r) => Primitive::Double(l as f64 * r),
                 Primitive::Bool(_b) => {
                     Primitive::Error("call to mul() on a boolean value")
