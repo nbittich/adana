@@ -154,7 +154,6 @@ mod test {
         for i in 1..100u64 {
             file_db.insert(i, format!("ok mani{i}"));
             file_db.insert(i * 100, format!("ok rebenga{i}"));
-            std::thread::sleep(Duration::from_millis(25));
         }
         assert_eq!(Some(198), file_db.len());
 

@@ -2,27 +2,33 @@ use slab_tree::{NodeId, Tree};
 
 use crate::prelude::{BTreeMap, Context};
 
-use super::{MathConstants, Number, Operator, TreeNodeValue, Value};
+use super::{MathConstants, Operator, Primitive, TreeNodeValue, Value};
 
 fn variable_from_ctx<'a>(
     name: &'a str,
     negate: bool,
-    ctx: &mut BTreeMap<String, Number>,
+    ctx: &mut BTreeMap<String, Primitive>,
 ) -> anyhow::Result<Value<'a>> {
-    let value =
-        ctx.get(name).context(format!("variable {name} not found in ctx"))?;
+    let value = ctx
+        .get(name)
+        .context(format!("variable {name} not found in ctx"))?
+        .as_ref_ok()?;
 
     if cfg!(test) {
         dbg!(value);
     }
 
-    let value = match value {
-        Number::Int(i) if negate => Value::Integer(-i),
-        Number::Int(i) => Value::Integer(*i),
-        Number::Double(d) if negate => Value::Decimal(-d),
-        Number::Double(d) => Value::Decimal(*d),
-    };
-    Ok(value)
+    match value {
+        Primitive::Int(i) if negate => Ok(Value::Integer(-i)),
+        Primitive::Int(i) => Ok(Value::Integer(*i)),
+        Primitive::Double(d) if negate => Ok(Value::Decimal(-d)),
+        Primitive::Double(d) => Ok(Value::Decimal(*d)),
+        Primitive::Bool(b) if !negate => Ok(Value::Bool(*b)),
+        Primitive::Bool(_b) => {
+            Err(anyhow::Error::msg("attempt to negate a bool value"))
+        }
+        Primitive::Error(msg) => Err(anyhow::Error::msg(*msg)),
+    }
 }
 
 fn filter_op<'a>(
@@ -37,7 +43,7 @@ fn filter_op<'a>(
 }
 
 pub(super) fn to_ast(
-    ctx: &mut BTreeMap<String, Number>,
+    ctx: &mut BTreeMap<String, Primitive>,
     value: Value,
     tree: &mut Tree<TreeNodeValue>,
     curr_node_id: &Option<NodeId>,
@@ -57,12 +63,21 @@ pub(super) fn to_ast(
             }
 
             let op_pos = None
+                .or_else(filter_op(Operator::Or, &operations))
+                .or_else(filter_op(Operator::And, &operations))
+                .or_else(filter_op(Operator::GreaterOrEqual, &operations))
+                .or_else(filter_op(Operator::LessOrEqual, &operations))
+                .or_else(filter_op(Operator::Greater, &operations))
+                .or_else(filter_op(Operator::Less, &operations))
+                .or_else(filter_op(Operator::Equal, &operations))
+                .or_else(filter_op(Operator::NotEqual, &operations))
                 .or_else(filter_op(Operator::Add, &operations))
                 .or_else(filter_op(Operator::Subtr, &operations))
                 .or_else(filter_op(Operator::Mult, &operations))
                 .or_else(filter_op(Operator::Mod, &operations))
                 .or_else(filter_op(Operator::Div, &operations))
-                .or_else(filter_op(Operator::Pow, &operations));
+                .or_else(filter_op(Operator::Pow, &operations))
+                .or_else(filter_op(Operator::Not, &operations));
 
             if let Some(op_pos) = op_pos {
                 let mut left: Vec<Value> =
@@ -136,7 +151,7 @@ pub(super) fn to_ast(
         }
 
         Value::Decimal(num) => {
-            let double_node = TreeNodeValue::Primitive(Number::Double(num));
+            let double_node = TreeNodeValue::Primitive(Primitive::Double(num));
             if let Some(node_id) = curr_node_id {
                 let mut node = tree
                     .get_mut(*node_id)
@@ -151,18 +166,34 @@ pub(super) fn to_ast(
             }
         }
         Value::Integer(num) => {
-            let double_node = TreeNodeValue::Primitive(Number::Int(num));
+            let int_node = TreeNodeValue::Primitive(Primitive::Int(num));
             let node_id = if let Some(node_id) = curr_node_id {
                 let mut node = tree
                     .get_mut(*node_id)
                     .context("node id does not exist!")?;
-                node.append(double_node);
+                node.append(int_node);
                 Some(node.node_id())
             } else if let Some(mut root_node) = tree.root_mut() {
-                root_node.append(double_node);
+                root_node.append(int_node);
                 tree.root_id()
             } else {
-                Some(tree.set_root(double_node))
+                Some(tree.set_root(int_node))
+            };
+            Ok(node_id)
+        }
+        Value::Bool(bool_v) => {
+            let bool_node = TreeNodeValue::Primitive(Primitive::Bool(bool_v));
+            let node_id = if let Some(node_id) = curr_node_id {
+                let mut node = tree
+                    .get_mut(*node_id)
+                    .context("node id does not exist!")?;
+                node.append(bool_node);
+                Some(node.node_id())
+            } else if let Some(mut root_node) = tree.root_mut() {
+                root_node.append(bool_node);
+                tree.root_id()
+            } else {
+                Some(tree.set_root(bool_node))
             };
             Ok(node_id)
         }

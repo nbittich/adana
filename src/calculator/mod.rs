@@ -1,14 +1,16 @@
 mod ast;
 mod compute;
-mod number;
 mod parser;
+mod primitive;
 
 #[cfg(test)]
 mod tests;
 
 pub use compute::compute;
-pub use number::Number;
+pub use primitive::Primitive;
 use strum::EnumCount;
+
+pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &["true", "false"];
 
 #[derive(Debug, EnumCount)]
 pub(super) enum MathConstants {
@@ -58,6 +60,7 @@ pub(super) enum Value<'a> {
     BuiltInFunction { fn_type: BuiltInFunctionType, expr: Box<Value<'a>> },
     Decimal(f64),
     Integer(i128),
+    Bool(bool),
     BlockParen(Vec<Value<'a>>),
     Variable(&'a str),
     Const(char),
@@ -83,12 +86,21 @@ pub(super) enum Operator {
     Div,
     Mod,
     Pow,
+    Not,
+    Less,
+    Greater,
+    LessOrEqual,
+    GreaterOrEqual,
+    Equal,
+    NotEqual,
+    And,
+    Or,
 }
 
 #[derive(Debug)]
 pub(super) enum TreeNodeValue {
     VariableAssign(String),
     Ops(Operator),
-    Primitive(Number),
+    Primitive(Primitive),
     BuiltInFunction(BuiltInFunctionType),
 }
