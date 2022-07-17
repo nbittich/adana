@@ -160,10 +160,10 @@ fn compute_recur(
             TreeNodeValue::Primitive(Primitive::Error(err)) => {
                 Err(anyhow::Error::msg(*err))
             }
-            TreeNodeValue::Primitive(p) => p.ok(),
+            TreeNodeValue::Primitive(p) => p.clone().ok(),
             TreeNodeValue::VariableAssign(name) => {
                 let v = compute_recur(node.first_child(), ctx)?.ok()?;
-                ctx.insert(name.to_owned(), v);
+                ctx.insert(name.to_owned(), v.clone());
                 Ok(v)
             }
             TreeNodeValue::BuiltInFunction(fn_type) => {

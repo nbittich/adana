@@ -11,11 +11,12 @@ use crate::prelude::{Deserialize, Serialize};
 
 const MAX_U32_AS_I128: i128 = u32::MAX as i128;
 
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Primitive {
     Int(i128),
     Bool(bool),
     Double(f64),
+    String(String),
     Error(&'static str),
 }
 
@@ -112,18 +113,15 @@ impl Primitive {
     }
     pub fn as_ref_ok(&self) -> Result<&Primitive> {
         match self {
-            Primitive::Int(_) | Primitive::Bool(_) | Primitive::Double(_) => {
-                Ok(self)
-            }
             Primitive::Error(msg) => Err(anyhow::Error::msg(*msg)),
+
+            _ => Ok(self),
         }
     }
     pub fn ok(self) -> Result<Primitive> {
         match self {
-            Primitive::Int(_) | Primitive::Bool(_) | Primitive::Double(_) => {
-                Ok(self)
-            }
             Primitive::Error(msg) => Err(anyhow::Error::msg(msg)),
+            _ => Ok(self),
         }
     }
 }
@@ -135,6 +133,7 @@ impl Display for Primitive {
             Primitive::Double(d) => write!(f, "{d}"),
             Primitive::Bool(b) => write!(f, "{b}"),
             Primitive::Error(e) => write!(f, "{e}"),
+            Primitive::String(s) => write!(f, "{s}"),
         }
     }
 }
@@ -146,6 +145,9 @@ impl Sin for Primitive {
             Primitive::Double(d) => Primitive::Double(d.sin()),
             Primitive::Bool(_b) => {
                 Primitive::Error("call to sin() on a boolean value")
+            }
+            Primitive::String(_s) => {
+                Primitive::Error("call to sin() on a string value")
             }
             Primitive::Error(e) => panic!("call to sin() on an error. {e}"),
         }
@@ -160,6 +162,9 @@ impl Cos for Primitive {
             Primitive::Bool(_b) => {
                 Primitive::Error("call to cos() on a boolean value")
             }
+            Primitive::String(_s) => {
+                Primitive::Error("call to cos() on a string value")
+            }
             Primitive::Error(e) => panic!("call to cos() on an error. {e}"),
         }
     }
@@ -173,6 +178,9 @@ impl Tan for Primitive {
             Primitive::Bool(_b) => {
                 Primitive::Error("call to tan() on a boolean value")
             }
+            Primitive::String(_s) => {
+                Primitive::Error("call to tan() on a string value")
+            }
             Primitive::Error(e) => panic!("call to tan() on an error. {e}"),
         }
     }
@@ -184,7 +192,10 @@ impl Logarithm for Primitive {
             Primitive::Int(i) => Primitive::Double((*i as f64).log10()),
             Primitive::Double(d) => Primitive::Double(d.log10()),
             Primitive::Bool(_b) => {
-                Primitive::Error("call to log tan() on a boolean value")
+                Primitive::Error("call to log() on a boolean value")
+            }
+            Primitive::String(_s) => {
+                Primitive::Error("call to log() on a string value")
             }
             Primitive::Error(e) => panic!("call to log() on an error. {e}"),
         }
@@ -195,6 +206,9 @@ impl Logarithm for Primitive {
             Primitive::Double(d) => Primitive::Double(d.ln()),
             Primitive::Bool(_b) => {
                 Primitive::Error("call to ln() on a boolean value")
+            }
+            Primitive::String(_s) => {
+                Primitive::Error("call to ln() on a string value")
             }
             Primitive::Error(e) => panic!("call to ln() on an error. {e}"),
         }
@@ -209,6 +223,9 @@ impl Sqrt for Primitive {
             Primitive::Bool(_b) => {
                 Primitive::Error("call to sqrt() on a boolean value")
             }
+            Primitive::String(_s) => {
+                Primitive::Error("call to sqrt() on a string value")
+            }
             Primitive::Error(e) => panic!("call to sqrt() on an error. {e}"),
         }
     }
@@ -220,6 +237,9 @@ impl Abs for Primitive {
             Primitive::Double(d) => Primitive::Double(d.abs()),
             Primitive::Bool(_b) => {
                 Primitive::Error("call to abs() on a boolean value")
+            }
+            Primitive::String(_s) => {
+                Primitive::Error("call to abs() on a string value")
             }
             Primitive::Error(e) => panic!("call to abs() on an error. {e}"),
         }
@@ -241,6 +261,9 @@ impl Pow for Primitive {
                 Primitive::Bool(_b) => {
                     Primitive::Error("call to pow() on a boolean value")
                 }
+                Primitive::String(_s) => {
+                    Primitive::Error("call to pow() on a string value")
+                }
                 Primitive::Error(e) => panic!("call to pow() on an error. {e}"),
             },
             Primitive::Double(l) => match rhs {
@@ -249,9 +272,14 @@ impl Pow for Primitive {
                 Primitive::Bool(_b) => {
                     Primitive::Error("call to pow() on a boolean value")
                 }
+                Primitive::String(_s) => {
+                    Primitive::Error("call to pow() on a string value")
+                }
                 Primitive::Error(e) => panic!("call to pow() on an error. {e}"),
             },
-
+            Primitive::String(_s) => {
+                Primitive::Error("call to pow() on a string value")
+            }
             Primitive::Bool(_b) => {
                 Primitive::Error("call to pow() on a boolean value")
             }
@@ -281,6 +309,7 @@ impl Add for Primitive {
                 Primitive::Bool(_b) => {
                     Primitive::Error("call to add() on a boolean value")
                 }
+                Primitive::String(s) => Primitive::String(format!("{l}{s}")),
                 Primitive::Error(e) => panic!("call to add() on an error. {e}"),
             },
             Primitive::Double(l) => match rhs {
@@ -289,8 +318,10 @@ impl Add for Primitive {
                 Primitive::Bool(_b) => {
                     Primitive::Error("call to add() on a boolean value")
                 }
+                Primitive::String(s) => Primitive::String(format!("{l}{s}")),
                 Primitive::Error(e) => panic!("call to add() on an error. {e}"),
             },
+            Primitive::String(s) => Primitive::String(format!("{s}{rhs}")),
             Primitive::Bool(_b) => {
                 Primitive::Error("call to add() on a boolean value")
             }
@@ -307,21 +338,21 @@ impl Sub for Primitive {
             Primitive::Int(l) => match rhs {
                 Primitive::Int(r) => Primitive::Int(l - r),
                 Primitive::Double(r) => Primitive::Double(l as f64 - r),
-                Primitive::Bool(_b) => {
-                    Primitive::Error("call to sub() on a boolean value")
-                }
+                Primitive::Bool(_) | Primitive::String(_) => Primitive::Error(
+                    "call to sub() on a boolean or string value",
+                ),
                 Primitive::Error(e) => panic!("call to sub() on an error. {e}"),
             },
             Primitive::Double(l) => match rhs {
                 Primitive::Int(r) => Primitive::Double(l - r as f64),
                 Primitive::Double(r) => Primitive::Double(l as f64 - r),
-                Primitive::Bool(_b) => {
-                    Primitive::Error("call to sub() on a boolean value")
-                }
+                Primitive::Bool(_) | Primitive::String(_) => Primitive::Error(
+                    "call to sub() on a boolean or string value",
+                ),
                 Primitive::Error(e) => panic!("call to sub() on an error. {e}"),
             },
-            Primitive::Bool(_b) => {
-                Primitive::Error("call to sub() on a boolean value")
+            Primitive::Bool(_) | Primitive::String(_) => {
+                Primitive::Error("call to sub() on a boolean or string value")
             }
             Primitive::Error(e) => panic!("call to sub() on an error. {e}"),
         }
@@ -336,22 +367,22 @@ impl Rem for Primitive {
             Primitive::Int(l) => match rhs {
                 Primitive::Int(r) if r != 0 => Primitive::Int(l % r),
                 Primitive::Double(r) => Primitive::Double(l as f64 % r),
-                Primitive::Bool(_b) => {
-                    Primitive::Error("call to rem() on a boolean value")
-                }
+                Primitive::Bool(_) | Primitive::String(_) => Primitive::Error(
+                    "call to rem() on a boolean or string value",
+                ),
                 Primitive::Error(e) => panic!("call to rem() on an error. {e}"),
                 _ => Primitive::Double(f64::NAN),
             },
             Primitive::Double(l) => match rhs {
                 Primitive::Int(r) => Primitive::Double(l % r as f64),
                 Primitive::Double(r) => Primitive::Double(l as f64 % r),
-                Primitive::Bool(_b) => {
-                    Primitive::Error("call to rem() on a boolean value")
-                }
+                Primitive::Bool(_) | Primitive::String(_) => Primitive::Error(
+                    "call to rem() on a boolean or string value",
+                ),
                 Primitive::Error(e) => panic!("call to rem() on an error. {e}"),
             },
-            Primitive::Bool(_b) => {
-                Primitive::Error("call to rem() on a boolean value")
+            Primitive::Bool(_) | Primitive::String(_) => {
+                Primitive::Error("call to rem() on a boolean or string  value")
             }
             Primitive::Error(e) => panic!("call to rem() on an error. {e}"),
         }
@@ -365,18 +396,24 @@ impl Mul for Primitive {
             Primitive::Int(l) => match rhs {
                 Primitive::Int(r) => Primitive::Int(l.wrapping_mul(r)),
                 Primitive::Double(r) => Primitive::Double(l as f64 * r),
-                Primitive::Bool(_b) => {
-                    Primitive::Error("call to mul() on a boolean value")
-                }
+                Primitive::Bool(_) | Primitive::String(_) => Primitive::Error(
+                    "call to mul() on a boolean or string value",
+                ),
                 Primitive::Error(e) => panic!("call to mul() on an error. {e}"),
             },
             Primitive::Double(l) => match rhs {
                 Primitive::Int(r) => Primitive::Double(l * r as f64),
                 Primitive::Double(r) => Primitive::Double(l as f64 * r),
-                Primitive::Bool(_b) => {
-                    Primitive::Error("call to mul() on a boolean value")
-                }
+                Primitive::Bool(_) | Primitive::String(_) => Primitive::Error(
+                    "call to mul() on a boolean or string value",
+                ),
                 Primitive::Error(e) => panic!("call to mul() on an error. {e}"),
+            },
+            Primitive::String(l) => match rhs {
+                Primitive::Int(r) => Primitive::String(l.repeat(r as usize)),
+                _ => Primitive::Error(
+                    "call to mul() for a string on an invalid value",
+                ),
             },
             Primitive::Bool(_b) => {
                 Primitive::Error("call to mul() on a boolean value")
@@ -394,8 +431,8 @@ impl Div for Primitive {
                 Primitive::Int(r) if r != 0 => Primitive::Int(l / r),
                 Primitive::Double(r) => Primitive::Double(l as f64 / r),
                 Primitive::Int(_) if l >= 1 => Primitive::Double(f64::INFINITY),
-                Primitive::Bool(_b) => {
-                    Primitive::Error("call to div() on a boolean value")
+                Primitive::Bool(_) | Primitive::String(_) => {
+                    Primitive::Error("call to div() on a boolean or string value")
                 }
                 Primitive::Error(e) => panic!("call to div() on an error. {e}"),
                 _ => Primitive::Double(f64::NAN),
@@ -403,13 +440,13 @@ impl Div for Primitive {
             Primitive::Double(l) => match rhs {
                 Primitive::Int(r) => Primitive::Double(l / r as f64),
                 Primitive::Double(r) => Primitive::Double(l as f64 / r),
-                Primitive::Bool(_b) => {
-                    Primitive::Error("call to div() on a boolean value")
+                Primitive::Bool(_) | Primitive::String(_)=> {
+                    Primitive::Error("call to div() on a boolean or string value")
                 }
                 Primitive::Error(e) => panic!("call to div() on an error. {e}"),
             },
-            Primitive::Bool(_b) => {
-                Primitive::Error("call to div() on a boolean value")
+            Primitive::Bool(_) | Primitive::String(_) => {
+                Primitive::Error("call to div() on a boolean or string value")
             }
             Primitive::Error(e) => panic!("call to div() on an error. {e}"),
         }
@@ -423,8 +460,8 @@ impl std::ops::Neg for Primitive {
         match self {
             Primitive::Int(n) => Primitive::Int(-n),
             Primitive::Double(n) => Primitive::Double(-n),
-            Primitive::Bool(_b) => {
-                Primitive::Error("call to neg() on a boolean value")
+            Primitive::Bool(_)  | Primitive::String(_) => {
+                Primitive::Error("call to neg() on a boolean or string value")
             }
             Primitive::Error(e) => panic!("call to div() on an error. {e}"),
         }
@@ -443,6 +480,9 @@ impl std::ops::Not for Primitive {
             Primitive::Double(_) => {
                 Primitive::Error("call to not() on a double value")
             }
+            Primitive::String(_) => {
+                Primitive::Error("call to not() on a string value")
+            }
             Primitive::Error(e) => panic!("call to div() on an error. {e}"),
         }
     }
@@ -456,9 +496,13 @@ impl Or for Primitive {
                 Primitive::Double(_) => {
                     Primitive::Error("'or'on a double value")
                 }
+                Primitive::String(_) => {
+                    Primitive::Error("'or'on a string value")
+                }
                 Primitive::Error(e) => panic!("'or' on an error. {e}"),
             },
             Primitive::Int(_) => Primitive::Error("'or' on an int value"),
+            Primitive::String(_) => Primitive::Error("'or' on an string value"),
             Primitive::Double(_) => Primitive::Error("'or'on a double value"),
             Primitive::Error(e) => panic!("'or' on an error. {e}"),
         }
@@ -473,9 +517,13 @@ impl And for Primitive {
                 Primitive::Double(_) => {
                     Primitive::Error("'and'on a double value")
                 }
+                Primitive::String(_) => {
+                    Primitive::Error("'and'on a string value")
+                }
                 Primitive::Error(e) => panic!("'and' on an error. {e}"),
             },
             Primitive::Int(_) => Primitive::Error("'and' on an int value"),
+            Primitive::String(_) => Primitive::Error("'and' on an string value"),
             Primitive::Double(_) => Primitive::Error("'and'on a double value"),
             Primitive::Error(e) => panic!("'and' on an error. {e}"),
         }
@@ -493,9 +541,15 @@ impl PartialOrd for Primitive {
                 l.partial_cmp(&(*r as f64))
             }
             (Primitive::Double(l), Primitive::Double(r)) => l.partial_cmp(r),
+            (Primitive::Bool(a), Primitive::Bool(b)) => a.partial_cmp(b),
+
+            (Primitive::String(l), Primitive::String(r)) => l.partial_cmp(r),
+
+
+            (Primitive::String(_), Primitive::Error(_)) => None,
+            (Primitive::Error(_), Primitive::String(_)) => None,
             (Primitive::Int(_), Primitive::Error(_)) => None,
             (Primitive::Bool(_), Primitive::Int(_)) => None,
-            (Primitive::Bool(a), Primitive::Bool(b)) => a.partial_cmp(b),
             (Primitive::Bool(_), Primitive::Double(_)) => None,
             (Primitive::Bool(_), Primitive::Error(_)) => None,
             (Primitive::Double(_), Primitive::Bool(_)) => None,
@@ -505,6 +559,14 @@ impl PartialOrd for Primitive {
             (Primitive::Error(_), Primitive::Double(_)) => None,
             (Primitive::Error(_), Primitive::Error(_)) => None,
             (Primitive::Int(_), Primitive::Bool(_)) => None,
+
+            (Primitive::Int(_), Primitive::String(_)) => None,
+            (Primitive::Bool(_), Primitive::String(_)) => None,
+            (Primitive::Double(_), Primitive::String(_)) => None,
+            (Primitive::String(_), Primitive::Int(_)) => None,
+            (Primitive::String(_), Primitive::Bool(_)) => None,
+            (Primitive::String(_), Primitive::Double(_)) => None,
+
         }
     }
 }

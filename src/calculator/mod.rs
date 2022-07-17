@@ -61,11 +61,13 @@ pub(super) enum Value<'a> {
     Decimal(f64),
     Integer(i128),
     Bool(bool),
+    String(&'a str),
     BlockParen(Vec<Value<'a>>),
     Variable(&'a str),
     Const(char),
     VariableNegate(&'a str),
     VariableExpr { name: Box<Value<'a>>, expr: Box<Value<'a>> },
+    //IfElseExpr { cond: Box<Value<'a>>, if_expr: Box<Value<'a>>, else_expr: Option<Box<Value<'a>>>}
 }
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub(super) enum BuiltInFunctionType {
@@ -76,6 +78,7 @@ pub(super) enum BuiltInFunctionType {
     Sin,
     Cos,
     Tan,
+   // LoadFile
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]

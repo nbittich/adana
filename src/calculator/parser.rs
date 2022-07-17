@@ -1,3 +1,5 @@
+use nom::bytes::streaming::take_until1;
+
 use crate::prelude::{
     all_consuming, alpha1, alphanumeric1, alt, cut, delimited, double, many1,
     map, map_parser, multispace0, one_of, preceded, recognize_float,
@@ -31,6 +33,13 @@ fn parse_bool(s: &str) -> Res<Value> {
         map(tag_no_space("true"), |_| Value::Bool(true)),
         map(tag_no_space("false"), |_| Value::Bool(false)),
     ))(s)
+}
+
+fn parse_string(s: &str) -> Res<Value> {
+    map(
+        delimited(tag_no_space("\""), take_until1("\""), tag_no_space("\"")),
+        Value::String,
+    )(s)
 }
 
 fn parse_variable(s: &str) -> Res<Value> {
@@ -73,6 +82,7 @@ fn parse_fn(s: &str) -> Res<Value> {
     ) -> impl Fn(&'a str) -> Res<Value> {
         let fn_name = match &fn_type {
             BuiltInFunctionType::Sqrt => "sqrt",
+            // BuiltInFunctionType::LoadFile => "k_load",
             BuiltInFunctionType::Abs => "abs",
             BuiltInFunctionType::Log => "log",
             BuiltInFunctionType::Ln => "ln",
@@ -106,6 +116,7 @@ fn parse_value(s: &str) -> Res<Value> {
                 parse_operation,
                 parse_number,
                 parse_bool,
+                parse_string,
                 parse_fn,
                 parse_variable,
                 parse_constant,

@@ -462,3 +462,20 @@ fn test_simple_logical_and_or() {
         compute(" 5 < 3 || 4 < 8 && 9*5 == 45", &mut ctx).unwrap()
     );
 }
+
+#[test]
+fn test_str() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(
+        Primitive::String("aaaaa".to_string()),
+        compute(r#""a"*5"#, &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Primitive::String("a5".to_string()),
+        compute(r#""a"+5"#, &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Primitive::String("a5.1".to_string()),
+        compute(r#""a"+5.1"#, &mut ctx).unwrap()
+    );
+}
