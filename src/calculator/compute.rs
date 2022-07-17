@@ -224,8 +224,10 @@ pub fn compute(
     match load_file_path(s).map_err(|e| Error::msg(e.to_string())) {
         Ok(file) => {
             let mut result = Primitive::Int(0);
-            for line in file.lines().filter(|s| !s.trim().is_empty()) {
-                result = compute_row(line, ctx)?;
+            for line in file.lines() {
+                if !line.trim().is_empty() {
+                    result = compute_row(line, ctx)?;
+                }
             }
             Ok(result)
         }
