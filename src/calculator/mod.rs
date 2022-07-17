@@ -78,7 +78,7 @@ pub(super) enum BuiltInFunctionType {
     Sin,
     Cos,
     Tan,
-   // LoadFile
+    // LoadFile
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]

@@ -24,7 +24,7 @@ fn variable_from_ctx<'a>(
         Primitive::Double(d) if negate => Ok(Value::Decimal(-d)),
         Primitive::Double(d) => Ok(Value::Decimal(*d)),
         Primitive::Bool(b) if !negate => Ok(Value::Bool(*b)),
-        Primitive::Bool(_) | Primitive::String(_)=> {
+        Primitive::Bool(_) | Primitive::String(_) => {
             Err(anyhow::Error::msg("attempt to negate a bool or string value"))
         }
         Primitive::Error(msg) => Err(anyhow::Error::msg(*msg)),
@@ -168,20 +168,26 @@ pub(super) fn to_ast(
             }
         }
 
-        Value::Decimal(num) => {
-            primitive_to_ast(TreeNodeValue::Primitive(Primitive::Double(num)), tree, curr_node_id)
-        }
-        Value::Integer(num) => {
-            primitive_to_ast(TreeNodeValue::Primitive(Primitive::Int(num)), tree, curr_node_id)
-        }
-        Value::Bool(bool_v) => {
-            primitive_to_ast(TreeNodeValue::Primitive(Primitive::Bool(bool_v)), tree, curr_node_id)
-        }
-        Value::String(string_v) => {
-            primitive_to_ast(TreeNodeValue::Primitive(Primitive::String(
-                string_v.to_string(),
-            )), tree, curr_node_id)
-        }
+        Value::Decimal(num) => primitive_to_ast(
+            TreeNodeValue::Primitive(Primitive::Double(num)),
+            tree,
+            curr_node_id,
+        ),
+        Value::Integer(num) => primitive_to_ast(
+            TreeNodeValue::Primitive(Primitive::Int(num)),
+            tree,
+            curr_node_id,
+        ),
+        Value::Bool(bool_v) => primitive_to_ast(
+            TreeNodeValue::Primitive(Primitive::Bool(bool_v)),
+            tree,
+            curr_node_id,
+        ),
+        Value::String(string_v) => primitive_to_ast(
+            TreeNodeValue::Primitive(Primitive::String(string_v.to_string())),
+            tree,
+            curr_node_id,
+        ),
         Value::Variable(name) => {
             let value = variable_from_ctx(name, false, ctx)?;
             to_ast(ctx, value, tree, curr_node_id)

@@ -431,18 +431,18 @@ impl Div for Primitive {
                 Primitive::Int(r) if r != 0 => Primitive::Int(l / r),
                 Primitive::Double(r) => Primitive::Double(l as f64 / r),
                 Primitive::Int(_) if l >= 1 => Primitive::Double(f64::INFINITY),
-                Primitive::Bool(_) | Primitive::String(_) => {
-                    Primitive::Error("call to div() on a boolean or string value")
-                }
+                Primitive::Bool(_) | Primitive::String(_) => Primitive::Error(
+                    "call to div() on a boolean or string value",
+                ),
                 Primitive::Error(e) => panic!("call to div() on an error. {e}"),
                 _ => Primitive::Double(f64::NAN),
             },
             Primitive::Double(l) => match rhs {
                 Primitive::Int(r) => Primitive::Double(l / r as f64),
                 Primitive::Double(r) => Primitive::Double(l as f64 / r),
-                Primitive::Bool(_) | Primitive::String(_)=> {
-                    Primitive::Error("call to div() on a boolean or string value")
-                }
+                Primitive::Bool(_) | Primitive::String(_) => Primitive::Error(
+                    "call to div() on a boolean or string value",
+                ),
                 Primitive::Error(e) => panic!("call to div() on an error. {e}"),
             },
             Primitive::Bool(_) | Primitive::String(_) => {
@@ -460,7 +460,7 @@ impl std::ops::Neg for Primitive {
         match self {
             Primitive::Int(n) => Primitive::Int(-n),
             Primitive::Double(n) => Primitive::Double(-n),
-            Primitive::Bool(_)  | Primitive::String(_) => {
+            Primitive::Bool(_) | Primitive::String(_) => {
                 Primitive::Error("call to neg() on a boolean or string value")
             }
             Primitive::Error(e) => panic!("call to div() on an error. {e}"),
@@ -523,7 +523,9 @@ impl And for Primitive {
                 Primitive::Error(e) => panic!("'and' on an error. {e}"),
             },
             Primitive::Int(_) => Primitive::Error("'and' on an int value"),
-            Primitive::String(_) => Primitive::Error("'and' on an string value"),
+            Primitive::String(_) => {
+                Primitive::Error("'and' on an string value")
+            }
             Primitive::Double(_) => Primitive::Error("'and'on a double value"),
             Primitive::Error(e) => panic!("'and' on an error. {e}"),
         }
@@ -545,7 +547,6 @@ impl PartialOrd for Primitive {
 
             (Primitive::String(l), Primitive::String(r)) => l.partial_cmp(r),
 
-
             (Primitive::String(_), Primitive::Error(_)) => None,
             (Primitive::Error(_), Primitive::String(_)) => None,
             (Primitive::Int(_), Primitive::Error(_)) => None,
@@ -566,7 +567,6 @@ impl PartialOrd for Primitive {
             (Primitive::String(_), Primitive::Int(_)) => None,
             (Primitive::String(_), Primitive::Bool(_)) => None,
             (Primitive::String(_), Primitive::Double(_)) => None,
-
         }
     }
 }
