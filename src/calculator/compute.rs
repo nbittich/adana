@@ -1,12 +1,13 @@
 use std::ops::{Neg, Not};
 
+use anyhow::Error;
 use slab_tree::{NodeRef, Tree};
 
-use crate::prelude::BTreeMap;
+use crate::{calculator::parser::load_file_path, prelude::BTreeMap};
 
 use super::{
     ast::to_ast,
-    parser::parse_var_expr,
+    parser::parse,
     primitive::{Abs, And, Cos, Logarithm, Or, Pow, Primitive, Sin, Sqrt, Tan},
     Operator, TreeNodeValue,
 };
@@ -19,7 +20,7 @@ fn compute_recur(
         match node.data() {
             TreeNodeValue::Ops(Operator::Not) => {
                 if node.children().count() != 1 {
-                    return Err(anyhow::Error::msg(
+                    return Err(Error::msg(
                         "only one value allowed, no '!' possible",
                     ));
                 }
@@ -76,7 +77,7 @@ fn compute_recur(
             }
             TreeNodeValue::Ops(Operator::Equal) => {
                 if node.children().count() == 1 {
-                    return Err(anyhow::Error::msg(
+                    return Err(Error::msg(
                         "only one value, no '==' comparison possible",
                     ));
                 }
@@ -86,7 +87,7 @@ fn compute_recur(
             }
             TreeNodeValue::Ops(Operator::And) => {
                 if node.children().count() == 1 {
-                    return Err(anyhow::Error::msg(
+                    return Err(Error::msg(
                         "only one value, no '&&' comparison possible",
                     ));
                 }
@@ -96,7 +97,7 @@ fn compute_recur(
             }
             TreeNodeValue::Ops(Operator::Or) => {
                 if node.children().count() == 1 {
-                    return Err(anyhow::Error::msg(
+                    return Err(Error::msg(
                         "only one value, no '||' comparison possible",
                     ));
                 }
@@ -106,7 +107,7 @@ fn compute_recur(
             }
             TreeNodeValue::Ops(Operator::NotEqual) => {
                 if node.children().count() == 1 {
-                    return Err(anyhow::Error::msg(
+                    return Err(Error::msg(
                         "only one value, no '!=' comparison possible",
                     ));
                 }
@@ -116,7 +117,7 @@ fn compute_recur(
             }
             TreeNodeValue::Ops(Operator::Less) => {
                 if node.children().count() == 1 {
-                    return Err(anyhow::Error::msg(
+                    return Err(Error::msg(
                         "only one value, no '<' comparison possible",
                     ));
                 }
@@ -126,7 +127,7 @@ fn compute_recur(
             }
             TreeNodeValue::Ops(Operator::Greater) => {
                 if node.children().count() == 1 {
-                    return Err(anyhow::Error::msg(
+                    return Err(Error::msg(
                         "only one value, no '>' comparison possible",
                     ));
                 }
@@ -136,7 +137,7 @@ fn compute_recur(
             }
             TreeNodeValue::Ops(Operator::GreaterOrEqual) => {
                 if node.children().count() == 1 {
-                    return Err(anyhow::Error::msg(
+                    return Err(Error::msg(
                         "only one value, no '>=' comparison possible",
                     ));
                 }
@@ -146,7 +147,7 @@ fn compute_recur(
             }
             TreeNodeValue::Ops(Operator::LessOrEqual) => {
                 if node.children().count() == 1 {
-                    return Err(anyhow::Error::msg(
+                    return Err(Error::msg(
                         "only one value, no '<=' comparison possible",
                     ));
                 }
@@ -158,7 +159,7 @@ fn compute_recur(
                 Ok(Primitive::Bool(*b))
             }
             TreeNodeValue::Primitive(Primitive::Error(err)) => {
-                Err(anyhow::Error::msg(*err))
+                Err(Error::msg(*err))
             }
             TreeNodeValue::Primitive(p) => p.clone().ok(),
             TreeNodeValue::VariableAssign(name) => {
@@ -190,29 +191,44 @@ pub fn compute(
     s: &str,
     ctx: &mut BTreeMap<String, Primitive>,
 ) -> anyhow::Result<Primitive> {
-    let (rest, value) =
-        parse_var_expr(s).map_err(|e| anyhow::Error::msg(e.to_string()))?;
+    fn compute_row(
+        s: &str,
+        ctx: &mut BTreeMap<String, Primitive>,
+    ) -> anyhow::Result<Primitive> {
+        let (rest, value) = parse(s).map_err(|e| Error::msg(e.to_string()))?;
 
-    if cfg!(test) {
-        dbg!(rest);
-        dbg!(&value);
+        if cfg!(test) {
+            dbg!(rest);
+            dbg!(&value);
+        }
+        anyhow::ensure!(rest.trim().is_empty(), "Invalid operation!");
+
+        let mut tree: Tree<TreeNodeValue> = Tree::new();
+        to_ast(ctx, value, &mut tree, &None)?;
+
+        anyhow::ensure!(tree.root_id().is_some(), "Invalid expression!");
+
+        if cfg!(test) {
+            let mut tree_fmt = String::new();
+            tree.write_formatted(&mut tree_fmt)?;
+            println!("===================DEBUG TREE==================");
+            print!("{tree_fmt}");
+            println!("===================DEBUG TREE==================");
+        }
+
+        let root = tree.root();
+
+        compute_recur(root, ctx)
     }
-    anyhow::ensure!(rest.trim().is_empty(), "Invalid operation!");
 
-    let mut tree: Tree<TreeNodeValue> = Tree::new();
-    to_ast(ctx, value, &mut tree, &None)?;
-
-    anyhow::ensure!(tree.root_id().is_some(), "Invalid expression!");
-
-    if cfg!(test) {
-        let mut tree_fmt = String::new();
-        tree.write_formatted(&mut tree_fmt)?;
-        println!("===================DEBUG TREE==================");
-        print!("{tree_fmt}");
-        println!("===================DEBUG TREE==================");
+    match load_file_path(s).map_err(|e| Error::msg(e.to_string())) {
+        Ok(file) => {
+            let mut result = Primitive::Int(0);
+            for line in file.lines().filter(|s| !s.trim().is_empty()) {
+                result = compute_row(line, ctx)?;
+            }
+            Ok(result)
+        }
+        Err(_) => compute_row(s, ctx),
     }
-
-    let root = tree.root();
-
-    compute_recur(root, ctx)
 }

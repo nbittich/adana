@@ -1,3 +1,5 @@
+use std::fs::read_to_string;
+
 use nom::bytes::streaming::take_until1;
 
 use crate::prelude::{
@@ -82,7 +84,6 @@ fn parse_fn(s: &str) -> Res<Value> {
     ) -> impl Fn(&'a str) -> Res<Value> {
         let fn_name = match &fn_type {
             BuiltInFunctionType::Sqrt => "sqrt",
-            // BuiltInFunctionType::LoadFile => "k_load",
             BuiltInFunctionType::Abs => "abs",
             BuiltInFunctionType::Log => "log",
             BuiltInFunctionType::Ln => "ln",
@@ -169,8 +170,27 @@ fn parse_operation(s: &str) -> Res<Value> {
 fn parse_expression(s: &str) -> Res<Value> {
     map(many1(parse_value), Value::Expression)(s)
 }
+pub(super) fn load_file_path(s: &str) -> anyhow::Result<String> {
+    let (rest, file_path) = preceded(
+        tag_no_space_no_case("k_load"),
+        delimited(
+            tag_no_space("("),
+            delimited(
+                tag_no_space(r#"""#),
+                take_until1(r#"""#),
+                tag_no_space(r#"""#),
+            ),
+            tag_no_space(")"),
+        ),
+    )(s)
+    .map_err(|e| anyhow::Error::msg(format!("{e}")))?;
+    anyhow::ensure!(rest.trim().is_empty(), "Invalid operation!");
 
-pub(super) fn parse_var_expr(s: &str) -> Res<Value> {
+    let file = read_to_string(file_path)?;
+    Ok(file)
+}
+
+pub(super) fn parse(s: &str) -> Res<Value> {
     preceded(
         multispace0,
         terminated(

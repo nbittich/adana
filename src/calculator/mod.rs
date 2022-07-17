@@ -3,9 +3,6 @@ mod compute;
 mod parser;
 mod primitive;
 
-#[cfg(test)]
-mod tests;
-
 pub use compute::compute;
 pub use primitive::Primitive;
 use strum::EnumCount;
@@ -78,7 +75,6 @@ pub(super) enum BuiltInFunctionType {
     Sin,
     Cos,
     Tan,
-    // LoadFile
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -107,3 +103,9 @@ pub(super) enum TreeNodeValue {
     Primitive(Primitive),
     BuiltInFunction(BuiltInFunctionType),
 }
+
+#[cfg(test)]
+mod tests;
+
+#[cfg(test)]
+mod tests_file;

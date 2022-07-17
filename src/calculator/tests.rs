@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::calculator::{parser::parse_var_expr, Operator::*, Value};
+use crate::calculator::{parser::parse as parse_var_expr, Operator::*, Value};
 
 use super::{compute, Primitive};
 
