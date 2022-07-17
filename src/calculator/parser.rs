@@ -1,11 +1,9 @@
 use std::fs::read_to_string;
 
-use nom::bytes::streaming::take_until1;
-
 use crate::prelude::{
     all_consuming, alpha1, alphanumeric1, alt, cut, delimited, double, many1,
     map, map_parser, multispace0, one_of, preceded, recognize_float,
-    separated_pair, tag, tag_no_case, terminated, verify, Res, I128,
+    separated_pair, tag, tag_no_case, take_until1, verify, Res, I128,
 };
 
 use super::{
@@ -62,19 +60,16 @@ fn parse_constant(s: &str) -> Res<Value> {
 }
 
 fn parse_paren(s: &str) -> Res<Value> {
-    preceded(
-        multispace0,
-        delimited(
-            tag_no_space("("),
-            map(many1(parse_value), |v| {
-                if v.len() == 1 {
-                    v.into_iter().next().unwrap()
-                } else {
-                    Value::BlockParen(v)
-                }
-            }),
-            cut(tag_no_space(")")),
-        ),
+    delimited(
+        tag_no_space("("),
+        map(many1(parse_value), |v| {
+            if v.len() == 1 {
+                v.into_iter().next().unwrap()
+            } else {
+                Value::BlockParen(v)
+            }
+        }),
+        cut(tag_no_space(")")),
     )(s)
 }
 
@@ -111,19 +106,16 @@ fn parse_fn(s: &str) -> Res<Value> {
 fn parse_value(s: &str) -> Res<Value> {
     preceded(
         multispace0,
-        terminated(
-            alt((
-                parse_paren,
-                parse_operation,
-                parse_number,
-                parse_bool,
-                parse_string,
-                parse_fn,
-                parse_variable,
-                parse_constant,
-            )),
-            multispace0,
-        ),
+        alt((
+            parse_paren,
+            parse_operation,
+            parse_number,
+            parse_bool,
+            parse_string,
+            parse_fn,
+            parse_variable,
+            parse_constant,
+        )),
     )(s)
 }
 
@@ -191,26 +183,14 @@ pub(super) fn load_file_path(s: &str) -> anyhow::Result<String> {
 }
 
 pub(super) fn parse(s: &str) -> Res<Value> {
-    preceded(
-        multispace0,
-        terminated(
-            alt((
-                map(
-                    separated_pair(
-                        parse_variable,
-                        tag_no_space("="),
-                        parse_expression,
-                    ),
-                    |(name, expr)| Value::VariableExpr {
-                        name: Box::new(name),
-                        expr: Box::new(expr),
-                    },
-                ),
-                parse_expression,
-            )),
-            multispace0,
+    alt((
+        map(
+            separated_pair(parse_variable, tag_no_space("="), parse_expression),
+            |(name, expr)| Value::VariableExpr {
+                name: Box::new(name),
+                expr: Box::new(expr),
+            },
         ),
-    )(s)
+        parse_expression,
+    ))(s)
 }
-
-// endregion: parsers
