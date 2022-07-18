@@ -20,7 +20,7 @@ fn test_expr_invalid_drc() {
 }
 
 #[test]
-#[should_panic(expected = "Invalid operation!")]
+#[should_panic]
 fn test_op_invalid() {
     let expr = "use example = wesh";
     let mut ctx = BTreeMap::from([("x".to_string(), Primitive::Double(2.))]);
@@ -37,7 +37,7 @@ fn test_compute_with_ctx() {
 }
 #[test]
 fn test_compute_assign_with_ctx() {
-    let expr = "y = x * 5";
+    let expr = "y = x *  5";
     let mut ctx = BTreeMap::from([("x".to_string(), Primitive::Double(2.))]);
 
     let res = compute(expr, &mut ctx).unwrap();
@@ -67,7 +67,7 @@ fn test_variable() {
 }
 #[test]
 fn test_variable_expr() {
-    let expr = "z = x*5+9*y/8";
+    let expr = "z = x*  5+9*y  /8";
     let (_, op) = parse_var_expr(expr).unwrap();
     assert_eq!(
         op,
@@ -96,12 +96,16 @@ fn test_modulo() {
     assert_eq!(Primitive::Double(0.625), compute("5/8.%2", &mut ctx).unwrap());
     assert_eq!(
         Primitive::Double(3278.9),
-        compute("2* (9*(5-(1/2.))) ^2 -1 / 5. * 8 - 4 %4", &mut ctx).unwrap()
+        compute("2   * (9  *(5-(1 /2.) )  ) ^2 -1 / 5. * 8 - 4 %4", &mut ctx)
+            .unwrap()
     );
     assert_eq!(
         Primitive::Double(-1.1),
-        compute("2* (9*(5-(1/2.))) ^2 %2 -1 / 5. * 8 - 4 %4", &mut ctx)
-            .unwrap()
+        compute(
+            "    2* (9   *(5-(1  /2.)   )) ^2 %2 -1 /5. * 8 - 4 %4",
+            &mut ctx
+        )
+        .unwrap()
     );
 }
 
@@ -110,7 +114,7 @@ fn test_compute() {
     let mut ctx = BTreeMap::new();
     assert_eq!(
         Primitive::Double(3280.3),
-        compute("x=2* (9*(5-(1./2.))) ^2 -1 / 5.", &mut ctx).unwrap()
+        compute("x=2* (9*(5-(1./     2.) )) ^2 -1 / 5.", &mut ctx).unwrap()
     );
     assert_eq!(
         Primitive::Double(3274.9),

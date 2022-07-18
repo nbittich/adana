@@ -1,9 +1,10 @@
 use std::fs::read_to_string;
 
 use crate::prelude::{
-    all_consuming, alpha1, alphanumeric1, alt, cut, delimited, double, many1,
-    map, map_parser, multispace0, one_of, preceded, recognize_float,
-    separated_pair, tag, tag_no_case, take_until1, verify, Res, I128,
+    all_consuming, alpha1, alphanumeric1, alt, cut, delimited, double, eof,
+    many1, map, map_parser, multispace0, one_of, preceded, recognize_float,
+    separated_pair, tag, tag_no_case, take_until1, terminated, verify, Res,
+    I128,
 };
 
 use super::{
@@ -160,7 +161,10 @@ fn parse_operation(s: &str) -> Res<Value> {
 }
 
 fn parse_expression(s: &str) -> Res<Value> {
-    map(many1(parse_value), Value::Expression)(s)
+    map(
+        terminated(many1(parse_value), alt((tag("\n"), eof))),
+        Value::Expression,
+    )(s)
 }
 pub(super) fn load_file_path(s: &str) -> anyhow::Result<String> {
     let (rest, file_path) = preceded(

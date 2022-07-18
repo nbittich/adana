@@ -13,9 +13,10 @@ fn test_simple_file() {
         &BTreeMap::from([
             ("a".to_string(), Primitive::Int(25)),
             ("b".to_string(), Primitive::Bool(true)),
-            ("c".to_string(), Primitive::Bool(true))
+            ("c".to_string(), Primitive::Bool(true)),
+            ("d".to_string(), Primitive::Int(150)),
         ]),
         &ctx
     );
-    assert_eq!(Primitive::Bool(true), r);
+    assert_eq!(Primitive::Int(150), r);
 }
