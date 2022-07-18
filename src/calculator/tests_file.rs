@@ -20,3 +20,14 @@ fn test_simple_file() {
     );
     assert_eq!(Primitive::Int(150), r);
 }
+#[test]
+fn test_if_statement() {
+    let file_path = r#"
+     k_load("file_tests/test2.karsher")
+    "#;
+    let mut ctx = BTreeMap::new();
+    let r = compute(file_path, &mut ctx).unwrap();
+
+    dbg!(ctx);
+    dbg!(r);
+}

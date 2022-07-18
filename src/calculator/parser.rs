@@ -1,12 +1,12 @@
 use std::fs::read_to_string;
 
-use nom::combinator::rest;
+use nom::{combinator::rest, sequence::pair};
 
 use crate::prelude::{
     all_consuming, alpha1, alphanumeric1, alt, cut, delimited, double, eof,
-    line_ending, many0, many1, map, map_parser, multispace0, one_of, opt,
-    preceded, recognize_float, separated_pair, tag, tag_no_case, take_until,
-    take_until1, terminated, verify, Res, I128,
+    many0, many1, map, map_parser, multispace0, one_of, opt, preceded,
+    recognize_float, separated_pair, tag, tag_no_case, take_until, take_until1,
+    terminated, verify, Res, I128,
 };
 
 use super::{
@@ -16,11 +16,7 @@ use super::{
 
 fn comments(s: &str) -> Res<Vec<&str>> {
     terminated(
-        many0(delimited(
-            multispace0,
-            preceded(tag("#"), take_until("\n")),
-            line_ending,
-        )),
+        many0(preceded(tag_no_space("#"), take_until("\n"))),
         multispace0,
     )(s)
 }
@@ -87,7 +83,7 @@ fn parse_paren(s: &str) -> Res<Value> {
     )(s)
 }
 
-fn parse_fn(s: &str) -> Res<Value> {
+fn parse_builtin_fn(s: &str) -> Res<Value> {
     fn parse_fn<'a>(
         fn_type: BuiltInFunctionType,
     ) -> impl Fn(&'a str) -> Res<Value> {
@@ -126,7 +122,7 @@ fn parse_value(s: &str) -> Res<Value> {
             parse_number,
             parse_bool,
             parse_string,
-            parse_fn,
+            parse_builtin_fn,
             parse_variable,
             parse_constant,
         )),
@@ -174,8 +170,9 @@ fn parse_operation(s: &str) -> Res<Value> {
 }
 
 fn parse_expression(s: &str) -> Res<Value> {
-    map(terminated(many1(parse_value), opt(comments)), Value::Expression)(s)
+    map(many1(parse_value), Value::Expression)(s)
 }
+
 pub(super) fn load_file_path(s: &str) -> anyhow::Result<String> {
     let (rest, file_path) = preceded(
         tag_no_space_no_case("k_load"),
@@ -209,15 +206,43 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
     ))(s)
 }
 
-pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
-    many1(map_parser(
-        preceded(
-            opt(comments),
-            terminated(
-                alt((take_until(";"), line_ending, eof, rest)),
-                opt(tag_no_space(";")),
-            ),
+fn parse_if_statement(s: &str) -> Res<Value> {
+    map(
+        preceded(tag_no_space("if"), pair(parse_paren, parse_block)),
+        |(cond, exprs)| Value::IfExpr { cond: Box::new(cond), exprs },
+    )(s)
+}
+
+fn parse_block(s: &str) -> Res<Vec<Value>> {
+    preceded(
+        tag_no_space("{"),
+        terminated(
+            alt((map(parse_if_statement, |v| vec![v]), parse_instructions)),
+            tag_no_space("}"),
         ),
-        parse_simple_instruction,
-    ))(instructions)
+    )(s)
+
+    //Ok(("", vec![]))
+}
+
+pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
+    many1(alt((
+        parse_if_statement,
+        map_parser(
+            preceded(
+                opt(comments),
+                terminated(
+                    alt((
+                        take_until(";"),
+                        take_until("}"),
+                        take_until("\n"),
+                        eof,
+                        rest,
+                    )),
+                    terminated(opt(tag_no_space(";")), opt(comments)),
+                ),
+            ),
+            terminated(parse_simple_instruction, opt(comments)),
+        ),
+    )))(instructions)
 }

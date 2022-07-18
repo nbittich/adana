@@ -7,7 +7,7 @@ pub use compute::compute;
 pub use primitive::Primitive;
 use strum::EnumCount;
 
-pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &["true", "false"];
+pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &["true", "false", "if"];
 
 #[derive(Debug, EnumCount)]
 pub(super) enum MathConstants {
@@ -64,7 +64,7 @@ pub(super) enum Value<'a> {
     Const(char),
     VariableNegate(&'a str),
     VariableExpr { name: Box<Value<'a>>, expr: Box<Value<'a>> },
-    //IfElseExpr { cond: Box<Value<'a>>, if_expr: Box<Value<'a>>, else_expr: Option<Box<Value<'a>>>}
+    IfExpr { cond: Box<Value<'a>>, exprs: Vec<Value<'a>> },
 }
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub(super) enum BuiltInFunctionType {

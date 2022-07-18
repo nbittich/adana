@@ -232,12 +232,31 @@ pub fn compute(
     }
     anyhow::ensure!(rest.trim().is_empty(), "Invalid operation!");
 
-    for instruction in instructions {
+    fn compute(
+        instruction: Value,
+        ctx: &mut BTreeMap<String, Primitive>,
+    ) -> anyhow::Result<Primitive> {
         let tree = value_to_tree(instruction, ctx)?;
 
         let root = tree.root();
 
-        result = compute_recur(root, ctx)?;
+        compute_recur(root, ctx)
+    }
+
+    for instruction in instructions {
+        match instruction {
+            Value::IfExpr { cond, exprs } => {
+                let cond = compute(*cond, ctx)?;
+                if matches!(cond, Primitive::Bool(true)) {
+                    for instruction in exprs {
+                        result = compute(instruction, ctx)?;
+                    }
+                }
+            }
+            _ => {
+                result = compute(instruction, ctx)?;
+            }
+        }
     }
 
     Ok(result)

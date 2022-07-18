@@ -257,5 +257,6 @@ pub(super) fn to_ast(
             to_ast(ctx, *expr, tree, &node_id)?;
             Ok(node_id)
         }
+        Value::IfExpr { cond: _, exprs: _ } => unreachable!(),
     }
 }
