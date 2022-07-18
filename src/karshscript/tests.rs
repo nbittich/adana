@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::calculator::{
+use crate::karshscript::{
     parser::parse_instructions as parse_var_expr, Operator::*, Value,
 };
 
@@ -9,7 +9,7 @@ use super::{compute, Primitive};
 #[test]
 #[should_panic(expected = "invalid expression!")]
 fn test_expr_invalid() {
-    let expr = "use example";
+    let expr = "uze example";
     let mut ctx = BTreeMap::from([("x".to_string(), Primitive::Double(2.))]);
     compute(expr, &mut ctx).unwrap();
 }

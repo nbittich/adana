@@ -2,17 +2,18 @@ use std::fs::read_to_string;
 
 use nom::{combinator::rest, sequence::pair};
 
-use crate::prelude::{
-    all_consuming, alpha1, alphanumeric1, alt, cut, delimited, double, eof,
-    many0, many1, map, map_parser, multispace0, one_of, opt, preceded,
-    recognize_float, separated_pair, tag, tag_no_case, take_until, take_until1,
-    terminated, verify, Res, I128,
+use crate::{
+    karshscript::constants::{ABS, COS, K_LOAD, LN, LOG, SIN, SQRT, TAN},
+    prelude::{
+        all_consuming, alpha1, alphanumeric1, alt, cut, delimited, double, eof,
+        many0, many1, map, map_parser, multispace0, one_of, opt, preceded,
+        recognize_float, separated_pair, tag, tag_no_case, take_until,
+        take_until1, terminated, verify, Res, I128,
+    },
+    reserved_keywords::check_reserved_keyword,
 };
 
-use super::{
-    BuiltInFunctionType, MathConstants, Operator, Value,
-    FORBIDDEN_VARIABLE_NAME,
-};
+use super::{BuiltInFunctionType, MathConstants, Operator, Value};
 
 fn comments(s: &str) -> Res<Vec<&str>> {
     terminated(
@@ -57,9 +58,7 @@ fn parse_variable(s: &str) -> Res<Value> {
         alpha1,
         map(
             verify(all_consuming(alphanumeric1), |s: &str| {
-                !FORBIDDEN_VARIABLE_NAME.contains(&s)
-                    && (s.len() != 1
-                        || !MathConstants::get_symbols().contains(s))
+                !check_reserved_keyword(&[s])
             }),
             Value::Variable,
         ),
@@ -88,13 +87,13 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
         fn_type: BuiltInFunctionType,
     ) -> impl Fn(&'a str) -> Res<Value> {
         let fn_name = match &fn_type {
-            BuiltInFunctionType::Sqrt => "sqrt",
-            BuiltInFunctionType::Abs => "abs",
-            BuiltInFunctionType::Log => "log",
-            BuiltInFunctionType::Ln => "ln",
-            BuiltInFunctionType::Sin => "sin",
-            BuiltInFunctionType::Cos => "cos",
-            BuiltInFunctionType::Tan => "tan",
+            BuiltInFunctionType::Sqrt => SQRT,
+            BuiltInFunctionType::Abs => ABS,
+            BuiltInFunctionType::Log => LOG,
+            BuiltInFunctionType::Ln => LN,
+            BuiltInFunctionType::Sin => SIN,
+            BuiltInFunctionType::Cos => COS,
+            BuiltInFunctionType::Tan => TAN,
         };
         move |s: &str| {
             map(preceded(tag_no_space_no_case(fn_name), parse_paren), |expr| {
@@ -175,7 +174,7 @@ fn parse_expression(s: &str) -> Res<Value> {
 
 pub(super) fn load_file_path(s: &str) -> anyhow::Result<String> {
     let (rest, file_path) = preceded(
-        tag_no_space_no_case("k_load"),
+        tag_no_space_no_case(K_LOAD),
         delimited(
             tag_no_space("("),
             delimited(

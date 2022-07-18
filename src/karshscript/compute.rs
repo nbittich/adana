@@ -7,7 +7,7 @@ use anyhow::Error;
 use slab_tree::{NodeRef, Tree};
 
 use crate::{
-    calculator::parser::{load_file_path, parse_instructions},
+    karshscript::parser::{load_file_path, parse_instructions},
     prelude::BTreeMap,
 };
 

@@ -7,29 +7,44 @@ pub use compute::compute;
 pub use primitive::Primitive;
 use strum::EnumCount;
 
-pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &["true", "false", "if"];
+#[macro_use]
+pub mod constants {
+    macro_rules! pi {
+        () => {
+            'π'
+        };
+    }
+    macro_rules! euler_number {
+        () => {
+            'γ'
+        };
+    }
+    macro_rules! tau {
+        () => {
+            'τ'
+        };
+    }
+    pub const TRUE: &str = "true";
+    pub const FALSE: &str = "false";
+    pub const IF: &str = "if";
+    pub const TAU: &str = concat!(tau!());
+    pub const PI: &str = concat!(pi!());
+    pub const EULER_NUMBER: &str = concat!(euler_number!());
+    pub const SQRT: &str = "sqrt";
+    pub const ABS: &str = "abs";
+    pub const LOG: &str = "log";
+    pub const LN: &str = "ln";
+    pub const SIN: &str = "sin";
+    pub const COS: &str = "cos";
+    pub const TAN: &str = "tan";
+    pub const K_LOAD: &str = "k_load";
+}
 
 #[derive(Debug, EnumCount)]
 pub(super) enum MathConstants {
     Pi,
     EulerNumber,
     Tau,
-}
-
-macro_rules! pi {
-    () => {
-        'π'
-    };
-}
-macro_rules! euler_number {
-    () => {
-        'γ'
-    };
-}
-macro_rules! tau {
-    () => {
-        'τ'
-    };
 }
 
 impl MathConstants {

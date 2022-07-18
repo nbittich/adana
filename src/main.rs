@@ -1,13 +1,14 @@
 mod args;
 mod cache_command;
-mod calculator;
 mod db;
 mod editor;
+mod karshscript;
 mod prelude;
+mod reserved_keywords;
 
 use args::*;
-use calculator::Primitive;
 use db::DbOp;
+use karshscript::Primitive;
 use rustyline::error::ReadlineError;
 use std::path::Path;
 
@@ -72,18 +73,23 @@ fn start_app(
         get_default_cache(db).as_ref().map_or("DEFAULT".into(), |v| v.clone())
     };
     let mut rl = editor::build_editor(history_path);
-    let mut math_ctx = BTreeMap::new();
+    let mut script_context = BTreeMap::new();
     loop {
         let readline = editor::read_line(&mut rl, &current_cache);
 
         match readline {
             Ok(line) => {
                 rl.add_history_entry(line.as_str());
-                match process_repl(&line, &mut math_ctx) {
+                match process_repl(&line, &mut script_context) {
                     Ok(()) => (),
                     Err(e) => {
                         warn!("{e}");
-                        process_command(db, &mut current_cache, &line)?;
+                        process_command(
+                            db,
+                            &script_context,
+                            &mut current_cache,
+                            &line,
+                        )?;
                     }
                 }
             }
@@ -107,7 +113,7 @@ fn process_repl(
     line: &str,
     ctx: &mut BTreeMap<String, Primitive>,
 ) -> anyhow::Result<()> {
-    let calc = crate::calculator::compute(line, ctx)?;
+    let calc = crate::karshscript::compute(line, ctx)?;
     println!("{calc}");
     Ok(())
 }
