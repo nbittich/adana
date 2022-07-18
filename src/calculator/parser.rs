@@ -4,9 +4,9 @@ use nom::combinator::rest;
 
 use crate::prelude::{
     all_consuming, alpha1, alphanumeric1, alt, cut, delimited, double, eof,
-    many1, map, map_parser, multispace0, one_of, opt, preceded,
-    recognize_float, separated_pair, tag, tag_no_case, take_until, take_until1,
-    terminated, verify, Res, I128, line_ending,many0
+    line_ending, many0, many1, map, map_parser, multispace0, one_of, opt,
+    preceded, recognize_float, separated_pair, tag, tag_no_case, take_until,
+    take_until1, terminated, verify, Res, I128,
 };
 
 use super::{
@@ -15,11 +15,14 @@ use super::{
 };
 
 fn comments(s: &str) -> Res<Vec<&str>> {
-    terminated(many0(delimited(
+    terminated(
+        many0(delimited(
+            multispace0,
+            preceded(tag("#"), take_until("\n")),
+            line_ending,
+        )),
         multispace0,
-        preceded(tag("#"), take_until("\n")),
-        line_ending,
-    )), multispace0)(s)
+    )(s)
 }
 
 fn tag_no_space<'a>(t: &'a str) -> impl Fn(&'a str) -> Res<&'a str> {
@@ -194,21 +197,16 @@ pub(super) fn load_file_path(s: &str) -> anyhow::Result<String> {
 }
 
 fn parse_simple_instruction(s: &str) -> Res<Value> {
-        alt((
-            map(
-                separated_pair(
-                    parse_variable,
-                    tag_no_space("="),
-                    parse_expression,
-                ),
-                |(name, expr)| Value::VariableExpr {
-                    name: Box::new(name),
-                    expr: Box::new(expr),
-                },
-            ),
-            parse_expression,
-        )
-    )(s)
+    alt((
+        map(
+            separated_pair(parse_variable, tag_no_space("="), parse_expression),
+            |(name, expr)| Value::VariableExpr {
+                name: Box::new(name),
+                expr: Box::new(expr),
+            },
+        ),
+        parse_expression,
+    ))(s)
 }
 
 pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
