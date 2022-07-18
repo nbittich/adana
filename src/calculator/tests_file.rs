@@ -27,7 +27,15 @@ fn test_if_statement() {
     "#;
     let mut ctx = BTreeMap::new();
     let r = compute(file_path, &mut ctx).unwrap();
-
-    dbg!(ctx);
-    dbg!(r);
+    assert_eq!(
+        &BTreeMap::from([
+            ("a".to_string(), Primitive::Int(25)),
+            ("b".to_string(), Primitive::Int(12)),
+            ("c".to_string(), Primitive::Int(20)),
+            ("x".to_string(), Primitive::Int(15)),
+            ("z".to_string(), Primitive::Int(18)),
+        ]),
+        &ctx
+    );
+    assert_eq!(Primitive::Int(20), r);
 }

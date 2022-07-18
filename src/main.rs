@@ -11,7 +11,7 @@ use db::DbOp;
 use rustyline::error::ReadlineError;
 use std::path::Path;
 
-use prelude::{colors::LightBlue, colors::Style, debug, BTreeMap};
+use prelude::{colors::LightBlue, colors::Style, debug, warn, BTreeMap};
 
 use crate::{
     cache_command::{clear_terminal, get_default_cache, process_command},
@@ -79,8 +79,12 @@ fn start_app(
         match readline {
             Ok(line) => {
                 rl.add_history_entry(line.as_str());
-                if process_repl(&line, &mut math_ctx).is_err() {
-                    process_command(db, &mut current_cache, &line)?;
+                match process_repl(&line, &mut math_ctx) {
+                    Ok(()) => (),
+                    Err(e) => {
+                        warn!("{e}");
+                        process_command(db, &mut current_cache, &line)?;
+                    }
                 }
             }
             Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {

@@ -4,8 +4,9 @@ if(a > 20) {
     b = 12;
     x = 15;
     #test
-    z = 12 # test
-    r = 11 # rrr
+    z = 18 # test
+    r = 11; # rrr
+ 
 }
 
 c = 20
