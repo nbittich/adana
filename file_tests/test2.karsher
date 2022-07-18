@@ -3,9 +3,9 @@ a = 5 * 5;
 if(a > 20) {
     b = 12;
     x = 15;
-    #test
-    z = 18 # test
-    r = 11; # rrr
+    z = 18;
+    # last expression should never end with a semicolon
+    r = 11  
 }
 
 c = 20

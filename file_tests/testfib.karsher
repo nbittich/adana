@@ -11,3 +11,9 @@ while (n > 1)
     b = c
 }
 
+if(c < 55) {
+    # extra comment
+    x = "this is a complex program: " + c
+}
+
+c

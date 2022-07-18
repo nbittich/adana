@@ -33,6 +33,7 @@ fn test_if_statement() {
             ("b".to_string(), Primitive::Int(12)),
             ("c".to_string(), Primitive::Int(20)),
             ("x".to_string(), Primitive::Int(15)),
+            ("r".to_string(), Primitive::Int(11)),
             ("z".to_string(), Primitive::Int(18)),
         ]),
         &ctx
@@ -59,9 +60,19 @@ fn test_while_statement() {
         c
     }
 
-    for n in 0..10 {
+    for n in 0..=10 {
         ctx.insert("n".to_string(), Primitive::Int(n));
         let r = compute(file_path, &mut ctx).unwrap();
-        assert_eq!(Primitive::Int(fib(n)), r);
+        let fibonacci = fib(n);
+        assert_eq!(Some(&Primitive::Int(fibonacci)), ctx.get("c"));
+        assert_eq!(Primitive::Int(fibonacci), r);
+        if fibonacci < 55 {
+            assert_eq!(
+                Some(&Primitive::String(format!(
+                    "this is a complex program: {fibonacci}"
+                ))),
+                ctx.get("x")
+            );
+        }
     }
 }
