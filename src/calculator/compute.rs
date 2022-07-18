@@ -1,15 +1,20 @@
-use std::ops::{Neg, Not};
+use std::{
+    borrow::{Borrow, Cow},
+    ops::{Neg, Not},
+};
 
 use anyhow::Error;
 use slab_tree::{NodeRef, Tree};
 
-use crate::{calculator::parser::load_file_path, prelude::BTreeMap};
+use crate::{
+    calculator::parser::{load_file_path, parse_instructions},
+    prelude::BTreeMap,
+};
 
 use super::{
     ast::to_ast,
-    parser::parse,
     primitive::{Abs, And, Cos, Logarithm, Or, Pow, Primitive, Sin, Sqrt, Tan},
-    Operator, TreeNodeValue,
+    Operator, TreeNodeValue, Value,
 };
 
 fn compute_recur(
@@ -184,53 +189,56 @@ fn compute_recur(
         Primitive::Int(0).ok()
     }
 }
-// endregion: calculate
+
+fn value_to_tree(
+    value: Value,
+    ctx: &mut BTreeMap<String, Primitive>,
+) -> anyhow::Result<Tree<TreeNodeValue>> {
+    let mut tree: Tree<TreeNodeValue> = Tree::new();
+    to_ast(ctx, value, &mut tree, &None)?;
+
+    anyhow::ensure!(tree.root_id().is_some(), "Invalid expression!");
+
+    if cfg!(test) {
+        let mut tree_fmt = String::new();
+        tree.write_formatted(&mut tree_fmt)?;
+        println!("===================DEBUG TREE==================");
+        print!("{tree_fmt}");
+        println!("===================DEBUG TREE==================");
+    }
+    Ok(tree)
+}
 
 // region: exposed api
 pub fn compute(
     s: &str,
     ctx: &mut BTreeMap<String, Primitive>,
 ) -> anyhow::Result<Primitive> {
-    fn compute_row(
-        s: &str,
-        ctx: &mut BTreeMap<String, Primitive>,
-    ) -> anyhow::Result<Primitive> {
-        let (rest, value) = parse(s).map_err(|e| Error::msg(e.to_string()))?;
-
-        if cfg!(test) {
-            dbg!(rest);
-            dbg!(&value);
+    let mut instruction_str: Cow<str> = Cow::Borrowed(s);
+    let (rest, instructions) =
+        match load_file_path(s).map_err(|e| Error::msg(e.to_string())) {
+            Ok(file) => {
+                instruction_str = Cow::Owned(file);
+                parse_instructions(instruction_str.borrow())
+            }
+            Err(_) => parse_instructions(instruction_str.borrow()),
         }
-        anyhow::ensure!(rest.trim().is_empty(), "Invalid operation!");
+        .map_err(|e| Error::msg(e.to_string()))?;
 
-        let mut tree: Tree<TreeNodeValue> = Tree::new();
-        to_ast(ctx, value, &mut tree, &None)?;
+    let mut result = Primitive::Int(0);
+    if cfg!(test) {
+        dbg!(rest);
+        dbg!(&instructions);
+    }
+    anyhow::ensure!(rest.trim().is_empty(), "Invalid operation!");
 
-        anyhow::ensure!(tree.root_id().is_some(), "Invalid expression!");
-
-        if cfg!(test) {
-            let mut tree_fmt = String::new();
-            tree.write_formatted(&mut tree_fmt)?;
-            println!("===================DEBUG TREE==================");
-            print!("{tree_fmt}");
-            println!("===================DEBUG TREE==================");
-        }
+    for instruction in instructions {
+        let tree = value_to_tree(instruction, ctx)?;
 
         let root = tree.root();
 
-        compute_recur(root, ctx)
+        result = compute_recur(root, ctx)?;
     }
 
-    match load_file_path(s).map_err(|e| Error::msg(e.to_string())) {
-        Ok(file) => {
-            let mut result = Primitive::Int(0);
-            for line in file.lines() {
-                if !line.trim().is_empty() {
-                    result = compute_row(line, ctx)?;
-                }
-            }
-            Ok(result)
-        }
-        Err(_) => compute_row(s, ctx),
-    }
+    Ok(result)
 }

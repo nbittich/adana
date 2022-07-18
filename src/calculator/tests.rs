@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 
-use crate::calculator::{parser::parse as parse_var_expr, Operator::*, Value};
+use crate::calculator::{
+    parser::parse_instructions as parse_var_expr, Operator::*, Value,
+};
 
 use super::{compute, Primitive};
 
@@ -52,7 +54,7 @@ fn test_variable() {
     let (_, op) = parse_var_expr(expr).unwrap();
     assert_eq!(
         op,
-        Value::Expression(vec![
+        vec![Value::Expression(vec![
             Value::Variable("x",),
             Value::Operation(Mult,),
             Value::Integer(5,),
@@ -62,7 +64,7 @@ fn test_variable() {
             Value::Variable("y",),
             Value::Operation(Div,),
             Value::Integer(8,),
-        ],),
+        ],)],
     );
 }
 #[test]
@@ -71,7 +73,7 @@ fn test_variable_expr() {
     let (_, op) = parse_var_expr(expr).unwrap();
     assert_eq!(
         op,
-        Value::VariableExpr {
+        vec![Value::VariableExpr {
             name: Box::new(Value::Variable("z")),
             expr: Box::new(Value::Expression(vec![
                 Value::Variable("x",),
@@ -84,7 +86,7 @@ fn test_variable_expr() {
                 Value::Operation(Div,),
                 Value::Integer(8,),
             ]))
-        },
+        },]
     );
 }
 
@@ -318,7 +320,7 @@ fn test_extra() {
             "
                 2*(3/4.-12%5 +7^9) -6/12.*4 / 
                 sqrt(2*(3/4.-12%5 +7^9) --6/12.*4) + 
-                abs(-2*(3/4.-12%5 +7^9) -6/12.*4 / sqrt(5))
+                abs(-2*(3/4.-12%5 +7^9) -6/12.*4 / sqrt(5));
             ",
             &mut ctx
         )
@@ -331,7 +333,7 @@ fn test_extra() {
                 (2*(3/4.-12%5 +7^9) -6/12.*4 / 
                 sqrt(2*(3/4.-12%5 +7^9) --6/12.*4) + 
                 abs(-2*(3/4.-12%5 +7^9) -6/12.*4 / sqrt(5)) -
-                ln(abs(-2*(3/4.-12%5 +7^9 --8*4^9. % 2) --6/12.*4))) * π
+                ln(abs(-2*(3/4.-12%5 +7^9 --8*4^9. % 2) --6/12.*4))) * π;
 
             ",
             &mut ctx
@@ -345,7 +347,7 @@ fn test_extra() {
                 (2*(3/4.-12%5 +7^9) -6/12.*4 / 
                 sqrt(2*(3/4.-12%5 +7^9) --6/12.*4) + 
                 abs(-2*(3/4.-12%5 +7^9) -6/12.*4 / sqrt(5)) -
-                ln(abs(-2*(3/4.-12%5 +7^9 --8*4^9. % 2) --6/12.*4))) * γ
+                ln(abs(-2*(3/4.-12%5 +7^9 --8*4^9. % 2) --6/12.*4))) * γ;
 
             ",
             &mut ctx

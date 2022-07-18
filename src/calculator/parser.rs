@@ -1,10 +1,12 @@
 use std::fs::read_to_string;
 
+use nom::combinator::rest;
+
 use crate::prelude::{
     all_consuming, alpha1, alphanumeric1, alt, cut, delimited, double, eof,
-    many1, map, map_parser, multispace0, one_of, preceded, recognize_float,
-    separated_pair, tag, tag_no_case, take_until1, terminated, verify, Res,
-    I128,
+    many1, map, map_parser, multispace0, one_of, opt, preceded,
+    recognize_float, separated_pair, tag, tag_no_case, take_until, take_until1,
+    terminated, verify, Res, I128,
 };
 
 use super::{
@@ -161,10 +163,7 @@ fn parse_operation(s: &str) -> Res<Value> {
 }
 
 fn parse_expression(s: &str) -> Res<Value> {
-    map(
-        terminated(many1(parse_value), alt((tag("\n"), eof))),
-        Value::Expression,
-    )(s)
+    map(many1(parse_value), Value::Expression)(s)
 }
 pub(super) fn load_file_path(s: &str) -> anyhow::Result<String> {
     let (rest, file_path) = preceded(
@@ -186,15 +185,35 @@ pub(super) fn load_file_path(s: &str) -> anyhow::Result<String> {
     Ok(file)
 }
 
-pub(super) fn parse(s: &str) -> Res<Value> {
-    alt((
-        map(
-            separated_pair(parse_variable, tag_no_space("="), parse_expression),
-            |(name, expr)| Value::VariableExpr {
-                name: Box::new(name),
-                expr: Box::new(expr),
-            },
+fn parse_simple_instruction(s: &str) -> Res<Value> {
+    preceded(
+        multispace0,
+        alt((
+            map(
+                separated_pair(
+                    parse_variable,
+                    tag_no_space("="),
+                    parse_expression,
+                ),
+                |(name, expr)| Value::VariableExpr {
+                    name: Box::new(name),
+                    expr: Box::new(expr),
+                },
+            ),
+            parse_expression,
+        )),
+    )(s)
+}
+
+pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
+    many1(map_parser(
+        preceded(
+            multispace0,
+            terminated(
+                alt((take_until(";"), take_until("\n"), eof, rest)),
+                opt(tag_no_space(";")),
+            ),
         ),
-        parse_expression,
-    ))(s)
+        parse_simple_instruction,
+    ))(instructions)
 }
