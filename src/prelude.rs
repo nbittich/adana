@@ -6,7 +6,7 @@ pub use nom::{
     },
     character::complete::{
         alpha1, alphanumeric1, i128 as I128, multispace0, multispace1, none_of,
-        one_of, space1,
+        one_of, space1,line_ending
     },
     combinator::{all_consuming, cut, eof, map, map_parser, opt, rest, verify},
     multi::{many0, many1, separated_list0},

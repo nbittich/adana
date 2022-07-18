@@ -6,13 +6,21 @@ use crate::prelude::{
     all_consuming, alpha1, alphanumeric1, alt, cut, delimited, double, eof,
     many1, map, map_parser, multispace0, one_of, opt, preceded,
     recognize_float, separated_pair, tag, tag_no_case, take_until, take_until1,
-    terminated, verify, Res, I128,
+    terminated, verify, Res, I128, line_ending,many0
 };
 
 use super::{
     BuiltInFunctionType, MathConstants, Operator, Value,
     FORBIDDEN_VARIABLE_NAME,
 };
+
+fn comments(s: &str) -> Res<Vec<&str>> {
+    terminated(many0(delimited(
+        multispace0,
+        preceded(tag("#"), take_until("\n")),
+        line_ending,
+    )), multispace0)(s)
+}
 
 fn tag_no_space<'a>(t: &'a str) -> impl Fn(&'a str) -> Res<&'a str> {
     move |s: &str| delimited(multispace0, tag(t), multispace0)(s)
@@ -163,7 +171,7 @@ fn parse_operation(s: &str) -> Res<Value> {
 }
 
 fn parse_expression(s: &str) -> Res<Value> {
-    map(many1(parse_value), Value::Expression)(s)
+    map(terminated(many1(parse_value), opt(comments)), Value::Expression)(s)
 }
 pub(super) fn load_file_path(s: &str) -> anyhow::Result<String> {
     let (rest, file_path) = preceded(
@@ -186,8 +194,6 @@ pub(super) fn load_file_path(s: &str) -> anyhow::Result<String> {
 }
 
 fn parse_simple_instruction(s: &str) -> Res<Value> {
-    preceded(
-        multispace0,
         alt((
             map(
                 separated_pair(
@@ -201,16 +207,16 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                 },
             ),
             parse_expression,
-        )),
+        )
     )(s)
 }
 
 pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
     many1(map_parser(
         preceded(
-            multispace0,
+            opt(comments),
             terminated(
-                alt((take_until(";"), take_until("\n"), eof, rest)),
+                alt((take_until(";"), line_ending, eof, rest)),
                 opt(tag_no_space(";")),
             ),
         ),
