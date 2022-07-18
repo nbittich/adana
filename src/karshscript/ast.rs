@@ -257,8 +257,11 @@ pub(super) fn to_ast(
             to_ast(ctx, *expr, tree, &node_id)?;
             Ok(node_id)
         }
-        Value::IfExpr { cond: _, exprs: _ } => Err(anyhow::Error::msg(
-            "Only simple expression allowed in if statement",
-        )),
+        Value::IfExpr { cond: _, exprs: _ } => {
+            Err(anyhow::Error::msg("nested if statement not allowed"))
+        }
+        Value::WhileExpr { cond: _, exprs: _ } => {
+            Err(anyhow::Error::msg("nested while statement not allowed"))
+        }
     }
 }

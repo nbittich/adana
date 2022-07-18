@@ -1,13 +1,13 @@
-fib(n) ={
-    a = 0
-    b = 1
-    c = n
-    while n > 1
-    {
-        c = a + b
-        a = b
-        b = c
-        n = n -1
-    }
-    return c
+# fibonacci
+a = 0;
+b = 1;
+c = n;
+
+while (n > 1)
+{
+    n = n -1;
+    c = a + b;
+    a = b;
+    b = c
 }
+

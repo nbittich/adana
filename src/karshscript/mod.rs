@@ -65,7 +65,7 @@ impl MathConstants {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub(super) enum Value<'a> {
     Expression(Vec<Value<'a>>),
     Operation(Operator),
@@ -80,6 +80,7 @@ pub(super) enum Value<'a> {
     VariableNegate(&'a str),
     VariableExpr { name: Box<Value<'a>>, expr: Box<Value<'a>> },
     IfExpr { cond: Box<Value<'a>>, exprs: Vec<Value<'a>> },
+    WhileExpr { cond: Box<Value<'a>>, exprs: Vec<Value<'a>> },
 }
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub(super) enum BuiltInFunctionType {

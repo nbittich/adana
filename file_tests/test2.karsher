@@ -6,7 +6,6 @@ if(a > 20) {
     #test
     z = 18 # test
     r = 11; # rrr
- 
 }
 
 c = 20

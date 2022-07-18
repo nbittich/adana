@@ -190,7 +190,8 @@ pub fn process_command(
                     clear_terminal();
                 }
                 CacheCommand::PrintScriptContext => {
-                    println!("{:?}", script_context)
+                    let json = serde_json::to_string_pretty(&script_context)?;
+                    println!("{json}")
                 }
             }
         }

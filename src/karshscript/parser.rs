@@ -211,6 +211,12 @@ fn parse_if_statement(s: &str) -> Res<Value> {
         |(cond, exprs)| Value::IfExpr { cond: Box::new(cond), exprs },
     )(s)
 }
+fn parse_while_statement(s: &str) -> Res<Value> {
+    map(
+        preceded(tag_no_space("while"), pair(parse_paren, parse_block)),
+        |(cond, exprs)| Value::WhileExpr { cond: Box::new(cond), exprs },
+    )(s)
+}
 
 fn parse_block(s: &str) -> Res<Vec<Value>> {
     preceded(
@@ -226,6 +232,7 @@ fn parse_block(s: &str) -> Res<Vec<Value>> {
 
 pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
     many1(alt((
+        parse_while_statement,
         parse_if_statement,
         map_parser(
             preceded(

@@ -253,6 +253,16 @@ pub fn compute(
                     }
                 }
             }
+            Value::WhileExpr { cond, exprs } => {
+                while matches!(
+                    compute(*cond.clone(), ctx)?,
+                    Primitive::Bool(true)
+                ) {
+                    for instruction in &exprs {
+                        result = compute(instruction.clone(), ctx)?;
+                    }
+                }
+            }
             _ => {
                 result = compute(instruction, ctx)?;
             }
