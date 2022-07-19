@@ -24,9 +24,13 @@ fn variable_from_ctx(
         Primitive::Double(d) if negate => Ok(Value::Decimal(-d)),
         Primitive::Double(d) => Ok(Value::Decimal(*d)),
         Primitive::Bool(b) if !negate => Ok(Value::Bool(*b)),
-        Primitive::Bool(_) | Primitive::String(_) => {
-            Err(anyhow::Error::msg("attempt to negate a bool or string value"))
+        Primitive::String(s) if !negate => Ok(Value::String(s.to_string())),
+        Primitive::Unit => {
+            Err(anyhow::Error::msg("attempt to get an unit value from ctx"))
         }
+        Primitive::Bool(_) | Primitive::String(_) => Err(anyhow::Error::msg(
+            "attempt to negate a bool or string or unit value",
+        )),
         Primitive::Error(msg) => Err(anyhow::Error::msg(*msg)),
     }
 }

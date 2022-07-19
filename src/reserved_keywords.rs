@@ -8,6 +8,7 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     TAU,
     IF,
     PI,
+    PRINT_LN,
     EULER_NUMBER,
     ABS,
     LOG,

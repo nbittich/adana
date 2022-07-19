@@ -1,0 +1,28 @@
+count = 0
+
+while (count <= 100) {
+    toprint = false
+    text = ""
+
+    if(count % 3 == 0) {
+        toprint = true
+        text = count + " = Fizz"
+    }
+
+    if(count % 5 == 0) {
+       toprint = true
+       text = count + " = Buzz"
+    }
+
+    if(count % 3 == 0 && count % 5 == 0) {
+       toprint = true
+       text = count + " = FizzBuzz"
+    }
+    
+    count = count + 1
+
+    if(toprint) {
+      println(text)
+    }
+
+}

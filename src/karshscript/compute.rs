@@ -182,6 +182,10 @@ fn compute_recur(
                     super::BuiltInFunctionType::Sin => v.sin().ok(),
                     super::BuiltInFunctionType::Cos => v.cos().ok(),
                     super::BuiltInFunctionType::Tan => v.tan().ok(),
+                    super::BuiltInFunctionType::Println => {
+                        println!("{v}");
+                        Ok(Primitive::Unit)
+                    }
                 }
             }
             TreeNodeValue::IfExpr(v) => {

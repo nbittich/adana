@@ -37,6 +37,7 @@ pub mod constants {
     pub const SIN: &str = "sin";
     pub const COS: &str = "cos";
     pub const TAN: &str = "tan";
+    pub const PRINT_LN: &str = "println";
     pub const K_LOAD: &str = "k_load";
 }
 
@@ -91,6 +92,7 @@ pub(super) enum BuiltInFunctionType {
     Sin,
     Cos,
     Tan,
+    Println,
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]

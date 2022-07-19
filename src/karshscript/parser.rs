@@ -3,7 +3,9 @@ use std::fs::read_to_string;
 use nom::{combinator::rest, sequence::pair};
 
 use crate::{
-    karshscript::constants::{ABS, COS, K_LOAD, LN, LOG, SIN, SQRT, TAN},
+    karshscript::constants::{
+        ABS, COS, K_LOAD, LN, LOG, PRINT_LN, SIN, SQRT, TAN,
+    },
     prelude::{
         all_consuming, alpha1, alphanumeric1, alt, cut, delimited, double,
         many0, many1, map, map_parser, multispace0, one_of, opt, preceded,
@@ -48,7 +50,7 @@ fn parse_bool(s: &str) -> Res<Value> {
 
 fn parse_string(s: &str) -> Res<Value> {
     map(
-        delimited(tag_no_space("\""), take_until1("\""), tag_no_space("\"")),
+        delimited(tag_no_space("\""), take_until("\""), tag_no_space("\"")),
         |s| Value::String(s.to_string()),
     )(s)
 }
@@ -94,6 +96,7 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
             BuiltInFunctionType::Sin => SIN,
             BuiltInFunctionType::Cos => COS,
             BuiltInFunctionType::Tan => TAN,
+            BuiltInFunctionType::Println => PRINT_LN,
         };
         move |s: &str| {
             map(preceded(tag_no_space_no_case(fn_name), parse_paren), |expr| {
@@ -109,6 +112,7 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
         parse_fn(BuiltInFunctionType::Sin),
         parse_fn(BuiltInFunctionType::Cos),
         parse_fn(BuiltInFunctionType::Tan),
+        parse_fn(BuiltInFunctionType::Println),
     ))(s)
 }
 
@@ -223,8 +227,6 @@ fn parse_block(s: &str) -> Res<Vec<Value>> {
         tag_no_space("{"),
         terminated(parse_instructions, tag_no_space("}")),
     )(s)
-
-    //Ok(("", vec![]))
 }
 
 pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
@@ -243,3 +245,9 @@ pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
         ),
     )))(instructions)
 }
+
+/*
+TODO
+parse block => actually the whole string between {}, recursive if any nested if/while block
+
+*/

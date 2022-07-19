@@ -98,3 +98,17 @@ fn test_nested_file() {
     );
     assert_eq!(Primitive::Int(240), r);
 }
+
+#[test]
+fn test_fizz_buzz() {
+    let file_path = r#"
+        k_load("file_tests/test_fizzbuzz.karsher")
+    "#;
+    let mut ctx = BTreeMap::new();
+    let _ = compute(file_path, &mut ctx);
+
+    assert_eq!(
+        Some(&Primitive::String("100= Buzz".to_string())),
+        ctx.get("text")
+    );
+}
