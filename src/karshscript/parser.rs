@@ -245,7 +245,7 @@ pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
                         eof,
                         rest,
                     )),
-                    terminated(opt(tag_no_space(";")), opt(comments)),
+                    preceded(opt(tag_no_space(";")), opt(comments)),
                 ),
             ),
             terminated(parse_simple_instruction, opt(comments)),

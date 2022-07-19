@@ -7,13 +7,13 @@ while (n > 1)
 {
     n = n -1;
     c = a + b;
-    a = b;
-    b = c
+    a = b; # hello
+    b = c;
 }
 
 if(c < 55) {
     # extra comment
-    x = "this is a complex program: " + c
+    x = "this is a complex program: " + c; # hello
 }
 
 c

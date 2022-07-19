@@ -5,7 +5,8 @@ if(a > 20) {
     x = 15;
     z = 18;
     # last expression should never end with a semicolon
-    r = 11  
+    r = 11  ; # hello
+
 }
 
 c = 20
