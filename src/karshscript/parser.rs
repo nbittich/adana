@@ -5,7 +5,7 @@ use nom::{combinator::rest, sequence::pair};
 use crate::{
     karshscript::constants::{ABS, COS, K_LOAD, LN, LOG, SIN, SQRT, TAN},
     prelude::{
-        all_consuming, alpha1, alphanumeric1, alt, cut, delimited, double, eof,
+        all_consuming, alpha1, alphanumeric1, alt, cut, delimited, double,
         many0, many1, map, map_parser, multispace0, one_of, opt, preceded,
         recognize_float, separated_pair, tag, tag_no_case, take_until,
         take_until1, terminated, verify, Res, I128,
@@ -235,14 +235,8 @@ pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
             preceded(
                 opt(comments),
                 terminated(
-                    alt((
-                        take_until(";"),
-                        take_until("\n"),
-                        take_until("}"),
-                        eof,
-                        rest,
-                    )),
-                    preceded(opt(tag_no_space(";")), opt(comments)),
+                    alt((take_until(";"), take_until("\n"), rest)),
+                    preceded(opt(one_of(";")), opt(comments)),
                 ),
             ),
             terminated(parse_simple_instruction, opt(comments)),

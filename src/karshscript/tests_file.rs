@@ -92,6 +92,7 @@ fn test_nested_file() {
             ("b".to_string(), Primitive::Int(240)),
             ("x".to_string(), Primitive::Int(50)),
             ("s".to_string(), Primitive::String("mod 3".to_string())),
+            ("z".to_string(), Primitive::String("mod 1".to_string())),
         ]),
         &ctx
     );
