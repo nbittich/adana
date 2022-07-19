@@ -184,6 +184,12 @@ fn compute_recur(
                     super::BuiltInFunctionType::Tan => v.tan().ok(),
                 }
             }
+            TreeNodeValue::IfExpr(v) => {
+                compute_instructions(vec![v.clone()], ctx)
+            }
+            TreeNodeValue::WhileExpr(v) => {
+                compute_instructions(vec![v.clone()], ctx)
+            }
         }
     } else {
         Primitive::Int(0).ok()
@@ -209,28 +215,11 @@ fn value_to_tree(
     Ok(tree)
 }
 
-// region: exposed api
-pub fn compute(
-    s: &str,
+fn compute_instructions(
+    instructions: Vec<Value>,
     ctx: &mut BTreeMap<String, Primitive>,
 ) -> anyhow::Result<Primitive> {
-    let mut instruction_str: Cow<str> = Cow::Borrowed(s);
-    let (rest, instructions) =
-        match load_file_path(s).map_err(|e| Error::msg(e.to_string())) {
-            Ok(file) => {
-                instruction_str = Cow::Owned(file);
-                parse_instructions(instruction_str.borrow())
-            }
-            Err(_) => parse_instructions(instruction_str.borrow()),
-        }
-        .map_err(|e| Error::msg(e.to_string()))?;
-
     let mut result = Primitive::Int(0);
-    if cfg!(test) {
-        dbg!(rest);
-        dbg!(&instructions);
-    }
-    anyhow::ensure!(rest.trim().is_empty(), "Invalid operation!");
 
     fn compute(
         instruction: Value,
@@ -270,4 +259,28 @@ pub fn compute(
     }
 
     Ok(result)
+}
+// region: exposed api
+pub fn compute(
+    s: &str,
+    ctx: &mut BTreeMap<String, Primitive>,
+) -> anyhow::Result<Primitive> {
+    let mut instruction_str: Cow<str> = Cow::Borrowed(s);
+    let (rest, instructions) =
+        match load_file_path(s).map_err(|e| Error::msg(e.to_string())) {
+            Ok(file) => {
+                instruction_str = Cow::Owned(file);
+                parse_instructions(instruction_str.borrow())
+            }
+            Err(_) => parse_instructions(instruction_str.borrow()),
+        }
+        .map_err(|e| Error::msg(e.to_string()))?;
+
+    if cfg!(test) {
+        dbg!(rest);
+        dbg!(&instructions);
+    }
+    anyhow::ensure!(rest.trim().is_empty(), "Invalid operation!");
+
+    compute_instructions(instructions, ctx)
 }

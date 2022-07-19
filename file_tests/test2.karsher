@@ -4,9 +4,12 @@ if(a > 20) {
     b = 12;
     x = 15;
     z = 18;
-    # last expression should never end with a semicolon
+    # last expression can now end with a semicolon
     r = 11  ; # hello
-
+    #while(1>2) {
+     #   x = 0
+    #}
+    #y = 2
 }
 
 c = 20

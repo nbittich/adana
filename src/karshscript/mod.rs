@@ -66,21 +66,21 @@ impl MathConstants {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub(super) enum Value<'a> {
-    Expression(Vec<Value<'a>>),
+pub(super) enum Value {
+    Expression(Vec<Value>),
     Operation(Operator),
-    BuiltInFunction { fn_type: BuiltInFunctionType, expr: Box<Value<'a>> },
+    BuiltInFunction { fn_type: BuiltInFunctionType, expr: Box<Value> },
     Decimal(f64),
     Integer(i128),
     Bool(bool),
-    String(&'a str),
-    BlockParen(Vec<Value<'a>>),
-    Variable(&'a str),
+    String(String),
+    BlockParen(Vec<Value>),
+    Variable(String),
     Const(char),
-    VariableNegate(&'a str),
-    VariableExpr { name: Box<Value<'a>>, expr: Box<Value<'a>> },
-    IfExpr { cond: Box<Value<'a>>, exprs: Vec<Value<'a>> },
-    WhileExpr { cond: Box<Value<'a>>, exprs: Vec<Value<'a>> },
+    VariableNegate(String),
+    VariableExpr { name: Box<Value>, expr: Box<Value> },
+    IfExpr { cond: Box<Value>, exprs: Vec<Value> },
+    WhileExpr { cond: Box<Value>, exprs: Vec<Value> },
 }
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub(super) enum BuiltInFunctionType {
@@ -118,6 +118,8 @@ pub(super) enum TreeNodeValue {
     Ops(Operator),
     Primitive(Primitive),
     BuiltInFunction(BuiltInFunctionType),
+    IfExpr(Value),
+    WhileExpr(Value),
 }
 
 #[cfg(test)]

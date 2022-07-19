@@ -55,13 +55,13 @@ fn test_variable() {
     assert_eq!(
         op,
         vec![Value::Expression(vec![
-            Value::Variable("x",),
+            Value::Variable("x".to_string(),),
             Value::Operation(Mult,),
             Value::Integer(5,),
             Value::Operation(Add,),
             Value::Integer(9,),
             Value::Operation(Mult,),
-            Value::Variable("y",),
+            Value::Variable("y".to_string(),),
             Value::Operation(Div,),
             Value::Integer(8,),
         ],)],
@@ -74,15 +74,15 @@ fn test_variable_expr() {
     assert_eq!(
         op,
         vec![Value::VariableExpr {
-            name: Box::new(Value::Variable("z")),
+            name: Box::new(Value::Variable("z".to_string())),
             expr: Box::new(Value::Expression(vec![
-                Value::Variable("x",),
+                Value::Variable("x".to_string(),),
                 Value::Operation(Mult,),
                 Value::Integer(5,),
                 Value::Operation(Add,),
                 Value::Integer(9,),
                 Value::Operation(Mult,),
-                Value::Variable("y",),
+                Value::Variable("y".to_string(),),
                 Value::Operation(Div,),
                 Value::Integer(8,),
             ]))

@@ -49,7 +49,7 @@ fn parse_bool(s: &str) -> Res<Value> {
 fn parse_string(s: &str) -> Res<Value> {
     map(
         delimited(tag_no_space("\""), take_until1("\""), tag_no_space("\"")),
-        Value::String,
+        |s| Value::String(s.to_string()),
     )(s)
 }
 
@@ -60,7 +60,7 @@ fn parse_variable(s: &str) -> Res<Value> {
             verify(all_consuming(alphanumeric1), |s: &str| {
                 !check_reserved_keyword(&[s])
             }),
-            Value::Variable,
+            |s: &str| Value::Variable(s.to_string()),
         ),
     )(s)
 }
@@ -221,10 +221,7 @@ fn parse_while_statement(s: &str) -> Res<Value> {
 fn parse_block(s: &str) -> Res<Vec<Value>> {
     preceded(
         tag_no_space("{"),
-        terminated(
-            alt((map(parse_if_statement, |v| vec![v]), parse_instructions)),
-            tag_no_space("}"),
-        ),
+        terminated(parse_instructions, tag_no_space("}")),
     )(s)
 
     //Ok(("", vec![]))
@@ -232,16 +229,16 @@ fn parse_block(s: &str) -> Res<Vec<Value>> {
 
 pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
     many1(alt((
-        parse_while_statement,
         parse_if_statement,
+        parse_while_statement,
         map_parser(
             preceded(
                 opt(comments),
                 terminated(
                     alt((
                         take_until(";"),
-                        take_until("}"),
                         take_until("\n"),
+                        take_until("}"),
                         eof,
                         rest,
                     )),

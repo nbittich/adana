@@ -4,11 +4,11 @@ use crate::prelude::{BTreeMap, Context};
 
 use super::{MathConstants, Operator, Primitive, TreeNodeValue, Value};
 
-fn variable_from_ctx<'a>(
-    name: &'a str,
+fn variable_from_ctx(
+    name: &str,
     negate: bool,
     ctx: &mut BTreeMap<String, Primitive>,
-) -> anyhow::Result<Value<'a>> {
+) -> anyhow::Result<Value> {
     let value = ctx
         .get(name)
         .context(format!("variable {name} not found in ctx"))?
@@ -31,10 +31,10 @@ fn variable_from_ctx<'a>(
     }
 }
 
-fn filter_op<'a>(
+fn filter_op(
     op: Operator,
-    operations: &'a [Value<'a>],
-) -> impl FnOnce() -> Option<usize> + 'a {
+    operations: &[Value],
+) -> impl FnOnce() -> Option<usize> + '_ {
     move || {
         operations.iter().rposition(
             |c| matches!(c, Value::Operation(operator) if operator == &op),
@@ -48,7 +48,7 @@ pub(super) fn to_ast(
     tree: &mut Tree<TreeNodeValue>,
     curr_node_id: &Option<NodeId>,
 ) -> anyhow::Result<Option<NodeId>> {
-    fn primitive_to_ast(
+    fn append_to_current_and_return(
         v: TreeNodeValue,
         tree: &mut Tree<TreeNodeValue>,
         curr_node_id: &Option<NodeId>,
@@ -111,7 +111,7 @@ pub(super) fn to_ast(
                         Some(Value::Decimal(d)) => Some(Value::Decimal(-d)),
                         Some(Value::Integer(d)) => Some(Value::Integer(-d)),
                         Some(Value::Variable(d)) => {
-                            Some(Value::VariableNegate(d))
+                            Some(Value::VariableNegate(d.to_string()))
                         }
                         _ => None,
                     };
@@ -168,32 +168,32 @@ pub(super) fn to_ast(
             }
         }
 
-        Value::Decimal(num) => primitive_to_ast(
+        Value::Decimal(num) => append_to_current_and_return(
             TreeNodeValue::Primitive(Primitive::Double(num)),
             tree,
             curr_node_id,
         ),
-        Value::Integer(num) => primitive_to_ast(
+        Value::Integer(num) => append_to_current_and_return(
             TreeNodeValue::Primitive(Primitive::Int(num)),
             tree,
             curr_node_id,
         ),
-        Value::Bool(bool_v) => primitive_to_ast(
+        Value::Bool(bool_v) => append_to_current_and_return(
             TreeNodeValue::Primitive(Primitive::Bool(bool_v)),
             tree,
             curr_node_id,
         ),
-        Value::String(string_v) => primitive_to_ast(
-            TreeNodeValue::Primitive(Primitive::String(string_v.to_string())),
+        Value::String(string_v) => append_to_current_and_return(
+            TreeNodeValue::Primitive(Primitive::String(string_v)),
             tree,
             curr_node_id,
         ),
         Value::Variable(name) => {
-            let value = variable_from_ctx(name, false, ctx)?;
+            let value = variable_from_ctx(name.as_str(), false, ctx)?;
             to_ast(ctx, value, tree, curr_node_id)
         }
         Value::VariableNegate(name) => {
-            let value = variable_from_ctx(name, true, ctx)?;
+            let value = variable_from_ctx(name.as_str(), true, ctx)?;
             to_ast(ctx, value, tree, curr_node_id)
         }
         Value::VariableExpr { name, expr } => {
@@ -257,11 +257,15 @@ pub(super) fn to_ast(
             to_ast(ctx, *expr, tree, &node_id)?;
             Ok(node_id)
         }
-        Value::IfExpr { cond: _, exprs: _ } => {
-            Err(anyhow::Error::msg("nested if statement not allowed"))
+        v @ Value::IfExpr { cond: _, exprs: _ } => {
+            // Err(anyhow::Error::msg("nested if statement not allowed"))
+            let if_node = TreeNodeValue::IfExpr(v);
+            append_to_current_and_return(if_node, tree, curr_node_id)
         }
-        Value::WhileExpr { cond: _, exprs: _ } => {
-            Err(anyhow::Error::msg("nested while statement not allowed"))
+        v @ Value::WhileExpr { cond: _, exprs: _ } => {
+            // Err(anyhow::Error::msg("nested while statement not allowed"))
+            let while_node = TreeNodeValue::WhileExpr(v);
+            append_to_current_and_return(while_node, tree, curr_node_id)
         }
     }
 }

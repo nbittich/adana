@@ -20,6 +20,7 @@ fn test_simple_file() {
     );
     assert_eq!(Primitive::Int(150), r);
 }
+
 #[test]
 fn test_if_statement() {
     let file_path = r#"
@@ -75,4 +76,24 @@ fn test_while_statement() {
             );
         }
     }
+}
+
+#[test]
+fn test_nested_file() {
+    let file_path = r#"
+        k_load("file_tests/test_nested.karsher")
+    "#;
+    let mut ctx = BTreeMap::new();
+    let r = compute(file_path, &mut ctx).unwrap();
+
+    assert_eq!(
+        &BTreeMap::from([
+            ("a".to_string(), Primitive::Int(0)),
+            ("b".to_string(), Primitive::Int(240)),
+            ("x".to_string(), Primitive::Int(50)),
+            ("s".to_string(), Primitive::String("mod 3".to_string())),
+        ]),
+        &ctx
+    );
+    assert_eq!(Primitive::Int(240), r);
 }
