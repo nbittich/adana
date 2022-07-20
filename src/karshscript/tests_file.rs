@@ -112,3 +112,27 @@ fn test_fizz_buzz() {
         ctx.get("text")
     );
 }
+
+#[test]
+fn test_multiline_file() {
+    let file_path = r#"
+    k_load("file_tests/test_multiline.karsher")
+"#;
+    let mut ctx = BTreeMap::new();
+    let _ = compute(file_path, &mut ctx);
+
+    assert_eq!(Some(&Primitive::Int(77)), ctx.get("s"));
+    assert_eq!(
+        Some(&Primitive::String(
+            "multiline\n    sin v\n    text\n  ".to_string()
+        )),
+        ctx.get("v")
+    );
+    assert_eq!(
+        Some(&Primitive::String("sincostanmultiline".to_string())),
+        ctx.get("x")
+    );
+    assert_eq!(Some(&Primitive::Int(1)), ctx.get("xy"));
+    assert_eq!(Some(&Primitive::Int(2)), ctx.get("ze"));
+    assert_eq!(Some(&Primitive::Int(3)), ctx.get("de"));
+}

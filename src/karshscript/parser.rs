@@ -15,7 +15,10 @@ use crate::{
     reserved_keywords::check_reserved_keyword,
 };
 
-use super::{BuiltInFunctionType, MathConstants, Operator, Value};
+use super::{
+    constants::{IF, MULTILINE, WHILE},
+    BuiltInFunctionType, MathConstants, Operator, Value,
+};
 
 fn comments(s: &str) -> Res<Vec<&str>> {
     terminated(
@@ -119,16 +122,19 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
 fn parse_value(s: &str) -> Res<Value> {
     preceded(
         multispace0,
-        alt((
-            parse_paren,
-            parse_operation,
-            parse_number,
-            parse_bool,
-            parse_string,
-            parse_builtin_fn,
-            parse_variable,
-            parse_constant,
-        )),
+        terminated(
+            alt((
+                parse_string,
+                parse_paren,
+                parse_operation,
+                parse_number,
+                parse_bool,
+                parse_builtin_fn,
+                parse_variable,
+                parse_constant,
+            )),
+            opt(comments),
+        ),
     )(s)
 }
 
@@ -173,7 +179,10 @@ fn parse_operation(s: &str) -> Res<Value> {
 }
 
 fn parse_expression(s: &str) -> Res<Value> {
-    map(many1(parse_value), Value::Expression)(s)
+    map_parser(
+        parse_multiline,
+        map(many1(preceded(opt(comments), parse_value)), Value::Expression),
+    )(s)
 }
 
 pub(super) fn load_file_path(s: &str) -> anyhow::Result<String> {
@@ -211,13 +220,22 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
 
 fn parse_if_statement(s: &str) -> Res<Value> {
     map(
-        preceded(tag_no_space("if"), pair(parse_paren, parse_block)),
+        preceded(tag_no_space(IF), pair(parse_paren, parse_block)),
         |(cond, exprs)| Value::IfExpr { cond: Box::new(cond), exprs },
     )(s)
 }
+fn parse_multiline(s: &str) -> Res<&str> {
+    alt((
+        preceded(
+            tag_no_space(MULTILINE),
+            delimited(tag_no_space("{"), take_until("}"), tag_no_space("}")),
+        ),
+        alt((take_until("\n"), rest)),
+    ))(s)
+}
 fn parse_while_statement(s: &str) -> Res<Value> {
     map(
-        preceded(tag_no_space("while"), pair(parse_paren, parse_block)),
+        preceded(tag_no_space(WHILE), pair(parse_paren, parse_block)),
         |(cond, exprs)| Value::WhileExpr { cond: Box::new(cond), exprs },
     )(s)
 }
@@ -230,29 +248,36 @@ fn parse_block(s: &str) -> Res<Vec<Value>> {
 }
 
 pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
-    many1(alt((
-        parse_if_statement,
-        parse_while_statement,
-        map_parser(
-            preceded(
-                opt(comments),
-                terminated(
-                    alt((
-                        take_until(";"),
-                        take_until("\n"),
-                        take_until("}"),
-                        rest,
-                    )),
-                    preceded(opt(one_of(";")), opt(comments)),
-                ),
-            ),
-            terminated(parse_simple_instruction, opt(comments)),
-        ),
-    )))(instructions)
+    terminated(
+        many1(preceded(
+            opt(comments),
+            alt((
+                parse_while_statement,
+                parse_if_statement,
+                parse_simple_instruction,
+            )),
+        )),
+        opt(comments),
+    )(instructions)
 }
 
-/*
-TODO
-parse block => actually the whole string between {}, recursive if any nested if/while block
+#[cfg(test)]
+mod test {
+    use super::parse_multiline;
 
-*/
+    #[test]
+    fn test_parse_multiline() {
+        let (rest, _result) = parse_multiline(
+            r#"
+        multiline 
+        {
+            2*(3/4.-12%5 +7^9) -6/12.*4 / 
+            sqrt(2*(3/4.-12%5 +7^9) --6/12.*4) + 
+            abs(-2*(3/4.-12%5 +7^9) -6/12.*4 / sqrt(5))
+        }
+        "#,
+        )
+        .unwrap();
+        assert!(rest.is_empty());
+    }
+}

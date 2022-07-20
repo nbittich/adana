@@ -5,16 +5,26 @@ while (count <= 100) {
     text = ""
 
     if(count % 3 == 0) {
+      #fizz
         toprint = true
-        text = count + " = Fizz"
+        text = multiline {
+                  count
+                  + 
+                  " = Fizz"
+        }
     }
 
     if(count % 5 == 0) {
+      # buzz
        toprint = true
-       text = count + " = Buzz"
+       text = multiline {
+          count + 
+          " = Buzz" # oops
+        }
     }
 
     if(count % 3 == 0 && count % 5 == 0) {
+      # Fizz Buzz
        toprint = true
        text = count + " = FizzBuzz"
     }

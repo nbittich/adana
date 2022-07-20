@@ -17,6 +17,8 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     COS,
     TAN,
     K_LOAD,
+    WHILE,
+    MULTILINE,
 ];
 
 pub fn check_reserved_keyword(aliases: &[&str]) -> bool {

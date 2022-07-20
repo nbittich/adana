@@ -3,12 +3,12 @@
 # oops another comment here
 # # oops another comment here
 # # oops another comment here
-a = 5 * 5; 
+a = 5 * 5
 # # oops another comment here
 # oops another comment here
 
 
 
-b = true; # oops 
-c = a > 20 && b; # oops 
+b = true # oops 
+c = a > 20 && b # oops 
 d = 6 * a # oops 

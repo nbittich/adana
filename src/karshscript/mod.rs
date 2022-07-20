@@ -27,6 +27,7 @@ pub mod constants {
     pub const TRUE: &str = "true";
     pub const FALSE: &str = "false";
     pub const IF: &str = "if";
+    pub const WHILE: &str = "while";
     pub const TAU: &str = concat!(tau!());
     pub const PI: &str = concat!(pi!());
     pub const EULER_NUMBER: &str = concat!(euler_number!());
@@ -39,6 +40,7 @@ pub mod constants {
     pub const TAN: &str = "tan";
     pub const PRINT_LN: &str = "println";
     pub const K_LOAD: &str = "k_load";
+    pub const MULTILINE: &str = "multiline";
 }
 
 #[derive(Debug, EnumCount)]
