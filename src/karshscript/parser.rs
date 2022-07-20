@@ -237,7 +237,12 @@ pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
             preceded(
                 opt(comments),
                 terminated(
-                    alt((take_until(";"), take_until("\n"), rest)),
+                    alt((
+                        take_until(";"),
+                        take_until("\n"),
+                        take_until("}"),
+                        rest,
+                    )),
                     preceded(opt(one_of(";")), opt(comments)),
                 ),
             ),
