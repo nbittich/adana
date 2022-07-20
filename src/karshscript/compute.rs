@@ -30,7 +30,7 @@ fn compute_recur(
                     ));
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
-                (!left).ok()
+                Ok(!left)
             }
             TreeNodeValue::Ops(Operator::Add) => {
                 if node.children().count() == 1 {
@@ -38,7 +38,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                (left + right).ok()
+                Ok(left + right)
             }
             TreeNodeValue::Ops(Operator::Mult) => {
                 if node.children().count() == 1 {
@@ -46,7 +46,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                (left * right).ok()
+                Ok(left * right)
             }
             TreeNodeValue::Ops(Operator::Mod) => {
                 if node.children().count() == 1 {
@@ -54,15 +54,15 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                (left % right).ok()
+                Ok(left % right)
             }
             TreeNodeValue::Ops(Operator::Subtr) => {
                 if node.children().count() == 1 {
-                    return compute_recur(node.first_child(), ctx)?.neg().ok();
+                    return Ok(compute_recur(node.first_child(), ctx)?.neg());
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                (left - right).ok()
+                Ok(left - right)
             }
             TreeNodeValue::Ops(Operator::Pow) => {
                 if node.children().count() == 1 {
@@ -70,7 +70,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                left.pow(right).ok()
+                Ok(left.pow(right))
             }
             TreeNodeValue::Ops(Operator::Div) => {
                 if node.children().count() == 1 {
@@ -78,7 +78,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                (left / right).ok()
+                Ok(left / right)
             }
             TreeNodeValue::Ops(Operator::Equal) => {
                 if node.children().count() == 1 {
@@ -88,7 +88,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                (left.is_equal(&right)).ok()
+                Ok(left.is_equal(&right))
             }
             TreeNodeValue::Ops(Operator::And) => {
                 if node.children().count() == 1 {
@@ -98,7 +98,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                (left.and(right)).ok()
+                Ok(left.and(right))
             }
             TreeNodeValue::Ops(Operator::Or) => {
                 if node.children().count() == 1 {
@@ -108,7 +108,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                (left.or(right)).ok()
+                Ok(left.or(right))
             }
             TreeNodeValue::Ops(Operator::NotEqual) => {
                 if node.children().count() == 1 {
@@ -118,7 +118,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                (left.is_equal(&right).not()).ok()
+                Ok(left.is_equal(&right).not())
             }
             TreeNodeValue::Ops(Operator::Less) => {
                 if node.children().count() == 1 {
@@ -128,7 +128,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                (left.is_less_than(&right)).ok()
+                Ok(left.is_less_than(&right))
             }
             TreeNodeValue::Ops(Operator::Greater) => {
                 if node.children().count() == 1 {
@@ -138,7 +138,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                (left.is_greater_than(&right)).ok()
+                Ok(left.is_greater_than(&right))
             }
             TreeNodeValue::Ops(Operator::GreaterOrEqual) => {
                 if node.children().count() == 1 {
@@ -148,7 +148,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                (left.is_greater_or_equal(&right)).ok()
+                Ok(left.is_greater_or_equal(&right))
             }
             TreeNodeValue::Ops(Operator::LessOrEqual) => {
                 if node.children().count() == 1 {
@@ -158,7 +158,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                (left.is_less_or_equal(&right)).ok()
+                Ok(left.is_less_or_equal(&right))
             }
             TreeNodeValue::Primitive(Primitive::Bool(b)) => {
                 Ok(Primitive::Bool(*b))
@@ -166,22 +166,24 @@ fn compute_recur(
             TreeNodeValue::Primitive(Primitive::Error(err)) => {
                 Err(Error::msg(*err))
             }
-            TreeNodeValue::Primitive(p) => p.clone().ok(),
+            TreeNodeValue::Primitive(p) => Ok(p.clone()),
             TreeNodeValue::VariableAssign(name) => {
-                let v = compute_recur(node.first_child(), ctx)?.ok()?;
-                ctx.insert(name.to_owned(), v.clone());
+                let v = compute_recur(node.first_child(), ctx)?;
+                if !matches!(v, Primitive::Error(_)) {
+                    ctx.insert(name.to_owned(), v.clone());
+                }
                 Ok(v)
             }
             TreeNodeValue::BuiltInFunction(fn_type) => {
                 let v = compute_recur(node.first_child(), ctx)?;
                 match fn_type {
-                    super::BuiltInFunctionType::Sqrt => v.sqrt().ok(),
-                    super::BuiltInFunctionType::Abs => v.abs().ok(),
-                    super::BuiltInFunctionType::Log => v.log().ok(),
-                    super::BuiltInFunctionType::Ln => v.ln().ok(),
-                    super::BuiltInFunctionType::Sin => v.sin().ok(),
-                    super::BuiltInFunctionType::Cos => v.cos().ok(),
-                    super::BuiltInFunctionType::Tan => v.tan().ok(),
+                    super::BuiltInFunctionType::Sqrt => Ok(v.sqrt()),
+                    super::BuiltInFunctionType::Abs => Ok(v.abs()),
+                    super::BuiltInFunctionType::Log => Ok(v.log()),
+                    super::BuiltInFunctionType::Ln => Ok(v.ln()),
+                    super::BuiltInFunctionType::Sin => Ok(v.sin()),
+                    super::BuiltInFunctionType::Cos => Ok(v.cos()),
+                    super::BuiltInFunctionType::Tan => Ok(v.tan()),
                     super::BuiltInFunctionType::Println => {
                         println!("{v}");
                         Ok(Primitive::Unit)
@@ -196,7 +198,7 @@ fn compute_recur(
             }
         }
     } else {
-        Primitive::Int(0).ok()
+        Ok(Primitive::Unit)
     }
 }
 

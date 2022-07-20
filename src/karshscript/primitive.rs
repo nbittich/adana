@@ -119,12 +119,7 @@ impl Primitive {
             _ => Ok(self),
         }
     }
-    pub fn ok(self) -> Result<Primitive> {
-        match self {
-            Primitive::Error(msg) => Err(anyhow::Error::msg(msg)),
-            _ => Ok(self),
-        }
-    }
+  
 }
 
 impl Display for Primitive {
