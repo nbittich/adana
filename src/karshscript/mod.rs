@@ -100,6 +100,10 @@ pub(super) enum Value {
         exprs: Vec<Value>,
     },
     Array(Vec<Value>),
+    ArrayAccess {
+        arr: Box<Value>,
+        index: Box<Value>,
+    },
 }
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub(super) enum BuiltInFunctionType {

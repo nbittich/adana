@@ -1,6 +1,9 @@
 use slab_tree::{NodeId, Tree};
 
-use crate::prelude::{BTreeMap, Context};
+use crate::{
+    karshscript::primitive::IndexAt,
+    prelude::{BTreeMap, Context},
+};
 
 use super::{MathConstants, Operator, Primitive, TreeNodeValue, Value};
 
@@ -308,5 +311,55 @@ pub(super) fn to_ast(
             tree,
             curr_node_id,
         ),
+        Value::ArrayAccess { arr, index } => match (*arr, *index) {
+            (Value::Array(arr), Value::Integer(idx)) => {
+                let primitives = arr_values_to_arr_primitive(arr)?;
+                let r = primitives.index_at(Primitive::Int(idx));
+                to_ast(ctx, primitive_to_value(&r, false)?, tree, curr_node_id)
+            }
+            (arr @ Value::Array(_), Value::Variable(idx_var)) => {
+                let idx = variable_from_ctx(&idx_var, false, ctx)?;
+                to_ast(
+                    ctx,
+                    Value::ArrayAccess {
+                        arr: Box::new(arr),
+                        index: Box::new(idx),
+                    },
+                    tree,
+                    curr_node_id,
+                )
+            }
+            (Value::Variable(arr_var), idx @ Value::Integer(_)) => {
+                let arr = variable_from_ctx(&arr_var, false, ctx)?;
+                to_ast(
+                    ctx,
+                    Value::ArrayAccess {
+                        arr: Box::new(arr),
+                        index: Box::new(idx),
+                    },
+                    tree,
+                    curr_node_id,
+                )
+            }
+            (Value::Variable(arr_var), Value::Variable(idx_var)) => {
+                let idx = variable_from_ctx(&idx_var, false, ctx)?;
+                let arr = variable_from_ctx(&arr_var, false, ctx)?;
+                to_ast(
+                    ctx,
+                    Value::ArrayAccess {
+                        arr: Box::new(arr),
+                        index: Box::new(idx),
+                    },
+                    tree,
+                    curr_node_id,
+                )
+            }
+
+            (arr, index) => {
+                return Err(anyhow::Error::msg(format!(
+                    "illegal array access! array => {arr:?}, index=> {index:?}"
+                )))
+            }
+        },
     }
 }

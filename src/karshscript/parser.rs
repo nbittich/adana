@@ -131,10 +131,25 @@ fn parse_array(s: &str) -> Res<Value> {
             tag_no_space("["),
             terminated(
                 separated_list0(tag_no_space(","), parse_value),
-                tag_no_space("]"),
+                preceded(multispace0, tag("]")),
             ),
         ),
         Value::Array,
+    )(s)
+}
+fn parse_array_access(s: &str) -> Res<Value> {
+    map(
+        pair(
+            alt((parse_variable, parse_array)),
+            preceded(
+                terminated(tag("["), multispace0),
+                terminated(parse_value, preceded(multispace0, tag("]"))),
+            ),
+        ),
+        |(arr, idx)| Value::ArrayAccess {
+            arr: Box::new(arr),
+            index: Box::new(idx),
+        },
     )(s)
 }
 
@@ -143,6 +158,7 @@ fn parse_value(s: &str) -> Res<Value> {
         multispace0,
         terminated(
             alt((
+                parse_array_access,
                 parse_array,
                 parse_string,
                 parse_paren,

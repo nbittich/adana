@@ -48,6 +48,10 @@ pub trait Logarithm {
 pub trait Sin {
     fn sin(&self) -> Self;
 }
+pub trait IndexAt<Rhs = Self> {
+    fn index_at(&self, rhs: Rhs) -> Self;
+}
+
 pub trait Cos {
     fn cos(&self) -> Self;
 }
@@ -781,6 +785,23 @@ impl PartialOrd for Primitive {
             (Primitive::Array(_), Primitive::Unit) => None,
             (Primitive::Error(_), Primitive::Array(_)) => None,
             (Primitive::Unit, Primitive::Array(_)) => None,
+        }
+    }
+}
+
+impl IndexAt for Primitive {
+    fn index_at(&self, rhs: Primitive) -> Primitive {
+        match (self, rhs) {
+            (Primitive::Array(arr), Primitive::Int(idx)) => {
+                let idx = idx as usize;
+                if idx < arr.len() {
+                    arr[idx].clone()
+                } else {
+                    Primitive::Error("index out of range")
+                }
+            }
+
+            _ => Primitive::Error("illegal access to array!!!"),
         }
     }
 }
