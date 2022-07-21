@@ -5,13 +5,11 @@ while (count <= 100) {
     count = count + 1
     if(count % 3 == 0 && count % 5 == 0) {
       # Fizz Buzz
-       toprint = true
        text = count + " = FizzBuzz"
        println(text)
 
     } else if(count % 5 == 0) {
       # buzz
-       toprint = true
        text = multiline {
           count + 
           " = Buzz" # oops
