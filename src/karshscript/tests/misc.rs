@@ -4,7 +4,7 @@ use crate::karshscript::{
     parser::parse_instructions as parse_var_expr, Operator::*, Value,
 };
 
-use super::{compute, Primitive};
+use crate::karshscript::{compute, Primitive};
 
 #[test]
 #[should_panic(expected = "invalid expression!")]

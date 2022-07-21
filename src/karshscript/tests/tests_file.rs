@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use super::{compute, Primitive};
+use crate::karshscript::{compute, Primitive};
 
 #[test]
 fn test_simple_file() {
