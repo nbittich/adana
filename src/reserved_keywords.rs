@@ -10,6 +10,7 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     PI,
     PRINT_LN,
     PRINT,
+    LENGTH,
     EULER_NUMBER,
     ABS,
     LOG,

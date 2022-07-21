@@ -34,6 +34,7 @@ pub mod constants {
     pub const EULER_NUMBER: &str = concat!(euler_number!());
     pub const SQRT: &str = "sqrt";
     pub const ABS: &str = "abs";
+    pub const LENGTH: &str = "length";
     pub const LOG: &str = "log";
     pub const LN: &str = "ln";
     pub const SIN: &str = "sin";
@@ -116,6 +117,7 @@ pub(super) enum BuiltInFunctionType {
     Tan,
     Println,
     Print,
+    Length
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]

@@ -186,6 +186,7 @@ fn compute_recur(
                     super::BuiltInFunctionType::Sin => Ok(v.sin()),
                     super::BuiltInFunctionType::Cos => Ok(v.cos()),
                     super::BuiltInFunctionType::Tan => Ok(v.tan()),
+                    super::BuiltInFunctionType::Length => Ok(v.len()),
                     super::BuiltInFunctionType::Println => {
                         println!("{v}");
                         Ok(Primitive::Unit)
