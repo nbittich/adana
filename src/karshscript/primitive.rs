@@ -830,7 +830,9 @@ impl Array for Primitive {
         match (self, index) {
             (Primitive::Array(arr), Primitive::Int(idx)) => {
                 let idx = *idx as usize;
-                if idx < arr.len() {
+                if !matches!(rhs, Primitive::Error(_) | Primitive::Unit)
+                    && idx < arr.len()
+                {
                     std::mem::swap(&mut arr[idx], rhs);
                     arr[idx].clone()
                 } else {
