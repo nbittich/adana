@@ -48,8 +48,10 @@ pub trait Logarithm {
 pub trait Sin {
     fn sin(&self) -> Self;
 }
-pub trait IndexAt<Rhs = Self> {
-    fn index_at(&self, rhs: Rhs) -> Self;
+pub trait Array {
+    fn index_at(&self, rhs: Self) -> Self;
+    fn len(&self) -> Primitive;
+    fn swap_mem(&mut self, rhs: &mut Self, index: &Primitive) -> Primitive;
 }
 
 pub trait Cos {
@@ -789,7 +791,7 @@ impl PartialOrd for Primitive {
     }
 }
 
-impl IndexAt for Primitive {
+impl Array for Primitive {
     fn index_at(&self, rhs: Primitive) -> Primitive {
         match (self, rhs) {
             (Primitive::Array(arr), Primitive::Int(idx)) => {
@@ -800,8 +802,42 @@ impl IndexAt for Primitive {
                     Primitive::Error("index out of range")
                 }
             }
-
+            (Primitive::String(s), Primitive::Int(idx)) => {
+                let idx = idx as usize;
+                if idx < s.len() {
+                    Primitive::String(s[0..idx].to_string())
+                } else {
+                    Primitive::Error("index out of range")
+                }
+            }
             _ => Primitive::Error("illegal access to array!!!"),
+        }
+    }
+
+    fn len(&self) -> Primitive {
+        match self {
+            Primitive::String(s) => Primitive::Int(s.len() as i128),
+            Primitive::Array(a) => Primitive::Int(a.len() as i128),
+            _ => Primitive::Error("call to len() on a non array value"),
+        }
+    }
+
+    fn swap_mem(
+        &mut self,
+        rhs: &mut Primitive,
+        index: &Primitive,
+    ) -> Primitive {
+        match (self, index) {
+            (Primitive::Array(arr), Primitive::Int(idx)) => {
+                let idx = *idx as usize;
+                if idx < arr.len() {
+                    std::mem::swap(&mut arr[idx], rhs);
+                    arr[idx].clone()
+                } else {
+                    Primitive::Error("index out of range")
+                }
+            }
+            _ => Primitive::Error("invalid call to swap_mem()"),
         }
     }
 }

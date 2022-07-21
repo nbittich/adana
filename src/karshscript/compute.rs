@@ -14,7 +14,7 @@ use crate::{
 use super::{
     ast::to_ast,
     primitive::{
-        Abs, And, Cos, IndexAt, Logarithm, Or, Pow, Primitive, Sin, Sqrt, Tan,
+        Abs, And, Array, Cos, Logarithm, Or, Pow, Primitive, Sin, Sqrt, Tan,
     },
     Operator, TreeNodeValue, Value,
 };
@@ -237,7 +237,12 @@ fn compute_recur(
                     }
                     _ => Err(anyhow::Error::msg(error_message())),
                 }
-                // }
+            }
+            TreeNodeValue::VariableArrayAssign { name, index } => {
+                let mut v = compute_recur(node.first_child(), ctx)?;
+                let array =
+                    ctx.get_mut(name).context("array not found in context")?;
+                Ok(array.swap_mem(&mut v, index))
             }
         }
     } else {

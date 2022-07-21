@@ -204,21 +204,30 @@ pub(super) fn to_ast(
                 "invalid variable assignment "
             );
 
-            if let Value::Variable(n) = *name {
-                let variable_assign_node =
-                    TreeNodeValue::VariableAssign(n.to_string());
-
-                let node_id = Some(tree.set_root(variable_assign_node));
-
-                let value = *expr;
-
-                let _ = to_ast(ctx, value, tree, &node_id)?
-                    .context(format!("invalid variable expr {n}"))?;
-
-                Ok(node_id)
+            let variable_assign_node = if let Value::Variable(n) = *name {
+                Ok(TreeNodeValue::VariableAssign(n))
+            } else if let Value::ArrayAccess { arr, index } = *name {
+                if let (Value::Variable(n), Value::Integer(index)) =
+                    (*arr, *index)
+                {
+                    Ok(TreeNodeValue::VariableArrayAssign {
+                        name: n,
+                        index: Primitive::Int(index),
+                    })
+                } else {
+                    Err(anyhow::Error::msg("invalid variable expression"))
+                }
             } else {
                 Err(anyhow::Error::msg("invalid variable expression"))
-            }
+            }?;
+
+            let node_id = Some(tree.set_root(variable_assign_node));
+
+            let value = *expr;
+
+            let _ = to_ast(ctx, value, tree, &node_id)?
+                .context(format!("invalid variable expr {node_id:?}"))?;
+            Ok(node_id)
         }
         Value::Const(c) => match c {
             c if c == MathConstants::Pi.get_symbol() => to_ast(
@@ -283,7 +292,6 @@ pub(super) fn to_ast(
             ),
             (v, Value::Variable(idx_var)) => {
                 let idx = variable_from_ctx(&idx_var, false, ctx)?;
-
                 append_to_current_and_return(
                     TreeNodeValue::ArrayAccess { index: idx, array: v },
                     tree,

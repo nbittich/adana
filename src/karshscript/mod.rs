@@ -140,6 +140,7 @@ pub(super) enum Operator {
 #[derive(Debug)]
 pub(super) enum TreeNodeValue {
     VariableAssign(String),
+    VariableArrayAssign { name: String, index: Primitive },
     Ops(Operator),
     Primitive(Primitive),
     BuiltInFunction(BuiltInFunctionType),
@@ -147,7 +148,6 @@ pub(super) enum TreeNodeValue {
     WhileExpr(Value),
     Array(Vec<Value>),
     ArrayAccess { index: Primitive, array: Value },
-    // ArrayReassign { index: i128, array: Vec<Value> },
 }
 
 #[cfg(test)]
