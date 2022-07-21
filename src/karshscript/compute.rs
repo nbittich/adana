@@ -233,7 +233,7 @@ fn compute_recur(
                                 return Ok(primitive);
                             }
                         }
-                        return Err(anyhow::Error::msg(error_message()));
+                        Err(anyhow::Error::msg(error_message()))
                     }
                     _ => Err(anyhow::Error::msg(error_message())),
                 }

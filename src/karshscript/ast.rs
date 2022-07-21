@@ -14,7 +14,8 @@ fn variable_from_ctx(
     let value = ctx
         .get(name)
         .context(format!("variable {name} not found in ctx"))?
-        .as_ref_ok()?.clone();
+        .as_ref_ok()?
+        .clone();
 
     if cfg!(test) {
         dbg!(&value);
@@ -272,7 +273,7 @@ pub(super) fn to_ast(
             curr_node_id,
         ),
         Value::ArrayAccess { arr, index } => match (*arr, *index) {
-            (v @ _, Value::Integer(idx)) => append_to_current_and_return(
+            (v, Value::Integer(idx)) => append_to_current_and_return(
                 TreeNodeValue::ArrayAccess {
                     index: Primitive::Int(idx),
                     array: v,
@@ -280,7 +281,7 @@ pub(super) fn to_ast(
                 tree,
                 curr_node_id,
             ),
-            (v @ _, Value::Variable(idx_var)) => {
+            (v, Value::Variable(idx_var)) => {
                 let idx = variable_from_ctx(&idx_var, false, ctx)?;
 
                 append_to_current_and_return(
