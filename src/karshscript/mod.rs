@@ -40,6 +40,7 @@ pub mod constants {
     pub const COS: &str = "cos";
     pub const TAN: &str = "tan";
     pub const PRINT_LN: &str = "println";
+    pub const PRINT: &str = "print";
     pub const K_LOAD: &str = "k_load";
     pub const MULTILINE: &str = "multiline";
 }
@@ -109,6 +110,7 @@ pub(super) enum BuiltInFunctionType {
     Cos,
     Tan,
     Println,
+    Print,
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]

@@ -4,7 +4,7 @@ use nom::{combinator::rest, sequence::pair};
 
 use crate::{
     karshscript::constants::{
-        ABS, COS, K_LOAD, LN, LOG, PRINT_LN, SIN, SQRT, TAN,
+        ABS, COS, K_LOAD, LN, LOG, PRINT, PRINT_LN, SIN, SQRT, TAN,
     },
     prelude::{
         all_consuming, alpha1, alphanumeric1, alt, cut, delimited, double,
@@ -100,6 +100,7 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
             BuiltInFunctionType::Cos => COS,
             BuiltInFunctionType::Tan => TAN,
             BuiltInFunctionType::Println => PRINT_LN,
+            BuiltInFunctionType::Print => PRINT,
         };
         move |s: &str| {
             map(preceded(tag_no_space_no_case(fn_name), parse_paren), |expr| {
@@ -116,6 +117,7 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
         parse_fn(BuiltInFunctionType::Cos),
         parse_fn(BuiltInFunctionType::Tan),
         parse_fn(BuiltInFunctionType::Println),
+        parse_fn(BuiltInFunctionType::Print),
     ))(s)
 }
 

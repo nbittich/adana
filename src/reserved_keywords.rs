@@ -9,6 +9,7 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     IF,
     PI,
     PRINT_LN,
+    PRINT,
     EULER_NUMBER,
     ABS,
     LOG,

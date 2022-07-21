@@ -188,6 +188,10 @@ fn compute_recur(
                         println!("{v}");
                         Ok(Primitive::Unit)
                     }
+                    super::BuiltInFunctionType::Print => {
+                        print!("{v}");
+                        Ok(Primitive::Unit)
+                    }
                 }
             }
             TreeNodeValue::IfExpr(v) => {
