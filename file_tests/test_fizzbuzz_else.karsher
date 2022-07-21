@@ -24,5 +24,7 @@ while (count <= 100) {
         }
        println(text)
 
+    }else {
+      println(count + " neither fizz nor buzz")
     }
 }

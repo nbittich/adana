@@ -108,7 +108,7 @@ fn test_fizz_buzz() {
     let _ = compute(file_path, &mut ctx);
 
     assert_eq!(
-        Some(&Primitive::String("100= Buzz".to_string())),
+        Some(&Primitive::String("100 = Buzz".to_string())),
         ctx.get("text")
     );
 }
@@ -124,7 +124,7 @@ fn test_multiline_file() {
     assert_eq!(Some(&Primitive::Int(77)), ctx.get("s"));
     assert_eq!(
         Some(&Primitive::String(
-            "multiline\n    sin v\n    text\n  ".to_string()
+            "\n    multiline\n    sin v\n    text\n  ".to_string()
         )),
         ctx.get("v")
     );

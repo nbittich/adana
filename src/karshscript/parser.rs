@@ -53,7 +53,11 @@ fn parse_bool(s: &str) -> Res<Value> {
 
 fn parse_string(s: &str) -> Res<Value> {
     map(
-        delimited(tag_no_space("\""), take_until("\""), tag_no_space("\"")),
+        delimited(
+            preceded(multispace0, tag("\"")),
+            take_until("\""),
+            tag_no_space("\""),
+        ),
         |s| Value::String(s.to_string()),
     )(s)
 }
