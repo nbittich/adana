@@ -1,7 +1,8 @@
-- array
+- tests array index
 - function
 - replace most of the built in functions by a std library
 - string to array (split? or just each character as a single string in an array)
 - k_import => like k_load but allowed in file
+- <s>array / index</s>
 - <s>return the Primitive::Error, implement display</s>
 - <s>else / else if</s>
