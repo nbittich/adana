@@ -117,7 +117,7 @@ pub(super) enum BuiltInFunctionType {
     Tan,
     Println,
     Print,
-    Length
+    Length,
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]

@@ -4,7 +4,7 @@ use nom::{combinator::rest, multi::separated_list0, sequence::pair};
 
 use crate::{
     karshscript::constants::{
-        ABS, COS, K_LOAD, LN, LOG, PRINT, PRINT_LN, SIN, SQRT, TAN, LENGTH,
+        ABS, COS, K_LOAD, LENGTH, LN, LOG, PRINT, PRINT_LN, SIN, SQRT, TAN,
     },
     prelude::{
         all_consuming, alpha1, alphanumeric1, alt, cut, delimited, double,
