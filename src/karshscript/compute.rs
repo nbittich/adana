@@ -207,7 +207,15 @@ fn compute_recur(
                 let mut primitives = vec![];
                 for v in arr {
                     let primitive = compute_instructions(vec![v.clone()], ctx)?;
-                    primitives.push(primitive);
+                    match primitive {
+                        v @ Primitive::Error(_) => return Ok(v),
+                        Primitive::Unit => {
+                            return Ok(Primitive::Error(
+                                "cannot push unit () to array",
+                            ))
+                        }
+                        _ => primitives.push(primitive),
+                    }
                 }
                 Ok(Primitive::Array(primitives))
             }
