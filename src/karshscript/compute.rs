@@ -225,7 +225,7 @@ fn compute_instructions(
     instructions: Vec<Value>,
     ctx: &mut BTreeMap<String, Primitive>,
 ) -> anyhow::Result<Primitive> {
-    let mut result = Primitive::Int(0);
+    let mut result = Primitive::Unit;
 
     fn compute(
         instruction: Value,

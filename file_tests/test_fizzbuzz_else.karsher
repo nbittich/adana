@@ -1,7 +1,8 @@
-count = 0
+count = -1
 
 while (count <= 100) {
     text = ""
+    count = count + 1
     if(count % 3 == 0 && count % 5 == 0) {
       # Fizz Buzz
        toprint = true
@@ -26,5 +27,4 @@ while (count <= 100) {
        println(text)
 
     }
-    count = count + 1
 }

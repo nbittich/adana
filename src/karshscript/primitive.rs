@@ -119,7 +119,6 @@ impl Primitive {
             _ => Ok(self),
         }
     }
-  
 }
 
 impl Display for Primitive {

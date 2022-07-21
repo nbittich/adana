@@ -73,7 +73,10 @@ impl MathConstants {
 pub(super) enum Value {
     Expression(Vec<Value>),
     Operation(Operator),
-    BuiltInFunction { fn_type: BuiltInFunctionType, expr: Box<Value> },
+    BuiltInFunction {
+        fn_type: BuiltInFunctionType,
+        expr: Box<Value>,
+    },
     Decimal(f64),
     Integer(i128),
     Bool(bool),
@@ -82,9 +85,19 @@ pub(super) enum Value {
     Variable(String),
     Const(char),
     VariableNegate(String),
-    VariableExpr { name: Box<Value>, expr: Box<Value> },
-    IfExpr { cond: Box<Value>, exprs: Vec<Value>, else_expr: Option<Vec<Value>> },
-    WhileExpr { cond: Box<Value>, exprs: Vec<Value> },
+    VariableExpr {
+        name: Box<Value>,
+        expr: Box<Value>,
+    },
+    IfExpr {
+        cond: Box<Value>,
+        exprs: Vec<Value>,
+        else_expr: Option<Vec<Value>>,
+    },
+    WhileExpr {
+        cond: Box<Value>,
+        exprs: Vec<Value>,
+    },
 }
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub(super) enum BuiltInFunctionType {

@@ -155,8 +155,6 @@ fn test_if_else_file() {
     let mut ctx = BTreeMap::new();
     let _ = compute(file_path, &mut ctx);
 
-    assert_eq!(
-        Some(&Primitive::String("100= Buzz".to_string())),
-        ctx.get("text")
-    );
+    assert_eq!(Some(&Primitive::String("".to_string())), ctx.get("text"));
+    assert_eq!(Some(&Primitive::Int(101)), ctx.get("count"));
 }
