@@ -1,52 +1,27 @@
+use std::ops::Neg;
+
 use slab_tree::{NodeId, Tree};
 
 use crate::prelude::{BTreeMap, Context};
 
 use super::{MathConstants, Operator, Primitive, TreeNodeValue, Value};
 
-fn primitive_to_value(p: &Primitive, negate: bool) -> anyhow::Result<Value> {
-    match p {
-        Primitive::Int(i) if negate => Ok(Value::Integer(-i)),
-        Primitive::Int(i) => Ok(Value::Integer(*i)),
-        Primitive::Double(d) if negate => Ok(Value::Decimal(-d)),
-        Primitive::Double(d) => Ok(Value::Decimal(*d)),
-        Primitive::Bool(b) if !negate => Ok(Value::Bool(*b)),
-        Primitive::String(s) if !negate => Ok(Value::String(s.to_string())),
-        Primitive::Array(arr) if !negate => {
-            let values = arr
-                .iter()
-                .map(|p| primitive_to_value(p, false))
-                .collect::<Result<Vec<_>, _>>()?;
-            Ok(Value::Array(values))
-        }
-        Primitive::Array(_) => {
-            Err(anyhow::Error::msg("attempt to negate an array value from ctx"))
-        }
-        Primitive::Unit => {
-            Err(anyhow::Error::msg("attempt to get an unit value from ctx"))
-        }
-        Primitive::Bool(_) | Primitive::String(_) => Err(anyhow::Error::msg(
-            "attempt to negate a bool or string or unit value",
-        )),
-        Primitive::Error(msg) => Err(anyhow::Error::msg(*msg)),
-    }
-}
-
 fn variable_from_ctx(
     name: &str,
     negate: bool,
     ctx: &mut BTreeMap<String, Primitive>,
-) -> anyhow::Result<Value> {
+) -> anyhow::Result<Primitive> {
     let value = ctx
         .get(name)
         .context(format!("variable {name} not found in ctx"))?
-        .as_ref_ok()?;
+        .as_ref_ok()?.clone();
 
     if cfg!(test) {
-        dbg!(value);
+        dbg!(&value);
     }
+    let primitive = if negate { value.neg() } else { value };
 
-    primitive_to_value(value, negate)
+    Ok(primitive)
 }
 
 fn filter_op(
@@ -208,11 +183,19 @@ pub(super) fn to_ast(
         ),
         Value::Variable(name) => {
             let value = variable_from_ctx(name.as_str(), false, ctx)?;
-            to_ast(ctx, value, tree, curr_node_id)
+            append_to_current_and_return(
+                TreeNodeValue::Primitive(value),
+                tree,
+                curr_node_id,
+            )
         }
         Value::VariableNegate(name) => {
             let value = variable_from_ctx(name.as_str(), true, ctx)?;
-            to_ast(ctx, value, tree, curr_node_id)
+            append_to_current_and_return(
+                TreeNodeValue::Primitive(value),
+                tree,
+                curr_node_id,
+            )
         }
         Value::VariableExpr { name, expr } => {
             anyhow::ensure!(
@@ -289,46 +272,19 @@ pub(super) fn to_ast(
             curr_node_id,
         ),
         Value::ArrayAccess { arr, index } => match (*arr, *index) {
-            (Value::Array(arr), Value::Integer(idx)) => {
+            (v @ _, Value::Integer(idx)) => append_to_current_and_return(
+                TreeNodeValue::ArrayAccess {
+                    index: Primitive::Int(idx),
+                    array: v,
+                },
+                tree,
+                curr_node_id,
+            ),
+            (v @ _, Value::Variable(idx_var)) => {
+                let idx = variable_from_ctx(&idx_var, false, ctx)?;
+
                 append_to_current_and_return(
-                    TreeNodeValue::ArrayAccess { index: idx, array: arr },
-                    tree,
-                    curr_node_id,
-                )
-            }
-            (arr @ Value::Array(_), Value::Variable(idx_var)) => {
-                let idx = variable_from_ctx(&idx_var, false, ctx)?;
-                to_ast(
-                    ctx,
-                    Value::ArrayAccess {
-                        arr: Box::new(arr),
-                        index: Box::new(idx),
-                    },
-                    tree,
-                    curr_node_id,
-                )
-            }
-            (Value::Variable(arr_var), idx @ Value::Integer(_)) => {
-                let arr = variable_from_ctx(&arr_var, false, ctx)?;
-                to_ast(
-                    ctx,
-                    Value::ArrayAccess {
-                        arr: Box::new(arr),
-                        index: Box::new(idx),
-                    },
-                    tree,
-                    curr_node_id,
-                )
-            }
-            (Value::Variable(arr_var), Value::Variable(idx_var)) => {
-                let idx = variable_from_ctx(&idx_var, false, ctx)?;
-                let arr = variable_from_ctx(&arr_var, false, ctx)?;
-                to_ast(
-                    ctx,
-                    Value::ArrayAccess {
-                        arr: Box::new(arr),
-                        index: Box::new(idx),
-                    },
+                    TreeNodeValue::ArrayAccess { index: idx, array: v },
                     tree,
                     curr_node_id,
                 )

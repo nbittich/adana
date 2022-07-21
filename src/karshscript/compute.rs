@@ -3,7 +3,7 @@ use std::{
     ops::{Neg, Not},
 };
 
-use anyhow::Error;
+use anyhow::{Context, Error};
 use slab_tree::{NodeRef, Tree};
 
 use crate::{
@@ -13,7 +13,9 @@ use crate::{
 
 use super::{
     ast::to_ast,
-    primitive::{Abs, And, Cos, Logarithm, Or, Pow, Primitive, Sin, Sqrt, Tan},
+    primitive::{
+        Abs, And, Cos, IndexAt, Logarithm, Or, Pow, Primitive, Sin, Sqrt, Tan,
+    },
     Operator, TreeNodeValue, Value,
 };
 
@@ -209,14 +211,33 @@ fn compute_recur(
                 Ok(Primitive::Array(primitives))
             }
             TreeNodeValue::ArrayAccess { index, array } => {
-                let index = *index as usize;
-                if array.len() <= index {
-                    Ok(Primitive::Error("array index out of range"))
-                } else {
-                    let primitive =
-                        compute_instructions(vec![array[index].clone()], ctx)?;
-                    Ok(primitive)
+                let error_message = || {
+                    format!("illegal index {index} for array access {array:?}")
+                };
+                match array {
+                    Value::Variable(v) => {
+                        let array =
+                            ctx.get(v).context("array not found in context")?;
+                        Ok(array.index_at(index.clone()))
+                    }
+                    Value::Array(array) => {
+                        if let Primitive::Int(index) = index {
+                            let index = *index as usize;
+                            let value =
+                                array.get(index).context(error_message())?;
+                            if index < array.len() {
+                                let primitive = compute_instructions(
+                                    vec![value.clone()],
+                                    ctx,
+                                )?;
+                                return Ok(primitive);
+                            }
+                        }
+                        return Err(anyhow::Error::msg(error_message()));
+                    }
+                    _ => Err(anyhow::Error::msg(error_message())),
                 }
+                // }
             }
         }
     } else {

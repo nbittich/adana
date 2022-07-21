@@ -146,7 +146,8 @@ pub(super) enum TreeNodeValue {
     IfExpr(Value),
     WhileExpr(Value),
     Array(Vec<Value>),
-    ArrayAccess { index: i128, array: Vec<Value> },
+    ArrayAccess { index: Primitive, array: Value },
+    // ArrayReassign { index: i128, array: Vec<Value> },
 }
 
 #[cfg(test)]
