@@ -11,7 +11,7 @@ pub use nom::{
     combinator::{all_consuming, cut, eof, map, map_parser, opt, rest, verify},
     multi::{many0, many1, separated_list0},
     number::complete::{double, recognize_float},
-    sequence::{delimited, pair, preceded, separated_pair, terminated},
+    sequence::{delimited, pair, preceded, separated_pair, tuple, terminated},
     IResult, Parser,
 };
 

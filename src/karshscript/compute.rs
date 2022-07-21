@@ -240,10 +240,14 @@ fn compute_instructions(
 
     for instruction in instructions {
         match instruction {
-            Value::IfExpr { cond, exprs } => {
+            Value::IfExpr { cond, exprs, else_expr } => {
                 let cond = compute(*cond, ctx)?;
                 if matches!(cond, Primitive::Bool(true)) {
                     for instruction in exprs {
+                        result = compute(instruction, ctx)?;
+                    }
+                } else if let Some(else_expr) = else_expr {
+                    for instruction in else_expr {
                         result = compute(instruction, ctx)?;
                     }
                 }

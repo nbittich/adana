@@ -136,3 +136,27 @@ fn test_multiline_file() {
     assert_eq!(Some(&Primitive::Int(2)), ctx.get("ze"));
     assert_eq!(Some(&Primitive::Int(3)), ctx.get("de"));
 }
+
+#[test]
+fn test_if_else_file() {
+    let file_path = r#"
+    k_load("file_tests/test_if_else.karsher")
+"#;
+    let mut ctx = BTreeMap::new();
+    ctx.insert("count".to_string(), Primitive::Int(102));
+    let _ = compute(file_path, &mut ctx);
+
+    assert_eq!(ctx.get("count"), Some(&Primitive::Int(101)));
+    let _ = compute(file_path, &mut ctx);
+    assert_eq!(ctx.get("count"), Some(&Primitive::Int(51)));
+    let file_path = r#"
+    k_load("file_tests/test_fizzbuzz_else.karsher")
+"#;
+    let mut ctx = BTreeMap::new();
+    let _ = compute(file_path, &mut ctx);
+
+    assert_eq!(
+        Some(&Primitive::String("100= Buzz".to_string())),
+        ctx.get("text")
+    );
+}

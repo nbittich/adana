@@ -27,6 +27,7 @@ pub mod constants {
     pub const TRUE: &str = "true";
     pub const FALSE: &str = "false";
     pub const IF: &str = "if";
+    pub const ELSE: &str = "else";
     pub const WHILE: &str = "while";
     pub const TAU: &str = concat!(tau!());
     pub const PI: &str = concat!(pi!());
@@ -82,7 +83,7 @@ pub(super) enum Value {
     Const(char),
     VariableNegate(String),
     VariableExpr { name: Box<Value>, expr: Box<Value> },
-    IfExpr { cond: Box<Value>, exprs: Vec<Value> },
+    IfExpr { cond: Box<Value>, exprs: Vec<Value>, else_expr: Option<Vec<Value>> },
     WhileExpr { cond: Box<Value>, exprs: Vec<Value> },
 }
 #[derive(Debug, Copy, Clone, PartialEq)]

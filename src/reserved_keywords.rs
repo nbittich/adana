@@ -18,6 +18,7 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     TAN,
     K_LOAD,
     WHILE,
+    ELSE,
     MULTILINE,
 ];
 

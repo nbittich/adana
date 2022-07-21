@@ -1,0 +1,7 @@
+if(count == 102) {
+  count = count -1
+  println("101")
+} else {
+  count = count -50
+  println("oops")
+}

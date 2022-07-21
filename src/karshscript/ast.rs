@@ -261,7 +261,7 @@ pub(super) fn to_ast(
             to_ast(ctx, *expr, tree, &node_id)?;
             Ok(node_id)
         }
-        v @ Value::IfExpr { cond: _, exprs: _ } => {
+        v @ Value::IfExpr { cond: _, exprs: _, else_expr: _ } => {
             // Err(anyhow::Error::msg("nested if statement not allowed"))
             let if_node = TreeNodeValue::IfExpr(v);
             append_to_current_and_return(if_node, tree, curr_node_id)

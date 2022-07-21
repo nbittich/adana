@@ -10,13 +10,13 @@ use crate::{
         all_consuming, alpha1, alphanumeric1, alt, cut, delimited, double,
         many0, many1, map, map_parser, multispace0, one_of, opt, preceded,
         recognize_float, separated_pair, tag, tag_no_case, take_until,
-        take_until1, terminated, verify, Res, I128,
+        take_until1, terminated, tuple, verify, Res, I128,
     },
     reserved_keywords::check_reserved_keyword,
 };
 
 use super::{
-    constants::{IF, MULTILINE, WHILE},
+    constants::{ELSE, IF, MULTILINE, WHILE},
     BuiltInFunctionType, MathConstants, Operator, Value,
 };
 
@@ -220,8 +220,22 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
 
 fn parse_if_statement(s: &str) -> Res<Value> {
     map(
-        preceded(tag_no_space(IF), pair(parse_paren, parse_block)),
-        |(cond, exprs)| Value::IfExpr { cond: Box::new(cond), exprs },
+        preceded(
+            tag_no_space(IF),
+            tuple((
+                parse_paren,
+                parse_block,
+                opt(preceded(
+                    tag_no_space(ELSE),
+                    alt((map(parse_if_statement, |v| vec![v]), parse_block)),
+                )),
+            )),
+        ),
+        |(cond, exprs, else_expr)| Value::IfExpr {
+            cond: Box::new(cond),
+            exprs,
+            else_expr,
+        },
     )(s)
 }
 fn parse_multiline(s: &str) -> Res<&str> {
