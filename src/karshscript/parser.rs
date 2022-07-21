@@ -1,6 +1,6 @@
 use std::fs::read_to_string;
 
-use nom::{combinator::rest, sequence::pair};
+use nom::{combinator::rest, multi::separated_list0, sequence::pair};
 
 use crate::{
     karshscript::constants::{
@@ -125,11 +125,25 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
     ))(s)
 }
 
+fn parse_array(s: &str) -> Res<Value> {
+    map(
+        preceded(
+            tag_no_space("["),
+            terminated(
+                separated_list0(tag_no_space(","), parse_value),
+                tag_no_space("]"),
+            ),
+        ),
+        Value::Array,
+    )(s)
+}
+
 fn parse_value(s: &str) -> Res<Value> {
     preceded(
         multispace0,
         terminated(
             alt((
+                parse_array,
                 parse_string,
                 parse_paren,
                 parse_operation,

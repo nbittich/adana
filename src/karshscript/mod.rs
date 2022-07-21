@@ -99,6 +99,7 @@ pub(super) enum Value {
         cond: Box<Value>,
         exprs: Vec<Value>,
     },
+    Array(Vec<Value>),
 }
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub(super) enum BuiltInFunctionType {

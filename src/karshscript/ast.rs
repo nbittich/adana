@@ -4,6 +4,54 @@ use crate::prelude::{BTreeMap, Context};
 
 use super::{MathConstants, Operator, Primitive, TreeNodeValue, Value};
 
+fn arr_values_to_arr_primitive(arr: Vec<Value>) -> anyhow::Result<Primitive> {
+    let mut primitives = vec![];
+    for v in arr {
+        match v {
+            Value::Integer(i) => primitives.push(Primitive::Int(i)),
+            Value::Bool(b) => primitives.push(Primitive::Bool(b)),
+            Value::Decimal(d) => primitives.push(Primitive::Double(d)),
+            Value::String(s) => primitives.push(Primitive::String(s)),
+            Value::Array(arr) => {
+                primitives.push(arr_values_to_arr_primitive(arr)?)
+            }
+            _ => {
+                return Err(anyhow::Error::msg(
+                    "invalid conversion for array! ",
+                ))
+            }
+        }
+    }
+    Ok(Primitive::Array(primitives))
+}
+fn primitive_to_value(p: &Primitive, negate: bool) -> anyhow::Result<Value> {
+    match p {
+        Primitive::Int(i) if negate => Ok(Value::Integer(-i)),
+        Primitive::Int(i) => Ok(Value::Integer(*i)),
+        Primitive::Double(d) if negate => Ok(Value::Decimal(-d)),
+        Primitive::Double(d) => Ok(Value::Decimal(*d)),
+        Primitive::Bool(b) if !negate => Ok(Value::Bool(*b)),
+        Primitive::String(s) if !negate => Ok(Value::String(s.to_string())),
+        Primitive::Array(arr) if !negate => {
+            let values = arr
+                .iter()
+                .map(|p| primitive_to_value(p, false))
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(Value::Array(values))
+        }
+        Primitive::Array(_) => {
+            Err(anyhow::Error::msg("attempt to negate an array value from ctx"))
+        }
+        Primitive::Unit => {
+            Err(anyhow::Error::msg("attempt to get an unit value from ctx"))
+        }
+        Primitive::Bool(_) | Primitive::String(_) => Err(anyhow::Error::msg(
+            "attempt to negate a bool or string or unit value",
+        )),
+        Primitive::Error(msg) => Err(anyhow::Error::msg(*msg)),
+    }
+}
+
 fn variable_from_ctx(
     name: &str,
     negate: bool,
@@ -18,21 +66,7 @@ fn variable_from_ctx(
         dbg!(value);
     }
 
-    match value {
-        Primitive::Int(i) if negate => Ok(Value::Integer(-i)),
-        Primitive::Int(i) => Ok(Value::Integer(*i)),
-        Primitive::Double(d) if negate => Ok(Value::Decimal(-d)),
-        Primitive::Double(d) => Ok(Value::Decimal(*d)),
-        Primitive::Bool(b) if !negate => Ok(Value::Bool(*b)),
-        Primitive::String(s) if !negate => Ok(Value::String(s.to_string())),
-        Primitive::Unit => {
-            Err(anyhow::Error::msg("attempt to get an unit value from ctx"))
-        }
-        Primitive::Bool(_) | Primitive::String(_) => Err(anyhow::Error::msg(
-            "attempt to negate a bool or string or unit value",
-        )),
-        Primitive::Error(msg) => Err(anyhow::Error::msg(*msg)),
-    }
+    primitive_to_value(value, negate)
 }
 
 fn filter_op(
@@ -262,14 +296,17 @@ pub(super) fn to_ast(
             Ok(node_id)
         }
         v @ Value::IfExpr { cond: _, exprs: _, else_expr: _ } => {
-            // Err(anyhow::Error::msg("nested if statement not allowed"))
             let if_node = TreeNodeValue::IfExpr(v);
             append_to_current_and_return(if_node, tree, curr_node_id)
         }
         v @ Value::WhileExpr { cond: _, exprs: _ } => {
-            // Err(anyhow::Error::msg("nested while statement not allowed"))
             let while_node = TreeNodeValue::WhileExpr(v);
             append_to_current_and_return(while_node, tree, curr_node_id)
         }
+        Value::Array(arr) => append_to_current_and_return(
+            TreeNodeValue::Primitive(arr_values_to_arr_primitive(arr)?),
+            tree,
+            curr_node_id,
+        ),
     }
 }
