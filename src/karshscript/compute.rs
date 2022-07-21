@@ -200,6 +200,24 @@ fn compute_recur(
             TreeNodeValue::WhileExpr(v) => {
                 compute_instructions(vec![v.clone()], ctx)
             }
+            TreeNodeValue::Array(arr) => {
+                let mut primitives = vec![];
+                for v in arr {
+                    let primitive = compute_instructions(vec![v.clone()], ctx)?;
+                    primitives.push(primitive);
+                }
+                Ok(Primitive::Array(primitives))
+            }
+            TreeNodeValue::ArrayAccess { index, array } => {
+                let index = *index as usize;
+                if array.len() <= index {
+                    Ok(Primitive::Error("array index out of range"))
+                } else {
+                    let primitive =
+                        compute_instructions(vec![array[index].clone()], ctx)?;
+                    Ok(primitive)
+                }
+            }
         }
     } else {
         Ok(Primitive::Unit)

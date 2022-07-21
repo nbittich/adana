@@ -244,7 +244,11 @@ pub(super) fn load_file_path(s: &str) -> anyhow::Result<String> {
 fn parse_simple_instruction(s: &str) -> Res<Value> {
     alt((
         map(
-            separated_pair(parse_variable, tag_no_space("="), parse_expression),
+            separated_pair(
+                alt((parse_array_access, parse_variable)),
+                tag_no_space("="),
+                parse_expression,
+            ),
             |(name, expr)| Value::VariableExpr {
                 name: Box::new(name),
                 expr: Box::new(expr),

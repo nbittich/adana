@@ -145,6 +145,8 @@ pub(super) enum TreeNodeValue {
     BuiltInFunction(BuiltInFunctionType),
     IfExpr(Value),
     WhileExpr(Value),
+    Array(Vec<Value>),
+    ArrayAccess { index: i128, array: Vec<Value> },
 }
 
 #[cfg(test)]

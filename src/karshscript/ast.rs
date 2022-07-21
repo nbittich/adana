@@ -1,32 +1,9 @@
 use slab_tree::{NodeId, Tree};
 
-use crate::{
-    karshscript::primitive::IndexAt,
-    prelude::{BTreeMap, Context},
-};
+use crate::prelude::{BTreeMap, Context};
 
 use super::{MathConstants, Operator, Primitive, TreeNodeValue, Value};
 
-fn arr_values_to_arr_primitive(arr: Vec<Value>) -> anyhow::Result<Primitive> {
-    let mut primitives = vec![];
-    for v in arr {
-        match v {
-            Value::Integer(i) => primitives.push(Primitive::Int(i)),
-            Value::Bool(b) => primitives.push(Primitive::Bool(b)),
-            Value::Decimal(d) => primitives.push(Primitive::Double(d)),
-            Value::String(s) => primitives.push(Primitive::String(s)),
-            Value::Array(arr) => {
-                primitives.push(arr_values_to_arr_primitive(arr)?)
-            }
-            _ => {
-                return Err(anyhow::Error::msg(
-                    "invalid conversion for array! ",
-                ))
-            }
-        }
-    }
-    Ok(Primitive::Array(primitives))
-}
 fn primitive_to_value(p: &Primitive, negate: bool) -> anyhow::Result<Value> {
     match p {
         Primitive::Int(i) if negate => Ok(Value::Integer(-i)),
@@ -307,15 +284,17 @@ pub(super) fn to_ast(
             append_to_current_and_return(while_node, tree, curr_node_id)
         }
         Value::Array(arr) => append_to_current_and_return(
-            TreeNodeValue::Primitive(arr_values_to_arr_primitive(arr)?),
+            TreeNodeValue::Array(arr),
             tree,
             curr_node_id,
         ),
         Value::ArrayAccess { arr, index } => match (*arr, *index) {
             (Value::Array(arr), Value::Integer(idx)) => {
-                let primitives = arr_values_to_arr_primitive(arr)?;
-                let r = primitives.index_at(Primitive::Int(idx));
-                to_ast(ctx, primitive_to_value(&r, false)?, tree, curr_node_id)
+                append_to_current_and_return(
+                    TreeNodeValue::ArrayAccess { index: idx, array: arr },
+                    tree,
+                    curr_node_id,
+                )
             }
             (arr @ Value::Array(_), Value::Variable(idx_var)) => {
                 let idx = variable_from_ctx(&idx_var, false, ctx)?;
