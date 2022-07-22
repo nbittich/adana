@@ -8,7 +8,6 @@ use crate::karshscript::{
         Array as Arr,
         Primitive::{Array, Bool, Double, Int, String as Str},
     },
-    Primitive,
 };
 
 #[test]
@@ -140,11 +139,11 @@ fn test_string_array() {
     let _ = compute(file_path, &mut ctx).unwrap();
     assert_eq!(
         &BTreeMap::from([
-            ("v".to_string(), Primitive::String("nordine".to_string())),
-            ("copy".to_string(), Primitive::String("eodrnin".to_string())),
-            ("s".to_string(), Primitive::String("kekeke".to_string())),
-            ("count".to_string(), Primitive::Int(7)),
-            ("i".to_string(), Primitive::Int(6)),
+            ("v".to_string(), Str("nordine".to_string())),
+            ("copy".to_string(), Str("eodrnin".to_string())),
+            ("s".to_string(), Str("kekeke".to_string())),
+            ("count".to_string(), Int(7)),
+            ("i".to_string(), Int(6)),
         ]),
         &ctx
     );
