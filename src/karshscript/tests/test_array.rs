@@ -8,6 +8,7 @@ use crate::karshscript::{
         Array as Arr,
         Primitive::{Array, Bool, Double, Int, String as Str},
     },
+    Primitive,
 };
 
 #[test]
@@ -127,4 +128,24 @@ fn test_file_array() {
     let res = compute("arr[2]", &mut ctx).unwrap();
 
     assert_eq!(Str("bababa".to_string()), res)
+}
+
+#[test]
+#[serial]
+fn test_string_array() {
+    let file_path = r#"
+        include("file_tests/test_string_arr.karsher")
+    "#;
+    let mut ctx = BTreeMap::new();
+    let _ = compute(file_path, &mut ctx).unwrap();
+    assert_eq!(
+        &BTreeMap::from([
+            ("v".to_string(), Primitive::String("nordine".to_string())),
+            ("copy".to_string(), Primitive::String("eodrnin".to_string())),
+            ("s".to_string(), Primitive::String("kekeke".to_string())),
+            ("count".to_string(), Primitive::Int(7)),
+            ("i".to_string(), Primitive::Int(6)),
+        ]),
+        &ctx
+    );
 }

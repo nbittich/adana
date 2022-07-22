@@ -49,7 +49,7 @@ pub trait Sin {
     fn sin(&self) -> Self;
 }
 pub trait Array {
-    fn index_at(&self, rhs: Self) -> Self;
+    fn index_at(&self, rhs: &Self) -> Self;
     fn len(&self) -> Primitive;
     fn swap_mem(&mut self, rhs: &mut Self, index: &Primitive) -> Primitive;
 }
@@ -792,10 +792,10 @@ impl PartialOrd for Primitive {
 }
 
 impl Array for Primitive {
-    fn index_at(&self, rhs: Primitive) -> Primitive {
+    fn index_at(&self, rhs: &Primitive) -> Primitive {
         match (self, rhs) {
             (Primitive::Array(arr), Primitive::Int(idx)) => {
-                let idx = idx as usize;
+                let idx = *idx as usize;
                 if idx < arr.len() {
                     arr[idx].clone()
                 } else {
@@ -803,9 +803,10 @@ impl Array for Primitive {
                 }
             }
             (Primitive::String(s), Primitive::Int(idx)) => {
-                let idx = idx as usize;
+                let idx = *idx as usize;
                 if idx < s.len() {
-                    Primitive::String(s[0..idx].to_string())
+                    let s: String = s.chars().skip(idx).take(1).collect();
+                    Primitive::String(s)
                 } else {
                     Primitive::Error("index out of range")
                 }
@@ -835,6 +836,18 @@ impl Array for Primitive {
                 {
                     std::mem::swap(&mut arr[idx], rhs);
                     arr[idx].clone()
+                } else {
+                    Primitive::Error("index out of range")
+                }
+            }
+            (Primitive::String(s), Primitive::Int(idx)) => {
+                let idx = *idx as usize;
+                if !matches!(rhs, Primitive::Error(_) | Primitive::Unit)
+                    && idx < s.len()
+                {
+                    s.remove(idx);
+                    s.insert_str(idx, &rhs.to_string());
+                    rhs.clone()
                 } else {
                     Primitive::Error("index out of range")
                 }

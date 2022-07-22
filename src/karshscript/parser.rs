@@ -149,7 +149,7 @@ fn parse_array(s: &str) -> Res<Value> {
 fn parse_array_access(s: &str) -> Res<Value> {
     map(
         pair(
-            alt((parse_variable, parse_array)),
+            alt((parse_variable, parse_array, parse_string)),
             preceded(
                 terminated(tag("["), multispace0),
                 terminated(parse_value, preceded(multispace0, tag("]"))),

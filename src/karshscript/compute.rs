@@ -249,24 +249,23 @@ fn compute_recur(
                 let error_message = || {
                     format!("illegal index {index} for array access {array:?}")
                 };
-                match array {
-                    Value::Variable(v) => {
+                match (array, index) {
+                    (Value::Variable(v), index) => {
                         let array =
                             ctx.get(v).context("array not found in context")?;
-                        Ok(array.index_at(index.clone()))
+                        Ok(array.index_at(index))
                     }
-                    Value::Array(array) => {
-                        if let Primitive::Int(index) = index {
-                            let index = *index as usize;
-                            let value =
-                                array.get(index).context(error_message())?;
-                            if index < array.len() {
-                                let primitive = compute_instructions(
-                                    vec![value.clone()],
-                                    ctx,
-                                )?;
-                                return Ok(primitive);
-                            }
+                    (Value::String(v), index) => {
+                        let v = Primitive::String(v.clone());
+                        Ok(v.index_at(index))
+                    }
+                    (Value::Array(array), Primitive::Int(index)) => {
+                        let index = *index as usize;
+                        let value = array.get(index).context(error_message())?;
+                        if index < array.len() {
+                            let primitive =
+                                compute_instructions(vec![value.clone()], ctx)?;
+                            return Ok(primitive);
                         }
                         Err(anyhow::Error::msg(error_message()))
                     }
