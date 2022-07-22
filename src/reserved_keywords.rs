@@ -1,4 +1,4 @@
-use crate::{cache_command::CacheCommand, karshscript::constants::*};
+use crate::{adanascript::constants::*, cache_command::CacheCommand};
 
 pub const CACHE_COMMAND_DOC: &[(&[&str], &str)] = CacheCommand::doc();
 

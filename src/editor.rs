@@ -11,7 +11,7 @@ use std::path::Path;
 
 fn get_default_history_path() -> Option<Box<Path>> {
     let mut home_dir = dirs::home_dir()?;
-    home_dir.push(".karsher.history.txt");
+    home_dir.push(".adana.history.txt");
     Some(home_dir.into_boxed_path())
 }
 

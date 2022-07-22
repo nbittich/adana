@@ -1,11 +1,11 @@
 [package]
-name = "karsher"
-version = "0.9.0"
+name = "adana"
+version = "0.1.0"
 edition = "2021"
 authors = ["Nordine Bittich"]
 license = "MIT"
-description = "karsher is a dumb cache written in rust"
-homepage = "https://github.com/nbittich/karsher"
+description = "namespaces aliases for command lines & basic scripting language"
+homepage = "https://github.com/nbittich/adana"
 readme = "README.md"
 exclude = ["vscode/","dist/", ".vscode", ".history" ]
 

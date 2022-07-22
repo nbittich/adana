@@ -7,7 +7,7 @@ use std::{
 use anyhow::{Context, Error};
 use slab_tree::{NodeRef, Tree};
 
-use crate::{karshscript::parser::parse_instructions, prelude::BTreeMap};
+use crate::{adanascript::parser::parse_instructions, prelude::BTreeMap};
 
 use super::{
     ast::to_ast,

@@ -3,6 +3,27 @@
 version = 3
 
 [[package]]
+name = "adana"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "ctrlc",
+ "dirs",
+ "env_logger",
+ "log",
+ "nom",
+ "nu-ansi-term",
+ "rustyline",
+ "rustyline-derive",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "slab_tree",
+ "strum",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -265,27 +286,6 @@ name = "itoa"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "112c678d4050afce233f4f2852bb2eb519230b3cf12f33585275537d7e41578d"
-
-[[package]]
-name = "karsher"
-version = "0.9.0"
-dependencies = [
- "anyhow",
- "bincode",
- "ctrlc",
- "dirs",
- "env_logger",
- "log",
- "nom",
- "nu-ansi-term",
- "rustyline",
- "rustyline-derive",
- "serde",
- "serde_json",
- "serial_test",
- "slab_tree",
- "strum",
-]
 
 [[package]]
 name = "lazy_static"

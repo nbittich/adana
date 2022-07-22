@@ -1,14 +1,14 @@
+mod adanascript;
 mod args;
 mod cache_command;
 mod db;
 mod editor;
-mod karshscript;
 mod prelude;
 mod reserved_keywords;
 
+use adanascript::Primitive;
 use args::*;
 use db::DbOp;
-use karshscript::Primitive;
 use rustyline::error::ReadlineError;
 use std::path::Path;
 
@@ -113,7 +113,7 @@ fn process_repl(
     line: &str,
     ctx: &mut BTreeMap<String, Primitive>,
 ) -> anyhow::Result<()> {
-    let calc = crate::karshscript::compute(line, ctx)?;
+    let calc = crate::adanascript::compute(line, ctx)?;
     println!("{calc}");
     Ok(())
 }

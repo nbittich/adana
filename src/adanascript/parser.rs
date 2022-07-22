@@ -4,7 +4,7 @@ use nom::{
 };
 
 use crate::{
-    karshscript::constants::{
+    adanascript::constants::{
         ABS, COS, INCLUDE, LENGTH, LN, LOG, PRINT, PRINT_LN, SIN, SQRT, TAN,
     },
     prelude::{
