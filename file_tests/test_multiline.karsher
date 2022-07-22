@@ -1,0 +1,38 @@
+s = multiline { # sksksk
+  5 #whu
+  + # why shtrauss
+  8
+  *9 # # sksksk
+}# sksksk
+
+v = multiline {
+  "
+    multiline
+    sin v
+    text
+  "#oek
+}# hey that's a comment, it's useless
+# hey that's a comment, it's useless
+# hey that's a comment, it's useless
+# hey that's a comment, it's useless
+x = multiline {
+  #oh dear
+    "sin" +# oh dear
+    "cos" +  
+    "tan" + # oh dear
+    "multiline"   # oh dear
+    # oh dear
+    # oh dear
+    # oh dear
+    # oh dear
+}
+  #oh dear
+  xy = 1 # ok
+  ze = 2
+  #ok
+  de = 3
+  #oh dear
+  #oh dear
+  #oh dear
+  #oh dear
+

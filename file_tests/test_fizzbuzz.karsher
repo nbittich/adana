@@ -1,0 +1,38 @@
+count = 0
+
+while (count <= 100) {
+    toprint = false
+    text = ""
+
+    if(count % 3 == 0) {
+      #fizz
+        toprint = true
+        text = multiline {
+                  count
+                  + 
+                  " = Fizz"
+        }
+    }
+
+    if(count % 5 == 0) {
+      # buzz
+       toprint = true
+       text = multiline {
+          count + 
+          " = Buzz" # oops
+        }
+    }
+
+    if(count % 3 == 0 && count % 5 == 0) {
+      # Fizz Buzz
+       toprint = true
+       text = count + " = FizzBuzz"
+    }
+    
+    count = count + 1
+
+    if(toprint) {
+      println(text)
+    }
+
+}

@@ -1,17 +1,18 @@
 mod args;
 mod cache_command;
-mod calculator;
 mod db;
 mod editor;
+mod karshscript;
 mod prelude;
+mod reserved_keywords;
 
 use args::*;
-use calculator::Primitive;
 use db::DbOp;
+use karshscript::Primitive;
 use rustyline::error::ReadlineError;
 use std::path::Path;
 
-use prelude::{colors::LightBlue, colors::Style, debug, BTreeMap};
+use prelude::{colors::LightBlue, colors::Style, debug, warn, BTreeMap};
 
 use crate::{
     cache_command::{clear_terminal, get_default_cache, process_command},
@@ -72,15 +73,24 @@ fn start_app(
         get_default_cache(db).as_ref().map_or("DEFAULT".into(), |v| v.clone())
     };
     let mut rl = editor::build_editor(history_path);
-    let mut math_ctx = BTreeMap::new();
+    let mut script_context = BTreeMap::new();
     loop {
         let readline = editor::read_line(&mut rl, &current_cache);
 
         match readline {
             Ok(line) => {
                 rl.add_history_entry(line.as_str());
-                if process_repl(&line, &mut math_ctx).is_err() {
-                    process_command(db, &mut current_cache, &line)?;
+                match process_repl(&line, &mut script_context) {
+                    Ok(()) => (),
+                    Err(e) => {
+                        warn!("{e}");
+                        process_command(
+                            db,
+                            &script_context,
+                            &mut current_cache,
+                            &line,
+                        )?;
+                    }
                 }
             }
             Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
@@ -103,7 +113,7 @@ fn process_repl(
     line: &str,
     ctx: &mut BTreeMap<String, Primitive>,
 ) -> anyhow::Result<()> {
-    let calc = crate::calculator::compute(line, ctx)?;
+    let calc = crate::karshscript::compute(line, ctx)?;
     println!("{calc}");
     Ok(())
 }

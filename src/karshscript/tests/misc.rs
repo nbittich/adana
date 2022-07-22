@@ -1,13 +1,15 @@
 use std::collections::BTreeMap;
 
-use crate::calculator::{parser::parse_var_expr, Operator::*, Value};
+use crate::karshscript::{
+    parser::parse_instructions as parse_var_expr, Operator::*, Value,
+};
 
-use super::{compute, Primitive};
+use crate::karshscript::{compute, Primitive};
 
 #[test]
 #[should_panic(expected = "invalid expression!")]
 fn test_expr_invalid() {
-    let expr = "use example";
+    let expr = "uze example";
     let mut ctx = BTreeMap::from([("x".to_string(), Primitive::Double(2.))]);
     compute(expr, &mut ctx).unwrap();
 }
@@ -20,7 +22,7 @@ fn test_expr_invalid_drc() {
 }
 
 #[test]
-#[should_panic(expected = "Invalid operation!")]
+#[should_panic]
 fn test_op_invalid() {
     let expr = "use example = wesh";
     let mut ctx = BTreeMap::from([("x".to_string(), Primitive::Double(2.))]);
@@ -37,7 +39,7 @@ fn test_compute_with_ctx() {
 }
 #[test]
 fn test_compute_assign_with_ctx() {
-    let expr = "y = x * 5";
+    let expr = "y = x *  5";
     let mut ctx = BTreeMap::from([("x".to_string(), Primitive::Double(2.))]);
 
     let res = compute(expr, &mut ctx).unwrap();
@@ -52,39 +54,61 @@ fn test_variable() {
     let (_, op) = parse_var_expr(expr).unwrap();
     assert_eq!(
         op,
-        Value::Expression(vec![
-            Value::Variable("x",),
+        vec![Value::Expression(vec![
+            Value::Variable("x".to_string(),),
             Value::Operation(Mult,),
             Value::Integer(5,),
             Value::Operation(Add,),
             Value::Integer(9,),
             Value::Operation(Mult,),
-            Value::Variable("y",),
+            Value::Variable("y".to_string(),),
             Value::Operation(Div,),
             Value::Integer(8,),
-        ],),
+        ],)],
     );
 }
 #[test]
 fn test_variable_expr() {
-    let expr = "z = x*5+9*y/8";
+    let expr = "z = x*  5+9*y  /8";
     let (_, op) = parse_var_expr(expr).unwrap();
     assert_eq!(
         op,
-        Value::VariableExpr {
-            name: Box::new(Value::Variable("z")),
+        vec![Value::VariableExpr {
+            name: Box::new(Value::Variable("z".to_string())),
             expr: Box::new(Value::Expression(vec![
-                Value::Variable("x",),
+                Value::Variable("x".to_string(),),
                 Value::Operation(Mult,),
                 Value::Integer(5,),
                 Value::Operation(Add,),
                 Value::Integer(9,),
                 Value::Operation(Mult,),
-                Value::Variable("y",),
+                Value::Variable("y".to_string(),),
                 Value::Operation(Div,),
                 Value::Integer(8,),
             ]))
-        },
+        },]
+    );
+}
+#[test]
+fn test_variable_expr_2() {
+    let expr = "z_1 = x_3*  5+9*y_1_2  /8";
+    let (_, op) = parse_var_expr(expr).unwrap();
+    assert_eq!(
+        op,
+        vec![Value::VariableExpr {
+            name: Box::new(Value::Variable("z_1".to_string())),
+            expr: Box::new(Value::Expression(vec![
+                Value::Variable("x_3".to_string(),),
+                Value::Operation(Mult,),
+                Value::Integer(5,),
+                Value::Operation(Add,),
+                Value::Integer(9,),
+                Value::Operation(Mult,),
+                Value::Variable("y_1_2".to_string(),),
+                Value::Operation(Div,),
+                Value::Integer(8,),
+            ]))
+        },]
     );
 }
 
@@ -96,12 +120,16 @@ fn test_modulo() {
     assert_eq!(Primitive::Double(0.625), compute("5/8.%2", &mut ctx).unwrap());
     assert_eq!(
         Primitive::Double(3278.9),
-        compute("2* (9*(5-(1/2.))) ^2 -1 / 5. * 8 - 4 %4", &mut ctx).unwrap()
+        compute("2   * (9  *(5-(1 /2.) )  ) ^2 -1 / 5. * 8 - 4 %4", &mut ctx)
+            .unwrap()
     );
     assert_eq!(
         Primitive::Double(-1.1),
-        compute("2* (9*(5-(1/2.))) ^2 %2 -1 / 5. * 8 - 4 %4", &mut ctx)
-            .unwrap()
+        compute(
+            "    2* (9   *(5-(1  /2.)   )) ^2 %2 -1 /5. * 8 - 4 %4",
+            &mut ctx
+        )
+        .unwrap()
     );
 }
 
@@ -110,7 +138,7 @@ fn test_compute() {
     let mut ctx = BTreeMap::new();
     assert_eq!(
         Primitive::Double(3280.3),
-        compute("x=2* (9*(5-(1./2.))) ^2 -1 / 5.", &mut ctx).unwrap()
+        compute("x=2* (9*(5-(1./     2.) )) ^2 -1 / 5.", &mut ctx).unwrap()
     );
     assert_eq!(
         Primitive::Double(3274.9),
@@ -308,13 +336,17 @@ fn test_extra() {
         Primitive::Double(44721.45950030539),
         compute("sqrt((2*10^9-5*abs(8/9.))) + abs(1/10.)", &mut ctx).unwrap()
     );
+
     assert_eq!(
         Primitive::Double(161414423.89420456),
         compute(
             "
+            multiline 
+            {
                 2*(3/4.-12%5 +7^9) -6/12.*4 / 
                 sqrt(2*(3/4.-12%5 +7^9) --6/12.*4) + 
                 abs(-2*(3/4.-12%5 +7^9) -6/12.*4 / sqrt(5))
+            }
             ",
             &mut ctx
         )
@@ -324,10 +356,12 @@ fn test_extra() {
         Primitive::Double(507098311.0925626),
         compute(
             "
+            multiline {
                 (2*(3/4.-12%5 +7^9) -6/12.*4 / 
                 sqrt(2*(3/4.-12%5 +7^9) --6/12.*4) + 
                 abs(-2*(3/4.-12%5 +7^9) -6/12.*4 / sqrt(5)) -
                 ln(abs(-2*(3/4.-12%5 +7^9 --8*4^9. % 2) --6/12.*4))) * π
+            }
 
             ",
             &mut ctx
@@ -338,10 +372,12 @@ fn test_extra() {
         Primitive::Double(438769845.8328427),
         compute(
             "
+            multiline {
                 (2*(3/4.-12%5 +7^9) -6/12.*4 / 
                 sqrt(2*(3/4.-12%5 +7^9) --6/12.*4) + 
                 abs(-2*(3/4.-12%5 +7^9) -6/12.*4 / sqrt(5)) -
                 ln(abs(-2*(3/4.-12%5 +7^9 --8*4^9. % 2) --6/12.*4))) * γ
+            }
 
             ",
             &mut ctx
@@ -460,5 +496,22 @@ fn test_simple_logical_and_or() {
     assert_eq!(
         Primitive::Bool(true),
         compute(" 5 < 3 || 4 < 8 && 9*5 == 45", &mut ctx).unwrap()
+    );
+}
+
+#[test]
+fn test_str() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(
+        Primitive::String("aaaaa".to_string()),
+        compute(r#""a"*5"#, &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Primitive::String("a5".to_string()),
+        compute(r#""a"+5"#, &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Primitive::String("a5.1".to_string()),
+        compute(r#""a"+5.1"#, &mut ctx).unwrap()
     );
 }

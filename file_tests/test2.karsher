@@ -1,0 +1,12 @@
+a = 5 * 5 
+
+if(a > 20) {
+    b = 12
+    x = 15
+    z = 18
+    # last expression can now end with a semicolon
+    # if all previous expression ends also with a semicolon
+    r = 11   # hello
+}
+
+c = 20

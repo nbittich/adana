@@ -1,40 +1,34 @@
+use std::ops::Neg;
+
 use slab_tree::{NodeId, Tree};
 
 use crate::prelude::{BTreeMap, Context};
 
 use super::{MathConstants, Operator, Primitive, TreeNodeValue, Value};
 
-fn variable_from_ctx<'a>(
-    name: &'a str,
+fn variable_from_ctx(
+    name: &str,
     negate: bool,
     ctx: &mut BTreeMap<String, Primitive>,
-) -> anyhow::Result<Value<'a>> {
+) -> anyhow::Result<Primitive> {
     let value = ctx
         .get(name)
         .context(format!("variable {name} not found in ctx"))?
-        .as_ref_ok()?;
+        .as_ref_ok()?
+        .clone();
 
     if cfg!(test) {
-        dbg!(value);
+        dbg!(&value);
     }
+    let primitive = if negate { value.neg() } else { value };
 
-    match value {
-        Primitive::Int(i) if negate => Ok(Value::Integer(-i)),
-        Primitive::Int(i) => Ok(Value::Integer(*i)),
-        Primitive::Double(d) if negate => Ok(Value::Decimal(-d)),
-        Primitive::Double(d) => Ok(Value::Decimal(*d)),
-        Primitive::Bool(b) if !negate => Ok(Value::Bool(*b)),
-        Primitive::Bool(_b) => {
-            Err(anyhow::Error::msg("attempt to negate a bool value"))
-        }
-        Primitive::Error(msg) => Err(anyhow::Error::msg(*msg)),
-    }
+    Ok(primitive)
 }
 
-fn filter_op<'a>(
+fn filter_op(
     op: Operator,
-    operations: &'a [Value<'a>],
-) -> impl FnOnce() -> Option<usize> + 'a {
+    operations: &[Value],
+) -> impl FnOnce() -> Option<usize> + '_ {
     move || {
         operations.iter().rposition(
             |c| matches!(c, Value::Operation(operator) if operator == &op),
@@ -48,6 +42,24 @@ pub(super) fn to_ast(
     tree: &mut Tree<TreeNodeValue>,
     curr_node_id: &Option<NodeId>,
 ) -> anyhow::Result<Option<NodeId>> {
+    fn append_to_current_and_return(
+        v: TreeNodeValue,
+        tree: &mut Tree<TreeNodeValue>,
+        curr_node_id: &Option<NodeId>,
+    ) -> anyhow::Result<Option<NodeId>> {
+        if let Some(node_id) = curr_node_id {
+            let mut node =
+                tree.get_mut(*node_id).context("node id does not exist!")?;
+            node.append(v);
+            Ok(Some(node.node_id()))
+        } else if let Some(mut root_node) = tree.root_mut() {
+            root_node.append(v);
+            Ok(tree.root_id())
+        } else {
+            Ok(Some(tree.set_root(v)))
+        }
+    }
+
     match value {
         Value::Expression(mut operations)
         | Value::BlockParen(mut operations) => {
@@ -93,7 +105,7 @@ pub(super) fn to_ast(
                         Some(Value::Decimal(d)) => Some(Value::Decimal(-d)),
                         Some(Value::Integer(d)) => Some(Value::Integer(-d)),
                         Some(Value::Variable(d)) => {
-                            Some(Value::VariableNegate(d))
+                            Some(Value::VariableNegate(d.to_string()))
                         }
                         _ => None,
                     };
@@ -150,60 +162,41 @@ pub(super) fn to_ast(
             }
         }
 
-        Value::Decimal(num) => {
-            let double_node = TreeNodeValue::Primitive(Primitive::Double(num));
-            if let Some(node_id) = curr_node_id {
-                let mut node = tree
-                    .get_mut(*node_id)
-                    .context("node id does not exist!")?;
-                node.append(double_node);
-                Ok(Some(node.node_id()))
-            } else if let Some(mut root_node) = tree.root_mut() {
-                root_node.append(double_node);
-                Ok(tree.root_id())
-            } else {
-                Ok(Some(tree.set_root(double_node)))
-            }
-        }
-        Value::Integer(num) => {
-            let int_node = TreeNodeValue::Primitive(Primitive::Int(num));
-            let node_id = if let Some(node_id) = curr_node_id {
-                let mut node = tree
-                    .get_mut(*node_id)
-                    .context("node id does not exist!")?;
-                node.append(int_node);
-                Some(node.node_id())
-            } else if let Some(mut root_node) = tree.root_mut() {
-                root_node.append(int_node);
-                tree.root_id()
-            } else {
-                Some(tree.set_root(int_node))
-            };
-            Ok(node_id)
-        }
-        Value::Bool(bool_v) => {
-            let bool_node = TreeNodeValue::Primitive(Primitive::Bool(bool_v));
-            let node_id = if let Some(node_id) = curr_node_id {
-                let mut node = tree
-                    .get_mut(*node_id)
-                    .context("node id does not exist!")?;
-                node.append(bool_node);
-                Some(node.node_id())
-            } else if let Some(mut root_node) = tree.root_mut() {
-                root_node.append(bool_node);
-                tree.root_id()
-            } else {
-                Some(tree.set_root(bool_node))
-            };
-            Ok(node_id)
-        }
+        Value::Decimal(num) => append_to_current_and_return(
+            TreeNodeValue::Primitive(Primitive::Double(num)),
+            tree,
+            curr_node_id,
+        ),
+        Value::Integer(num) => append_to_current_and_return(
+            TreeNodeValue::Primitive(Primitive::Int(num)),
+            tree,
+            curr_node_id,
+        ),
+        Value::Bool(bool_v) => append_to_current_and_return(
+            TreeNodeValue::Primitive(Primitive::Bool(bool_v)),
+            tree,
+            curr_node_id,
+        ),
+        Value::String(string_v) => append_to_current_and_return(
+            TreeNodeValue::Primitive(Primitive::String(string_v)),
+            tree,
+            curr_node_id,
+        ),
         Value::Variable(name) => {
-            let value = variable_from_ctx(name, false, ctx)?;
-            to_ast(ctx, value, tree, curr_node_id)
+            let value = variable_from_ctx(name.as_str(), false, ctx)?;
+            append_to_current_and_return(
+                TreeNodeValue::Primitive(value),
+                tree,
+                curr_node_id,
+            )
         }
         Value::VariableNegate(name) => {
-            let value = variable_from_ctx(name, true, ctx)?;
-            to_ast(ctx, value, tree, curr_node_id)
+            let value = variable_from_ctx(name.as_str(), true, ctx)?;
+            append_to_current_and_return(
+                TreeNodeValue::Primitive(value),
+                tree,
+                curr_node_id,
+            )
         }
         Value::VariableExpr { name, expr } => {
             anyhow::ensure!(
@@ -211,21 +204,30 @@ pub(super) fn to_ast(
                 "invalid variable assignment "
             );
 
-            if let Value::Variable(n) = *name {
-                let variable_assign_node =
-                    TreeNodeValue::VariableAssign(n.to_string());
-
-                let node_id = Some(tree.set_root(variable_assign_node));
-
-                let value = *expr;
-
-                let _ = to_ast(ctx, value, tree, &node_id)?
-                    .context(format!("invalid variable expr {n}"))?;
-
-                Ok(node_id)
+            let variable_assign_node = if let Value::Variable(n) = *name {
+                Ok(TreeNodeValue::VariableAssign(n))
+            } else if let Value::ArrayAccess { arr, index } = *name {
+                if let (Value::Variable(n), Value::Integer(index)) =
+                    (*arr, *index)
+                {
+                    Ok(TreeNodeValue::VariableArrayAssign {
+                        name: n,
+                        index: Primitive::Int(index),
+                    })
+                } else {
+                    Err(anyhow::Error::msg("invalid variable expression"))
+                }
             } else {
                 Err(anyhow::Error::msg("invalid variable expression"))
-            }
+            }?;
+
+            let node_id = Some(tree.set_root(variable_assign_node));
+
+            let value = *expr;
+
+            let _ = to_ast(ctx, value, tree, &node_id)?
+                .context(format!("invalid variable expr {node_id:?}"))?;
+            Ok(node_id)
         }
         Value::Const(c) => match c {
             c if c == MathConstants::Pi.get_symbol() => to_ast(
@@ -266,5 +268,42 @@ pub(super) fn to_ast(
             to_ast(ctx, *expr, tree, &node_id)?;
             Ok(node_id)
         }
+        v @ Value::IfExpr { cond: _, exprs: _, else_expr: _ } => {
+            let if_node = TreeNodeValue::IfExpr(v);
+            append_to_current_and_return(if_node, tree, curr_node_id)
+        }
+        v @ Value::WhileExpr { cond: _, exprs: _ } => {
+            let while_node = TreeNodeValue::WhileExpr(v);
+            append_to_current_and_return(while_node, tree, curr_node_id)
+        }
+        Value::Array(arr) => append_to_current_and_return(
+            TreeNodeValue::Array(arr),
+            tree,
+            curr_node_id,
+        ),
+        Value::ArrayAccess { arr, index } => match (*arr, *index) {
+            (v, Value::Integer(idx)) => append_to_current_and_return(
+                TreeNodeValue::ArrayAccess {
+                    index: Primitive::Int(idx),
+                    array: v,
+                },
+                tree,
+                curr_node_id,
+            ),
+            (v, Value::Variable(idx_var)) => {
+                let idx = variable_from_ctx(&idx_var, false, ctx)?;
+                append_to_current_and_return(
+                    TreeNodeValue::ArrayAccess { index: idx, array: v },
+                    tree,
+                    curr_node_id,
+                )
+            }
+
+            (arr, index) => {
+                return Err(anyhow::Error::msg(format!(
+                    "illegal array access! array => {arr:?}, index=> {index:?}"
+                )))
+            }
+        },
     }
 }

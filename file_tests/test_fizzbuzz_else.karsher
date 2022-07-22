@@ -1,0 +1,30 @@
+count = -1
+
+while (count <= 100) {
+    text = ""
+    count = count + 1
+    if(count % 3 == 0 && count % 5 == 0) {
+      # Fizz Buzz
+       text = count + " = FizzBuzz"
+       println(text)
+
+    } else if(count % 5 == 0) {
+      # buzz
+       text = multiline {
+          count + 
+          " = Buzz" # oops
+        }
+       println(text)
+    } else if(count % 3 == 0) {
+      #fizz
+        text = multiline {
+                  count
+                  + 
+                  " = Fizz"
+        }
+       println(text)
+
+    }else {
+      println(count + " neither fizz nor buzz")
+    }
+}

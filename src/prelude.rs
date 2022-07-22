@@ -5,13 +5,15 @@ pub use nom::{
         take_while1,
     },
     character::complete::{
-        alpha1, alphanumeric1, i128 as I128, multispace0, multispace1, none_of,
-        one_of, space1,
+        alpha1, alphanumeric1, i128 as I128, line_ending, multispace0,
+        multispace1, none_of, one_of, space1,
     },
-    combinator::{all_consuming, cut, eof, map, map_parser, opt, rest, verify},
+    combinator::{
+        all_consuming, cut, eof, map, map_parser, opt, peek, rest, verify,
+    },
     multi::{many0, many1, separated_list0},
     number::complete::{double, recognize_float},
-    sequence::{delimited, pair, preceded, separated_pair, terminated},
+    sequence::{delimited, pair, preceded, separated_pair, terminated, tuple},
     IResult, Parser,
 };
 
