@@ -18,7 +18,7 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     SIN,
     COS,
     TAN,
-    K_LOAD,
+    INCLUDE,
     WHILE,
     ELSE,
     MULTILINE,

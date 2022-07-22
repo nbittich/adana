@@ -1,5 +1,3 @@
-use std::fs::read_to_string;
-
 use nom::{
     bytes::complete::take_while1, combinator::rest, multi::separated_list0,
     sequence::pair,
@@ -7,13 +5,13 @@ use nom::{
 
 use crate::{
     karshscript::constants::{
-        ABS, COS, K_LOAD, LENGTH, LN, LOG, PRINT, PRINT_LN, SIN, SQRT, TAN,
+        ABS, COS, INCLUDE, LENGTH, LN, LOG, PRINT, PRINT_LN, SIN, SQRT, TAN,
     },
     prelude::{
         all_consuming, alt, cut, delimited, double, many0, many1, map,
         map_parser, multispace0, one_of, opt, preceded, recognize_float,
-        separated_pair, tag, tag_no_case, take_until, take_until1, terminated,
-        tuple, verify, Res, I128,
+        separated_pair, tag, tag_no_case, take_until, terminated, tuple,
+        verify, Res, I128,
     },
     reserved_keywords::check_reserved_keyword,
 };
@@ -113,6 +111,7 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
             BuiltInFunctionType::Tan => TAN,
             BuiltInFunctionType::Println => PRINT_LN,
             BuiltInFunctionType::Print => PRINT,
+            BuiltInFunctionType::Include => INCLUDE,
         };
         move |s: &str| {
             map(preceded(tag_no_space_no_case(fn_name), parse_paren), |expr| {
@@ -131,6 +130,7 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
         parse_fn(BuiltInFunctionType::Println),
         parse_fn(BuiltInFunctionType::Print),
         parse_fn(BuiltInFunctionType::Length),
+        parse_fn(BuiltInFunctionType::Include),
     ))(s)
 }
 
@@ -228,26 +228,6 @@ fn parse_expression(s: &str) -> Res<Value> {
         parse_multiline,
         map(many1(preceded(opt(comments), parse_value)), Value::Expression),
     )(s)
-}
-
-pub(super) fn load_file_path(s: &str) -> anyhow::Result<String> {
-    let (rest, file_path) = preceded(
-        tag_no_space_no_case(K_LOAD),
-        delimited(
-            tag_no_space("("),
-            delimited(
-                tag_no_space(r#"""#),
-                take_until1(r#"""#),
-                tag_no_space(r#"""#),
-            ),
-            tag_no_space(")"),
-        ),
-    )(s)
-    .map_err(|e| anyhow::Error::msg(format!("{e}")))?;
-    anyhow::ensure!(rest.trim().is_empty(), "Invalid operation!");
-
-    let file = read_to_string(file_path)?;
-    Ok(file)
 }
 
 fn parse_simple_instruction(s: &str) -> Res<Value> {

@@ -1,15 +1,13 @@
 use std::{
-    borrow::{Borrow, Cow},
+    fs::read_to_string,
     ops::{Neg, Not},
+    path::{Path, PathBuf},
 };
 
 use anyhow::{Context, Error};
 use slab_tree::{NodeRef, Tree};
 
-use crate::{
-    karshscript::parser::{load_file_path, parse_instructions},
-    prelude::BTreeMap,
-};
+use crate::{karshscript::parser::parse_instructions, prelude::BTreeMap};
 
 use super::{
     ast::to_ast,
@@ -195,6 +193,34 @@ fn compute_recur(
                         print!("{v}");
                         Ok(Primitive::Unit)
                     }
+                    super::BuiltInFunctionType::Include => match v {
+                        Primitive::String(file_path) => {
+                            let curr_path = std::env::current_dir()
+                                .context("no current dir! wasn't expected")?;
+                            let temp_path = Path::new(&file_path);
+                            if temp_path.is_absolute() || temp_path.exists() {
+                                let parent = temp_path
+                                    .parent()
+                                    .context("parent doesn't exist")?;
+
+                                std::env::set_current_dir(PathBuf::from(
+                                    &parent,
+                                ))?;
+                            }
+
+                            let res = temp_path
+                                .file_name()
+                                .context("file name not found")
+                                .and_then(|p| {
+                                    read_to_string(p)
+                                        .map_err(anyhow::Error::new)
+                                })
+                                .and_then(move |file| compute(&file, ctx));
+                            std::env::set_current_dir(curr_path)?; // todo this might be quiet fragile
+                            res
+                        }
+                        _ => Ok(Primitive::Error("wrong include statement")),
+                    },
                 }
             }
             TreeNodeValue::IfExpr(v) => {
@@ -332,16 +358,9 @@ pub fn compute(
     s: &str,
     ctx: &mut BTreeMap<String, Primitive>,
 ) -> anyhow::Result<Primitive> {
-    let mut instruction_str: Cow<str> = Cow::Borrowed(s);
-    let (rest, instructions) =
-        match load_file_path(s).map_err(|e| Error::msg(e.to_string())) {
-            Ok(file) => {
-                instruction_str = Cow::Owned(file);
-                parse_instructions(instruction_str.borrow())
-            }
-            Err(_) => parse_instructions(instruction_str.borrow()),
-        }
-        .map_err(|e| Error::msg(e.to_string()))?;
+    let (rest, instructions) = parse_instructions(s).map_err(|e| {
+        anyhow::Error::msg(format!("could not parse instructions. {e}"))
+    })?;
 
     if cfg!(test) {
         dbg!(rest);

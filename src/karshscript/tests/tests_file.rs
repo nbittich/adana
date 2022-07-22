@@ -1,11 +1,14 @@
 use std::collections::BTreeMap;
 
+use serial_test::serial;
+
 use crate::karshscript::{compute, Primitive};
 
 #[test]
+#[serial]
 fn test_simple_file() {
     let file_path = r#"
-        k_load("file_tests/test1.karsher")
+    include("file_tests/test1.karsher")
     "#;
     let mut ctx = BTreeMap::new();
     let r = compute(file_path, &mut ctx).unwrap();
@@ -22,9 +25,10 @@ fn test_simple_file() {
 }
 
 #[test]
+#[serial]
 fn test_if_statement() {
     let file_path = r#"
-     k_load("file_tests/test2.karsher")
+    include("file_tests/test2.karsher")
     "#;
     let mut ctx = BTreeMap::new();
     let r = compute(file_path, &mut ctx).unwrap();
@@ -42,9 +46,10 @@ fn test_if_statement() {
     assert_eq!(Primitive::Int(20), r);
 }
 #[test]
+#[serial]
 fn test_while_statement() {
     let file_path = r#"
-     k_load("file_tests/testfib.karsher")
+    include("file_tests/testfib.karsher")
     "#;
     let mut ctx = BTreeMap::new();
 
@@ -79,9 +84,10 @@ fn test_while_statement() {
 }
 
 #[test]
+#[serial]
 fn test_nested_file() {
     let file_path = r#"
-        k_load("file_tests/test_nested.karsher")
+    include("file_tests/test_nested.karsher")
     "#;
     let mut ctx = BTreeMap::new();
     let r = compute(file_path, &mut ctx).unwrap();
@@ -100,9 +106,10 @@ fn test_nested_file() {
 }
 
 #[test]
+#[serial]
 fn test_fizz_buzz() {
     let file_path = r#"
-        k_load("file_tests/test_fizzbuzz.karsher")
+    include("file_tests/test_fizzbuzz.karsher")
     "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(file_path, &mut ctx);
@@ -114,9 +121,48 @@ fn test_fizz_buzz() {
 }
 
 #[test]
+#[serial]
+fn test_includes() {
+    let mut ctx = BTreeMap::new();
+    let file_path = r#"
+    include("file_tests/includes/reverse.karsher")
+"#;
+    let _ = compute(file_path, &mut ctx).unwrap();
+    dbg!("wesh", &ctx);
+    assert_eq!(
+        ctx,
+        BTreeMap::from([
+            ("a".to_string(), Primitive::Int(144,)),
+            (
+                "arr".to_string(),
+                Primitive::Array(vec![
+                    Primitive::Int(1,),
+                    Primitive::Int(2,),
+                    Primitive::Int(3,),
+                ],)
+            ),
+            (
+                "arr2".to_string(),
+                Primitive::Array(vec![
+                    Primitive::Int(4,),
+                    Primitive::Int(5,),
+                    Primitive::Int(6,),
+                ],)
+            ),
+            ("b".to_string(), Primitive::Int(233,)),
+            ("bfr".to_string(), Primitive::Int(2,)),
+            ("c".to_string(), Primitive::Int(233,)),
+            ("n".to_string(), Primitive::Int(1,)),
+            ("x".to_string(), Primitive::Int(4,))
+        ]),
+    );
+}
+
+#[test]
+#[serial]
 fn test_multiline_file() {
     let file_path = r#"
-    k_load("file_tests/test_multiline.karsher")
+    include("file_tests/test_multiline.karsher")
 "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(file_path, &mut ctx);
@@ -138,9 +184,10 @@ fn test_multiline_file() {
 }
 
 #[test]
+#[serial]
 fn test_if_else_file() {
     let file_path = r#"
-    k_load("file_tests/test_if_else.karsher")
+    include("file_tests/test_if_else.karsher")
 "#;
     let mut ctx = BTreeMap::new();
     ctx.insert("count".to_string(), Primitive::Int(102));
@@ -150,7 +197,7 @@ fn test_if_else_file() {
     let _ = compute(file_path, &mut ctx);
     assert_eq!(ctx.get("count"), Some(&Primitive::Int(51)));
     let file_path = r#"
-    k_load("file_tests/test_fizzbuzz_else.karsher")
+    include("file_tests/test_fizzbuzz_else.karsher")
 "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(file_path, &mut ctx);

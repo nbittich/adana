@@ -1,5 +1,7 @@
 use std::collections::BTreeMap;
 
+use serial_test::serial;
+
 use crate::karshscript::{
     compute,
     primitive::{
@@ -9,9 +11,10 @@ use crate::karshscript::{
 };
 
 #[test]
+#[serial]
 fn test_simple_array() {
     let file_path = r#"
-        k_load("file_tests/test_simple_array.karsher")
+        include("file_tests/test_simple_array.karsher")
     "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(file_path, &mut ctx).unwrap();
@@ -58,9 +61,10 @@ fn test_simple_array() {
     );
 }
 #[test]
+#[serial]
 fn test_file_array() {
     let file_path = r#"
-        k_load("file_tests/test_array.karsher")
+    include("file_tests/test_array.karsher")
     "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(file_path, &mut ctx).unwrap();
