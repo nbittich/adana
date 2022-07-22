@@ -1,4 +1,3 @@
-- tests array index
 - function
 - drop variable
 - replace most of the built in functions by a std library
@@ -7,5 +6,6 @@
 - variable should start with a letter but can have alphanumeric and maybe _ in it
 - <s>array len function</s>
 - <s>array / index</s>
+- <s>tests array index</s>
 - <s>return the Primitive::Error, implement display</s>
 - <s>else / else if</s>
