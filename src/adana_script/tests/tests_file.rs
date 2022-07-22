@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use serial_test::serial;
 
-use crate::adanascript::{compute, Primitive};
+use crate::adana_script::{compute, Primitive};
 
 #[test]
 #[serial]

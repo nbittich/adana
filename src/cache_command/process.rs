@@ -3,7 +3,7 @@ use std::{collections::BTreeMap, path::Path};
 use nom::error::ErrorKind;
 
 use crate::{
-    adanascript::Primitive,
+    adana_script::Primitive,
     db::DbOp,
     prelude::colors::*,
     reserved_keywords::{check_reserved_keyword, CACHE_COMMAND_DOC},

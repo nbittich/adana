@@ -1,4 +1,4 @@
-mod adanascript;
+mod adana_script;
 mod args;
 mod cache_command;
 mod db;
@@ -6,7 +6,7 @@ mod editor;
 mod prelude;
 mod reserved_keywords;
 
-use adanascript::Primitive;
+use adana_script::Primitive;
 use args::*;
 use db::DbOp;
 use rustyline::error::ReadlineError;
@@ -15,6 +15,7 @@ use std::path::Path;
 use prelude::{colors::LightBlue, colors::Style, debug, warn, BTreeMap};
 
 use crate::{
+    adana_script::compute,
     cache_command::{clear_terminal, get_default_cache, process_command},
     db::{Config, Db},
 };
@@ -113,7 +114,7 @@ fn process_repl(
     line: &str,
     ctx: &mut BTreeMap<String, Primitive>,
 ) -> anyhow::Result<()> {
-    let calc = crate::adanascript::compute(line, ctx)?;
+    let calc = compute(line, ctx)?;
     println!("{calc}");
     Ok(())
 }
