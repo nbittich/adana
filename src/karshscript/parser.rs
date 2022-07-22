@@ -1,16 +1,19 @@
 use std::fs::read_to_string;
 
-use nom::{combinator::rest, multi::separated_list0, sequence::pair, bytes::complete::take_while1};
+use nom::{
+    bytes::complete::take_while1, combinator::rest, multi::separated_list0,
+    sequence::pair,
+};
 
 use crate::{
     karshscript::constants::{
         ABS, COS, K_LOAD, LENGTH, LN, LOG, PRINT, PRINT_LN, SIN, SQRT, TAN,
     },
     prelude::{
-        all_consuming, alpha1, alphanumeric1, alt, cut, delimited, double,
-        many0, many1, map, map_parser, multispace0, one_of, opt, peek,
-        preceded, recognize_float, separated_pair, tag, tag_no_case,
-        take_until, take_until1, terminated, tuple, verify, Res, I128,
+        all_consuming, alt, cut, delimited, double, many0, many1, map,
+        map_parser, multispace0, one_of, opt, preceded, recognize_float,
+        separated_pair, tag, tag_no_case, take_until, take_until1, terminated,
+        tuple, verify, Res, I128,
     },
     reserved_keywords::check_reserved_keyword,
 };
@@ -63,7 +66,8 @@ fn parse_string(s: &str) -> Res<Value> {
 }
 
 fn parse_variable(s: &str) -> Res<Value> {
-    let allowed_values = |s| take_while1(|s: char|s.is_alphanumeric() || s == '_')(s);
+    let allowed_values =
+        |s| take_while1(|s: char| s.is_alphanumeric() || s == '_')(s);
     map_parser(
         verify(allowed_values, |s: &str| {
             s.chars().next().filter(|c| c.is_alphabetic()).is_some()
