@@ -3,7 +3,8 @@
 - replace most of the built in functions by a std library
 - string to array (split? or just each character as a single string in an array)
 - k_import => like k_load but allowed in file
-- variable should start with a letter but can have alphanumeric and maybe _ in it
+
+- <s>variable should start with a letter but can have alphanumeric and maybe _ in it</s>
 - <s>array len function</s>
 - <s>array / index</s>
 - <s>tests array index</s>

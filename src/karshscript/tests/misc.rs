@@ -89,6 +89,28 @@ fn test_variable_expr() {
         },]
     );
 }
+#[test]
+fn test_variable_expr_2() {
+    let expr = "z_1 = x_3*  5+9*y_1_2  /8";
+    let (_, op) = parse_var_expr(expr).unwrap();
+    assert_eq!(
+        op,
+        vec![Value::VariableExpr {
+            name: Box::new(Value::Variable("z_1".to_string())),
+            expr: Box::new(Value::Expression(vec![
+                Value::Variable("x_3".to_string(),),
+                Value::Operation(Mult,),
+                Value::Integer(5,),
+                Value::Operation(Add,),
+                Value::Integer(9,),
+                Value::Operation(Mult,),
+                Value::Variable("y_1_2".to_string(),),
+                Value::Operation(Div,),
+                Value::Integer(8,),
+            ]))
+        },]
+    );
+}
 
 #[test]
 fn test_modulo() {
