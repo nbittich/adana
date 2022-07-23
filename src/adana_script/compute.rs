@@ -164,7 +164,7 @@ fn compute_recur(
                 Ok(Primitive::Bool(*b))
             }
             TreeNodeValue::Primitive(Primitive::Error(err)) => {
-                Err(Error::msg(*err))
+                Err(Error::msg(err.clone()))
             }
             TreeNodeValue::Primitive(p) => Ok(p.clone()),
             TreeNodeValue::VariableAssign(name) => {
@@ -219,7 +219,9 @@ fn compute_recur(
                             std::env::set_current_dir(curr_path)?; // todo this might be quiet fragile
                             res
                         }
-                        _ => Ok(Primitive::Error("wrong include statement")),
+                        _ => Ok(Primitive::Error(
+                            "wrong include statement".to_string(),
+                        )),
                     },
                 }
             }
@@ -237,7 +239,7 @@ fn compute_recur(
                         v @ Primitive::Error(_) => return Ok(v),
                         Primitive::Unit => {
                             return Ok(Primitive::Error(
-                                "cannot push unit () to array",
+                                "cannot push unit () to array".to_string(),
                             ))
                         }
                         _ => primitives.push(primitive),
