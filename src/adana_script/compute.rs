@@ -1,4 +1,5 @@
 use std::{
+    borrow::Borrow,
     fs::read_to_string,
     ops::{Neg, Not},
     path::{Path, PathBuf},
@@ -280,6 +281,33 @@ fn compute_recur(
                     ctx.get_mut(name).context("array not found in context")?;
                 Ok(array.swap_mem(&mut v, index))
             }
+            TreeNodeValue::Function(Value::Function { parameters, exprs }) => {
+                if let Value::BlockParen(parameters) = parameters.borrow() {
+                    let mut params = Vec::with_capacity(parameters.len());
+                    for parameter in parameters {
+                        if let Value::Variable(parameter) = parameter {
+                            params.push(parameter.clone());
+                        } else {
+                            return Ok(Primitive::Error(format!(
+                                "not a valid parameter: {parameter:?}"
+                            )));
+                        }
+                    }
+                    Ok(Primitive::Function {
+                        parameters: params,
+                        exprs: exprs.to_owned(),
+                    })
+                } else {
+                    return Ok(Primitive::Error(format!(
+                        "not a valid function: {parameters:?}, {exprs:?}"
+                    )));
+                }
+            }
+            TreeNodeValue::Function(v) => {
+                return Ok(Primitive::Error(format!(
+                    "unexpected function declaration: {v:?}"
+                )));
+            }
         }
     } else {
         Ok(Primitive::Unit)
@@ -367,7 +395,10 @@ pub fn compute(
         dbg!(rest);
         dbg!(&instructions);
     }
-    anyhow::ensure!(rest.trim().is_empty(), "Invalid operation!");
+    anyhow::ensure!(
+        rest.trim().is_empty(),
+        format!("Invalid operation! {instructions:?} => {rest}")
+    );
 
     compute_instructions(instructions, ctx)
 }
