@@ -14,7 +14,7 @@ get_v = (key, map) => {
         k = map[count]
         if(k[0] == key) {
             res = k[1] 
-            count = length(map) + 1 # simulate break / early return
+            count = length(map) # simulate break / early return
         } else {
             count = count +1
         }
