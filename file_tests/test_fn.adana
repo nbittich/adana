@@ -30,7 +30,7 @@ index_of_v = (key, m) => {
         k = m[count]
         if(k[0] == key) {
             res = count
-            count = length(m) # simulate break / early return
+            break
         } else {
             count = count +1
         }

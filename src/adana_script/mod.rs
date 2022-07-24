@@ -45,6 +45,7 @@ pub mod constants {
     pub const SIN: &str = "sin";
     pub const COS: &str = "cos";
     pub const TAN: &str = "tan";
+    pub const BREAK: &str = "break";
     pub const PRINT_LN: &str = "println";
     pub const PRINT: &str = "print";
     pub const INCLUDE: &str = "include";
@@ -78,6 +79,7 @@ impl MathConstants {
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Value {
+    Break,
     Expression(Vec<Value>),
     Operation(Operator),
     BuiltInFunction {
@@ -155,6 +157,7 @@ pub enum Operator {
 
 #[derive(Debug)]
 pub(super) enum TreeNodeValue {
+    Break,
     VariableAssign(String),
     VariableArrayAssign { name: String, index: Primitive },
     Ops(Operator),

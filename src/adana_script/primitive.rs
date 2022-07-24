@@ -23,6 +23,7 @@ pub enum Primitive {
     Error(String),
     Function { parameters: Vec<String>, exprs: Vec<Value> },
     Unit,
+    NoReturn,
 }
 
 // region: traits
@@ -155,6 +156,7 @@ impl Display for Primitive {
             Primitive::Function { parameters, exprs: _ } => {
                 write!(f, "({}) => {{...}}", parameters.join(", "))
             }
+            Primitive::NoReturn => write!(f, "!"),
         }
     }
 }
@@ -490,6 +492,7 @@ impl PartialOrd for Primitive {
             (Primitive::Bool(_), _) => None,
             (Primitive::Double(_), _) => None,
             (Primitive::String(_), _) => None,
+            (Primitive::NoReturn, _) => None,
             (Primitive::Array(_), _) => None,
             (Primitive::Error(_), _) => None,
             (Primitive::Unit, _) => None,

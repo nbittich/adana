@@ -12,6 +12,7 @@
         
 - update readme
 
+- <s>break while</s>
 - <s>function & function call</s>
 - <s> rename project </s>
 - <s>string to array (split? or just each character as a single string in an array)</s>

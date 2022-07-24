@@ -14,7 +14,7 @@ use crate::{
 };
 
 use super::{
-    constants::{ELSE, IF, MULTILINE, WHILE},
+    constants::{BREAK, ELSE, IF, MULTILINE, WHILE},
     BuiltInFunctionType, MathConstants, Operator, Value,
 };
 
@@ -102,7 +102,11 @@ where
 fn parse_fn(s: &str) -> Res<Value> {
     let parser = |p| separated_list0(tag_no_space(","), parse_value)(p);
     map(
-        separated_pair(parse_paren(parser), tag("=>"), parse_block),
+        separated_pair(
+            parse_paren(parser),
+            tag("=>"),
+            parse_block(parse_instructions),
+        ),
         |(parameters, exprs)| Value::Function {
             parameters: Box::new(parameters),
             exprs,
@@ -254,10 +258,13 @@ fn parse_if_statement(s: &str) -> Res<Value> {
             tag_no_space(IF),
             tuple((
                 parse_block_paren,
-                parse_block,
+                parse_block(parse_instructions),
                 opt(preceded(
                     tag_no_space(ELSE),
-                    alt((map(parse_if_statement, |v| vec![v]), parse_block)),
+                    alt((
+                        map(parse_if_statement, |v| vec![v]),
+                        parse_block(parse_instructions),
+                    )),
                 )),
             )),
         ),
@@ -279,16 +286,25 @@ fn parse_multiline(s: &str) -> Res<&str> {
 }
 fn parse_while_statement(s: &str) -> Res<Value> {
     map(
-        preceded(tag_no_space(WHILE), pair(parse_block_paren, parse_block)),
+        preceded(
+            tag_no_space(WHILE),
+            pair(parse_block_paren, parse_block(parse_instructions)),
+        ),
         |(cond, exprs)| Value::WhileExpr { cond: Box::new(cond), exprs },
     )(s)
 }
 
-fn parse_block(s: &str) -> Res<Vec<Value>> {
-    preceded(
-        tag_no_space("{"),
-        terminated(parse_instructions, tag_no_space("}")),
-    )(s)
+fn parse_block<F>(parser: F) -> impl Fn(&str) -> Res<Vec<Value>>
+where
+    F: Fn(&str) -> Res<Vec<Value>>,
+{
+    move |s| {
+        preceded(tag_no_space("{"), terminated(&parser, tag_no_space("}")))(s)
+    }
+}
+
+fn parse_break(s: &str) -> Res<Value> {
+    map(tag_no_space(BREAK), |_| Value::Break)(s)
 }
 
 pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
@@ -296,124 +312,12 @@ pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
         many1(preceded(
             opt(comments),
             alt((
-                //  parse_fn_call,
-                //   parse_fn,
                 parse_while_statement,
                 parse_if_statement,
+                parse_break,
                 parse_simple_instruction,
             )),
         )),
         opt(comments),
     )(instructions)
-}
-
-#[cfg(test)]
-mod test {
-    use crate::adana_script::{
-        parser::parse_instructions, BuiltInFunctionType, Value,
-    };
-
-    use super::parse_multiline;
-
-    #[test]
-    fn test_parse_multiline() {
-        let (rest, _result) = parse_multiline(
-            r#"
-        multiline 
-        {
-            2*(3/4.-12%5 +7^9) -6/12.*4 / 
-            sqrt(2*(3/4.-12%5 +7^9) --6/12.*4) + 
-            abs(-2*(3/4.-12%5 +7^9) -6/12.*4 / sqrt(5))
-        }
-        "#,
-        )
-        .unwrap();
-        assert!(rest.is_empty());
-    }
-    #[test]
-    fn test_parse_fn() {
-        let (rest, result) = parse_instructions(
-            r#"
-            z = (x) => {
-                x = 0
-             }
-        "#,
-        )
-        .unwrap();
-        assert_eq!(
-            result,
-            vec![Value::VariableExpr {
-                name: Box::new(Value::Variable("z".to_string(),)),
-                expr: Box::new(Value::Function {
-                    parameters: Box::new(Value::BlockParen(vec![
-                        Value::Variable("x".to_string(),),
-                    ],)),
-                    exprs: vec![Value::VariableExpr {
-                        name: Box::new(Value::Variable("x".to_string(),)),
-                        expr: Box::new(Value::Expression(vec![
-                            Value::Integer(0,),
-                        ],)),
-                    },],
-                }),
-            },]
-        );
-        assert!(rest.trim().is_empty());
-        let (rest, result) = parse_instructions(
-            r#"
-             (x, y) => {
-                x = 0
-             }
-        "#,
-        )
-        .unwrap();
-        assert_eq!(
-            result,
-            vec![Value::Function {
-                parameters: Box::new(Value::BlockParen(vec![
-                    Value::Variable("x".to_string(),),
-                    Value::Variable("y".to_string(),),
-                ],)),
-                exprs: vec![Value::VariableExpr {
-                    name: Box::new(Value::Variable("x".to_string(),)),
-                    expr: Box::new(Value::Expression(
-                        vec![Value::Integer(0,),],
-                    )),
-                },],
-            },]
-        );
-        assert!(rest.trim().is_empty());
-        let (rest, result) = parse_instructions(
-            r#"
-             (x, y) => {
-                x = 0
-                println("hello")
-             }
-        "#,
-        )
-        .unwrap();
-        assert_eq!(
-            result,
-            vec![Value::Function {
-                parameters: Box::new(Value::BlockParen(vec![
-                    Value::Variable("x".to_string(),),
-                    Value::Variable("y".to_string(),),
-                ],)),
-                exprs: vec![
-                    Value::VariableExpr {
-                        name: Box::new(Value::Variable("x".to_string(),)),
-                        expr: Box::new(Value::Expression(vec![
-                            Value::Integer(0,),
-                        ],)),
-                    },
-                    Value::Expression(vec![Value::BuiltInFunction {
-                        fn_type: BuiltInFunctionType::Println,
-                        expr: Box::new(Value::BlockParen(vec![Value::String(
-                            format!("hello")
-                        )]))
-                    }])
-                ],
-            },]
-        );
-        assert!(rest.trim().is_empty());
-    }
 }

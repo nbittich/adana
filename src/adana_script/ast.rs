@@ -325,5 +325,10 @@ pub(super) fn to_ast(
                 curr_node_id,
             )
         }
+        Value::Break => append_to_current_and_return(
+            TreeNodeValue::Break,
+            tree,
+            curr_node_id,
+        ),
     }
 }

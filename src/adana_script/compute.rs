@@ -359,6 +359,7 @@ fn compute_recur(
                     "unexpected function declaration: {v:?}"
                 )));
             }
+            TreeNodeValue::Break => Ok(Primitive::NoReturn),
         }
     } else {
         Ok(Primitive::Unit)
@@ -416,12 +417,15 @@ fn compute_instructions(
                 }
             }
             Value::WhileExpr { cond, exprs } => {
-                while matches!(
+                'while_loop: while matches!(
                     compute(*cond.clone(), ctx)?,
                     Primitive::Bool(true)
                 ) {
                     for instruction in &exprs {
-                        result = compute(instruction.clone(), ctx)?;
+                        match compute(instruction.clone(), ctx)? {
+                            Primitive::NoReturn => break 'while_loop,
+                            p => result = p,
+                        }
                     }
                 }
             }
