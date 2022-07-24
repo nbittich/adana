@@ -101,7 +101,16 @@ fn parse_fn(s: &str) -> Res<Value> {
         separated_pair(
             parse_paren(parser),
             tag("=>"),
-            parse_block(parse_instructions),
+            alt((
+                parse_block(parse_instructions),
+                map(
+                    map_parser(
+                        alt((take_until("\n"), rest)),
+                        many1(preceded(multispace0, parse_value)),
+                    ),
+                    |v| vec![Value::Expression(v)],
+                ),
+            )),
         ),
         |(parameters, exprs)| Value::Function {
             parameters: Box::new(parameters),

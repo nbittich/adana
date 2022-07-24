@@ -152,3 +152,49 @@ fn test_drop() {
     assert_eq!(ctx.get("z"), Some(&Primitive::Int(35,)));
     assert_eq!(ctx.get("m"), None);
 }
+
+#[test]
+fn test_inline_fn() {
+    let script = r#"
+        hello = (name) => "hello " + name
+        hello_me = hello("nordine")
+        hello_world = hello("world")
+        null
+    "#;
+    let mut ctx = BTreeMap::new();
+    let res = compute(script, &mut ctx).unwrap();
+
+    assert_eq!(Primitive::Null, res);
+
+    assert_eq!(
+        ctx.get("hello_me"),
+        Some(&Primitive::String("hello nordine".into()))
+    );
+    assert_eq!(
+        ctx.get("hello_world"),
+        Some(&Primitive::String("hello world".into()))
+    );
+
+    let script = "hello = (name) => \"hello \" + name";
+
+    let mut ctx = BTreeMap::new();
+    let _ = compute(script, &mut ctx).unwrap();
+
+    let script = "hello_me = hello(\"nordine\")";
+    let res = compute(script, &mut ctx).unwrap();
+
+    assert_eq!(Primitive::String("hello nordine".into()), res);
+    assert_eq!(
+        ctx.get("hello_me"),
+        Some(&Primitive::String("hello nordine".into()))
+    );
+
+    let script = "hello_world = hello(\"world\")";
+    let res = compute(script, &mut ctx).unwrap();
+    assert_eq!(Primitive::String("hello world".into()), res);
+
+    assert_eq!(
+        ctx.get("hello_world"),
+        Some(&Primitive::String("hello world".into()))
+    );
+}
