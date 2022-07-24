@@ -303,6 +303,47 @@ fn compute_recur(
                     )));
                 }
             }
+            TreeNodeValue::FunctionCall(Value::FunctionCall {
+                parameters,
+                function,
+            }) => {
+                if let Value::BlockParen(param_values) = parameters.borrow() {
+                    let function =
+                        compute_instructions(vec![*function.clone()], ctx)?;
+                    if let Primitive::Function { parameters, exprs } = function
+                    {
+                        let mut scope_ctx = BTreeMap::new();
+                        for (i, param) in parameters.iter().enumerate() {
+                            if let Some(value) = param_values.get(i) {
+                                let value = compute_instructions(
+                                    vec![value.clone()],
+                                    ctx,
+                                )?;
+                                scope_ctx.insert(param.clone(), value);
+                            } else {
+                                return Ok(Primitive::Error(format!(
+                                    "missing parameter {param}"
+                                )));
+                            }
+                        }
+
+                        compute_instructions(exprs, &mut scope_ctx)
+                    } else {
+                        return Ok(Primitive::Error(format!(
+                            " not a function: {function}"
+                        )));
+                    }
+                } else {
+                    return Ok(Primitive::Error(format!(
+                        "invalid function call: {parameters:?} => {function:?}"
+                    )));
+                }
+            }
+            TreeNodeValue::FunctionCall(v) => {
+                return Ok(Primitive::Error(format!(
+                    "unexpected function call declaration: {v:?}"
+                )));
+            }
             TreeNodeValue::Function(v) => {
                 return Ok(Primitive::Error(format!(
                     "unexpected function declaration: {v:?}"

@@ -28,6 +28,8 @@ fn comments(s: &str) -> Res<Vec<&str>> {
 fn tag_no_space<'a>(t: &'a str) -> impl Fn(&'a str) -> Res<&'a str> {
     move |s: &str| delimited(multispace0, tag(t), multispace0)(s)
 }
+
+#[allow(dead_code)]
 fn tag_no_space_no_case<'a>(t: &'a str) -> impl Fn(&'a str) -> Res<&'a str> {
     move |s: &str| delimited(multispace0, tag_no_case(t), multispace0)(s)
 }
@@ -108,16 +110,24 @@ fn parse_fn(s: &str) -> Res<Value> {
     )(s)
 }
 
+fn parse_fn_call(s: &str) -> Res<Value> {
+    let parser = |p| separated_list0(tag_no_space(","), parse_value)(p);
+
+    map(
+        pair(alt((parse_fn, parse_variable)), parse_paren(parser)),
+        |(function, parameters)| Value::FunctionCall {
+            parameters: Box::new(parameters),
+            function: Box::new(function),
+        },
+    )(s)
+}
 fn parse_builtin_fn(s: &str) -> Res<Value> {
     fn parse_builtin<'a>(
         fn_type: BuiltInFunctionType,
     ) -> impl Fn(&'a str) -> Res<Value> {
         move |s: &str| {
             map(
-                preceded(
-                    tag_no_space_no_case(fn_type.as_str()),
-                    parse_block_paren,
-                ),
+                preceded(tag_no_space(fn_type.as_str()), parse_block_paren),
                 |expr| Value::BuiltInFunction { fn_type, expr: Box::new(expr) },
             )(s)
         }
@@ -178,6 +188,7 @@ fn parse_value(s: &str) -> Res<Value> {
                 parse_number,
                 parse_bool,
                 parse_builtin_fn,
+                parse_fn_call,
                 parse_variable,
                 parse_constant,
             )),

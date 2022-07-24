@@ -312,5 +312,12 @@ pub(super) fn to_ast(
                 curr_node_id,
             )
         }
+        fc @ Value::FunctionCall { parameters: _, function: _ } => {
+            append_to_current_and_return(
+                TreeNodeValue::FunctionCall(fc),
+                tree,
+                curr_node_id,
+            )
+        }
     }
 }

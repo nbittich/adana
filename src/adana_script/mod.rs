@@ -88,10 +88,10 @@ pub enum Value {
         parameters: Box<Value>,
         exprs: Vec<Value>,
     },
-    // FunctionCall {
-    //    name: Block<Value>,
-    //    parameters: Vec<Value>,
-    //}
+    FunctionCall {
+        parameters: Box<Value>,
+        function: Box<Value>,
+    },
     Decimal(f64),
     Integer(i128),
     Bool(bool),
@@ -165,6 +165,7 @@ pub(super) enum TreeNodeValue {
     Array(Vec<Value>),
     ArrayAccess { index: Primitive, array: Value },
     Function(Value),
+    FunctionCall(Value),
 }
 
 impl BuiltInFunctionType {
