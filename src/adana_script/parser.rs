@@ -120,7 +120,12 @@ fn parse_fn(s: &str) -> Res<Value> {
 }
 
 fn parse_fn_call(s: &str) -> Res<Value> {
-    let parser = |p| separated_list0(tag_no_space(","), parse_value)(p);
+    let parser = |p| {
+        separated_list0(
+            tag_no_space(","),
+            map(many1(preceded(multispace0, parse_value)), Value::Expression),
+        )(p)
+    };
 
     map(
         pair(alt((parse_fn, parse_variable)), parse_paren(parser)),
@@ -197,10 +202,10 @@ fn parse_value(s: &str) -> Res<Value> {
         multispace0,
         terminated(
             alt((
+                parse_block_paren,
                 parse_array_access,
                 parse_array,
                 parse_string,
-                parse_block_paren,
                 parse_operation,
                 parse_number,
                 parse_bool,

@@ -198,3 +198,16 @@ fn test_inline_fn() {
         Some(&Primitive::String("hello world".into()))
     );
 }
+
+#[test]
+#[serial_test::serial]
+fn test_recursive() {
+    let s = r#"
+        include("file_tests/test_recursion.adana")
+        fact6 = fact(6)
+    "#;
+    let mut ctx = BTreeMap::new();
+    let r = compute(s, &mut ctx).unwrap();
+
+    assert_eq!(Primitive::Int(720), r);
+}
