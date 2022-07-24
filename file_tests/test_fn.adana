@@ -1,0 +1,24 @@
+map = () => {
+    []
+}
+
+push_v = (key, value, map) => {
+    map = [[key, value]] + map
+    map
+}
+
+
+get_v = (key, map) => {
+    count = 0
+    res = [] # simulate null
+    while(count < length(map)) {
+        k = map[count]
+        if(k[0] == key) {
+            res = k[1] 
+            count = length(map) + 1 # simulate break / early return
+        } else {
+            count = count +1
+        }
+    }
+    res
+}

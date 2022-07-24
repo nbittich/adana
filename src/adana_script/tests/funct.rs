@@ -77,3 +77,28 @@ fn test_anon_func_call() {
     let res = compute(s, &mut ctx).unwrap();
     assert_eq!(Primitive::Int(600), res);
 }
+
+#[test]
+#[serial_test::serial]
+fn test_basic_map() {
+    let script = r#"
+        include("file_tests/test_fn.adana")
+        m = map()
+        m = push_v("nordine", 34, m)
+        get_v("nordine", m)
+    "#;
+    let mut ctx = BTreeMap::new();
+
+    let res = compute(script, &mut ctx).unwrap();
+    assert_eq!(Primitive::Int(34), res);
+    let script = r#"
+        include("file_tests/test_fn.adana")
+        m = map()
+        m = push_v("nordine", 34, m)
+        get_v("nordines", m)
+    "#;
+    let mut ctx = BTreeMap::new();
+
+    let res = compute(script, &mut ctx).unwrap();
+    assert_eq!(Primitive::Array(vec![]), res); // todo change that with null or smth
+}
