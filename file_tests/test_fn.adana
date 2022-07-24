@@ -4,7 +4,7 @@ map = () => {
 
 push_v = (key, value, m) => {
     idx = index_of_v(key, m) 
-    if(idx >= 0) {
+    if(idx != null) {
         m[idx] = [key, value]
     } else {
         m = [[key, value]] + m
@@ -14,9 +14,10 @@ push_v = (key, value, m) => {
 }
 
 get_v = (key, m) => {
-    res = [] # simulate null
+    res = null
     idx = index_of_v(key,m)
-    if(idx >= 0) {
+    println("izi" + idx)
+    if(idx != null) {
         k = m[idx]
         res = k[1] 
     }
@@ -25,8 +26,8 @@ get_v = (key, m) => {
 
 index_of_v = (key, m) => {
     count = 0
-    res = -1
-     while(count < length(m)) {
+    res = null
+    while(count < length(m)) {
         k = m[count]
         if(k[0] == key) {
             res = count

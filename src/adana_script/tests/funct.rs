@@ -100,8 +100,9 @@ fn test_basic_map() {
     let mut ctx = BTreeMap::new();
 
     let res = compute(script, &mut ctx).unwrap();
-    assert_eq!(Primitive::Array(vec![]), res); // todo change that with null or smth
+    assert_eq!(Primitive::Null, res); // todo change that with null or smth
 }
+
 #[test]
 #[serial_test::serial]
 fn test_override_map() {

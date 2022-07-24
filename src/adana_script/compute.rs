@@ -360,6 +360,7 @@ fn compute_recur(
                 )));
             }
             TreeNodeValue::Break => Ok(Primitive::NoReturn),
+            TreeNodeValue::Null => Ok(Primitive::Null),
         }
     } else {
         Ok(Primitive::Unit)

@@ -2,6 +2,7 @@
 - drop variable
 - early return
 
+- better error, break should not be a primitive
 - map type if not too lazy
 - make a std library
 - import/require => like include but scoped context & functions
@@ -12,6 +13,7 @@
         
 - update readme
 
+- <s>implement null</s>
 - <s>break while</s>
 - <s>function & function call</s>
 - <s> rename project </s>

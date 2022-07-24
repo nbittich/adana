@@ -14,7 +14,7 @@ use crate::{
 };
 
 use super::{
-    constants::{BREAK, ELSE, IF, MULTILINE, WHILE},
+    constants::{BREAK, ELSE, IF, MULTILINE, NULL, WHILE},
     BuiltInFunctionType, MathConstants, Operator, Value,
 };
 
@@ -195,6 +195,7 @@ fn parse_value(s: &str) -> Res<Value> {
                 parse_fn_call,
                 parse_variable,
                 parse_constant,
+                parse_null,
             )),
             opt(comments),
         ),
@@ -284,6 +285,11 @@ fn parse_multiline(s: &str) -> Res<&str> {
         alt((take_until("\n"), rest)),
     ))(s)
 }
+
+fn parse_null(s: &str) -> Res<Value> {
+    map(tag_no_space(NULL), |_| Value::Null)(s)
+}
+
 fn parse_while_statement(s: &str) -> Res<Value> {
     map(
         preceded(

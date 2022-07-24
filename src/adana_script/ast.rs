@@ -330,5 +330,10 @@ pub(super) fn to_ast(
             tree,
             curr_node_id,
         ),
+        Value::Null => append_to_current_and_return(
+            TreeNodeValue::Null,
+            tree,
+            curr_node_id,
+        ),
     }
 }

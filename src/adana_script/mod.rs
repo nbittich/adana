@@ -49,6 +49,7 @@ pub mod constants {
     pub const PRINT_LN: &str = "println";
     pub const PRINT: &str = "print";
     pub const INCLUDE: &str = "include";
+    pub const NULL: &str = "null";
     pub const MULTILINE: &str = "multiline";
 }
 
@@ -94,6 +95,7 @@ pub enum Value {
         parameters: Box<Value>,
         function: Box<Value>,
     },
+    Null,
     Decimal(f64),
     Integer(i128),
     Bool(bool),
@@ -169,6 +171,7 @@ pub(super) enum TreeNodeValue {
     ArrayAccess { index: Primitive, array: Value },
     Function(Value),
     FunctionCall(Value),
+    Null,
 }
 
 impl BuiltInFunctionType {

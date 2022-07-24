@@ -9,7 +9,7 @@ use anyhow::Result;
 
 use crate::prelude::{Deserialize, Serialize};
 
-use super::Value;
+use super::{constants::NULL, Value};
 
 const MAX_U32_AS_I128: i128 = u32::MAX as i128;
 
@@ -17,6 +17,7 @@ const MAX_U32_AS_I128: i128 = u32::MAX as i128;
 pub enum Primitive {
     Int(i128),
     Bool(bool),
+    Null,
     Double(f64),
     String(String),
     Array(Vec<Primitive>),
@@ -120,9 +121,14 @@ impl Primitive {
             Some(Ordering::Less) | Some(Ordering::Greater) => {
                 Primitive::Bool(false)
             }
-            None => Primitive::Error(
-                "call to is_equal() for two different types".to_string(),
-            ),
+            None => match (self, other) {
+                (Primitive::Null, _) | (_, Primitive::Null) => {
+                    Primitive::Bool(false)
+                }
+                _ => Primitive::Error(
+                    "call to is_equal() for two different types".to_string(),
+                ),
+            },
         }
     }
     pub fn as_ref_ok(&self) -> Result<&Primitive> {
@@ -157,6 +163,7 @@ impl Display for Primitive {
                 write!(f, "({}) => {{...}}", parameters.join(", "))
             }
             Primitive::NoReturn => write!(f, "!"),
+            Primitive::Null => write!(f, "{}", NULL),
         }
     }
 }
@@ -487,12 +494,14 @@ impl PartialOrd for Primitive {
                 l @ Primitive::Function { parameters: _, exprs: _ },
                 r @ Primitive::Function { parameters: _, exprs: _ },
             ) => l.partial_cmp(r),
+            (Primitive::Null, Primitive::Null) => Some(Ordering::Equal),
 
             (Primitive::Int(_), _) => None,
             (Primitive::Bool(_), _) => None,
             (Primitive::Double(_), _) => None,
             (Primitive::String(_), _) => None,
             (Primitive::NoReturn, _) => None,
+            (Primitive::Null, _) => None,
             (Primitive::Array(_), _) => None,
             (Primitive::Error(_), _) => None,
             (Primitive::Unit, _) => None,
