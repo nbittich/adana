@@ -207,15 +207,20 @@ pub(super) fn to_ast(
             let variable_assign_node = if let Value::Variable(n) = *name {
                 Ok(TreeNodeValue::VariableAssign(n))
             } else if let Value::ArrayAccess { arr, index } = *name {
-                if let (Value::Variable(n), Value::Integer(index)) =
-                    (*arr, *index)
-                {
-                    Ok(TreeNodeValue::VariableArrayAssign {
-                        name: n,
-                        index: Primitive::Int(index),
-                    })
+                let index = match *index {
+                    Value::Integer(n) => Ok(Primitive::Int(n)),
+                    Value::Variable(v) => variable_from_ctx(&v, false, ctx),
+                    v => {
+                        Err(anyhow::Error::msg(format!("invalid index {v:?}")))
+                    }
+                }?;
+
+                if let Value::Variable(n) = *arr {
+                    Ok(TreeNodeValue::VariableArrayAssign { name: n, index })
                 } else {
-                    Err(anyhow::Error::msg("invalid variable expression"))
+                    Err(anyhow::Error::msg(format!(
+                        "invalid variable expression {arr:?} => {expr:?}"
+                    )))
                 }
             } else {
                 Err(anyhow::Error::msg("invalid variable expression"))
@@ -292,6 +297,7 @@ pub(super) fn to_ast(
             ),
             (v, Value::Variable(idx_var)) => {
                 let idx = variable_from_ctx(&idx_var, false, ctx)?;
+
                 append_to_current_and_return(
                     TreeNodeValue::ArrayAccess { index: idx, array: v },
                     tree,

@@ -102,3 +102,26 @@ fn test_basic_map() {
     let res = compute(script, &mut ctx).unwrap();
     assert_eq!(Primitive::Array(vec![]), res); // todo change that with null or smth
 }
+#[test]
+#[serial_test::serial]
+fn test_override_map() {
+    let script = r#"
+        include("file_tests/test_fn.adana")
+        m = map()
+        m = push_v("nordine", 34, m)
+        m = push_v("nordine", 35, m)
+        get_v("nordine", m)
+    "#;
+    let mut ctx = BTreeMap::new();
+
+    let res = compute(script, &mut ctx).unwrap();
+    assert_eq!(Primitive::Int(35), res);
+
+    assert_eq!(
+        ctx.get("m"),
+        Some(&Primitive::Array(vec![Primitive::Array(vec![
+            Primitive::String("nordine".to_string(),),
+            Primitive::Int(35,),
+        ],),],),)
+    );
+}

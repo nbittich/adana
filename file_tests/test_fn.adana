@@ -2,19 +2,35 @@ map = () => {
     []
 }
 
-push_v = (key, value, map) => {
-    [[key, value]] + map
+push_v = (key, value, m) => {
+    idx = index_of_v(key, m) 
+    if(idx >= 0) {
+        m[idx] = [key, value]
+    } else {
+        m = [[key, value]] + m
+    }
+    m
+    
 }
 
-
-get_v = (key, map) => {
-    count = 0
+get_v = (key, m) => {
     res = [] # simulate null
-    while(count < length(map)) {
-        k = map[count]
+    idx = index_of_v(key,m)
+    if(idx >= 0) {
+        k = m[idx]
+        res = k[1] 
+    }
+    res
+}
+
+index_of_v = (key, m) => {
+    count = 0
+    res = -1
+     while(count < length(m)) {
+        k = m[count]
         if(k[0] == key) {
-            res = k[1] 
-            count = length(map) # simulate break / early return
+            res = count
+            count = length(m) # simulate break / early return
         } else {
             count = count +1
         }

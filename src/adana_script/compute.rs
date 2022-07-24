@@ -327,6 +327,16 @@ fn compute_recur(
                             }
                         }
 
+                        // copy also the function definition to the scoped ctx
+                        for (k, p) in ctx {
+                            if matches!(
+                                p,
+                                Primitive::Function { parameters: _, exprs: _ }
+                            ) {
+                                scope_ctx.insert(k.to_string(), p.clone());
+                            }
+                        }
+
                         compute_instructions(exprs, &mut scope_ctx)
                     } else {
                         return Ok(Primitive::Error(format!(
