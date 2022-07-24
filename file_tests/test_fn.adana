@@ -3,8 +3,7 @@ map = () => {
 }
 
 push_v = (key, value, map) => {
-    map = [[key, value]] + map
-    map
+    [[key, value]] + map
 }
 
 
