@@ -1,6 +1,6 @@
-- function
-- drop variable
 - file_open = fopen, but try cast each line to the right primitive, default to string
+- drop variable
+- early return
 
 - map type if not too lazy
 - make a std library
@@ -12,6 +12,7 @@
         
 - update readme
 
+- <s>function & function call</s>
 - <s> rename project </s>
 - <s>string to array (split? or just each character as a single string in an array)</s>
 - <s>variable should start with a letter but can have alphanumeric and maybe _ in it</s>

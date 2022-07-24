@@ -14,6 +14,7 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     EULER_NUMBER,
     ABS,
     LOG,
+    SQRT,
     LN,
     SIN,
     COS,

@@ -237,14 +237,14 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
             separated_pair(
                 alt((parse_array_access, parse_variable)),
                 tag_no_space("="),
-                alt((parse_fn, parse_expression)),
+                alt((parse_fn_call, parse_fn, parse_expression)),
             ),
             |(name, expr)| Value::VariableExpr {
                 name: Box::new(name),
                 expr: Box::new(expr),
             },
         ),
-        parse_expression,
+        alt((parse_fn_call, parse_fn, parse_expression)),
     ))(s)
 }
 
@@ -296,7 +296,8 @@ pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
         many1(preceded(
             opt(comments),
             alt((
-                parse_fn,
+                //  parse_fn_call,
+                //   parse_fn,
                 parse_while_statement,
                 parse_if_statement,
                 parse_simple_instruction,
