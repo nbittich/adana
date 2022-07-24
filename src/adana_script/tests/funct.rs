@@ -150,4 +150,5 @@ fn test_drop() {
     );
 
     assert_eq!(ctx.get("z"), Some(&Primitive::Int(35,)));
+    assert_eq!(ctx.get("m"), None);
 }
