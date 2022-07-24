@@ -3,6 +3,7 @@ use std::{
     fs::read_to_string,
     ops::{Neg, Not},
     path::{Path, PathBuf},
+    thread::spawn,
 };
 
 use anyhow::{Context, Error};
@@ -337,7 +338,16 @@ fn compute_recur(
                             }
                         }
 
-                        compute_instructions(exprs, &mut scope_ctx)
+                        // call function in a specific os thread with its own stack
+                        spawn(move || {
+                            compute_instructions(exprs, &mut scope_ctx)
+                        })
+                        .join()
+                        .map_err(|e| {
+                            anyhow::Error::msg(format!(
+                                "something wrong: {e:?}"
+                            ))
+                        })?
                     } else {
                         return Ok(Primitive::Error(format!(
                             " not a function: {function}"
