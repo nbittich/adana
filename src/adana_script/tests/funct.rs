@@ -126,3 +126,28 @@ fn test_override_map() {
         ],),],),)
     );
 }
+
+#[test]
+#[serial_test::serial]
+fn test_drop() {
+    let script = r#"
+        include("file_tests/test_fn.adana")
+        m = map()
+        m = push_v("nordine", 34, m)
+        m = push_v("nordine", 35, m)
+        z = get_v("nordine", m)
+        drop(m)
+    "#;
+    let mut ctx = BTreeMap::new();
+
+    let res = compute(script, &mut ctx).unwrap();
+    assert_eq!(
+        Primitive::Array(vec![Primitive::Array(vec![Primitive::Array(vec![
+            Primitive::String("nordine".to_string(),),
+            Primitive::Int(35,),
+        ],),],)]),
+        res
+    );
+
+    assert_eq!(ctx.get("z"), Some(&Primitive::Int(35,)));
+}

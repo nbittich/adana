@@ -361,6 +361,18 @@ fn compute_recur(
             }
             TreeNodeValue::Break => Ok(Primitive::NoReturn),
             TreeNodeValue::Null => Ok(Primitive::Null),
+            TreeNodeValue::Drop(variables) => {
+                let mut dropped = Vec::new();
+                if variables.iter().all(|k| ctx.contains_key(k)) {
+                    for var in variables {
+                        dropped.push(ctx.remove(var).unwrap());
+                    }
+                } else {
+                    return Ok(Primitive::Error(format!("ctx doesn't contain all variables that must be dropped {variables:?}")));
+                }
+
+                Ok(Primitive::Array(dropped))
+            }
         }
     } else {
         Ok(Primitive::Unit)

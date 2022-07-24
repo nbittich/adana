@@ -335,5 +335,26 @@ pub(super) fn to_ast(
             tree,
             curr_node_id,
         ),
+        Value::Drop(v) => {
+            if let Value::BlockParen(variables) = *v {
+                let mut vars = Vec::with_capacity(variables.len());
+                for var in variables {
+                    if let Value::Variable(var) = var {
+                        vars.push(var);
+                    } else {
+                        return Err(anyhow::Error::msg(format!(
+                            "not a variable: {var:?}"
+                        )));
+                    }
+                }
+                append_to_current_and_return(
+                    TreeNodeValue::Drop(vars),
+                    tree,
+                    curr_node_id,
+                )
+            } else {
+                Err(anyhow::Error::msg(format!("drop must be in paren: {v:?}")))
+            }
+        }
     }
 }

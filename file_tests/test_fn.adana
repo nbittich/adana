@@ -16,7 +16,6 @@ push_v = (key, value, m) => {
 get_v = (key, m) => {
     res = null
     idx = index_of_v(key,m)
-    println("izi" + idx)
     if(idx != null) {
         k = m[idx]
         res = k[1] 

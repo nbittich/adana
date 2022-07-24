@@ -17,6 +17,7 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     SQRT,
     BREAK,
     NULL,
+    DROP,
     LN,
     SIN,
     COS,

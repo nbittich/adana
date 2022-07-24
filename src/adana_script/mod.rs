@@ -49,6 +49,7 @@ pub mod constants {
     pub const PRINT_LN: &str = "println";
     pub const PRINT: &str = "print";
     pub const INCLUDE: &str = "include";
+    pub const DROP: &str = "drop";
     pub const NULL: &str = "null";
     pub const MULTILINE: &str = "multiline";
 }
@@ -81,6 +82,7 @@ impl MathConstants {
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Value {
     Break,
+    Drop(Box<Value>),
     Expression(Vec<Value>),
     Operation(Operator),
     BuiltInFunction {
@@ -160,6 +162,7 @@ pub enum Operator {
 #[derive(Debug)]
 pub(super) enum TreeNodeValue {
     Break,
+    Drop(Vec<String>),
     VariableAssign(String),
     VariableArrayAssign { name: String, index: Primitive },
     Ops(Operator),

@@ -1,20 +1,16 @@
-use nom::{
-    bytes::complete::take_while1, combinator::rest, multi::separated_list0,
-    sequence::pair,
-};
-
 use crate::{
     prelude::{
         all_consuming, alt, cut, delimited, double, many0, many1, map,
-        map_parser, multispace0, one_of, opt, preceded, recognize_float,
-        separated_pair, tag, tag_no_case, take_until, terminated, tuple,
-        verify, Res, I128,
+        map_parser, multispace0, one_of, opt, pair, preceded, recognize_float,
+        rest, separated_list0, separated_list1, separated_pair, tag,
+        tag_no_case, take_until, take_while1, terminated, tuple, verify, Res,
+        I128,
     },
     reserved_keywords::check_reserved_keyword,
 };
 
 use super::{
-    constants::{BREAK, ELSE, IF, MULTILINE, NULL, WHILE},
+    constants::{BREAK, DROP, ELSE, IF, MULTILINE, NULL, WHILE},
     BuiltInFunctionType, MathConstants, Operator, Value,
 };
 
@@ -124,6 +120,14 @@ fn parse_fn_call(s: &str) -> Res<Value> {
             function: Box::new(function),
         },
     )(s)
+}
+
+fn parse_drop(s: &str) -> Res<Value> {
+    let parser = |p| separated_list1(tag_no_space(","), parse_variable)(p);
+
+    map(preceded(tag_no_space(DROP), parse_paren(parser)), |variables| {
+        Value::Drop(Box::new(variables))
+    })(s)
 }
 fn parse_builtin_fn(s: &str) -> Res<Value> {
     fn parse_builtin<'a>(
@@ -322,6 +326,7 @@ pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
                 parse_if_statement,
                 parse_break,
                 parse_simple_instruction,
+                parse_drop,
             )),
         )),
         opt(comments),
