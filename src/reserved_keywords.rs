@@ -18,6 +18,7 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     BREAK,
     NULL,
     DROP,
+    READ_LINES,
     LN,
     SIN,
     COS,

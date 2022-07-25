@@ -9,7 +9,8 @@ use serde::{Deserialize, Serialize};
 use strum::EnumCount;
 
 use self::constants::{
-    ABS, COS, INCLUDE, LENGTH, LN, LOG, PRINT, PRINT_LN, SIN, SQRT, TAN,
+    ABS, COS, INCLUDE, LENGTH, LN, LOG, PRINT, PRINT_LN, READ_LINES, SIN, SQRT,
+    TAN,
 };
 
 #[macro_use]
@@ -42,6 +43,7 @@ pub mod constants {
     pub const LENGTH: &str = "length";
     pub const LOG: &str = "log";
     pub const LN: &str = "ln";
+    pub const READ_LINES: &str = "read_lines";
     pub const SIN: &str = "sin";
     pub const COS: &str = "cos";
     pub const TAN: &str = "tan";
@@ -135,6 +137,7 @@ pub enum BuiltInFunctionType {
     Cos,
     Tan,
     Println,
+    ReadLines,
     Print,
     Length,
     Include,
@@ -191,6 +194,7 @@ impl BuiltInFunctionType {
             BuiltInFunctionType::Println => PRINT_LN,
             BuiltInFunctionType::Print => PRINT,
             BuiltInFunctionType::Include => INCLUDE,
+            BuiltInFunctionType::ReadLines => READ_LINES,
         }
     }
 }

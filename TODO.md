@@ -1,4 +1,3 @@
-- file_open = fopen, but try cast each line to the right primitive, default to string
 - early return
 
 - better error, break should not be a primitive
@@ -12,6 +11,7 @@
         
 - update readme
 
+- <s>file_open = fopen, but try cast each line to the right primitive, default to string</s>
 - <s>drop variable</s>
 - <s>implement null</s>
 - <s>break while</s>

@@ -1,6 +1,7 @@
 use std::{
     borrow::Borrow,
-    fs::read_to_string,
+    fs::{read_to_string, File},
+    io::{BufRead, BufReader},
     ops::{Neg, Not},
     path::{Path, PathBuf},
     thread::spawn,
@@ -222,7 +223,28 @@ fn compute_recur(
                             res
                         }
                         _ => Ok(Primitive::Error(
-                            "wrong include statement".to_string(),
+                            "wrong include call".to_string(),
+                        )),
+                    },
+                    super::BuiltInFunctionType::ReadLines => match v {
+                        Primitive::String(file_path) => {
+                            if !PathBuf::from(file_path.as_str()).exists() {
+                                Ok(Primitive::Error(format!(
+                                    "file {file_path} not found"
+                                )))
+                            } else {
+                                let file = File::open(file_path)?;
+                                let reader = BufReader::new(file);
+                                Ok(Primitive::Array(
+                                    reader
+                                        .lines()
+                                        .map(|s| s.map(Primitive::String))
+                                        .collect::<Result<Vec<_>, _>>()?,
+                                ))
+                            }
+                        }
+                        _ => Ok(Primitive::Error(
+                            "wrong read lines call".to_string(),
                         )),
                     },
                 }
