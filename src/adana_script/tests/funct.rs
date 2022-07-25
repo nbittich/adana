@@ -240,3 +240,20 @@ fn test_fn_param() {
         r
     );
 }
+#[test]
+#[serial_test::serial]
+fn test_if_else_file() {
+    let file_path = r#"
+    include("file_tests/string.adana")
+    res = split("kekeke=lekeke=meme=me", "=")
+"#;
+    let mut ctx = BTreeMap::new();
+    let r= compute(file_path, &mut ctx).unwrap();
+
+    assert_eq!(r, Primitive::Array(vec![
+        Primitive::String("kekeke".into()),
+        Primitive::String("lekeke".into()),
+        Primitive::String("meme".into()),
+        Primitive::String("me".into()),
+    ]));
+}

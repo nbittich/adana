@@ -5,6 +5,7 @@ mod primitive;
 
 pub use compute::compute;
 pub use primitive::Primitive;
+
 use serde::{Deserialize, Serialize};
 use strum::EnumCount;
 
