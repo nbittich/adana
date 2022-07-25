@@ -1,20 +1,16 @@
-use nom::{
-    bytes::complete::take_while1, combinator::rest, multi::separated_list0,
-    sequence::pair,
-};
-
 use crate::{
     prelude::{
         all_consuming, alt, cut, delimited, double, many0, many1, map,
-        map_parser, multispace0, one_of, opt, preceded, recognize_float,
-        separated_pair, tag, tag_no_case, take_until, terminated, tuple,
-        verify, Res, I128,
+        map_parser, multispace0, one_of, opt, pair, preceded, recognize_float,
+        rest, separated_list0, separated_list1, separated_pair, tag,
+        tag_no_case, take_until, take_while1, terminated, tuple, verify, Res,
+        I128,
     },
     reserved_keywords::check_reserved_keyword,
 };
 
 use super::{
-    constants::{ELSE, IF, MULTILINE, WHILE},
+    constants::{BREAK, DROP, ELSE, IF, MULTILINE, NULL, RETURN, WHILE},
     BuiltInFunctionType, MathConstants, Operator, Value,
 };
 
@@ -102,7 +98,20 @@ where
 fn parse_fn(s: &str) -> Res<Value> {
     let parser = |p| separated_list0(tag_no_space(","), parse_value)(p);
     map(
-        separated_pair(parse_paren(parser), tag("=>"), parse_block),
+        separated_pair(
+            parse_paren(parser),
+            tag("=>"),
+            alt((
+                parse_block(parse_instructions),
+                map(
+                    map_parser(
+                        alt((take_until("\n"), rest)),
+                        many1(preceded(multispace0, parse_value)),
+                    ),
+                    |v| vec![Value::Expression(v)],
+                ),
+            )),
+        ),
         |(parameters, exprs)| Value::Function {
             parameters: Box::new(parameters),
             exprs,
@@ -111,7 +120,18 @@ fn parse_fn(s: &str) -> Res<Value> {
 }
 
 fn parse_fn_call(s: &str) -> Res<Value> {
-    let parser = |p| separated_list0(tag_no_space(","), parse_value)(p);
+    let parser = |p| {
+        separated_list0(
+            tag_no_space(","),
+            alt((
+                parse_fn,
+                map(
+                    many1(preceded(multispace0, parse_value)),
+                    Value::Expression,
+                ),
+            )),
+        )(p)
+    };
 
     map(
         pair(alt((parse_fn, parse_variable)), parse_paren(parser)),
@@ -120,6 +140,14 @@ fn parse_fn_call(s: &str) -> Res<Value> {
             function: Box::new(function),
         },
     )(s)
+}
+
+fn parse_drop(s: &str) -> Res<Value> {
+    let parser = |p| separated_list1(tag_no_space(","), parse_variable)(p);
+
+    map(preceded(tag_no_space(DROP), parse_paren(parser)), |variables| {
+        Value::Drop(Box::new(variables))
+    })(s)
 }
 fn parse_builtin_fn(s: &str) -> Res<Value> {
     fn parse_builtin<'a>(
@@ -144,6 +172,7 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
         parse_builtin(BuiltInFunctionType::Print),
         parse_builtin(BuiltInFunctionType::Length),
         parse_builtin(BuiltInFunctionType::Include),
+        parse_builtin(BuiltInFunctionType::ReadLines),
     ))(s)
 }
 
@@ -180,10 +209,10 @@ fn parse_value(s: &str) -> Res<Value> {
         multispace0,
         terminated(
             alt((
+                parse_block_paren,
                 parse_array_access,
                 parse_array,
                 parse_string,
-                parse_block_paren,
                 parse_operation,
                 parse_number,
                 parse_bool,
@@ -191,6 +220,7 @@ fn parse_value(s: &str) -> Res<Value> {
                 parse_fn_call,
                 parse_variable,
                 parse_constant,
+                parse_null,
             )),
             opt(comments),
         ),
@@ -254,10 +284,13 @@ fn parse_if_statement(s: &str) -> Res<Value> {
             tag_no_space(IF),
             tuple((
                 parse_block_paren,
-                parse_block,
+                parse_block(parse_instructions),
                 opt(preceded(
                     tag_no_space(ELSE),
-                    alt((map(parse_if_statement, |v| vec![v]), parse_block)),
+                    alt((
+                        map(parse_if_statement, |v| vec![v]),
+                        parse_block(parse_instructions),
+                    )),
                 )),
             )),
         ),
@@ -277,18 +310,37 @@ fn parse_multiline(s: &str) -> Res<&str> {
         alt((take_until("\n"), rest)),
     ))(s)
 }
+
+fn parse_null(s: &str) -> Res<Value> {
+    map(tag_no_space(NULL), |_| Value::Null)(s)
+}
+
 fn parse_while_statement(s: &str) -> Res<Value> {
     map(
-        preceded(tag_no_space(WHILE), pair(parse_block_paren, parse_block)),
+        preceded(
+            tag_no_space(WHILE),
+            pair(parse_block_paren, parse_block(parse_instructions)),
+        ),
         |(cond, exprs)| Value::WhileExpr { cond: Box::new(cond), exprs },
     )(s)
 }
 
-fn parse_block(s: &str) -> Res<Vec<Value>> {
-    preceded(
-        tag_no_space("{"),
-        terminated(parse_instructions, tag_no_space("}")),
-    )(s)
+fn parse_block<F>(parser: F) -> impl Fn(&str) -> Res<Vec<Value>>
+where
+    F: Fn(&str) -> Res<Vec<Value>>,
+{
+    move |s| {
+        preceded(tag_no_space("{"), terminated(&parser, tag_no_space("}")))(s)
+    }
+}
+
+fn parse_break(s: &str) -> Res<Value> {
+    map(tag_no_space(BREAK), |_| Value::Break)(s)
+}
+fn parse_early_return(s: &str) -> Res<Value> {
+    map(preceded(tag_no_space(RETURN), opt(parse_value)), |v| {
+        Value::EarlyReturn(Box::new(v))
+    })(s)
 }
 
 pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
@@ -296,124 +348,14 @@ pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
         many1(preceded(
             opt(comments),
             alt((
-                //  parse_fn_call,
-                //   parse_fn,
                 parse_while_statement,
                 parse_if_statement,
+                parse_break,
+                parse_early_return,
                 parse_simple_instruction,
+                parse_drop,
             )),
         )),
         opt(comments),
     )(instructions)
-}
-
-#[cfg(test)]
-mod test {
-    use crate::adana_script::{
-        parser::parse_instructions, BuiltInFunctionType, Value,
-    };
-
-    use super::parse_multiline;
-
-    #[test]
-    fn test_parse_multiline() {
-        let (rest, _result) = parse_multiline(
-            r#"
-        multiline 
-        {
-            2*(3/4.-12%5 +7^9) -6/12.*4 / 
-            sqrt(2*(3/4.-12%5 +7^9) --6/12.*4) + 
-            abs(-2*(3/4.-12%5 +7^9) -6/12.*4 / sqrt(5))
-        }
-        "#,
-        )
-        .unwrap();
-        assert!(rest.is_empty());
-    }
-    #[test]
-    fn test_parse_fn() {
-        let (rest, result) = parse_instructions(
-            r#"
-            z = (x) => {
-                x = 0
-             }
-        "#,
-        )
-        .unwrap();
-        assert_eq!(
-            result,
-            vec![Value::VariableExpr {
-                name: Box::new(Value::Variable("z".to_string(),)),
-                expr: Box::new(Value::Function {
-                    parameters: Box::new(Value::BlockParen(vec![
-                        Value::Variable("x".to_string(),),
-                    ],)),
-                    exprs: vec![Value::VariableExpr {
-                        name: Box::new(Value::Variable("x".to_string(),)),
-                        expr: Box::new(Value::Expression(vec![
-                            Value::Integer(0,),
-                        ],)),
-                    },],
-                }),
-            },]
-        );
-        assert!(rest.trim().is_empty());
-        let (rest, result) = parse_instructions(
-            r#"
-             (x, y) => {
-                x = 0
-             }
-        "#,
-        )
-        .unwrap();
-        assert_eq!(
-            result,
-            vec![Value::Function {
-                parameters: Box::new(Value::BlockParen(vec![
-                    Value::Variable("x".to_string(),),
-                    Value::Variable("y".to_string(),),
-                ],)),
-                exprs: vec![Value::VariableExpr {
-                    name: Box::new(Value::Variable("x".to_string(),)),
-                    expr: Box::new(Value::Expression(
-                        vec![Value::Integer(0,),],
-                    )),
-                },],
-            },]
-        );
-        assert!(rest.trim().is_empty());
-        let (rest, result) = parse_instructions(
-            r#"
-             (x, y) => {
-                x = 0
-                println("hello")
-             }
-        "#,
-        )
-        .unwrap();
-        assert_eq!(
-            result,
-            vec![Value::Function {
-                parameters: Box::new(Value::BlockParen(vec![
-                    Value::Variable("x".to_string(),),
-                    Value::Variable("y".to_string(),),
-                ],)),
-                exprs: vec![
-                    Value::VariableExpr {
-                        name: Box::new(Value::Variable("x".to_string(),)),
-                        expr: Box::new(Value::Expression(vec![
-                            Value::Integer(0,),
-                        ],)),
-                    },
-                    Value::Expression(vec![Value::BuiltInFunction {
-                        fn_type: BuiltInFunctionType::Println,
-                        expr: Box::new(Value::BlockParen(vec![Value::String(
-                            format!("hello")
-                        )]))
-                    }])
-                ],
-            },]
-        );
-        assert!(rest.trim().is_empty());
-    }
 }

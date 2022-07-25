@@ -1,8 +1,10 @@
 use std::{
     borrow::Borrow,
-    fs::read_to_string,
+    fs::{read_to_string, File},
+    io::{BufRead, BufReader},
     ops::{Neg, Not},
     path::{Path, PathBuf},
+    thread::spawn,
 };
 
 use anyhow::{Context, Error};
@@ -221,7 +223,28 @@ fn compute_recur(
                             res
                         }
                         _ => Ok(Primitive::Error(
-                            "wrong include statement".to_string(),
+                            "wrong include call".to_string(),
+                        )),
+                    },
+                    super::BuiltInFunctionType::ReadLines => match v {
+                        Primitive::String(file_path) => {
+                            if !PathBuf::from(file_path.as_str()).exists() {
+                                Ok(Primitive::Error(format!(
+                                    "file {file_path} not found"
+                                )))
+                            } else {
+                                let file = File::open(file_path)?;
+                                let reader = BufReader::new(file);
+                                Ok(Primitive::Array(
+                                    reader
+                                        .lines()
+                                        .map(|s| s.map(Primitive::String))
+                                        .collect::<Result<Vec<_>, _>>()?,
+                                ))
+                            }
+                        }
+                        _ => Ok(Primitive::Error(
+                            "wrong read lines call".to_string(),
                         )),
                     },
                 }
@@ -327,7 +350,26 @@ fn compute_recur(
                             }
                         }
 
-                        compute_instructions(exprs, &mut scope_ctx)
+                        // copy also the function definition to the scoped ctx
+                        for (k, p) in ctx {
+                            if matches!(
+                                p,
+                                Primitive::Function { parameters: _, exprs: _ }
+                            ) {
+                                scope_ctx.insert(k.to_string(), p.clone());
+                            }
+                        }
+
+                        // call function in a specific os thread with its own stack
+                        spawn(move || {
+                            compute_instructions(exprs, &mut scope_ctx)
+                        })
+                        .join()
+                        .map_err(|e| {
+                            anyhow::Error::msg(format!(
+                                "something wrong: {e:?}"
+                            ))
+                        })?
                     } else {
                         return Ok(Primitive::Error(format!(
                             " not a function: {function}"
@@ -348,6 +390,28 @@ fn compute_recur(
                 return Ok(Primitive::Error(format!(
                     "unexpected function declaration: {v:?}"
                 )));
+            }
+            TreeNodeValue::Break => Ok(Primitive::NoReturn),
+            TreeNodeValue::Null => Ok(Primitive::Null),
+            TreeNodeValue::Drop(variables) => {
+                let mut dropped = Vec::new();
+                if variables.iter().all(|k| ctx.contains_key(k)) {
+                    for var in variables {
+                        dropped.push(ctx.remove(var).unwrap());
+                    }
+                } else {
+                    return Ok(Primitive::Error(format!("ctx doesn't contain all variables that must be dropped {variables:?}")));
+                }
+
+                Ok(Primitive::Array(dropped))
+            }
+            TreeNodeValue::EarlyReturn(v) => {
+                if let Some(v) = v {
+                    let p = compute_instructions(vec![v.clone()], ctx)?;
+                    Ok(Primitive::EarlyReturn(Box::new(p)))
+                } else {
+                    Ok(Primitive::EarlyReturn(Box::new(Primitive::Null)))
+                }
             }
         }
     } else {
@@ -393,31 +457,45 @@ fn compute_instructions(
 
     for instruction in instructions {
         match instruction {
+            v @ Value::EarlyReturn(_) => return compute(v, ctx),
             Value::IfExpr { cond, exprs, else_expr } => {
                 let cond = compute(*cond, ctx)?;
                 if matches!(cond, Primitive::Bool(true)) {
                     for instruction in exprs {
-                        result = compute(instruction, ctx)?;
+                        match compute(instruction.clone(), ctx)? {
+                            v @ Primitive::EarlyReturn(_) => return Ok(v),
+                            p => result = p,
+                        }
                     }
                 } else if let Some(else_expr) = else_expr {
                     for instruction in else_expr {
-                        result = compute(instruction, ctx)?;
+                        match compute(instruction.clone(), ctx)? {
+                            v @ Primitive::EarlyReturn(_) => return Ok(v),
+                            p => result = p,
+                        }
                     }
                 }
             }
             Value::WhileExpr { cond, exprs } => {
-                while matches!(
+                'while_loop: while matches!(
                     compute(*cond.clone(), ctx)?,
                     Primitive::Bool(true)
                 ) {
                     for instruction in &exprs {
-                        result = compute(instruction.clone(), ctx)?;
+                        match compute(instruction.clone(), ctx)? {
+                            Primitive::NoReturn => break 'while_loop,
+                            v @ Primitive::EarlyReturn(_) => return Ok(v),
+                            p => result = p,
+                        }
                     }
                 }
             }
             _ => {
                 result = compute(instruction, ctx)?;
             }
+        }
+        if let Primitive::EarlyReturn(p) = result {
+            return Ok(*p);
         }
     }
 

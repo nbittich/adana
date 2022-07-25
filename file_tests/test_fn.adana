@@ -1,0 +1,39 @@
+map = () => {
+    []
+}
+
+push_v = (key, value, m) => {
+    idx = index_of_v(key, m) 
+    if(idx != null) {
+        m[idx] = [key, value]
+    } else {
+        m = [[key, value]] + m
+    }
+    m
+    
+}
+
+get_v = (key, m) => {
+    res = null
+    idx = index_of_v(key,m)
+    if(idx != null) {
+        k = m[idx]
+        res = k[1] 
+    }
+    res
+}
+
+index_of_v = (key, m) => {
+    count = 0
+    res = null
+    while(count < length(m)) {
+        k = m[count]
+        if(k[0] == key) {
+            res = count
+            break
+        } else {
+            count = count +1
+        }
+    }
+    res
+}

@@ -207,15 +207,20 @@ pub(super) fn to_ast(
             let variable_assign_node = if let Value::Variable(n) = *name {
                 Ok(TreeNodeValue::VariableAssign(n))
             } else if let Value::ArrayAccess { arr, index } = *name {
-                if let (Value::Variable(n), Value::Integer(index)) =
-                    (*arr, *index)
-                {
-                    Ok(TreeNodeValue::VariableArrayAssign {
-                        name: n,
-                        index: Primitive::Int(index),
-                    })
+                let index = match *index {
+                    Value::Integer(n) => Ok(Primitive::Int(n)),
+                    Value::Variable(v) => variable_from_ctx(&v, false, ctx),
+                    v => {
+                        Err(anyhow::Error::msg(format!("invalid index {v:?}")))
+                    }
+                }?;
+
+                if let Value::Variable(n) = *arr {
+                    Ok(TreeNodeValue::VariableArrayAssign { name: n, index })
                 } else {
-                    Err(anyhow::Error::msg("invalid variable expression"))
+                    Err(anyhow::Error::msg(format!(
+                        "invalid variable expression {arr:?} => {expr:?}"
+                    )))
                 }
             } else {
                 Err(anyhow::Error::msg("invalid variable expression"))
@@ -292,6 +297,7 @@ pub(super) fn to_ast(
             ),
             (v, Value::Variable(idx_var)) => {
                 let idx = variable_from_ctx(&idx_var, false, ctx)?;
+
                 append_to_current_and_return(
                     TreeNodeValue::ArrayAccess { index: idx, array: v },
                     tree,
@@ -319,5 +325,41 @@ pub(super) fn to_ast(
                 curr_node_id,
             )
         }
+        Value::Break => append_to_current_and_return(
+            TreeNodeValue::Break,
+            tree,
+            curr_node_id,
+        ),
+        Value::Null => append_to_current_and_return(
+            TreeNodeValue::Null,
+            tree,
+            curr_node_id,
+        ),
+        Value::Drop(v) => {
+            if let Value::BlockParen(variables) = *v {
+                let mut vars = Vec::with_capacity(variables.len());
+                for var in variables {
+                    if let Value::Variable(var) = var {
+                        vars.push(var);
+                    } else {
+                        return Err(anyhow::Error::msg(format!(
+                            "not a variable: {var:?}"
+                        )));
+                    }
+                }
+                append_to_current_and_return(
+                    TreeNodeValue::Drop(vars),
+                    tree,
+                    curr_node_id,
+                )
+            } else {
+                Err(anyhow::Error::msg(format!("drop must be in paren: {v:?}")))
+            }
+        }
+        Value::EarlyReturn(v) => append_to_current_and_return(
+            TreeNodeValue::EarlyReturn(*v),
+            tree,
+            curr_node_id,
+        ),
     }
 }

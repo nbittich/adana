@@ -1,7 +1,6 @@
-- file_open = fopen, but try cast each line to the right primitive, default to string
-- drop variable
-- early return
 
+- stabilize, more tests
+- better error, break should not be a primitive
 - map type if not too lazy
 - make a std library
 - import/require => like include but scoped context & functions
@@ -12,6 +11,11 @@
         
 - update readme
 
+- <s>early return</s>
+- <s>file_open = fopen, but try cast each line to the right primitive, default to string</s>
+- <s>drop variable</s>
+- <s>implement null</s>
+- <s>break while</s>
 - <s>function & function call</s>
 - <s> rename project </s>
 - <s>string to array (split? or just each character as a single string in an array)</s>

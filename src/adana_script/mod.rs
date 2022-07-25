@@ -5,11 +5,13 @@ mod primitive;
 
 pub use compute::compute;
 pub use primitive::Primitive;
+
 use serde::{Deserialize, Serialize};
 use strum::EnumCount;
 
 use self::constants::{
-    ABS, COS, INCLUDE, LENGTH, LN, LOG, PRINT, PRINT_LN, SIN, SQRT, TAN,
+    ABS, COS, INCLUDE, LENGTH, LN, LOG, PRINT, PRINT_LN, READ_LINES, SIN, SQRT,
+    TAN,
 };
 
 #[macro_use]
@@ -42,12 +44,17 @@ pub mod constants {
     pub const LENGTH: &str = "length";
     pub const LOG: &str = "log";
     pub const LN: &str = "ln";
+    pub const READ_LINES: &str = "read_lines";
     pub const SIN: &str = "sin";
     pub const COS: &str = "cos";
     pub const TAN: &str = "tan";
+    pub const BREAK: &str = "break";
+    pub const RETURN: &str = "return";
     pub const PRINT_LN: &str = "println";
     pub const PRINT: &str = "print";
     pub const INCLUDE: &str = "include";
+    pub const DROP: &str = "drop";
+    pub const NULL: &str = "null";
     pub const MULTILINE: &str = "multiline";
 }
 
@@ -78,6 +85,9 @@ impl MathConstants {
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Value {
+    Break,
+    EarlyReturn(Box<Option<Value>>),
+    Drop(Box<Value>),
     Expression(Vec<Value>),
     Operation(Operator),
     BuiltInFunction {
@@ -92,6 +102,7 @@ pub enum Value {
         parameters: Box<Value>,
         function: Box<Value>,
     },
+    Null,
     Decimal(f64),
     Integer(i128),
     Bool(bool),
@@ -129,6 +140,7 @@ pub enum BuiltInFunctionType {
     Cos,
     Tan,
     Println,
+    ReadLines,
     Print,
     Length,
     Include,
@@ -155,6 +167,9 @@ pub enum Operator {
 
 #[derive(Debug)]
 pub(super) enum TreeNodeValue {
+    Break,
+    EarlyReturn(Option<Value>),
+    Drop(Vec<String>),
     VariableAssign(String),
     VariableArrayAssign { name: String, index: Primitive },
     Ops(Operator),
@@ -166,6 +181,7 @@ pub(super) enum TreeNodeValue {
     ArrayAccess { index: Primitive, array: Value },
     Function(Value),
     FunctionCall(Value),
+    Null,
 }
 
 impl BuiltInFunctionType {
@@ -182,6 +198,7 @@ impl BuiltInFunctionType {
             BuiltInFunctionType::Println => PRINT_LN,
             BuiltInFunctionType::Print => PRINT,
             BuiltInFunctionType::Include => INCLUDE,
+            BuiltInFunctionType::ReadLines => READ_LINES,
         }
     }
 }
