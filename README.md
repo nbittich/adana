@@ -1,6 +1,7 @@
-# Adana -  dumb cache / dumb terminal
+# Adana -  repl / scripting language / namespaced command line aliases 
 
 - use help for help
+- scripting: check file_tests for syntax and examples
 
 
 Static build using MUSL:
