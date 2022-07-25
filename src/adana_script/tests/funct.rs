@@ -240,6 +240,7 @@ fn test_fn_param() {
         r
     );
 }
+
 #[test]
 #[serial_test::serial]
 fn test_if_else_file() {
@@ -248,12 +249,59 @@ fn test_if_else_file() {
     res = split("kekeke=lekeke=meme=me", "=")
 "#;
     let mut ctx = BTreeMap::new();
-    let r= compute(file_path, &mut ctx).unwrap();
+    let r = compute(file_path, &mut ctx).unwrap();
 
-    assert_eq!(r, Primitive::Array(vec![
-        Primitive::String("kekeke".into()),
-        Primitive::String("lekeke".into()),
-        Primitive::String("meme".into()),
-        Primitive::String("me".into()),
-    ]));
+    assert_eq!(
+        r,
+        Primitive::Array(vec![
+            Primitive::String("kekeke".into()),
+            Primitive::String("lekeke".into()),
+            Primitive::String("meme".into()),
+            Primitive::String("me".into()),
+        ])
+    );
+    let file_path = r#"
+    include("file_tests/string.adana")
+    res = split("kekeke=akalekeke=meme=me", "=")
+"#;
+    let mut ctx = BTreeMap::new();
+    let r = compute(file_path, &mut ctx).unwrap();
+
+    assert_eq!(r, Primitive::Array(vec![Primitive::String("aka".into()),]));
+
+    let file_path = r#"
+    include("file_tests/string.adana")
+    res = split("kekeke=akalekeke=meme=me", "")
+"#;
+    let mut ctx = BTreeMap::new();
+    let r = compute(file_path, &mut ctx).unwrap();
+
+    assert_eq!(r, Primitive::Null,);
+
+    let file_path = r#"
+    include("file_tests/string.adana")
+    res = split("", "k")
+"#;
+    let mut ctx = BTreeMap::new();
+    let r = compute(file_path, &mut ctx).unwrap();
+
+    assert_eq!(r, Primitive::Null,);
+
+    let file_path = r#"
+    include("file_tests/string.adana")
+    res = split(null, "k")
+"#;
+    let mut ctx = BTreeMap::new();
+    let r = compute(file_path, &mut ctx).unwrap();
+
+    assert_eq!(r, Primitive::Null,);
+
+    let file_path = r#"
+    include("file_tests/string.adana")
+    res = split("sksksksk", null)
+"#;
+    let mut ctx = BTreeMap::new();
+    let r = compute(file_path, &mut ctx).unwrap();
+
+    assert_eq!(r, Primitive::Null,);
 }

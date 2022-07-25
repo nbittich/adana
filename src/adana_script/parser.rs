@@ -10,7 +10,7 @@ use crate::{
 };
 
 use super::{
-    constants::{BREAK, DROP, ELSE, IF, MULTILINE, NULL, WHILE},
+    constants::{BREAK, DROP, ELSE, IF, MULTILINE, NULL, RETURN, WHILE},
     BuiltInFunctionType, MathConstants, Operator, Value,
 };
 
@@ -337,6 +337,11 @@ where
 fn parse_break(s: &str) -> Res<Value> {
     map(tag_no_space(BREAK), |_| Value::Break)(s)
 }
+fn parse_early_return(s: &str) -> Res<Value> {
+    map(preceded(tag_no_space(RETURN), opt(parse_value)), |v| {
+        Value::EarlyReturn(Box::new(v))
+    })(s)
+}
 
 pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
     terminated(
@@ -346,6 +351,7 @@ pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
                 parse_while_statement,
                 parse_if_statement,
                 parse_break,
+                parse_early_return,
                 parse_simple_instruction,
                 parse_drop,
             )),

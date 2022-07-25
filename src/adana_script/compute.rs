@@ -405,6 +405,14 @@ fn compute_recur(
 
                 Ok(Primitive::Array(dropped))
             }
+            TreeNodeValue::EarlyReturn(v) => {
+                if let Some(v) = v {
+                    let p = compute_instructions(vec![v.clone()], ctx)?;
+                    Ok(Primitive::EarlyReturn(Box::new(p)))
+                } else {
+                    Ok(Primitive::EarlyReturn(Box::new(Primitive::Null)))
+                }
+            }
         }
     } else {
         Ok(Primitive::Unit)
@@ -449,15 +457,22 @@ fn compute_instructions(
 
     for instruction in instructions {
         match instruction {
+            v @ Value::EarlyReturn(_) => return compute(v, ctx),
             Value::IfExpr { cond, exprs, else_expr } => {
                 let cond = compute(*cond, ctx)?;
                 if matches!(cond, Primitive::Bool(true)) {
                     for instruction in exprs {
-                        result = compute(instruction, ctx)?;
+                        match compute(instruction.clone(), ctx)? {
+                            v @ Primitive::EarlyReturn(_) => return Ok(v),
+                            p => result = p,
+                        }
                     }
                 } else if let Some(else_expr) = else_expr {
                     for instruction in else_expr {
-                        result = compute(instruction, ctx)?;
+                        match compute(instruction.clone(), ctx)? {
+                            v @ Primitive::EarlyReturn(_) => return Ok(v),
+                            p => result = p,
+                        }
                     }
                 }
             }
@@ -469,6 +484,7 @@ fn compute_instructions(
                     for instruction in &exprs {
                         match compute(instruction.clone(), ctx)? {
                             Primitive::NoReturn => break 'while_loop,
+                            v @ Primitive::EarlyReturn(_) => return Ok(v),
                             p => result = p,
                         }
                     }
@@ -477,6 +493,9 @@ fn compute_instructions(
             _ => {
                 result = compute(instruction, ctx)?;
             }
+        }
+        if let Primitive::EarlyReturn(p) = result {
+            return Ok(*p);
         }
     }
 

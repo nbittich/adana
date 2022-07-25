@@ -25,6 +25,7 @@ pub enum Primitive {
     Function { parameters: Vec<String>, exprs: Vec<Value> },
     Unit,
     NoReturn,
+    EarlyReturn(Box<Primitive>),
 }
 
 // region: traits
@@ -164,6 +165,7 @@ impl Display for Primitive {
             }
             Primitive::NoReturn => write!(f, "!"),
             Primitive::Null => write!(f, "{}", NULL),
+            Primitive::EarlyReturn(p) => write!(f, "{p}"),
         }
     }
 }
@@ -450,6 +452,9 @@ impl std::ops::Not for Primitive {
 }
 impl Or for Primitive {
     fn or(&self, rhs: Self) -> Self {
+        if let &Primitive::Bool(true) = &self {
+            return Primitive::Bool(true);
+        }
         match (self, rhs) {
             (Primitive::Bool(l), Primitive::Bool(r)) => {
                 Primitive::Bool(*l || r)
@@ -463,6 +468,9 @@ impl Or for Primitive {
 }
 impl And for Primitive {
     fn and(&self, rhs: Self) -> Self {
+        if let &Primitive::Bool(false) = &self {
+            return Primitive::Bool(false);
+        }
         match (self, rhs) {
             (Primitive::Bool(l), Primitive::Bool(r)) => {
                 Primitive::Bool(*l && r)
@@ -501,6 +509,7 @@ impl PartialOrd for Primitive {
             (Primitive::Double(_), _) => None,
             (Primitive::String(_), _) => None,
             (Primitive::NoReturn, _) => None,
+            (Primitive::EarlyReturn(_), _) => None,
             (Primitive::Null, _) => None,
             (Primitive::Array(_), _) => None,
             (Primitive::Error(_), _) => None,

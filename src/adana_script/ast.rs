@@ -356,5 +356,10 @@ pub(super) fn to_ast(
                 Err(anyhow::Error::msg(format!("drop must be in paren: {v:?}")))
             }
         }
+        Value::EarlyReturn(v) => append_to_current_and_return(
+            TreeNodeValue::EarlyReturn(*v),
+            tree,
+            curr_node_id,
+        ),
     }
 }
