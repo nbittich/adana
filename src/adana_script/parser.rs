@@ -123,7 +123,13 @@ fn parse_fn_call(s: &str) -> Res<Value> {
     let parser = |p| {
         separated_list0(
             tag_no_space(","),
-            map(many1(preceded(multispace0, parse_value)), Value::Expression),
+            alt((
+                parse_fn,
+                map(
+                    many1(preceded(multispace0, parse_value)),
+                    Value::Expression,
+                ),
+            )),
         )(p)
     };
 

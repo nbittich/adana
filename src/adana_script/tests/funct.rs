@@ -211,3 +211,32 @@ fn test_recursive() {
 
     assert_eq!(Primitive::Int(720), r);
 }
+#[test]
+fn test_fn_param() {
+    let s = r#"
+    map_arr = (arr, f) => {
+        count = 0
+        len = length(arr)
+        new_arr = []
+        while(count < len) {
+            new_arr = new_arr + [f(arr[count])]
+            count = count + 1
+        }
+        new_arr
+    }
+    arr = map_arr([1,2,3], (a) => {
+        a + 1
+    }) 
+
+    "#;
+    let mut ctx = BTreeMap::new();
+    let r = compute(s, &mut ctx).unwrap();
+    assert_eq!(
+        Primitive::Array(vec![
+            Primitive::Int(2),
+            Primitive::Int(3),
+            Primitive::Int(4),
+        ]),
+        r
+    );
+}

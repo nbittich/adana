@@ -25,3 +25,13 @@ split = (s, c) => {
     res
 }
 
+iterate = (arr, f) => {
+    count = 0
+    len = length(arr)
+    while(count < len) {
+        f(arr[count])
+        count = count + 1
+    }
+    break
+}
+
