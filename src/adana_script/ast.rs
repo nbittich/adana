@@ -13,9 +13,11 @@ fn variable_from_ctx(
 ) -> anyhow::Result<Primitive> {
     let value = ctx
         .get(name)
-        .context(format!("variable {name} not found in ctx"))?
-        .as_ref_ok()?
-        .clone();
+        .cloned()
+        .or_else(|| {
+            Some(Primitive::Error(format!("variable {name} not found in ctx")))
+        })
+        .context(format!("variable {name} not found in ctx"))?;
 
     if cfg!(test) {
         dbg!(&value);

@@ -1,10 +1,10 @@
 use crate::{
     prelude::{
-        all_consuming, alt, cut, delimited, double, many0, many1, map,
-        map_parser, multispace0, one_of, opt, pair, preceded, recognize_float,
-        rest, separated_list0, separated_list1, separated_pair, tag,
-        tag_no_case, take_until, take_while1, terminated, tuple, verify, Res,
-        I128,
+        all_consuming, alt, consumed, cut, delimited, double, many0, many1,
+        map, map_parser, multispace0, one_of, opt, pair, preceded,
+        recognize_float, rest, separated_list0, separated_list1,
+        separated_pair, tag, tag_no_case, take_until, take_while1, terminated,
+        tuple, verify, Res, I128,
     },
     reserved_keywords::check_reserved_keyword,
 };
@@ -103,13 +103,7 @@ fn parse_fn(s: &str) -> Res<Value> {
             tag("=>"),
             alt((
                 parse_block(parse_instructions),
-                map(
-                    map_parser(
-                        alt((take_until("\n"), rest)),
-                        many1(preceded(multispace0, parse_value)),
-                    ),
-                    |v| vec![Value::Expression(v)],
-                ),
+                map(consumed(parse_expression), |(_, v)| vec![v]),
             )),
         ),
         |(parameters, exprs)| Value::Function {
@@ -121,20 +115,26 @@ fn parse_fn(s: &str) -> Res<Value> {
 
 fn parse_fn_call(s: &str) -> Res<Value> {
     let parser = |p| {
-        separated_list0(
-            tag_no_space(","),
-            alt((
-                parse_fn,
-                map(
-                    many1(preceded(multispace0, parse_value)),
-                    Value::Expression,
+        preceded(
+            tag_no_space("("),
+            terminated(
+                separated_list0(
+                    tag_no_space(","),
+                    alt((
+                        parse_fn,
+                        map(
+                            many1(preceded(multispace0, parse_value)),
+                            Value::Expression,
+                        ),
+                    )),
                 ),
-            )),
+                tag_no_space(")"),
+            ),
         )(p)
     };
 
     map(
-        pair(alt((parse_fn, parse_variable)), parse_paren(parser)),
+        pair(alt((parse_fn, parse_variable)), map(parser, Value::BlockParen)),
         |(function, parameters)| Value::FunctionCall {
             parameters: Box::new(parameters),
             function: Box::new(function),

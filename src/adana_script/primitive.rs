@@ -78,7 +78,7 @@ impl Primitive {
             Some(Ordering::Less) => Primitive::Bool(false),
             Some(Ordering::Equal) => Primitive::Bool(false),
             None => Primitive::Error(
-                "call to is_greater_than() for two different types".to_string(),
+                format!("call to is_greater_than() for two different types {self} => {other}")
             ),
         }
     }
@@ -89,8 +89,7 @@ impl Primitive {
             }
             Some(Ordering::Less) => Primitive::Bool(false),
             None => Primitive::Error(
-                "call to is_greater_or_equal() for two different types"
-                    .to_string(),
+                format!("call to is_greater_or_equal() for two different types {self} => {other}")
             ),
         }
     }
@@ -100,7 +99,7 @@ impl Primitive {
             Some(Ordering::Greater) => Primitive::Bool(false),
             Some(Ordering::Equal) => Primitive::Bool(false),
             None => Primitive::Error(
-                "call to is_less_than() for two different types".to_string(),
+                format!("call to is_less_than() for two different types {self} => {other}")
             ),
         }
     }
@@ -111,8 +110,7 @@ impl Primitive {
             }
             Some(Ordering::Greater) => Primitive::Bool(false),
             None => Primitive::Error(
-                "call to is_less_or_equal() for two different types"
-                    .to_string(),
+                    format!("call to is_less_or_equal() for two different types {self} => {other}")
             ),
         }
     }
@@ -127,7 +125,7 @@ impl Primitive {
                     Primitive::Bool(false)
                 }
                 _ => Primitive::Error(
-                    "call to is_equal() for two different types".to_string(),
+                    format!("call to is_equal() for two different types {self} => {other}"),
                 ),
             },
         }
@@ -147,7 +145,7 @@ impl Display for Primitive {
             Primitive::Int(i) => write!(f, "{i}"),
             Primitive::Double(d) => write!(f, "{d}"),
             Primitive::Bool(b) => write!(f, "{b}"),
-            Primitive::Error(e) => write!(f, "{e}"),
+            Primitive::Error(e) => write!(f, "Err: {e}"),
             Primitive::String(s) => write!(f, "{s}"),
             Primitive::Unit => Ok(()),
             Primitive::Array(arr) => {
@@ -544,9 +542,9 @@ impl Array for Primitive {
         match self {
             Primitive::String(s) => Primitive::Int(s.len() as i128),
             Primitive::Array(a) => Primitive::Int(a.len() as i128),
-            _ => Primitive::Error(
-                "call to len() on a non array value".to_string(),
-            ),
+            _ => Primitive::Error(format!(
+                "call to len() on a non array value => {self}"
+            )),
         }
     }
 

@@ -12,7 +12,7 @@ use db::DbOp;
 use rustyline::error::ReadlineError;
 use std::path::Path;
 
-use prelude::{colors::LightBlue, colors::Style, debug, warn, BTreeMap};
+use prelude::{colors::LightBlue, colors::Style, debug, BTreeMap};
 
 use crate::{
     adana_script::compute,
@@ -81,16 +81,31 @@ fn start_app(
         match readline {
             Ok(line) => {
                 rl.add_history_entry(line.as_str());
-                match process_repl(&line, &mut script_context) {
-                    Ok(()) => (),
-                    Err(e) => {
-                        warn!("{e}");
-                        process_command(
+
+                let script_res = {
+                    match compute(&line, &mut script_context) {
+                        Ok(calc) if matches!(calc, Primitive::Error(_)) => {
+                            Err(anyhow::Error::msg(calc))
+                        }
+                        Ok(calc) => Ok(calc),
+                        e @ Err(_) => e,
+                    }
+                };
+                match script_res {
+                    Ok(calc) => println!("{calc}"),
+                    Err(calc_err) => {
+                        match process_command(
                             db,
                             &script_context,
                             &mut current_cache,
                             &line,
-                        )?;
+                        ) {
+                            Ok(_) => (),
+                            Err(err) => {
+                                eprintln!("{calc_err}");
+                                eprintln!("Err: {err}");
+                            }
+                        }
                     }
                 }
             }
@@ -107,14 +122,5 @@ fn start_app(
     editor::save_history(&mut rl, history_path)?;
 
     println!("{}", Style::new().bold().fg(LightBlue).paint("BYE"));
-    Ok(())
-}
-
-fn process_repl(
-    line: &str,
-    ctx: &mut BTreeMap<String, Primitive>,
-) -> anyhow::Result<()> {
-    let calc = compute(line, ctx)?;
-    println!("{calc}");
     Ok(())
 }

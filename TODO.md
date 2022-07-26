@@ -1,6 +1,7 @@
 
 - stabilize, more tests
-- better error, break should not be a primitive
+- better error
+- break should not be a primitive
 - map type if not too lazy
 - make a std library
 - import/require => like include but scoped context & functions

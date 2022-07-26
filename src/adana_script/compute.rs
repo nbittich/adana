@@ -166,8 +166,9 @@ fn compute_recur(
             TreeNodeValue::Primitive(Primitive::Bool(b)) => {
                 Ok(Primitive::Bool(*b))
             }
-            TreeNodeValue::Primitive(Primitive::Error(err)) => {
-                Err(Error::msg(err.clone()))
+            TreeNodeValue::Primitive(v @ Primitive::Error(_)) => {
+                //   Err(Error::msg(err.clone()))
+                Ok(v.clone())
             }
             TreeNodeValue::Primitive(p) => Ok(p.clone()),
             TreeNodeValue::VariableAssign(name) => {
@@ -336,6 +337,20 @@ fn compute_recur(
                     if let Primitive::Function { parameters, exprs } = function
                     {
                         let mut scope_ctx = BTreeMap::new();
+
+                        // copy also the function definition to the scoped ctx
+                        for (k, p) in ctx.iter() {
+                            if matches!(
+                                p,
+                                &Primitive::Function {
+                                    parameters: _,
+                                    exprs: _
+                                }
+                            ) {
+                                scope_ctx.insert(k.to_string(), p.clone());
+                            }
+                        }
+
                         for (i, param) in parameters.iter().enumerate() {
                             if let Some(value) = param_values.get(i) {
                                 let value = compute_instructions(
@@ -347,16 +362,6 @@ fn compute_recur(
                                 return Ok(Primitive::Error(format!(
                                     "missing parameter {param}"
                                 )));
-                            }
-                        }
-
-                        // copy also the function definition to the scoped ctx
-                        for (k, p) in ctx {
-                            if matches!(
-                                p,
-                                Primitive::Function { parameters: _, exprs: _ }
-                            ) {
-                                scope_ctx.insert(k.to_string(), p.clone());
                             }
                         }
 
@@ -457,9 +462,19 @@ fn compute_instructions(
 
     for instruction in instructions {
         match instruction {
-            v @ Value::EarlyReturn(_) => return compute(v, ctx),
+            v @ Value::EarlyReturn(_) => {
+                let res = compute(v, ctx)?;
+                if let Primitive::EarlyReturn(r) = res {
+                    return Ok(*r);
+                } else {
+                    return Err(anyhow::Error::msg("bug! fixme"));
+                }
+            }
             Value::IfExpr { cond, exprs, else_expr } => {
                 let cond = compute(*cond, ctx)?;
+                if matches!(cond, Primitive::Error(_)) {
+                    return Ok(cond);
+                }
                 if matches!(cond, Primitive::Bool(true)) {
                     for instruction in exprs {
                         match compute(instruction.clone(), ctx)? {
