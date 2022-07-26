@@ -2,48 +2,48 @@
 
 Toy project with the following goals in mind:
 
-- Making something concrete with rust
-- Learning more about parser combinator
-- Use the minimum amount of libraries
-- Making a scripting language
-- Making a REPL
-- No tutorials, best practices, design patterns, clean architecture, fancy frameworks
+ - Making something concrete with rust
+ - Learning more about parser combinator
+ - Use the minimum amount of libraries
+ - Making a scripting language
+ - Making a REPL
+ - No tutorials, best practices, design patterns, clean architecture, fancy frameworks
 
-## Features
+ ## Features
 
-- alias commands in separate namespaces (dump, merge namespaces, backup, run,...)
-- calculator
-- simple scripting language
+ - alias commands in separate namespaces (dump, merge namespaces, backup, run,...)
+ - calculator
+ - simple scripting language
 
-## Installation
+ ## Installation
 
 1. Docker
-   - From docker hub:
-     - `docker run -it nbittich/adana`
-   - Manually:
-     - clone the repo
-     - build the docker image: `docker build -t adana .`
-     - `docker run -it adana`
+    * From docker hub: 
+        - `docker run -it nbittich/adana`
+    * Manually:
+        - clone the repo
+        - build the docker image: `docker build -t adana .`
+        - `docker run -it adana`
 2. Cargo
-   - From crate.io:
-     - `cargo install adana`
-     - `adana`
-   - Manually:
-     - `cargo build --release`
-     - `./target/x86_64-unknown-linux-musl/release/adana`
+    * From crate.io:
+        - `cargo install adana`
+        - `adana`
+    * Manually:
+        - `cargo build --release`
+        - `./target/x86_64-unknown-linux-musl/release/adana`
 
 ## Programming language
+
 
 First we start with the traditional hello world:
 
 ```python
-println("hello world!") # prints hello world
+println("hello world!") # prints hello world 
 ```
-
 In the repl, you could also simply write:
 
 ```python
-"hello world!" # prints hello world
+"hello world!" # prints hello world 
 ```
 
 ### Comments
@@ -77,30 +77,30 @@ Semicolons are not needed, if you need multiline statements, you can use a multi
 
 There are 14 operators:
 
-| **operator** | **description**  |
-| ------------ | ---------------- | --- | --- |
-| +            | add              |
-| -            | subtract         |
-| /            | divide           |
-| \*           | multiply         |
-| %            | modulo           |
-| ^            | pow              |
-| <            | less than        |
-| >            | greater than     |
-| <=           | less or equal    |
-| >=           | greater or equal |
-| &&           | and              |
-|              |                  |     | or  |
-| ==           | equal            |
-| ()           | parenthesis      |
+| **operator** | **description** |
+|--------------|-----------------|
+| +            | add             |
+| -            | subtract        |
+| /            | divide          |
+| *            | multiply        |
+| %            | modulo          |
+| ^            | pow             |
+| <            | less than       |
+| >            | greater than    |
+| <=           | less or equal   |
+| >=           | greater or equal|
+| &&           | and             |
+| ||           | or              |
+| ==           | equal           |
+| ()           | parenthesis     |
 
 ```python
 >> 5 + 5 # 10
 >> 5 + 5.5 # 10.5
 >> 5 / 5 # 1
 >> 5 / 6 # 0
->> 5 / 6. # 0.8333333333333334 -- we force it to make a float division by adding "."
->> 5 % 6 # 5 -- modulo on int
+>> 5 / 6. # 0.8333333333333334 -- we force it to make a float division by adding "." 
+>> 5 % 6 # 5 -- modulo on int 
 >> 5 % 4.1 # 0.9000000000000004 modulo on double
 >> 5 ^ 5 # 3125
 >> 5 * 5 # 25
@@ -112,7 +112,7 @@ There are 14 operators:
 ### Variable definition
 
 To define a variable, simply type the name of the variable followed by "=".
-Variable must always start by a letter and can have numerics or "\_" in it.
+Variable must always start by a letter and can have numerics or "_" in it.
 Add an assign(+=), subtract and assign (-=), etc are not supported.
 
 ```python
@@ -147,7 +147,6 @@ You can break if you match a certain condition:
      }
    }
 ```
-
 ### If/else
 
 Same as C:
@@ -155,9 +154,10 @@ Same as C:
 ```C
 >> if(age > 12) {
      println("age > 12")
-   } else if(age <9) {
+   } else if(age <9) 
+   {
      println("age < 9")
-   } else
+   } else 
    {
       println("dunno")
    }
@@ -168,16 +168,16 @@ Same as C:
 
 There are no type checking in the language. You can add a string to an array, nothing will stops you!
 
-In some cases though, you might get an error.
+In some cases though, you might get an error. 
 
 Below, a list of types and how you declare them. You cannot define (yet) your own structure.
 
-| **type** | **examples**                                                              |
-| -------- | ------------------------------------------------------------------------- |
-| null     | `null`                                                                    |
-| bool     | `true` / `false`                                                          |
-| int      | `5`                                                                       |
-| double   | `12.` / `12.2`                                                            |
-| string   | `"hello"`                                                                 |
-| array    | `[1,2,"3", true]`                                                         |
-| function | `() => "hello"` <br> `(name) => "hello" + name` <br> `(n) => { "hello" }` |
+| **type** | **examples**                                                                 |
+|----------|------------------------------------------------------------------------------|
+| null     | `null`                                                                       |
+| bool     | `true` / `false`                                                             |
+| int      | `5`                                                                          |
+| double   | `12.` / `12.2`                                                               |
+| string   | `"hello"`                                                                    |
+| array    | `[1,2,"3", true]`                                                            |
+| function | `() => "hello"` <br> `(name) => "hello" + name` <br> `(n) => {   "hello"  }` |
