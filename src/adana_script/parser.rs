@@ -167,6 +167,8 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
         parse_builtin(BuiltInFunctionType::Log),
         parse_builtin(BuiltInFunctionType::Sin),
         parse_builtin(BuiltInFunctionType::Cos),
+        parse_builtin(BuiltInFunctionType::ToInt),
+        parse_builtin(BuiltInFunctionType::ToDouble),
         parse_builtin(BuiltInFunctionType::Tan),
         parse_builtin(BuiltInFunctionType::Println),
         parse_builtin(BuiltInFunctionType::Print),

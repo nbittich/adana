@@ -11,7 +11,7 @@ use strum::EnumCount;
 
 use self::constants::{
     ABS, COS, INCLUDE, LENGTH, LN, LOG, PRINT, PRINT_LN, READ_LINES, SIN, SQRT,
-    TAN,
+    TAN, TO_DOUBLE, TO_INT,
 };
 
 #[macro_use]
@@ -40,6 +40,8 @@ pub mod constants {
     pub const PI: &str = concat!(pi!());
     pub const EULER_NUMBER: &str = concat!(euler_number!());
     pub const SQRT: &str = "sqrt";
+    pub const TO_INT: &str = "to_int";
+    pub const TO_DOUBLE: &str = "to_double";
     pub const ABS: &str = "abs";
     pub const LENGTH: &str = "length";
     pub const LOG: &str = "log";
@@ -138,6 +140,8 @@ pub enum BuiltInFunctionType {
     Ln,
     Sin,
     Cos,
+    ToInt,
+    ToDouble,
     Tan,
     Println,
     ReadLines,
@@ -199,6 +203,8 @@ impl BuiltInFunctionType {
             BuiltInFunctionType::Print => PRINT,
             BuiltInFunctionType::Include => INCLUDE,
             BuiltInFunctionType::ReadLines => READ_LINES,
+            BuiltInFunctionType::ToInt => TO_INT,
+            BuiltInFunctionType::ToDouble => TO_DOUBLE,
         }
     }
 }

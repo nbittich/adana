@@ -30,6 +30,10 @@ pub enum Primitive {
 
 // region: traits
 
+pub trait ToNumber {
+    fn to_int(&self) -> Self;
+    fn to_double(&self) -> Self;
+}
 pub trait Pow {
     fn pow(&self, n: Self) -> Self;
 }
@@ -445,6 +449,38 @@ impl std::ops::Not for Primitive {
         match self {
             Primitive::Bool(b) => Primitive::Bool(!b),
             _ => Primitive::Error(format!("invalid call to not() {self}")),
+        }
+    }
+}
+
+impl ToNumber for Primitive {
+    fn to_int(&self) -> Self {
+        match self {
+            v @ Primitive::Int(_) => v.clone(),
+            Primitive::Bool(false) => Primitive::Int(0),
+            Primitive::Bool(true) => Primitive::Int(1),
+            Primitive::Double(d) => Primitive::Int(*d as i128),
+            Primitive::String(s) => match s.parse::<i128>() {
+                Ok(number) => Primitive::Int(number),
+                Err(e) => Primitive::Error(format!(
+                    "invalid cast to int: {self}, {e}"
+                )),
+            },
+            _ => Primitive::Error(format!("invalid cast to int: {self}")),
+        }
+    }
+
+    fn to_double(&self) -> Self {
+        match self {
+            Primitive::Int(d) => Primitive::Double(*d as f64),
+            v @ Primitive::Double(_) => v.clone(),
+            Primitive::String(s) => match s.parse::<f64>() {
+                Ok(number) => Primitive::Double(number),
+                Err(e) => Primitive::Error(format!(
+                    "invalid cast to double: {self}, {e}"
+                )),
+            },
+            _ => Primitive::Error(format!("invalid cast to double: {self}")),
         }
     }
 }
