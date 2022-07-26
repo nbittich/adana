@@ -455,15 +455,12 @@ impl Or for Primitive {
         if let &Primitive::Bool(true) = &self {
             return Primitive::Bool(true);
         }
-        match (self, rhs) {
-            (Primitive::Bool(l), Primitive::Bool(r)) => {
-                Primitive::Bool(*l || r)
-            }
-
-            (l, r) => Primitive::Error(format!(
-                "illegal call to 'or' => left: {l} right: {r}"
-            )),
+        if !matches!((self, &rhs), (Primitive::Bool(_), Primitive::Bool(_))) {
+            return Primitive::Error(format!(
+                "illegal call to 'or' => left: {self} right: {rhs}"
+            ));
         }
+        rhs
     }
 }
 impl And for Primitive {
@@ -471,14 +468,14 @@ impl And for Primitive {
         if let &Primitive::Bool(false) = &self {
             return Primitive::Bool(false);
         }
-        match (self, rhs) {
-            (Primitive::Bool(l), Primitive::Bool(r)) => {
-                Primitive::Bool(*l && r)
-            }
-            (l, r) => Primitive::Error(format!(
-                "illegal call to 'and' => left: {l} right: {r}"
-            )),
+
+        if !matches!((self, &rhs), (Primitive::Bool(_), Primitive::Bool(_))) {
+            return Primitive::Error(format!(
+                "illegal call to 'and' => left: {self} right: {rhs}"
+            ));
         }
+
+        rhs
     }
 }
 

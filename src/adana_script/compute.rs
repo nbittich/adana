@@ -463,14 +463,16 @@ fn compute_instructions(
                 if matches!(cond, Primitive::Bool(true)) {
                     for instruction in exprs {
                         match compute(instruction.clone(), ctx)? {
-                            v @ Primitive::EarlyReturn(_) => return Ok(v),
+                            v @ Primitive::EarlyReturn(_)
+                            | v @ Primitive::Error(_) => return Ok(v),
                             p => result = p,
                         }
                     }
                 } else if let Some(else_expr) = else_expr {
                     for instruction in else_expr {
                         match compute(instruction.clone(), ctx)? {
-                            v @ Primitive::EarlyReturn(_) => return Ok(v),
+                            v @ Primitive::EarlyReturn(_)
+                            | v @ Primitive::Error(_) => return Ok(v),
                             p => result = p,
                         }
                     }
@@ -484,7 +486,8 @@ fn compute_instructions(
                     for instruction in &exprs {
                         match compute(instruction.clone(), ctx)? {
                             Primitive::NoReturn => break 'while_loop,
-                            v @ Primitive::EarlyReturn(_) => return Ok(v),
+                            v @ Primitive::EarlyReturn(_)
+                            | v @ Primitive::Error(_) => return Ok(v),
                             p => result = p,
                         }
                     }
@@ -496,6 +499,9 @@ fn compute_instructions(
         }
         if let Primitive::EarlyReturn(p) = result {
             return Ok(*p);
+        }
+        if matches!(result, Primitive::Error(_)) {
+            return Ok(result);
         }
     }
 
