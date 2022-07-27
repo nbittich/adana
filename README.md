@@ -90,9 +90,10 @@ There are 14 operators:
 | `<=`           | less or equal   |
 | `>=`           | greater or equal|
 | `&&`           | and             |
-| `||`           | or              |
+| `\|\|`           | or              |
 | `==`           | equal           |
 | `()`           | parenthesis     |
+
 
 ```python
 >> 5 + 5 # 10
