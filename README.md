@@ -181,7 +181,7 @@ Below, a list of types and how you declare them. You cannot define (yet) your ow
 | double   | `12.` / `12.2`                                                                                |
 | string   | `"hello"`                                                                                     |
 | array    | `[1,2,"3", true]`                                                                             |
-| function | `() => "hello"` <hr> `(name) => "hello" + name` <hr> `(n) => {`<hr>&emsp;  `"hello"`<br>`  }` |
+| function | `() => "hello"` <br> `(name) => "hello" + name` <br> `(n) => {`<br>&emsp;  `"hello"`<br>`  }` |
 
 #### Define & Manipulate arrays
 
