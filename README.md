@@ -38,23 +38,23 @@ Toy project with the following goals in mind:
 First we start with the traditional hello world:
 
 ```python
-println("hello world!") # prints hello world 
+>> println("hello world!") # prints hello world 
 ```
 In the repl, you could also simply write:
 
 ```python
-"hello world!" # prints hello world 
+>> "hello world!" # prints hello world 
 ```
 
 ### Comments
 
-As you can see, comments are defined like in python, starting with `#`.
+Comments are defined like in python, starting with `#`.
 You can put them after the last statement or before any useful code, for example:
 
 ```python
-# to go to the next line in the repl, press CTRL+x
+>> # to go to the next line in the repl, press CTRL+x
 
-# this will be ignore by the repl
+>> # this will be ignored by the repl
 
 >> println("hello world!") # this is also ok
 
@@ -77,22 +77,22 @@ Semicolons are not needed, if you need multiline statements, you can use a multi
 
 There are 14 operators:
 
-| **operator** | **description** |
-|--------------|-----------------|
-| +            | add             |
-| -            | subtract        |
-| /            | divide          |
-| *            | multiply        |
-| %            | modulo          |
-| ^            | pow             |
-| <            | less than       |
-| >            | greater than    |
-| <=           | less or equal   |
-| >=           | greater or equal|
-| &&           | and             |
-| ||           | or              |
-| ==           | equal           |
-| ()           | parenthesis     |
+|  **operator**  | **description** |
+|----------------|-----------------|
+| `+`            | add             |
+| `-`            | subtract        |
+| `/`            | divide          |
+| `*`            | multiply        |
+| `%`            | modulo          |
+| `^`            | pow             |
+| `<`            | less than       |
+| `>`            | greater than    |
+| `<=`           | less or equal   |
+| `>=`           | greater or equal|
+| `&&`           | and             |
+| `||`           | or              |
+| `==`           | equal           |
+| `()`           | parenthesis     |
 
 ```python
 >> 5 + 5 # 10
