@@ -173,12 +173,193 @@ In some cases though, you might get an error.
 
 Below, a list of types and how you declare them. You cannot define (yet) your own structure.
 
-| **type** | **examples**                                                                 |
-|----------|------------------------------------------------------------------------------|
-| null     | `null`                                                                       |
-| bool     | `true` / `false`                                                             |
-| int      | `5`                                                                          |
-| double   | `12.` / `12.2`                                                               |
-| string   | `"hello"`                                                                    |
-| array    | `[1,2,"3", true]`                                                            |
-| function | `() => "hello"` <br> `(name) => "hello" + name` <br> `(n) => {   "hello"  }` |
+| **type** | **examples**                                                                                  |
+|----------|-----------------------------------------------------------------------------------------------|
+| null     | `null`                                                                                        |
+| bool     | `true` / `false`                                                                              |
+| int      | `5`                                                                                           | 
+| double   | `12.` / `12.2`                                                                                |
+| string   | `"hello"`                                                                                     |
+| array    | `[1,2,"3", true]`                                                                             |
+| function | `() => "hello"` <hr> `(name) => "hello" + name` <hr> `(n) => {`<hr>&emsp;  `"hello"`<br>`  }` |
+
+#### Define & Manipulate arrays
+
+Arrays are declared like in javascript but are "immutable". After declaration, you cannot (yet) push
+new data in them. in order to that, you have to concat them with another array using the "+" operator.
+
+```python
+>> arr = [] # declare an empty array
+>> arr[0] = "kl" # Err: index out of range
+>> arr = arr + ["kl"] # arr now is ["kl"]
+```
+You can update a value in the array with the syntax above, as long as the array is greater than the index
+provided, e.g:
+
+```python
+arr = ["this", "is", "ax", "array", true, 1, 2.3] 
+arr[2] = "an" #fix the typo
+print(arr[2]) # an
+
+```
+
+To get the length of an array, you can use the buil-in function `length`
+
+```python
+>> arr_len = length(arr) # 7
+
+```
+
+Characters within a string can be accessed & updated just like an array:
+
+
+```python
+>> s = "this is a strink"
+>> s[2] # i
+>> length(s) # 16
+>> s[15] = "g" # fix the typo
+>> s # this is a string
+
+```
+
+Here are some other examples of what you can do with arrays:
+
+```python
+>> count = 9
+>> arr = null
+>> # arr = [1, [2, [3, [4, [5, [6, [7, [8, [9, null]]]]]]]]]
+   while(count > 0) {
+     arr = [count, arr]
+     count = count -1
+   } 
+   # prints 1,2,3,4,5,6,7,8,9,done
+   while(arr != null) {
+     print(arr[0] +",")
+     arr=arr[1]
+   }
+   print("done")
+   
+```
+
+#### Functions
+
+Function can be declared inline or as a block, with the exception of anonymous function parameters that cannot
+be inlined (yet). In case of a function parameter, you either assign the function to a variable or you
+use an anymous function block.
+
+Parameters cannot be modified within a function. if you want to update something, you have to return it
+and reassign.
+
+```python
+# no parameters
+hello = () => println("hello, world!")
+hello()
+
+# one parameter
+hello_name = (name) => println("hello "+name)
+hello_name("Bachir")
+
+# takes an array and a function as a parameter
+for_each = (arr, consumer) => {
+    count = 0
+    len = length(arr)
+    while(count < len) {
+        consumer(arr[count])
+        count = count + 1
+    }
+    return ""  # do not print the count as the repl will print the latest statement
+}
+
+for_each(["Mohamed", "Hakim", "Sarah", "Yasmine", "Noah", "Sofia", "Sami"], hello_name)
+
+
+```
+Parameters cannot be modified within a function. if you want to update something, you have to return it
+and reassign.
+
+Some other examples of what you can do with functions:
+
+```python
+arr  = ["Mohamed", "Hakim", "Sarah", "Yasmine", "Noah", "Sofia", "Sami"]
+
+acc  = (arr, v) => arr + [v]
+
+find_first = (arr, predicate) => {
+    len = length(arr)
+    count = 0
+    while(count < len) {
+        temp = arr[count]
+        if(predicate(temp)) {
+            return temp
+        }
+        count = count + 1
+    }
+    return null
+}
+
+
+find_first(arr, (v) => {
+    v[0] == "S" || v[0] == "s"
+})
+
+# recursive
+fact = (n) => {
+   if(n>=1) {
+    n * fact(n-1)
+   }else {
+     1
+   }
+}
+
+fact(10)
+```
+
+
+
+#### Include a script file
+
+You can dynamically load a script in the repl. 
+Assuming you've cloned the repo and you use docker, here's a example of to do it.
+
+Note that the extension can be anything.
+
+- map the example directory as a docker volume: 
+
+```
+docker run -v $PWD/file_tests:/scripts -it adana
+```
+
+```python
+
+include("scripts/test_fn.adana") # the built-in function to include
+m = map()
+m = push_v("nordine", 34, m)
+get_v("nordine", m)
+```
+
+
+#### Built-in functions
+
+There are multiple built-in functions available. 
+
+You already seen `length` to find the length of an array or string, `include` to include a script inside the repl and `println` to print something.
+
+Here are the built in functions available:
+
+
+| name         | description                                           | example                            |
+|--------------|-------------------------------------------------------|------------------------------------|
+| sqrt         | square root                                           | `sqrt(2)`                          |
+| abs          | absolute value                                        | `abs(-2)`                          |
+| log          | logarithm                                             | `log(2)`                           |
+| ln           | natural logarithm                                     | `ln(2)`                            |
+| length       | length of an array or string                          | `length("azert")`                  |
+| sin          | sine of a number                                      | `sin(2)`                           |
+| cos          | cosine of a number                                    | `cos(2)`                           |
+| tan          | tangent of a number                                   | `tan(2.2)`                         |
+| print        | print without a newline                               | `print("hello")`                   |
+| println      | print with a newline                                  | `println("hello")`                 |
+| include      | include a script                                      | `include("scripts/test_fn.adana")` |
+| read_lines   | read a file and returns an array<br> of each lines    | `read_lines("scripts/name.txt")`   |
+| to_int       | cast to int                                           | `to_int("2")`<br>`to_int(2.2)`     |
+| to_double    | cast to double                                        | `to_double("2.2")`                 |
