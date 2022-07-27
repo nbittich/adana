@@ -9,13 +9,34 @@ Toy project with the following goals in mind:
  - Making a REPL
  - No tutorials, best practices, design patterns, clean architecture, fancy frameworks
 
- ## Features
+ # Table of Contents
+1. [Features](#features)
+2. [Installation](#installation)
+3. [Programming language](#programming-langaguage)
+    * [Introduction](#introduction)
+    * [Comments](#comments)
+    * [Multiline](#multiline)
+    * [Operators](#operators)
+    * [Variable definition](#variable-definition)
+    * [Loops](#loops)
+    * [Conditions](#conditions)
+    * [Types](#types)
+    * [Manipulate arrays](#manipulate-arrays)
+    * [Functions](#functions)
+    * [Include a script file](#include-a-script-file)
+    * [Builtin functions](#builtin-functions)
+4. [Namespaced aliases](#namespaced-aliases)
 
- - alias commands in separate namespaces (dump, merge namespaces, backup, run,...)
- - calculator
- - simple scripting language
+<hr>
 
- ## Installation
+## Features
+
+- alias commands in separate namespaces (dump, merge namespaces, backup, run,...)
+- calculator
+- simple scripting language
+<hr>
+
+## Installation
 
 1. Docker
     * From docker hub: 
@@ -32,8 +53,11 @@ Toy project with the following goals in mind:
         - `cargo build --release`
         - `./target/x86_64-unknown-linux-musl/release/adana`
 
+<hr>
+
 ## Programming language
 
+### Introduction
 
 First we start with the traditional hello world:
 
@@ -45,6 +69,7 @@ In the repl, you could also simply write:
 ```python
 >> "hello world!" # prints hello world 
 ```
+<hr>
 
 ### Comments
 
@@ -59,8 +84,9 @@ You can put them after the last statement or before any useful code, for example
 >> println("hello world!") # this is also ok
 
 ```
+<hr>
 
-### Semicolon, multiline
+### Multiline
 
 Semicolons are not needed, if you need multiline statements, you can use a multiline block:
 
@@ -72,6 +98,7 @@ Semicolons are not needed, if you need multiline statements, you can use a multi
     "lines"
 }
 ```
+<hr>
 
 ### Operators
 
@@ -109,6 +136,7 @@ There are 14 operators:
 >> 5 * (5+ 1/ (3.1 ^2) * 9) ^3. # 1046.084549281999
 
 ```
+<hr>
 
 ### Variable definition
 
@@ -123,6 +151,7 @@ Add an assign(+=), subtract and assign (-=), etc are not supported.
 >> sub_total2 = 500 * vat # 605
 >> sub_total1 = sub_total1 + sub_total2 # 10605
 ```
+<hr>
 
 ### Loops
 
@@ -148,7 +177,9 @@ You can break if you match a certain condition:
      }
    }
 ```
-### If/else
+<hr>
+
+### Conditions
 
 Same as C:
 
@@ -164,6 +195,7 @@ Same as C:
    }
 
 ```
+<hr>
 
 ### Types
 
@@ -182,8 +214,9 @@ Below, a list of types and how you declare them. You cannot define (yet) your ow
 | string   | `"hello"`                                                                                     |
 | array    | `[1,2,"3", true]`                                                                             |
 | function | `() => "hello"` <br> `(name) => "hello" + name` <br> `(n) => {`<br>&emsp;  `"hello"`<br>`  }` |
+<hr>
 
-#### Define & Manipulate arrays
+### Manipulate arrays
 
 Arrays are declared like in javascript but are "immutable". After declaration, you cannot (yet) push
 new data in them. in order to that, you have to concat them with another array using the "+" operator.
@@ -240,8 +273,9 @@ Here are some other examples of what you can do with arrays:
    print("done")
    
 ```
+<hr>
 
-#### Functions
+### Functions
 
 Function can be declared inline or as a block, with the exception of anonymous function parameters that cannot
 be inlined (yet). In case of a function parameter, you either assign the function to a variable or you
@@ -315,8 +349,9 @@ fact(10)
 ```
 
 
+<hr>
 
-#### Include a script file
+### Include a script file
 
 You can dynamically load a script in the repl. 
 Assuming you've cloned the repo and you use docker, here's a example of to do it.
@@ -337,8 +372,9 @@ m = push_v("nordine", 34, m)
 get_v("nordine", m)
 ```
 
+<hr>
 
-#### Built-in functions
+### Builtin functions
 
 There are multiple built-in functions available. 
 
@@ -363,3 +399,8 @@ Here are the built in functions available:
 | read_lines   | read a file and returns an array<br> of each lines    | `read_lines("scripts/name.txt")`   |
 | to_int       | cast to int                                           | `to_int("2")`<br>`to_int(2.2)`     |
 | to_double    | cast to double                                        | `to_double("2.2")`                 |
+<hr>
+
+## Namespaced aliases
+
+TODO
