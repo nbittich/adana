@@ -416,7 +416,11 @@ You can also add any kind of values (e.g, ssh keys) to store them.
 
 There is no possible interaction with the scripting language yet.
 
-(demo)
+
+
+https://user-images.githubusercontent.com/3816305/181606658-b01a0ca5-4507-4d58-8625-4ccf9a662b86.mp4
+
+
 
 ## Test it with the provided sample
 
