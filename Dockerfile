@@ -29,4 +29,4 @@ ENV RUST_LOG=info
 VOLUME /root/.local/share
 
 COPY --from=builder  /app/adana/target/x86_64-unknown-linux-musl/release/adana .
-CMD [ "/adana" ]
+ENTRYPOINT [ "/adana" ]

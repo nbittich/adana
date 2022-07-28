@@ -16,7 +16,7 @@ Toy project with the following goals in mind:
     * [Introduction](#introduction)
     * [Comments](#comments)
     * [Multiline](#multiline)
-    * [Operators](#operators)
+    * [Operators and constants](#operators-and-constants)
     * [Variable definition](#variable-definition)
     * [Loops](#loops)
     * [Conditions](#conditions)
@@ -100,9 +100,9 @@ Semicolons are not needed, if you need multiline statements, you can use a multi
 ```
 <hr>
 
-### Operators
+### Operators and constants
 
-There are 14 operators:
+There are 14 operators & 3 constants:
 
 |  **operator**  | **description** |
 |----------------|-----------------|
@@ -117,9 +117,12 @@ There are 14 operators:
 | `<=`           | less or equal   |
 | `>=`           | greater or equal|
 | `&&`           | and             |
-| `\|\|`           | or              |
+| `\|\|`         | or              |
 | `==`           | equal           |
 | `()`           | parenthesis     |
+| `π`            | PI number       |
+| `γ`            | EULER number    |
+| `τ`            | TAU number      |
 
 
 ```python
@@ -399,8 +402,73 @@ Here are the built in functions available:
 | read_lines   | read a file and returns an array<br> of each lines    | `read_lines("scripts/name.txt")`   |
 | to_int       | cast to int                                           | `to_int("2")`<br>`to_int(2.2)`     |
 | to_double    | cast to double                                        | `to_double("2.2")`                 |
+| drop         | drop a variable from context                          | `drop("myvar")`                    |
 <hr>
 
 ## Namespaced aliases
 
-TODO
+You can alias useful commands in a separate namespace (e.g: "work", "git", "docker").
+
+You can then run that command through the repl.
+They will be save in disk so you can backup them, restore them etc.
+
+You can also add any kind of values (e.g, ssh keys) to store them.
+
+There is no possible interaction with the scripting language yet.
+
+(demo)
+
+## Test it with the provided sample
+
+`docker run -it -v $PWD/sample.json:/adanadb.json  adana --inmemory`
+
+`restore`
+
+`use misc`
+
+`ds`
+
+`printenv`
+
+### Available commands
+
+| name             | alt        | description                                                                                                                                                                                       |
+|------------------|------------|---------------------------------------------------------------------------------------------------------------------------------|
+| put              | N/A        | Put a new value to current namespace. can have multiple aliases with option '-a'.  e.g `put -a drc -a drcomp docker-compose`                                                                      |
+| describe         | ds         | List values within the current namespace.                                                                                                                                                         |
+| listns           | lsns       | List available namespaces.                                                                                                                                                                        |
+| currentns        | currentns  | Print current namespace.                                                                                                                                                                          |
+| backup           | bckp       | Backup the database of namespaces to the current directory                                                                                                                                        |
+| restore          | N/A        | Restore the database from current directory                                                                                                                                                       |
+| deletens         | delns      | Delete namespace or clear current namespace values.                                                                                                                                               |
+| mergens          | merge      | Merge current with a given namespace                                                                                                                                                              |
+| delete           | del        | Remove value from namespace. Accept either a hashkey or an alias. e.g `del drc`                                                                                                                   |
+| get              |            | Get value from namespace. Accept either a hashkey or an alias. e.g `get drc`                                                                                                                      |
+| exec             |            | Run a value from the namespace as an OS command.  Accept either a hashkey or an alias. It is completely optional, if you just write the alias, it will also works  e.g `exec drc` or simply `drc` |
+| cd               |            | Navigate to a directory in the filesystem                                                                                                                                                         |
+| use              |            | Switch to another namespace. default ns is DEFAULT. e.g `use linux`                                                                                                                               |
+| dump             |            | Dump namespace(s) as json.  Take an optional parameter, the namespace name. e.g `dump linux`                                                                                                      |
+| clear            | cls        | Clear the terminal.                                                                                                                                                                               |
+| print_script_ctx | script_ctx | Print script context                                                                                                                                                                              |
+| help             |            | Display help.                                                                                                                                                                                     |
+
+
+### logs
+RUST_LOG=info adana
+
+### Args - override
+
+``` 
+# open an in memory db
+
+adana --inmemory
+
+```
+
+```
+# override db path & history path + fallback in memory in case of an error (default to false)
+# path must exist! file doesn't have to.
+
+adana --dbpath /tmp/mydb.db --historypath /tmp/myhistory.txt --fallback
+
+```
