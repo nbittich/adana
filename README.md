@@ -26,6 +26,13 @@ Toy project with the following goals in mind:
     * [Include a script file](#include-a-script-file)
     * [Builtin functions](#builtin-functions)
 4. [Namespaced aliases](#namespaced-aliases)
+    * [Introduction](#namespaced-aliases)
+    * [Demo](#demo)
+    * [Try it](#try-it)
+    * [Available commands](#available-commands)
+    * [Shortcuts](#shortcuts)
+    * [Environment variables](#environment-variables)
+    * [Arguments](#arguments)
 
 <hr>
 
@@ -91,7 +98,7 @@ You can put them after the last statement or before any useful code, for example
 Semicolons are not needed, if you need multiline statements, you can use a multiline block:
 
 ```python
->> fancy_string = multiline {
+fancy_string = multiline {
     "this string" +
     "is " +
     "on several " +
@@ -145,7 +152,7 @@ There are 14 operators & 3 constants:
 
 To define a variable, simply type the name of the variable followed by "=".
 Variable must always start by a letter and can have numerics or "_" in it.
-Add an assign(+=), subtract and assign (-=), etc are not supported.
+Add and assign(+=), subtract and assign (-=), etc are not supported.
 
 ```python
 >> vat = 1.21 # 1.21
@@ -161,9 +168,9 @@ Add an assign(+=), subtract and assign (-=), etc are not supported.
 There's only one loop, the while loop. Just like in plain old C:
 
 ```C
->> count = 0
+count = 0
 
->> while(count < 10) {
+while(count < 10) {
     println(count)
     count = count + 1
    }
@@ -172,7 +179,7 @@ There's only one loop, the while loop. Just like in plain old C:
 You can break if you match a certain condition:
 
 ```C
->> while(count < 10) {
+while(count < 10) {
      println(count)
      count = count + 1
      if(count % 3 ==0) {
@@ -187,22 +194,20 @@ You can break if you match a certain condition:
 Same as C:
 
 ```C
->> if(age > 12) {
-     println("age > 12")
-   } else if(age <9) 
-   {
-     println("age < 9")
-   } else 
-   {
-      println("dunno")
-   }
+if(age > 12) {
+    println("age > 12")}
+else if(age <9) {
+    println("age < 9")}
+else {
+    println("dunno")
+}
 
 ```
 <hr>
 
 ### Types
 
-There are no type checking in the language. You can add a string to an array, nothing will stops you!
+There are no type checking in the language. You can add a string to an array, nothing will stop you!
 
 In some cases though, you might get an error. 
 
@@ -239,7 +244,7 @@ print(arr[2]) # an
 
 ```
 
-To get the length of an array, you can use the buil-in function `length`
+To get the length of an array, you can use the built-in function `length`
 
 ```python
 >> arr_len = length(arr) # 7
@@ -261,19 +266,19 @@ Characters within a string can be accessed & updated just like an array:
 Here are some other examples of what you can do with arrays:
 
 ```python
->> count = 9
->> arr = null
->> # arr = [1, [2, [3, [4, [5, [6, [7, [8, [9, null]]]]]]]]]
-   while(count > 0) {
-     arr = [count, arr]
-     count = count -1
-   } 
-   # prints 1,2,3,4,5,6,7,8,9,done
-   while(arr != null) {
-     print(arr[0] +",")
-     arr=arr[1]
-   }
-   print("done")
+count = 9
+arr = null
+# arr = [1, [2, [3, [4, [5, [6, [7, [8, [9, null]]]]]]]]]
+while(count > 0) {
+    arr = [count, arr]
+    count = count -1
+} 
+# prints 1,2,3,4,5,6,7,8,9,done
+while(arr != null) {
+    print(arr[0] +",")
+    arr=arr[1]
+}
+print("done")
    
 ```
 <hr>
@@ -312,14 +317,17 @@ for_each(["Mohamed", "Hakim", "Sarah", "Yasmine", "Noah", "Sofia", "Sami"], hell
 
 ```
 Parameters cannot be modified within a function. if you want to update something, you have to return it
-and reassign.
+and reassign. Everything that changes within the scope of a function won't have any effect on the outer
+scope.
 
 Some other examples of what you can do with functions:
 
 ```python
 arr  = ["Mohamed", "Hakim", "Sarah", "Yasmine", "Noah", "Sofia", "Sami"]
 
-acc  = (arr, v) => arr + [v]
+acc  = (arr, v) => arr + [v] # arr is immutable, thus you have to reassign it if you call that function
+
+arr = acc(arr, "Malika")
 
 find_first = (arr, predicate) => {
     len = length(arr)
@@ -357,7 +365,7 @@ fact(10)
 ### Include a script file
 
 You can dynamically load a script in the repl. 
-Assuming you've cloned the repo and you use docker, here's a example of to do it.
+Assuming you've cloned the repo and you use docker, here's an example of how to do it.
 
 Note that the extension can be anything.
 
@@ -379,11 +387,11 @@ get_v("nordine", m)
 
 ### Builtin functions
 
-There are multiple built-in functions available. 
+There are several built-in functions available. 
 
-You already seen `length` to find the length of an array or string, `include` to include a script inside the repl and `println` to print something.
+You already have seen `length` to find the length of an array or string, `include` to include a script inside the repl and `println` to print something.
 
-Here are the built in functions available:
+Here are a list of built in functions available:
 
 
 | name         | description                                           | example                            |
@@ -405,6 +413,8 @@ Here are the built in functions available:
 | drop         | drop a variable from context                          | `drop("myvar")`                    |
 <hr>
 
+Note that you can use the repl command `script_ctx` to see what variables are stored in the context.
+
 ## Namespaced aliases
 
 You can alias useful commands in a separate namespace (e.g: "work", "git", "docker").
@@ -416,13 +426,13 @@ You can also add any kind of values (e.g, ssh keys) to store them.
 
 There is no possible interaction with the scripting language yet.
 
-
+### Demo
 
 https://user-images.githubusercontent.com/3816305/181606658-b01a0ca5-4507-4d58-8625-4ccf9a662b86.mp4
 
 
 
-## Test it with the provided sample
+### Try it
 
 `docker run -it -v $PWD/sample.json:/adanadb.json  adana --inmemory`
 
@@ -457,10 +467,23 @@ https://user-images.githubusercontent.com/3816305/181606658-b01a0ca5-4507-4d58-8
 | help             |            | Display help.                                                                                                                                                                                     |
 
 
-### logs
-RUST_LOG=info adana
+### Shortcuts
 
-### Args - override
+```
+CTRL + x => new line in the repl
+CTRL + d => quit
+CTRL + c => undo
+CTRL + l => clear screen
+CTRL + r => history search
+```
+
+### Environment variables
+
+```
+RUST_LOG=info adana
+```
+
+### Arguments
 
 ``` 
 # open an in memory db
