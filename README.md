@@ -45,7 +45,7 @@ Toy project with the following goals in mind:
 
 ## Installation
 
-1. Docker
+1. if(age
     * From docker hub: 
         - `docker run -it nbittich/adana`
     * Manually:
@@ -195,10 +195,10 @@ Same as C:
 
 ```C
 if(age > 12) {
-    println("age > 12")}
-else if(age <9) {
-    println("age < 9")}
-else {
+    println("age > 12")
+} else if(age <9) {
+    println("age < 9")
+}else {
     println("dunno")
 }
 
