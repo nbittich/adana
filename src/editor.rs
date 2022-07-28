@@ -57,6 +57,7 @@ pub fn build_editor(
     rl.bind_sequence(KeyEvent::ctrl('l'), Cmd::ClearScreen);
     rl.bind_sequence(KeyEvent::alt('n'), Cmd::HistorySearchForward);
     rl.bind_sequence(KeyEvent::alt('p'), Cmd::HistorySearchBackward);
+    rl.bind_sequence(KeyEvent::ctrl('x'), Cmd::Newline);
     if rl
         .load_history(
             history_path

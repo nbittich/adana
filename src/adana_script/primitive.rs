@@ -30,6 +30,10 @@ pub enum Primitive {
 
 // region: traits
 
+pub trait ToNumber {
+    fn to_int(&self) -> Self;
+    fn to_double(&self) -> Self;
+}
 pub trait Pow {
     fn pow(&self, n: Self) -> Self;
 }
@@ -78,7 +82,7 @@ impl Primitive {
             Some(Ordering::Less) => Primitive::Bool(false),
             Some(Ordering::Equal) => Primitive::Bool(false),
             None => Primitive::Error(
-                "call to is_greater_than() for two different types".to_string(),
+                format!("call to is_greater_than() for two different types {self} => {other}")
             ),
         }
     }
@@ -89,8 +93,7 @@ impl Primitive {
             }
             Some(Ordering::Less) => Primitive::Bool(false),
             None => Primitive::Error(
-                "call to is_greater_or_equal() for two different types"
-                    .to_string(),
+                format!("call to is_greater_or_equal() for two different types {self} => {other}")
             ),
         }
     }
@@ -100,7 +103,7 @@ impl Primitive {
             Some(Ordering::Greater) => Primitive::Bool(false),
             Some(Ordering::Equal) => Primitive::Bool(false),
             None => Primitive::Error(
-                "call to is_less_than() for two different types".to_string(),
+                format!("call to is_less_than() for two different types {self} => {other}")
             ),
         }
     }
@@ -111,8 +114,7 @@ impl Primitive {
             }
             Some(Ordering::Greater) => Primitive::Bool(false),
             None => Primitive::Error(
-                "call to is_less_or_equal() for two different types"
-                    .to_string(),
+                    format!("call to is_less_or_equal() for two different types {self} => {other}")
             ),
         }
     }
@@ -127,7 +129,7 @@ impl Primitive {
                     Primitive::Bool(false)
                 }
                 _ => Primitive::Error(
-                    "call to is_equal() for two different types".to_string(),
+                    format!("call to is_equal() for two different types {self} => {other}"),
                 ),
             },
         }
@@ -147,7 +149,7 @@ impl Display for Primitive {
             Primitive::Int(i) => write!(f, "{i}"),
             Primitive::Double(d) => write!(f, "{d}"),
             Primitive::Bool(b) => write!(f, "{b}"),
-            Primitive::Error(e) => write!(f, "{e}"),
+            Primitive::Error(e) => write!(f, "Err: {e}"),
             Primitive::String(s) => write!(f, "{s}"),
             Primitive::Unit => Ok(()),
             Primitive::Array(arr) => {
@@ -450,20 +452,49 @@ impl std::ops::Not for Primitive {
         }
     }
 }
+
+impl ToNumber for Primitive {
+    fn to_int(&self) -> Self {
+        match self {
+            v @ Primitive::Int(_) => v.clone(),
+            Primitive::Bool(false) => Primitive::Int(0),
+            Primitive::Bool(true) => Primitive::Int(1),
+            Primitive::Double(d) => Primitive::Int(*d as i128),
+            Primitive::String(s) => match s.parse::<i128>() {
+                Ok(number) => Primitive::Int(number),
+                Err(e) => Primitive::Error(format!(
+                    "invalid cast to int: {self}, {e}"
+                )),
+            },
+            _ => Primitive::Error(format!("invalid cast to int: {self}")),
+        }
+    }
+
+    fn to_double(&self) -> Self {
+        match self {
+            Primitive::Int(d) => Primitive::Double(*d as f64),
+            v @ Primitive::Double(_) => v.clone(),
+            Primitive::String(s) => match s.parse::<f64>() {
+                Ok(number) => Primitive::Double(number),
+                Err(e) => Primitive::Error(format!(
+                    "invalid cast to double: {self}, {e}"
+                )),
+            },
+            _ => Primitive::Error(format!("invalid cast to double: {self}")),
+        }
+    }
+}
 impl Or for Primitive {
     fn or(&self, rhs: Self) -> Self {
         if let &Primitive::Bool(true) = &self {
             return Primitive::Bool(true);
         }
-        match (self, rhs) {
-            (Primitive::Bool(l), Primitive::Bool(r)) => {
-                Primitive::Bool(*l || r)
-            }
-
-            (l, r) => Primitive::Error(format!(
-                "illegal call to 'or' => left: {l} right: {r}"
-            )),
+        if !matches!((self, &rhs), (Primitive::Bool(_), Primitive::Bool(_))) {
+            return Primitive::Error(format!(
+                "illegal call to 'or' => left: {self} right: {rhs}"
+            ));
         }
+        rhs
     }
 }
 impl And for Primitive {
@@ -471,14 +502,14 @@ impl And for Primitive {
         if let &Primitive::Bool(false) = &self {
             return Primitive::Bool(false);
         }
-        match (self, rhs) {
-            (Primitive::Bool(l), Primitive::Bool(r)) => {
-                Primitive::Bool(*l && r)
-            }
-            (l, r) => Primitive::Error(format!(
-                "illegal call to 'and' => left: {l} right: {r}"
-            )),
+
+        if !matches!((self, &rhs), (Primitive::Bool(_), Primitive::Bool(_))) {
+            return Primitive::Error(format!(
+                "illegal call to 'and' => left: {self} right: {rhs}"
+            ));
         }
+
+        rhs
     }
 }
 
@@ -547,9 +578,9 @@ impl Array for Primitive {
         match self {
             Primitive::String(s) => Primitive::Int(s.len() as i128),
             Primitive::Array(a) => Primitive::Int(a.len() as i128),
-            _ => Primitive::Error(
-                "call to len() on a non array value".to_string(),
-            ),
+            _ => Primitive::Error(format!(
+                "call to len() on a non array value => {self}"
+            )),
         }
     }
 
