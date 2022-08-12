@@ -325,9 +325,9 @@ fn compute_recur(
                         exprs: exprs.to_owned(),
                     })
                 } else {
-                    return Ok(Primitive::Error(format!(
+                    Ok(Primitive::Error(format!(
                         "not a valid function: {parameters:?}, {exprs:?}"
-                    )));
+                    )))
                 }
             }
             TreeNodeValue::FunctionCall(Value::FunctionCall {
@@ -379,26 +379,22 @@ fn compute_recur(
                             ))
                         })?
                     } else {
-                        return Ok(Primitive::Error(format!(
+                        Ok(Primitive::Error(format!(
                             " not a function: {function}"
-                        )));
+                        )))
                     }
                 } else {
-                    return Ok(Primitive::Error(format!(
+                    Ok(Primitive::Error(format!(
                         "invalid function call: {parameters:?} => {function:?}"
-                    )));
+                    )))
                 }
             }
-            TreeNodeValue::FunctionCall(v) => {
-                return Ok(Primitive::Error(format!(
-                    "unexpected function call declaration: {v:?}"
-                )));
-            }
-            TreeNodeValue::Function(v) => {
-                return Ok(Primitive::Error(format!(
-                    "unexpected function declaration: {v:?}"
-                )));
-            }
+            TreeNodeValue::FunctionCall(v) => Ok(Primitive::Error(format!(
+                "unexpected function call declaration: {v:?}"
+            ))),
+            TreeNodeValue::Function(v) => Ok(Primitive::Error(format!(
+                "unexpected function declaration: {v:?}"
+            ))),
             TreeNodeValue::Break => Ok(Primitive::NoReturn),
             TreeNodeValue::Null => Ok(Primitive::Null),
             TreeNodeValue::Drop(variables) => {

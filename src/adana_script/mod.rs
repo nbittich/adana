@@ -132,7 +132,7 @@ pub enum Value {
         index: Box<Value>,
     },
 }
-#[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum BuiltInFunctionType {
     Sqrt,
     Abs,
@@ -150,7 +150,7 @@ pub enum BuiltInFunctionType {
     Include,
 }
 
-#[derive(Debug, PartialEq, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum Operator {
     Add,
     Subtr,

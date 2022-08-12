@@ -307,11 +307,9 @@ pub(super) fn to_ast(
                 )
             }
 
-            (arr, index) => {
-                return Err(anyhow::Error::msg(format!(
-                    "illegal array access! array => {arr:?}, index=> {index:?}"
-                )))
-            }
+            (arr, index) => Err(anyhow::Error::msg(format!(
+                "illegal array access! array => {arr:?}, index=> {index:?}"
+            ))),
         },
         f @ Value::Function { parameters: _, exprs: _ } => {
             append_to_current_and_return(
