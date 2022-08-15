@@ -26,7 +26,9 @@ impl FileLock {
             if let Ok(pid) = pid {
                 if pid_exists(pid) {
                     debug!("{pid} exist!");
-                    return Err(anyhow::Error::msg("Could not acquire lock"));
+                    return Err(anyhow::Error::msg(format!(
+                        "Could not acquire lock (pid exists: {pid})"
+                    )));
                 }
             } else {
                 return Err(anyhow::Error::msg(
