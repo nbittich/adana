@@ -45,7 +45,7 @@ Toy project with the following goals in mind:
 
 ## Installation
 
-1. if(age
+1. Docker
     * From docker hub: 
         - `docker run -it nbittich/adana`
     * Manually:
