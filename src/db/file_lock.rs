@@ -1,4 +1,5 @@
 use std::{
+    fmt::Display,
     fs::{remove_file, File},
     io::{BufReader, BufWriter, Write},
     path::{Path, PathBuf},
@@ -16,8 +17,36 @@ fn pid_exists(pid: u32) -> bool {
     Path::new(&format!("/proc/{}", pid)).exists()
 }
 
+#[derive(Debug)]
+pub enum FileLockError {
+    PidExist(u32),
+    PidFileDoesntExist,
+    Unknown(String),
+}
+
+impl Display for FileLockError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FileLockError::PidExist(pid) => {
+                write!(f, "Could not acquire lock (pid exists: {pid})")
+            }
+            FileLockError::PidFileDoesntExist => write!(
+                f,
+                "Lock exist but pid file doesn't! this is probably a bug."
+            ),
+            FileLockError::Unknown(e) => write!(f, "{e}"),
+        }
+    }
+}
+
+pub fn read_file(p: &PathBuf) -> anyhow::Result<BufReader<File>> {
+    let _inner = File::options().read(true).open(p)?;
+    let reader = BufReader::new(_inner);
+    Ok(reader)
+}
+
 impl FileLock {
-    pub fn open<P: AsRef<Path>>(path: P) -> anyhow::Result<FileLock> {
+    pub fn open<P: AsRef<Path>>(path: P) -> Result<FileLock, FileLockError> {
         let _lock_p = path.as_ref().with_extension("lock");
         let inner_p = path.as_ref().to_path_buf();
         if Path::exists(&_lock_p) {
@@ -26,14 +55,10 @@ impl FileLock {
             if let Ok(pid) = pid {
                 if pid_exists(pid) {
                     debug!("{pid} exist!");
-                    return Err(anyhow::Error::msg(format!(
-                        "Could not acquire lock (pid exists: {pid})"
-                    )));
+                    return Err(FileLockError::PidExist(pid));
                 }
             } else {
-                return Err(anyhow::Error::msg(
-                    "Lock exist but pid file doesn't! this is probably a bug.",
-                ));
+                return Err(FileLockError::PidFileDoesntExist);
             }
 
             // otherwise, we create a file lock to force cleanup
@@ -46,19 +71,24 @@ impl FileLock {
             };
         }
         // create files if not exist
-        let _ = File::options().create(true).append(true).open(&path)?;
-        let _ = File::create(&_lock_p)?;
-        Self::write_pid(&path)?;
+        let _ = File::options()
+            .create(true)
+            .append(true)
+            .open(&path)
+            .map_err(|e| FileLockError::Unknown(e.to_string()))?;
+        let _ = File::create(&_lock_p)
+            .map_err(|e| FileLockError::Unknown(e.to_string()))?;
+        Self::write_pid(&path)
+            .map_err(|e| FileLockError::Unknown(e.to_string()))?;
 
-        std::fs::copy(&path, &_lock_p)?;
+        std::fs::copy(&path, &_lock_p)
+            .map_err(|e| FileLockError::Unknown(e.to_string()))?;
 
         Ok(FileLock { _lock_p, inner_p })
     }
 
     pub fn read(&self) -> anyhow::Result<BufReader<File>> {
-        let _inner = File::options().read(true).open(&self.inner_p)?;
-        let reader = BufReader::new(_inner);
-        Ok(reader)
+        read_file(&self.inner_p)
     }
 
     pub fn write(&self, buf: &[u8]) -> anyhow::Result<()> {
@@ -132,7 +162,9 @@ mod test {
         let open_file_twice = FileLock::open(path);
 
         match open_file_twice {
-            Err(e) => assert_eq!(e.to_string(), "Could not acquire lock"),
+            Err(e) => assert!(e
+                .to_string()
+                .starts_with("Could not acquire lock (pid exists: ")),
             Ok(_) => (),
         }
     }

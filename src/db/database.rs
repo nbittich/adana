@@ -1,11 +1,13 @@
-use std::path::Path;
+use std::{fmt::Display, path::Path};
 
 use crate::{db::FileDbConfig, prelude::*};
 use anyhow::Context;
 use log::debug;
 use serde::de::DeserializeOwned;
 
-use super::{FileDb, FileLock, InMemoryDb, Key, Value};
+use super::{
+    file_lock, FileDb, FileLock, FileLockError, InMemoryDb, Key, Value,
+};
 
 fn get_default_db_path() -> Option<Box<Path>> {
     let mut db_dir = dirs::data_dir()?;
@@ -74,7 +76,7 @@ where
     K: 'static + Key + DeserializeOwned + std::fmt::Debug,
     V: 'static + Value + DeserializeOwned + std::fmt::Debug,
 {
-    fn in_memory_fallback(e: anyhow::Error) -> anyhow::Result<Db<K, V>> {
+    fn in_memory_fallback(e: impl Display) -> anyhow::Result<Db<K, V>> {
         eprintln!(
             "{} {e} \nAttempt to open a temporary db...\n",
             colors::Red.paint("Warning!")
@@ -89,7 +91,37 @@ where
 
         let file_lock = FileLock::open(path.as_ref());
         match file_lock {
-            Err(e) if !config.fall_back_in_memory => Err(e),
+            Err(e) if !config.fall_back_in_memory => {
+                Err(anyhow::Error::msg(e.to_string()))
+            }
+            Err(pid_exist @ FileLockError::PidExist(_)) => {
+                eprintln!(
+                    "{} {pid_exist} \nAttempt to open a temporary db...\n",
+                    colors::Red.paint("Warning!")
+                );
+                let p = path.as_ref();
+                let pb = p.to_path_buf();
+                match file_lock::read_file(&pb) {
+                    Ok(reader) => {
+                        match bincode::deserialize_from::<_, InMemoryDb<K, V>>(
+                            reader,
+                        ) {
+                            Ok(inner_db) => Ok(Db::InMemory(inner_db)),
+                            Err(e) => {
+                                eprintln!(
+                                        "{} {e:?} \nAttempt to deserialize db, could be because it is the first time you use it\n",
+                                        colors::Red.paint("Warning!")
+                                    );
+                                Self::in_memory_fallback(e)
+                            }
+                        }
+                    }
+                    Err(e) if config.fall_back_in_memory => {
+                        Self::in_memory_fallback(e)
+                    }
+                    Err(e) => Err(e),
+                }
+            }
             Err(e) => Self::in_memory_fallback(e),
             Ok(file_lock) => {
                 let inner = match file_lock.read() {
