@@ -13,7 +13,7 @@ pub fn parse_args(
     let mut arguments = vec![];
     while let Some(arg) = args.next() {
         match arg.as_str() {
-            "--inmemory" => {
+            "--inmemory" | "-im" => {
                 anyhow::ensure!(
                     !arguments.iter().any(|a| matches!(a, Argument::InMemory)),
                     "in memory should be specified only once!"
@@ -24,7 +24,7 @@ pub fn parse_args(
                 );
                 arguments.push(Argument::InMemory);
             }
-            "--fallback" => {
+            "--fallback" | "-fb" => {
                 anyhow::ensure!(
                     !arguments
                         .iter()
@@ -33,7 +33,7 @@ pub fn parse_args(
                 );
                 arguments.push(Argument::FallbackInMemory);
             }
-            "--dbpath" => {
+            "--dbpath" | "-db" => {
                 anyhow::ensure!(
                     !arguments.iter().any(|a| matches!(a, Argument::InMemory)),
                     "cannot mix in memory & db path!"
@@ -45,7 +45,7 @@ pub fn parse_args(
                 let path = args.next().context("db path missing!!")?;
                 arguments.push(Argument::DbPath(path));
             }
-            "--historypath" => {
+            "--historypath" | "-hp" => {
                 anyhow::ensure!(
                     !arguments
                         .iter()

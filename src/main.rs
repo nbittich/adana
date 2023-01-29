@@ -84,9 +84,7 @@ fn start_app(
 
                 let script_res = {
                     match compute(&line, &mut script_context) {
-                        Ok(calc) if matches!(calc, Primitive::Error(_)) => {
-                            Err(anyhow::Error::msg(calc))
-                        }
+                        Ok(Primitive::Error(e)) => Err(anyhow::Error::msg(e)),
                         Ok(calc) => Ok(calc),
                         e @ Err(_) => e,
                     }
