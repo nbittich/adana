@@ -169,6 +169,7 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
         parse_builtin(BuiltInFunctionType::ToInt),
         parse_builtin(BuiltInFunctionType::ToDouble),
         parse_builtin(BuiltInFunctionType::ToBool),
+        parse_builtin(BuiltInFunctionType::Eval),
         parse_builtin(BuiltInFunctionType::Tan),
         parse_builtin(BuiltInFunctionType::Println),
         parse_builtin(BuiltInFunctionType::Print),

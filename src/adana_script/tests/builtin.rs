@@ -34,3 +34,10 @@ fn test_builtin_to_bool() {
     let res = compute("to_bool(a)", &mut ctx).unwrap();
     assert_eq!(res, Primitive::Bool(false));
 }
+
+#[test]
+fn test_eval() {
+    let mut ctx = BTreeMap::new();
+    let _ = compute(r#"eval("z = sqrt(9)")"#, &mut ctx).unwrap();
+    assert_eq!(ctx.get("z"), Some(&Primitive::Double(3.0)));
+}

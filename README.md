@@ -412,6 +412,7 @@ Here are a list of built in functions available:
 | to_double    | cast to double                                        | `to_double("2.2")`                 |
 | to_bool      | cast to bool                                          | `to_bool("true")`                  |
 | drop         | drop a variable from context                          | `drop("myvar")`                    |
+| eval         | Evaluate a string as code                             | `eval("sqrt(9)")`                  |
 <hr>
 
 Note that you can use the repl command `script_ctx` to see what variables are stored in the context.

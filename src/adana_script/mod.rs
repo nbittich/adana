@@ -10,8 +10,8 @@ use serde::{Deserialize, Serialize};
 use strum::EnumCount;
 
 use self::constants::{
-    ABS, COS, INCLUDE, LENGTH, LN, LOG, PRINT, PRINT_LN, READ_LINES, SIN, SQRT,
-    TAN, TO_BOOL, TO_DOUBLE, TO_INT,
+    ABS, COS, EVAL, INCLUDE, LENGTH, LN, LOG, PRINT, PRINT_LN, READ_LINES, SIN,
+    SQRT, TAN, TO_BOOL, TO_DOUBLE, TO_INT,
 };
 
 #[macro_use]
@@ -59,6 +59,7 @@ pub mod constants {
     pub const DROP: &str = "drop";
     pub const NULL: &str = "null";
     pub const MULTILINE: &str = "multiline";
+    pub const EVAL: &str = "eval";
 }
 
 #[derive(Debug, EnumCount)]
@@ -148,6 +149,7 @@ pub enum BuiltInFunctionType {
     Println,
     ReadLines,
     Print,
+    Eval,
     Length,
     Include,
 }
@@ -203,6 +205,7 @@ impl BuiltInFunctionType {
             BuiltInFunctionType::Tan => TAN,
             BuiltInFunctionType::Println => PRINT_LN,
             BuiltInFunctionType::Print => PRINT,
+            BuiltInFunctionType::Eval => EVAL,
             BuiltInFunctionType::Include => INCLUDE,
             BuiltInFunctionType::ReadLines => READ_LINES,
             BuiltInFunctionType::ToInt => TO_INT,

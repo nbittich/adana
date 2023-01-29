@@ -188,6 +188,13 @@ fn compute_recur(
                     super::BuiltInFunctionType::Ln => Ok(v.ln()),
                     super::BuiltInFunctionType::Sin => Ok(v.sin()),
                     super::BuiltInFunctionType::Cos => Ok(v.cos()),
+                    super::BuiltInFunctionType::Eval => {
+                        if let Primitive::String(script) = v {
+                            compute(&script, ctx)
+                        } else {
+                            Ok(Primitive::Error(format!("invalid script {v}")))
+                        }
+                    }
                     super::BuiltInFunctionType::Tan => Ok(v.tan()),
                     super::BuiltInFunctionType::ToInt => Ok(v.to_int()),
                     super::BuiltInFunctionType::ToDouble => Ok(v.to_double()),
