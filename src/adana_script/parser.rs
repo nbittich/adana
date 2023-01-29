@@ -1,10 +1,10 @@
 use crate::{
     prelude::{
-        all_consuming, alt, consumed, cut, delimited, double, many0, many1,
-        map, map_parser, multispace0, one_of, opt, pair, preceded,
-        recognize_float, rest, separated_list0, separated_list1,
-        separated_pair, tag, tag_no_case, take_until, take_while1, terminated,
-        tuple, verify, Res, I128,
+        all_consuming, alt, consumed, delimited, double, many0, many1, map,
+        map_parser, multispace0, one_of, opt, pair, preceded, recognize_float,
+        rest, separated_list0, separated_list1, separated_pair, tag,
+        tag_no_case, take_until, take_while1, terminated, tuple, verify, Res,
+        I128,
     },
     reserved_keywords::check_reserved_keyword,
 };
@@ -87,10 +87,9 @@ where
     F: Fn(&'a str) -> Res<Vec<Value>>,
 {
     move |s| {
-        delimited(
+        preceded(
             tag_no_space("("),
-            map(&parser, Value::BlockParen),
-            cut(tag_no_space(")")),
+            terminated(map(&parser, Value::BlockParen), tag_no_space(")")),
         )(s)
     }
 }

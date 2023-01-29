@@ -215,3 +215,25 @@ fn test_parse_break() {
         },],
     )
 }
+
+#[test]
+fn test_paren_bug_2023() {
+    let expr = "(4*3 * (2+2))";
+    let (res, instructions) = parse_instructions(expr).unwrap();
+    assert_eq!("", res);
+    assert_eq!(
+        instructions,
+        vec![Value::Expression(vec![Value::BlockParen(vec![
+            Value::Integer(4,),
+            Value::Operation(Operator::Mult,),
+            Value::Integer(3,),
+            Value::Operation(Operator::Mult,),
+            Value::BlockParen(vec![
+                Value::Integer(2,),
+                Value::Operation(Operator::Add,),
+                Value::Integer(2,),
+            ],),
+        ],),],),]
+    );
+    dbg!(&res);
+}
