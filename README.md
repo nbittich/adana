@@ -7,12 +7,12 @@ Toy project with the following goals in mind:
  - Use the minimum amount of libraries
  - Making a scripting language
  - Making a REPL
- - No tutorials, best practices, design patterns, clean architecture, fancy frameworks
+ - No tutorials, best practices, design patterns, clean architecture, or fancy frameworks
 
  # Table of Contents
 1. [Features](#features)
 2. [Installation](#installation)
-3. [Programming language](#programming-langaguage)
+3. [Programming language](#programming-language)
     * [Introduction](#introduction)
     * [Comments](#comments)
     * [Multiline](#multiline)
@@ -46,7 +46,7 @@ Toy project with the following goals in mind:
 ## Installation
 
 1. Docker
-    * From docker hub: 
+    * From the docker hub: 
         - `docker run -it nbittich/adana`
     * Manually:
         - clone the repo
@@ -151,7 +151,7 @@ There are 14 operators & 3 constants:
 ### Variable definition
 
 To define a variable, simply type the name of the variable followed by "=".
-Variable must always start by a letter and can have numerics or "_" in it.
+Variable must always start with a letter and can have numerics or "_" in it.
 Add and assign(+=), subtract and assign (-=), etc are not supported.
 
 ```python
@@ -207,11 +207,11 @@ if(age > 12) {
 
 ### Types
 
-There are no type checking in the language. You can add a string to an array, nothing will stop you!
+There is no type-checking in the language. You can add a string to an array, nothing will stop you!
 
 In some cases though, you might get an error. 
 
-Below, a list of types and how you declare them. You cannot define (yet) your own structure.
+Below, is a list of types and how you declare them. You cannot define (yet) your structure.
 
 | **type** | **examples**                                                                                  |
 |----------|-----------------------------------------------------------------------------------------------|
@@ -227,7 +227,7 @@ Below, a list of types and how you declare them. You cannot define (yet) your ow
 ### Manipulate arrays
 
 Arrays are declared like in javascript but are "immutable". After declaration, you cannot (yet) push
-new data in them. in order to that, you have to concat them with another array using the "+" operator.
+new data in them. to do that, you have to concatenate them with another array using the "+" operator.
 
 ```python
 >> arr = [] # declare an empty array
@@ -285,12 +285,11 @@ print("done")
 
 ### Functions
 
-Function can be declared inline or as a block, with the exception of anonymous function parameters that cannot
-be inlined (yet). In case of a function parameter, you either assign the function to a variable or you
-use an anymous function block.
+The function can be declared inline or as a block, except for anonymous function parameters that cannot
+be inlined (yet). In the case of a function parameter, you either assign the function to a variable or 
+use an anonymous function block.
 
-Parameters cannot be modified within a function. if you want to update something, you have to return it
-and reassign.
+Parameters cannot be modified within a function. if you want to update something, you have to return it and reassign it.
 
 ```python
 # no parameters
@@ -316,9 +315,8 @@ for_each(["Mohamed", "Hakim", "Sarah", "Yasmine", "Noah", "Sofia", "Sami"], hell
 
 
 ```
-Parameters cannot be modified within a function. if you want to update something, you have to return it
-and reassign. Everything that changes within the scope of a function won't have any effect on the outer
-scope.
+Parameters cannot be modified within a function. if you want to update something, you have to return it and reassign it.
+Everything that changes within the scope of a function won't have any effect on the outer scope.
 
 Some other examples of what you can do with functions:
 
@@ -391,7 +389,7 @@ There are several built-in functions available.
 
 You already have seen `length` to find the length of an array or string, `include` to include a script inside the repl and `println` to print something.
 
-Here are a list of built in functions available:
+Here is a list of built-in functions available:
 
 
 | name         | description                                           | example                            |
