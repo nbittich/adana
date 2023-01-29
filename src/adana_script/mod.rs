@@ -11,7 +11,7 @@ use strum::EnumCount;
 
 use self::constants::{
     ABS, COS, EVAL, INCLUDE, LENGTH, LN, LOG, PRINT, PRINT_LN, READ_LINES, SIN,
-    SQRT, TAN, TO_BOOL, TO_DOUBLE, TO_INT,
+    SQRT, TAN, TO_BOOL, TO_DOUBLE, TO_INT, TYPE_OF,
 };
 
 #[macro_use]
@@ -60,6 +60,7 @@ pub mod constants {
     pub const NULL: &str = "null";
     pub const MULTILINE: &str = "multiline";
     pub const EVAL: &str = "eval";
+    pub const TYPE_OF: &str = "type_of";
 }
 
 #[derive(Debug, EnumCount)]
@@ -150,6 +151,7 @@ pub enum BuiltInFunctionType {
     ReadLines,
     Print,
     Eval,
+    TypeOf,
     Length,
     Include,
 }
@@ -203,6 +205,7 @@ impl BuiltInFunctionType {
             BuiltInFunctionType::Sin => SIN,
             BuiltInFunctionType::Cos => COS,
             BuiltInFunctionType::Tan => TAN,
+            BuiltInFunctionType::TypeOf => TYPE_OF,
             BuiltInFunctionType::Println => PRINT_LN,
             BuiltInFunctionType::Print => PRINT,
             BuiltInFunctionType::Eval => EVAL,

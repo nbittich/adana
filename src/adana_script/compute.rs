@@ -16,7 +16,7 @@ use super::{
     ast::to_ast,
     primitive::{
         Abs, And, Array, Cos, Logarithm, Or, Pow, Primitive, Sin, Sqrt, Tan,
-        ToBool, ToNumber,
+        ToBool, ToNumber, TypeOf,
     },
     Operator, TreeNodeValue, Value,
 };
@@ -259,6 +259,7 @@ fn compute_recur(
                             "wrong read lines call".to_string(),
                         )),
                     },
+                    super::BuiltInFunctionType::TypeOf => Ok(v.type_of()),
                 }
             }
             TreeNodeValue::IfExpr(v) => {

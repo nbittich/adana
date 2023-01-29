@@ -411,6 +411,7 @@ Here is a list of built-in functions available:
 | to_bool      | cast to bool                                          | `to_bool("true")`                  |
 | drop         | drop a variable from context                          | `drop("myvar")`                    |
 | eval         | Evaluate a string as code                             | `eval("sqrt(9)")`                  |
+| type_of      | Type of variable                                      | `type_of(true)`                    |
 <hr>
 
 Note that you can use the repl command `script_ctx` to see what variables are stored in the context.

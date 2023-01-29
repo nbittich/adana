@@ -29,7 +29,9 @@ pub enum Primitive {
 }
 
 // region: traits
-
+pub trait TypeOf {
+    fn type_of(&self) -> Self;
+}
 pub trait ToBool {
     fn to_bool(&self) -> Self;
 }
@@ -154,7 +156,7 @@ impl Display for Primitive {
             Primitive::Bool(b) => write!(f, "{b}"),
             Primitive::Error(e) => write!(f, "Err: {e}"),
             Primitive::String(s) => write!(f, "{s}"),
-            Primitive::Unit => Ok(()),
+            Primitive::Unit => write!(f, "()"),
             Primitive::Array(arr) => {
                 let joined_arr = arr
                     .iter()
@@ -547,6 +549,7 @@ impl PartialOrd for Primitive {
             }
             (Primitive::Double(l), Primitive::Double(r)) => l.partial_cmp(r),
             (Primitive::Bool(a), Primitive::Bool(b)) => a.partial_cmp(b),
+            (l @ Primitive::Bool(_), r) => l.partial_cmp(&(r.to_bool())),
 
             (Primitive::String(l), Primitive::String(r)) => l.partial_cmp(r),
             (Primitive::Unit, Primitive::Unit) => Some(Ordering::Equal),
@@ -556,18 +559,41 @@ impl PartialOrd for Primitive {
                 r @ Primitive::Function { parameters: _, exprs: _ },
             ) => l.partial_cmp(r),
             (Primitive::Null, Primitive::Null) => Some(Ordering::Equal),
+            (Primitive::EarlyReturn(l), Primitive::EarlyReturn(r)) => {
+                l.partial_cmp(r)
+            }
+            (Primitive::EarlyReturn(l), a) => l.as_ref().partial_cmp(a),
+            (l, Primitive::EarlyReturn(r)) => l.partial_cmp(r),
 
             (Primitive::Int(_), _) => None,
-            (Primitive::Bool(_), _) => None,
             (Primitive::Double(_), _) => None,
             (Primitive::String(_), _) => None,
             (Primitive::NoReturn, _) => None,
-            (Primitive::EarlyReturn(_), _) => None,
             (Primitive::Null, _) => None,
             (Primitive::Array(_), _) => None,
             (Primitive::Error(_), _) => None,
             (Primitive::Unit, _) => None,
             (Primitive::Function { parameters: _, exprs: _ }, _) => None,
+        }
+    }
+}
+
+impl TypeOf for Primitive {
+    fn type_of(&self) -> Self {
+        match self {
+            Primitive::Int(_) => Primitive::String("int".to_string()),
+            Primitive::Bool(_) => Primitive::String("bool".to_string()),
+            Primitive::Null => Primitive::String("null".to_string()),
+            Primitive::Double(_) => Primitive::String("double".to_string()),
+            Primitive::String(_) => Primitive::String("string".to_string()),
+            Primitive::Array(_) => Primitive::String("array".to_string()),
+            Primitive::Error(_) => Primitive::String("error".to_string()),
+            Primitive::Function { parameters: _, exprs: _ } => {
+                Primitive::String("function".to_string())
+            }
+            Primitive::Unit => Primitive::String("unit".to_string()),
+            Primitive::NoReturn => Primitive::String("!".to_string()),
+            Primitive::EarlyReturn(v) => v.type_of(),
         }
     }
 }
