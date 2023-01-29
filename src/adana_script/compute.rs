@@ -16,7 +16,7 @@ use super::{
     ast::to_ast,
     primitive::{
         Abs, And, Array, Cos, Logarithm, Or, Pow, Primitive, Sin, Sqrt, Tan,
-        ToNumber,
+        ToBool, ToNumber,
     },
     Operator, TreeNodeValue, Value,
 };
@@ -191,6 +191,7 @@ fn compute_recur(
                     super::BuiltInFunctionType::Tan => Ok(v.tan()),
                     super::BuiltInFunctionType::ToInt => Ok(v.to_int()),
                     super::BuiltInFunctionType::ToDouble => Ok(v.to_double()),
+                    super::BuiltInFunctionType::ToBool => Ok(v.to_bool()),
                     super::BuiltInFunctionType::Length => Ok(v.len()),
                     super::BuiltInFunctionType::Println => {
                         println!("{v}");

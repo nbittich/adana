@@ -30,6 +30,9 @@ pub enum Primitive {
 
 // region: traits
 
+pub trait ToBool {
+    fn to_bool(&self) -> Self;
+}
 pub trait ToNumber {
     fn to_int(&self) -> Self;
     fn to_double(&self) -> Self;
@@ -449,6 +452,25 @@ impl std::ops::Not for Primitive {
         match self {
             Primitive::Bool(b) => Primitive::Bool(!b),
             _ => Primitive::Error(format!("invalid call to not() {self}")),
+        }
+    }
+}
+
+impl ToBool for Primitive {
+    fn to_bool(&self) -> Self {
+        match self {
+            v @ Primitive::Bool(_) => v.clone(),
+            Primitive::Double(n) => Primitive::Bool(n > &0.0),
+            Primitive::Int(n) => Primitive::Bool(n > &0),
+            Primitive::Null => Primitive::Bool(false),
+            Primitive::Array(a) => Primitive::Bool(!a.is_empty()),
+            Primitive::String(s) => match s.parse::<bool>() {
+                Ok(b) => Primitive::Bool(b),
+                Err(e) => Primitive::Error(format!(
+                    "invalid cast to bool: {self}, {e}"
+                )),
+            },
+            _ => Primitive::Error(format!("invalide cast too bool: {self}")),
         }
     }
 }

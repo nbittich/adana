@@ -410,6 +410,7 @@ Here are a list of built in functions available:
 | read_lines   | read a file and returns an array<br> of each lines    | `read_lines("scripts/name.txt")`   |
 | to_int       | cast to int                                           | `to_int("2")`<br>`to_int(2.2)`     |
 | to_double    | cast to double                                        | `to_double("2.2")`                 |
+| to_bool      | cast to bool                                          | `to_bool("true")`                  |
 | drop         | drop a variable from context                          | `drop("myvar")`                    |
 <hr>
 
