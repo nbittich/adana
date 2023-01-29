@@ -14,7 +14,7 @@ pub struct FileLock {
 }
 
 fn pid_exists(pid: u32) -> bool {
-    Path::new(&format!("/proc/{}", pid)).exists()
+    Path::new(&format!("/proc/{pid}")).exists()
 }
 
 #[derive(Debug)]

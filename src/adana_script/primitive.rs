@@ -166,7 +166,7 @@ impl Display for Primitive {
                 write!(f, "({}) => {{...}}", parameters.join(", "))
             }
             Primitive::NoReturn => write!(f, "!"),
-            Primitive::Null => write!(f, "{}", NULL),
+            Primitive::Null => write!(f, "{NULL}"),
             Primitive::EarlyReturn(p) => write!(f, "{p}"),
         }
     }
@@ -265,7 +265,7 @@ impl Pow for Primitive {
                 Primitive::Double(l.powf(r as f64))
             }
             (Primitive::Double(l), Primitive::Double(r)) => {
-                Primitive::Double((*l as f64).powf(r))
+                Primitive::Double(l.powf(r))
             }
             (l, r) => Primitive::Error(format!(
                 "illegal call to pow() => left: {l} right: {r}"
@@ -301,7 +301,7 @@ impl Add for Primitive {
                 Primitive::Double(l + r as f64)
             }
             (Primitive::Double(l), Primitive::Double(r)) => {
-                Primitive::Double(l as f64 + r)
+                Primitive::Double(l + r)
             }
             (l, Primitive::String(s)) => Primitive::String(format!("{l}{s}")),
 
@@ -330,7 +330,7 @@ impl Sub for Primitive {
                 Primitive::Double(l - r as f64)
             }
             (Primitive::Double(l), Primitive::Double(r)) => {
-                Primitive::Double(l as f64 - r)
+                Primitive::Double(l - r)
             }
             (l, r) => Primitive::Error(format!(
                 "illegal call to sub() => left: {l} right: {r}"
@@ -356,7 +356,7 @@ impl Rem for Primitive {
                 Primitive::Double(l % r as f64)
             }
             (Primitive::Double(l), Primitive::Double(r)) => {
-                Primitive::Double(l as f64 % r)
+                Primitive::Double(l % r)
             }
 
             (l, r) => Primitive::Error(format!(
@@ -387,7 +387,7 @@ impl Mul for Primitive {
                 Primitive::Double(l * r as f64)
             }
             (Primitive::Double(l), Primitive::Double(r)) => {
-                Primitive::Double(l as f64 * r)
+                Primitive::Double(l * r)
             }
             (Primitive::String(l), Primitive::Int(r)) => {
                 Primitive::String(l.repeat(r as usize))
@@ -421,7 +421,7 @@ impl Div for Primitive {
                 Primitive::Double(l / r as f64)
             }
             (Primitive::Double(l), Primitive::Double(r)) => {
-                Primitive::Double(l as f64 / r)
+                Primitive::Double(l / r)
             }
             (l, r) => Primitive::Error(format!(
                 "illegal call to div() => left: {l} right: {r}"

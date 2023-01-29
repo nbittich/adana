@@ -113,7 +113,7 @@ fn start_app(
                 break;
             }
             Err(err) => {
-                eprintln!("Error: {:?}", err);
+                eprintln!("Error: {err:?}");
                 std::process::exit(1);
             }
         }

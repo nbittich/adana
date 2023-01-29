@@ -1,5 +1,5 @@
 use crate::prelude::*;
-fn extract_args<'a>(s: &'a str) -> Res<Vec<&'a str>> {
+fn extract_args(s: &str) -> Res<Vec<&str>> {
     preceded(
         multispace0,
         separated_list0(
@@ -14,7 +14,7 @@ fn extract_args<'a>(s: &'a str) -> Res<Vec<&'a str>> {
     )(s)
 }
 
-fn extract_envs<'a>(s: &'a str) -> Res<Vec<(&'a str, &'a str)>> {
+fn extract_envs(s: &str) -> Res<Vec<(&str, &str)>> {
     preceded(
         multispace0,
         separated_list0(
@@ -24,7 +24,7 @@ fn extract_envs<'a>(s: &'a str) -> Res<Vec<(&'a str, &'a str)>> {
     )(s)
 }
 
-fn extract_program<'a>(s: &'a str) -> Res<&'a str> {
+fn extract_program(s: &str) -> Res<&str> {
     preceded(multispace0, take_while(|s| s != ' '))(s)
 }
 

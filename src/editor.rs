@@ -32,7 +32,7 @@ pub fn read_line(
     curr_cache: &str,
 ) -> Result<String, rustyline::error::ReadlineError> {
     let p = format!("[{curr_cache}] >> ");
-    rl.readline(&format!("\x1b[1;32m{}\x1b[0m", p))
+    rl.readline(&format!("\x1b[1;32m{p}\x1b[0m"))
 }
 
 pub fn build_editor(
