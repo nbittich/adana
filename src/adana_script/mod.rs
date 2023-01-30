@@ -3,6 +3,8 @@ mod compute;
 mod parser;
 mod primitive;
 
+use std::collections::HashMap;
+
 pub use compute::compute;
 pub use primitive::Primitive;
 
@@ -59,8 +61,10 @@ pub mod constants {
     pub const DROP: &str = "drop";
     pub const NULL: &str = "null";
     pub const MULTILINE: &str = "multiline";
+    pub const STRUCT: &str = "struct";
     pub const EVAL: &str = "eval";
     pub const TYPE_OF: &str = "type_of";
+    pub const FN: &str = "fn";
 }
 
 #[derive(Debug, EnumCount)]
@@ -113,6 +117,7 @@ pub enum Value {
     Bool(bool),
     String(String),
     BlockParen(Vec<Value>),
+    Struct(HashMap<String, Value>),
     Variable(String),
     Const(char),
     VariableNegate(String),

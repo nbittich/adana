@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
 use crate::adana_script::{
-    parser::parse_instructions,
+    parser::{parse_instructions, parse_struct},
     BuiltInFunctionType, Operator,
     Value::{
         self, BlockParen, Expression, Function, Integer, Operation, Variable,
@@ -236,4 +238,116 @@ fn test_paren_bug_2023() {
         ],),],),]
     );
     dbg!(&res);
+}
+
+#[test]
+fn test_struct() {
+    let expr = r#"
+        # commentaire
+      my = struct { # commentaire
+          # ici un commentaire
+            a := 7;
+            b := "salut"; # i am a comment
+            c := [1,2,3];
+      # autre := ["commentaire"];
+            d := 1.;
+            x := true;
+            g := null;
+            aa := (n) => {
+                print("hello" + n)
+            }; # commentaire
+            i := ()=> {
+                1
+            };
+            j := 4*2+1 *sqrt(2.);
+            r := () => "hello!";
+            mm := (2 *2)
+        }
+        "#;
+    let (res, struc) = parse_instructions(expr).unwrap();
+    assert_eq!("", res);
+
+    assert_eq!(
+        struc,
+        vec![Value::VariableExpr {
+            name: Box::new(Value::Variable("my".to_string(),)),
+            expr: Box::new(Value::Struct(HashMap::from([
+                (
+                    "aa".into(),
+                    Value::Function {
+                        parameters: Box::new(Value::BlockParen(vec![
+                            Value::Variable("n".into(),),
+                        ],)),
+                        exprs: vec![Value::Expression(vec![
+                            Value::BuiltInFunction {
+                                fn_type: BuiltInFunctionType::Print,
+                                expr: Box::new(BlockParen(vec![
+                                    Value::String("hello".into(),),
+                                    Value::Operation(Operator::Add,),
+                                    Value::Variable("n".into(),),
+                                ],)),
+                            },
+                        ],),],
+                    }
+                ),
+                ("a".into(), Value::Integer(7,)),
+                (
+                    "r".into(),
+                    Value::Function {
+                        parameters: Box::new(BlockParen(vec![],)),
+                        exprs: vec![Value::Expression(vec![Value::String(
+                            "hello!".into(),
+                        ),],),],
+                    }
+                ),
+                (
+                    "c".into(),
+                    Value::Array(vec![
+                        Value::Integer(1,),
+                        Value::Integer(2,),
+                        Value::Integer(3,),
+                    ],)
+                ),
+                (
+                    "i".into(),
+                    Value::Function {
+                        parameters: Box::new(Value::BlockParen(vec![],)),
+                        exprs: vec![Value::Expression(vec![
+                            Value::Integer(1,),
+                        ],),],
+                    }
+                ),
+                ("x".into(), Value::Bool(true,)),
+                (
+                    "mm".into(),
+                    Value::BlockParen(vec![
+                        Value::Integer(2,),
+                        Value::Operation(Operator::Mult,),
+                        Value::Integer(2,),
+                    ],)
+                ),
+                (
+                    "j".into(),
+                    Value::Expression(vec![
+                        Value::Integer(4,),
+                        Value::Operation(Operator::Mult,),
+                        Value::Integer(2,),
+                        Value::Operation(Operator::Add,),
+                        Value::Integer(1,),
+                        Value::Operation(Operator::Mult,),
+                        Value::BuiltInFunction {
+                            fn_type: BuiltInFunctionType::Sqrt,
+                            expr: Box::new(Value::BlockParen(vec![
+                                Value::Decimal(2.0,),
+                            ],)),
+                        },
+                    ]),
+                ),
+                ("b".into(), Value::String("salut".into(),)),
+                ("d".into(), Value::Decimal(1.0,)),
+                ("g".into(), Value::Null),
+            ]),)),
+        }]
+    );
+    dbg!(res, struc);
 }

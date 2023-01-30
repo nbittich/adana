@@ -1,16 +1,17 @@
 use crate::{
     prelude::{
-        all_consuming, alt, consumed, delimited, double, many0, many1, map,
-        map_parser, multispace0, one_of, opt, pair, preceded, recognize_float,
-        rest, separated_list0, separated_list1, separated_pair, tag,
-        tag_no_case, take_until, take_while1, terminated, tuple, verify, Res,
-        I128,
+        all_consuming, alt, delimited, double, many0, many1, map, map_parser,
+        multispace0, one_of, opt, pair, preceded, recognize_float, rest,
+        separated_list0, separated_list1, separated_pair, tag, tag_no_case,
+        take_until, take_while1, terminated, tuple, verify, Res, I128,
     },
     reserved_keywords::check_reserved_keyword,
 };
 
 use super::{
-    constants::{BREAK, DROP, ELSE, IF, MULTILINE, NULL, RETURN, WHILE},
+    constants::{
+        BREAK, DROP, ELSE, IF, MULTILINE, NULL, RETURN, STRUCT, WHILE,
+    },
     BuiltInFunctionType, MathConstants, Operator, Value,
 };
 
@@ -58,20 +59,20 @@ fn parse_string(s: &str) -> Res<Value> {
     )(s)
 }
 
-fn parse_variable(s: &str) -> Res<Value> {
+fn parse_variable_str(s: &str) -> Res<&str> {
     let allowed_values =
         |s| take_while1(|s: char| s.is_alphanumeric() || s == '_')(s);
     map_parser(
         verify(allowed_values, |s: &str| {
             s.chars().next().filter(|c| c.is_alphabetic()).is_some()
         }),
-        map(
-            verify(all_consuming(allowed_values), |s: &str| {
-                !check_reserved_keyword(&[s])
-            }),
-            |s: &str| Value::Variable(s.to_string()),
-        ),
+        verify(all_consuming(allowed_values), |s: &str| {
+            !check_reserved_keyword(&[s])
+        }),
     )(s)
+}
+fn parse_variable(s: &str) -> Res<Value> {
+    map(parse_variable_str, |s: &str| Value::Variable(s.to_string()))(s)
 }
 fn parse_constant(s: &str) -> Res<Value> {
     map(one_of(MathConstants::get_symbols()), Value::Const)(s)
@@ -102,7 +103,7 @@ fn parse_fn(s: &str) -> Res<Value> {
             tag("=>"),
             alt((
                 parse_block(parse_instructions),
-                map(consumed(parse_expression), |(_, v)| vec![v]),
+                map(parse_expression, |v| vec![v]),
             )),
         ),
         |(parameters, exprs)| Value::Function {
@@ -180,6 +181,53 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
     ))(s)
 }
 
+fn parse_struct_expr(s: &str) -> Res<Value> {
+    // hack because the parser is super dumb
+    map_parser(
+        alt((take_until(";"), take_until("}"))),
+        alt((
+            parse_fn,
+            map(many1(parse_value), |mut expr| {
+                if expr.len() == 1 {
+                    expr.remove(0)
+                } else {
+                    Value::Expression(expr)
+                }
+            }),
+            parse_value,
+        )),
+    )(s)
+}
+pub(super) fn parse_struct(s: &str) -> Res<Value> {
+    preceded(
+        tag_no_space(STRUCT),
+        map(
+            delimited(
+                tag_no_space("{"),
+                separated_list1(
+                    terminated(tag_no_space(";"), opt(comments)),
+                    preceded(
+                        opt(comments),
+                        separated_pair(
+                            map(
+                                preceded(
+                                    multispace0,
+                                    terminated(parse_variable_str, multispace0),
+                                ),
+                                String::from,
+                            ), // more like a key
+                            tag_no_space(":="),
+                            parse_struct_expr,
+                            //),
+                        ),
+                    ),
+                ),
+                tag_no_space("}"),
+            ),
+            |list| Value::Struct(list.into_iter().collect()),
+        ),
+    )(s)
+}
 fn parse_array(s: &str) -> Res<Value> {
     map(
         preceded(
@@ -216,12 +264,14 @@ fn parse_value(s: &str) -> Res<Value> {
                 parse_block_paren,
                 parse_array_access,
                 parse_array,
+                parse_builtin_fn,
                 parse_string,
                 parse_operation,
                 parse_number,
                 parse_bool,
-                parse_builtin_fn,
                 parse_fn_call,
+                parse_fn,
+                parse_struct,
                 parse_variable,
                 parse_constant,
                 parse_null,
@@ -260,7 +310,7 @@ fn parse_operation(s: &str) -> Res<Value> {
 
 fn parse_expression(s: &str) -> Res<Value> {
     map_parser(
-        parse_multiline,
+        parse_multiline, // todo this is probably the source of all issues
         map(many1(preceded(opt(comments), parse_value)), Value::Expression),
     )(s)
 }
@@ -271,14 +321,14 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
             separated_pair(
                 alt((parse_array_access, parse_variable)),
                 tag_no_space("="),
-                alt((parse_fn_call, parse_fn, parse_expression)),
+                alt((parse_fn_call, parse_fn, parse_struct, parse_expression)),
             ),
             |(name, expr)| Value::VariableExpr {
                 name: Box::new(name),
                 expr: Box::new(expr),
             },
         ),
-        alt((parse_fn_call, parse_fn, parse_expression)),
+        alt((parse_fn_call, parse_fn, parse_struct, parse_expression)),
     ))(s)
 }
 
