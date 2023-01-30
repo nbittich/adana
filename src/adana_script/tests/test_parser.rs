@@ -242,6 +242,13 @@ fn test_paren_bug_2023() {
 
 #[test]
 fn test_struct() {
+    let expr = "struct {x:= 99}";
+    let (res, struc) = parse_instructions(expr).unwrap();
+    assert_eq!("", res);
+    assert_eq!(
+        vec![Value::Struct(HashMap::from([("x".into(), Value::Integer(99))]))],
+        struc
+    );
     let expr = r#"
         # commentaire
       my = struct { # commentaire
