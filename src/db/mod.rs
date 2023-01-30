@@ -51,6 +51,10 @@ pub trait Op<K: Key, V: Value> {
 pub trait DbOp<K: Key, V: Value>: Op<K, V> {
     fn get_current_tree(&self) -> Option<String>;
 
+    fn flush(&self) -> anyhow::Result<&'static str> {
+        Ok("sync not implemented")
+    }
+
     fn open_tree(&mut self, tree_name: &str) -> Option<bool>;
 
     fn tree_names(&self) -> Vec<String>;

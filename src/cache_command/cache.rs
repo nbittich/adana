@@ -165,6 +165,10 @@ pub fn backup(db: &mut impl DbOp<String, String>, path: &Path) -> Option<()> {
     std::fs::write(path, json).ok()
 }
 
+pub fn flush(db: &impl DbOp<String, String>) -> anyhow::Result<&'static str> {
+    db.flush()
+}
+
 pub fn restore(db: &mut impl DbOp<String, String>, path: &Path) -> Option<()> {
     let file = File::open(path).ok()?;
     let buf_reader = BufReader::new(file);

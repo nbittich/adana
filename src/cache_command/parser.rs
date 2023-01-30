@@ -52,6 +52,10 @@ fn concat_command(command: &str) -> Res<CacheCommand> {
     )(command)
 }
 
+fn flush_command(command: &str) -> Res<CacheCommand> {
+    extract_no_args(|s| tag_no_case(FLUSH)(s), |_| CacheCommand::Flush)(command)
+}
+
 fn backup_command(command: &str) -> Res<CacheCommand> {
     extract_no_args(
         |s| alt((tag_no_case(BACKUP_ALT), tag_no_case(BACKUP)))(s),
@@ -213,6 +217,7 @@ pub fn parse_command(command: &str) -> Res<CacheCommand> {
             help_command,
             clear_command,
             backup_command,
+            flush_command,
             restore_command,
             print_script_context_command,
             exec_command,

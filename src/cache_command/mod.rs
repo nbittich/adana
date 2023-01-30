@@ -18,6 +18,7 @@ pub mod constants {
     pub const RESTORE: &str = "restore";
     pub const BACKUP: &str = "backup";
     pub const BACKUP_ALT: &str = "bckp";
+    pub const FLUSH: &str = "flush";
     pub const DEL_CACHE: &str = "delns";
     pub const DEL_CACHE_ALT: &str = "deletens";
     pub const MERGE_CACHE: &str = "merge";
@@ -44,6 +45,7 @@ pub enum CacheCommand<'a> {
     ListCache,
     CurrentCache,
     Backup,
+    Flush,
     Restore,
     DeleteCache(Option<&'a str>),
     Merge(&'a str),
@@ -60,7 +62,7 @@ pub enum CacheCommand<'a> {
 
 impl CacheCommand<'_> {
     pub const fn doc() -> &'static [(&'static [&'static str], &'static str)] {
-        if CacheCommand::COUNT != 17 {
+        if CacheCommand::COUNT != 18 {
             panic!("CacheCommand::doc() no longer valid!");
         }
         &[
@@ -69,12 +71,13 @@ impl CacheCommand<'_> {
             (&[LIST_CACHE, LIST_CACHE_ALT], "List available namespaces."),
             (&[CURR_CACHE, CURR_CACHE_ALT], "Print current namespace."),
             (&[BACKUP, BACKUP_ALT], "Backup the database of namespaces to the current directory"),
+            (&[FLUSH], "Flush to database."),
             (&[RESTORE], "Restore the database from current directory"),
             (&[DEL_CACHE,DEL_CACHE_ALT], "Delete namespace or clear current namespace values."),
             (&[MERGE_CACHE,MERGE_CACHE_ALT], "Merge current with a given namespace"),
             (&[DEL,DEL_ALT], "Remove value from namespace. Accept either a hashkey or an alias. e.g `del drc`"),
             (&[GET], "Get value from namespace. Accept either a hashkey or an alias. e.g `get drc`"),
-            (&[EXEC], "Run a value from the namespace as an OS command. Accept either a hashkey or an alias. e.g `run drc`"),
+            (&[EXEC], "Run a value from the namespace as an OS command. Accept either a hashkey or an alias. e.g `exec drc`"),
             (&[CD], "Navigate to a directory"),
             (&[USE], "Switch to another namespace. default ns is DEFAULT. e.g `use linux`"),
             (&[DUMP], "Dump namespace(s) as json. Take an optional parameter, the namespace name. e.g `dump linux`"),

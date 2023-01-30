@@ -454,6 +454,7 @@ https://user-images.githubusercontent.com/3816305/181606658-b01a0ca5-4507-4d58-8
 | listns           | lsns       | List available namespaces.                                                                                                                                                                        |
 | currentns        | currentns  | Print current namespace.                                                                                                                                                                          |
 | backup           | bckp       | Backup the database of namespaces to the current directory                                                                                                                                        |
+| flush            | flush      | Flush database                                                                                                                                        |
 | restore          | N/A        | Restore the database from current directory                                                                                                                                                       |
 | deletens         | delns      | Delete namespace or clear current namespace values.                                                                                                                                               |
 | mergens          | merge      | Merge current with a given namespace                                                                                                                                                              |
@@ -494,9 +495,9 @@ adana --inmemory
 ```
 
 ```
-# override db path & history path + fallback in memory in case of an error (default to false)
+# override db path & history path + no fallback in memory in case of an error (default to false)
 # path must exist! file doesn't have to.
 
-adana --dbpath /tmp/mydb.db --historypath /tmp/myhistory.txt --fallback
+adana --dbpath /tmp/mydb.db --historypath /tmp/myhistory.txt --nofb
 
 ```

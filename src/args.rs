@@ -3,7 +3,7 @@ use anyhow::Context;
 pub enum Argument {
     InMemory,
     DbPath(String),
-    FallbackInMemory,
+    NoFallbackInMemory,
     HistoryPath(String),
 }
 
@@ -24,14 +24,14 @@ pub fn parse_args(
                 );
                 arguments.push(Argument::InMemory);
             }
-            "--fallback" | "-fb" => {
+            "--no-fallback" | "-nofb" => {
                 anyhow::ensure!(
                     !arguments
                         .iter()
-                        .any(|a| matches!(a, Argument::FallbackInMemory)),
-                    "fallback should be specified only once!"
+                        .any(|a| matches!(a, Argument::NoFallbackInMemory)),
+                    "no fallback should be specified only once!"
                 );
-                arguments.push(Argument::FallbackInMemory);
+                arguments.push(Argument::NoFallbackInMemory);
             }
             "--dbpath" | "-db" => {
                 anyhow::ensure!(

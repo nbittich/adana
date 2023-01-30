@@ -145,10 +145,14 @@ impl<K: Key + Clone, V: Value + Clone> DbOp<K, V> for InMemoryDb<K, V> {
         tree_name_source: &str,
         tree_name_dest: &str,
     ) -> Option<()> {
-        let source = self.trees.remove(tree_name_source)?;
+        let source: Vec<(K, V)> = self
+            .trees
+            .get(tree_name_source)?
+            .iter()
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect();
         let dest = self.trees.get_mut(tree_name_dest)?;
-        dest.extend(source.iter().map(|(k, v)| (k.clone(), v.clone())));
-        let _ = self.trees.insert(tree_name_source.to_string(), source);
+        dest.extend(source);
 
         Some(())
     }

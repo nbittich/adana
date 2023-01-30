@@ -59,10 +59,21 @@ impl<K: Key, V: Value> GuardedDb<K, V> for FileDb<K, V> {
     }
 }
 
-impl<K: Key, V: Value> DbOp<K, V> for FileDb<K, V> {
+impl<K, V> DbOp<K, V> for FileDb<K, V>
+where
+    K: 'static + Key + DeserializeOwned + std::fmt::Debug,
+    V: 'static + Value + DeserializeOwned + std::fmt::Debug,
+{
     fn get_current_tree(&self) -> Option<String> {
         let guard = self.get_guard()?;
         guard.get_current_tree()
+    }
+
+    fn flush(&self) -> anyhow::Result<&'static str> {
+        match self.get_sender().send(Notify::Update) {
+            Ok(_) => Ok("notify db to update itself"),
+            Err(e) => Err(anyhow::Error::from(e)),
+        }
     }
 
     fn open_tree(&mut self, tree_name: &str) -> Option<bool> {

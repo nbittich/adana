@@ -38,7 +38,7 @@ fn main() -> anyhow::Result<()> {
     } else {
         let in_memory = args.iter().any(|a| matches!(a, Argument::InMemory));
         let fallback_in_memory =
-            args.iter().any(|a| matches!(a, Argument::FallbackInMemory));
+            args.iter().any(|a| !matches!(a, Argument::NoFallbackInMemory));
         let db_path = args.iter().find_map(|a| {
             if let Argument::DbPath(path) = a {
                 Some(path)

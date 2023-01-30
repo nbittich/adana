@@ -153,6 +153,10 @@ pub fn process_command(
                     );
                 }
             }
+            CacheCommand::Flush => match flush(db) {
+                Ok(msg) => println!("{msg}"),
+                Err(err) => eprintln!("Error: {err:?}"),
+            },
             CacheCommand::Restore => {
                 let backup_path =
                     std::env::current_dir()?.join(BACKUP_FILE_NAME);
