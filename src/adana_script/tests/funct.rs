@@ -305,3 +305,20 @@ fn test_if_else_file() {
 
     assert_eq!(r, Primitive::Null,);
 }
+
+#[test]
+#[serial_test::serial]
+fn test_array_access_fn_call() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+             s = [1, (i) => { 1 + i  }, 2 , (name)=> { println("hello " + name)}, 6, (name) => { "hello " + name}]
+             z = s[1](5)
+             y = s[5]("nordine")
+             s[5]("nordine2")
+
+        "#;
+    let r = compute(expr, &mut ctx).unwrap();
+    assert_eq!(r, Primitive::String("hello nordine2".into()));
+    assert_eq!(ctx.get("z"), Some(&Primitive::Int(6)));
+    assert_eq!(ctx.get("y"), Some(&Primitive::String("hello nordine".into())));
+}

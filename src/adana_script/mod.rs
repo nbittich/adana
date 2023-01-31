@@ -64,7 +64,6 @@ pub mod constants {
     pub const STRUCT: &str = "struct";
     pub const EVAL: &str = "eval";
     pub const TYPE_OF: &str = "type_of";
-    pub const FN: &str = "fn";
 }
 
 #[derive(Debug, EnumCount)]

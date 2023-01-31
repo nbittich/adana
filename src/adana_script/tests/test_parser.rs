@@ -362,23 +362,113 @@ fn test_struct() {
 #[test]
 fn test_array_fn_access() {
     let expr = r#"
-       # x = (i) => println("hello")
-       # n = [1, 2, x]
+         x = (i) => println("hello")
+         n = [1, 2, x]
         n[2](5)
         "#;
     let (r, instr) = parse_instructions(expr).unwrap();
     assert_eq!("", r);
     assert_eq!(
         instr,
-        vec![Value::FunctionCall {
-            parameters: Box::new(Value::BlockParen(vec![Value::Expression(
-                vec![Value::Integer(5,),],
-            ),],)),
-            function: Box::new(Value::ArrayAccess {
-                arr: Box::new(Value::Variable("n".into(),)),
-                index: Box::new(Value::Integer(2,))
-            }),
-        },]
+        vec![
+            Value::VariableExpr {
+                name: Box::new(Value::Variable("x".into())),
+                expr: Box::new(Value::Function {
+                    parameters: Box::new(Value::BlockParen(vec![
+                        Value::Variable("i".into())
+                    ])),
+                    exprs: vec![Value::Expression(vec![
+                        Value::BuiltInFunction {
+                            fn_type: BuiltInFunctionType::Println,
+                            expr: Box::new(Value::BlockParen(vec![
+                                Value::String("hello".into())
+                            ]))
+                        }
+                    ])]
+                })
+            },
+            Value::VariableExpr {
+                name: Box::new(Value::Variable("n".into())),
+                expr: Box::new(Value::Array(vec![
+                    Value::Integer(1),
+                    Value::Integer(2),
+                    Value::Variable("x".into())
+                ]))
+            },
+            Value::FunctionCall {
+                parameters: Box::new(Value::BlockParen(vec![
+                    Value::Expression(vec![Value::Integer(5)])
+                ])),
+                function: Box::new(Value::ArrayAccess {
+                    arr: Box::new(Value::Variable("n".into())),
+                    index: Box::new(Value::Integer(2))
+                })
+            }
+        ]
     );
+    dbg!(instr);
+}
+
+#[test]
+fn test_inline_fn1() {
+    let expr = r#"
+        s = [1, (i) => { println(i) },2]
+        a = () => 1 +2
+        hello = (name) => "hello " + name
+
+        "#;
+    let (r, instr) = parse_instructions(expr).unwrap();
+    assert_eq!("", r);
+
+    assert_eq!(
+        instr,
+        vec![
+            Value::VariableExpr {
+                name: Box::new(Value::Variable("s".into())),
+                expr: Box::new(Value::Array(vec![
+                    Value::Integer(1),
+                    Value::Function {
+                        parameters: Box::new(Value::BlockParen(vec![
+                            Value::Variable("i".into())
+                        ])),
+                        exprs: vec![Value::BlockParen(vec![
+                            Value::BuiltInFunction {
+                                fn_type: BuiltInFunctionType::Println,
+                                expr: Box::new(Value::BlockParen(vec![
+                                    Value::Variable("i".into())
+                                ]))
+                            }
+                        ])]
+                    },
+                    Value::Integer(2)
+                ]))
+            },
+            Value::VariableExpr {
+                name: Box::new(Value::Variable("a".into(),)),
+                expr: Box::new(Value::Function {
+                    parameters: Box::new(BlockParen(vec![],)),
+                    exprs: vec![Value::Expression(vec![
+                        Value::Integer(1,),
+                        Value::Operation(Operator::Add,),
+                        Value::Integer(2,),
+                    ],),],
+                }),
+            },
+            Value::VariableExpr {
+                name: Box::new(Variable("hello".into(),)),
+                expr: Box::new(Value::Function {
+                    parameters: Box::new(Value::BlockParen(vec![
+                        Value::Variable("name".into(),),
+                    ],)),
+                    exprs: vec![Value::Expression(vec![
+                        Value::String("hello ".into(),),
+                        Value::Operation(Operator::Add,),
+                        Value::Variable("name".into(),),
+                    ])],
+                }),
+            },
+        ]
+    );
+
     dbg!(instr);
 }

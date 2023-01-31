@@ -99,11 +99,27 @@ fn parse_fn(s: &str) -> Res<Value> {
     let parser = |p| separated_list0(tag_no_space(","), parse_value)(p);
     map(
         separated_pair(
-            parse_paren(parser),
+            map_parser(take_until("=>"), parse_paren(parser)),
             tag("=>"),
             alt((
                 parse_block(parse_instructions),
-                map(parse_expression, |v| vec![v]),
+                alt((
+                    all_consuming(map(parse_expression, |v| vec![v])),
+                    preceded(
+                        tag_no_space("{"),
+                        terminated(
+                            map(
+                                map(many1(parse_value), Value::BlockParen),
+                                |v| vec![v],
+                            ),
+                            tag_no_space("}"),
+                        ),
+                    ),
+                    map_parser(
+                        take_until("\n"),
+                        map(parse_expression, |v| vec![v]),
+                    ),
+                )),
             )),
         ),
         |(parameters, exprs)| Value::Function {
@@ -236,8 +252,11 @@ fn parse_array(s: &str) -> Res<Value> {
         preceded(
             tag_no_space("["),
             terminated(
-                separated_list0(tag_no_space(","), parse_value),
-                preceded(multispace0, tag("]")),
+                separated_list0(
+                    tag_no_space(","),
+                    alt((parse_fn, parse_value)),
+                ),
+                preceded(multispace0, tag_no_space("]")),
             ),
         ),
         Value::Array,
@@ -248,8 +267,8 @@ fn parse_array_access(s: &str) -> Res<Value> {
         pair(
             alt((parse_variable, parse_array, parse_string)),
             preceded(
-                terminated(tag("["), multispace0),
-                terminated(parse_value, preceded(multispace0, tag("]"))),
+                tag_no_space("["),
+                terminated(parse_value, tag_no_space("]")),
             ),
         ),
         |(arr, idx)| Value::ArrayAccess {
@@ -264,16 +283,16 @@ fn parse_value(s: &str) -> Res<Value> {
         multispace0,
         terminated(
             alt((
-                parse_block_paren,
                 parse_array_access,
                 parse_array,
+                parse_fn,
+                parse_block_paren,
                 parse_builtin_fn,
-                parse_string,
                 parse_operation,
+                parse_string,
                 parse_number,
                 parse_bool,
                 parse_fn_call,
-                parse_fn,
                 parse_struct,
                 parse_variable,
                 parse_constant,
@@ -324,7 +343,13 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
             separated_pair(
                 alt((parse_array_access, parse_variable)),
                 tag_no_space("="),
-                alt((parse_fn_call, parse_fn, parse_struct, parse_expression)),
+                alt((
+                    parse_fn_call,
+                    parse_fn,
+                    parse_array,
+                    parse_struct,
+                    parse_expression,
+                )),
             ),
             |(name, expr)| Value::VariableExpr {
                 name: Box::new(name),
