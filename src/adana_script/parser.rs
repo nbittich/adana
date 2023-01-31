@@ -134,7 +134,10 @@ fn parse_fn_call(s: &str) -> Res<Value> {
     };
 
     map(
-        pair(alt((parse_fn, parse_variable)), map(parser, Value::BlockParen)),
+        pair(
+            alt((parse_fn, parse_array_access, parse_variable)),
+            map(parser, Value::BlockParen),
+        ),
         |(function, parameters)| Value::FunctionCall {
             parameters: Box::new(parameters),
             function: Box::new(function),

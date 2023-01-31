@@ -358,3 +358,27 @@ fn test_struct() {
     );
     dbg!(res, struc);
 }
+
+#[test]
+fn test_array_fn_access() {
+    let expr = r#"
+       # x = (i) => println("hello")
+       # n = [1, 2, x]
+        n[2](5)
+        "#;
+    let (r, instr) = parse_instructions(expr).unwrap();
+    assert_eq!("", r);
+    assert_eq!(
+        instr,
+        vec![Value::FunctionCall {
+            parameters: Box::new(Value::BlockParen(vec![Value::Expression(
+                vec![Value::Integer(5,),],
+            ),],)),
+            function: Box::new(Value::ArrayAccess {
+                arr: Box::new(Value::Variable("n".into(),)),
+                index: Box::new(Value::Integer(2,))
+            }),
+        },]
+    );
+    dbg!(instr);
+}
