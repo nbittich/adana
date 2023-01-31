@@ -1,3 +1,5 @@
+use nom::combinator::eof;
+
 use crate::{
     prelude::{
         all_consuming, alt, delimited, double, many0, many1, map, map_parser,
@@ -15,9 +17,9 @@ use super::{
     BuiltInFunctionType, MathConstants, Operator, Value,
 };
 
-fn comments(s: &str) -> Res<Vec<&str>> {
+pub(super) fn comments(s: &str) -> Res<Vec<&str>> {
     terminated(
-        many0(preceded(tag_no_space("#"), take_until("\n"))),
+        many0(preceded(tag_no_space("#"), alt((take_until("\n"), rest)))),
         multispace0,
     )(s)
 }

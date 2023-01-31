@@ -472,3 +472,43 @@ fn test_inline_fn1() {
 
     dbg!(instr);
 }
+
+#[test]
+fn test_comments_end_arr() {
+    let expr = r#"x[1]() # works"#;
+    let (r, ins) = parse_instructions(expr).unwrap();
+    assert_eq!("", r);
+    assert_eq!(
+        ins,
+        vec![Value::FunctionCall {
+            parameters: Box::new(Value::BlockParen(vec![],)),
+            function: Box::new(Value::ArrayAccess {
+                arr: Box::new(Value::Variable("x".to_string(),)),
+                index: Box::new(Value::Integer(1,)),
+            }),
+        }]
+    );
+    let expr = r#"x =[1, ()=> {print("hello")}] # doesn't work"#;
+    let (r, ins) = parse_instructions(expr).unwrap();
+    assert_eq!("", r);
+    assert_eq!(
+        ins,
+        vec![Value::VariableExpr {
+            name: Box::new(Value::Variable("x".into())),
+            expr: Box::new(Value::Array(vec![
+                Value::Integer(1,),
+                Value::Function {
+                    parameters: Box::new(Value::BlockParen(vec![],)),
+                    exprs: vec![Value::BlockParen(vec![
+                        Value::BuiltInFunction {
+                            fn_type: BuiltInFunctionType::Print,
+                            expr: Box::new(Value::BlockParen(vec![
+                                Value::String("hello".into()),
+                            ],)),
+                        },
+                    ],),],
+                },
+            ],)),
+        },]
+    );
+}
