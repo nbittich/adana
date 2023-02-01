@@ -217,6 +217,7 @@ fn parse_struct_expr(s: &str) -> Res<Value> {
     map_parser(
         alt((take_until(";"), take_until("}"))),
         alt((
+            parse_fn_call,
             parse_fn,
             map(many1(parse_value), |mut expr| {
                 if expr.len() == 1 {
@@ -234,7 +235,7 @@ pub(super) fn parse_struct(s: &str) -> Res<Value> {
         separated_pair(
             preceded(multispace0, terminated(map(parse_variable_str, String::from), multispace0)),
             tag_no_space(":"),
-            alt((parse_fn_call, parse_fn,  parse_struct_expr)))
+            parse_struct_expr)
     }(p);
     preceded(
         tag_no_space(STRUCT),
