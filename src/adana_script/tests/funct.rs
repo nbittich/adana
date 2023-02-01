@@ -156,7 +156,7 @@ fn test_drop() {
 #[test]
 fn test_inline_fn() {
     let script = r#"
-        hello = (name) => "hello " + name
+        hello = (name) => { "hello " + name } 
         hello_me = hello("nordine")
         hello_world = hello("world")
         null
@@ -175,7 +175,7 @@ fn test_inline_fn() {
         Some(&Primitive::String("hello world".into()))
     );
 
-    let script = "hello = (name) => \"hello \" + name";
+    let script = "hello = (name) => { \"hello \" + name}";
 
     let mut ctx = BTreeMap::new();
     let _ = compute(script, &mut ctx).unwrap();

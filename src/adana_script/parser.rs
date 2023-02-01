@@ -1,4 +1,4 @@
-use nom::combinator::eof;
+use nom::combinator::{cut, eof};
 
 use crate::{
     prelude::{
@@ -99,29 +99,39 @@ where
 
 fn parse_fn(s: &str) -> Res<Value> {
     let parser = |p| separated_list0(tag_no_space(","), parse_value)(p);
+    let parse_expr = |p| {
+        preceded(
+            tag_no_space("{"),
+            terminated(
+                map(map(many1(parse_value), Value::BlockParen), |v| vec![v]),
+                tag_no_space("}"),
+            ),
+        )(p)
+    };
     map(
         separated_pair(
             map_parser(take_until("=>"), parse_paren(parser)),
             tag("=>"),
             alt((
+                parse_expr,
                 parse_block(parse_instructions),
-                alt((
-                    all_consuming(map(parse_expression, |v| vec![v])),
-                    preceded(
-                        tag_no_space("{"),
-                        terminated(
-                            map(
-                                map(many1(parse_value), Value::BlockParen),
-                                |v| vec![v],
-                            ),
-                            tag_no_space("}"),
-                        ),
-                    ),
-                    map_parser(
-                        take_until("\n"),
-                        map(parse_expression, |v| vec![v]),
-                    ),
-                )),
+                map_parser(take_until("\n"), parse_expr), // alt((
+                                                          //     //all_consuming(map(parse_expression, |v| vec![v])),
+                                                          //     preceded(
+                                                          //         tag_no_space("{"),
+                                                          //         terminated(
+                                                          //             map(
+                                                          //                 map(many1(parse_value), Value::BlockParen),
+                                                          //                 |v| vec![v],
+                                                          //             ),
+                                                          //             tag_no_space("}"),
+                                                          //         ),
+                                                          //     ),
+                                                          //     // map_parser(
+                                                          //     //     take_until("\n"),
+                                                          //     //     map(parse_expression, |v| vec![v]),
+                                                          //     // ),
+                                                          // )),
             )),
         ),
         |(parameters, exprs)| Value::Function {
@@ -220,29 +230,21 @@ fn parse_struct_expr(s: &str) -> Res<Value> {
     )(s)
 }
 pub(super) fn parse_struct(s: &str) -> Res<Value> {
+    let pair_key_value = |p| {
+        separated_pair(
+            preceded(multispace0, terminated(map(parse_variable_str, String::from), multispace0)),
+            tag_no_space(":"),
+            alt((parse_fn_call, parse_fn,  parse_struct_expr)))
+    }(p);
     preceded(
         tag_no_space(STRUCT),
         map(
             delimited(
                 tag_no_space("{"),
-                separated_list1(
-                    terminated(tag_no_space(";"), opt(comments)),
-                    preceded(
-                        opt(comments),
-                        separated_pair(
-                            map(
-                                preceded(
-                                    multispace0,
-                                    terminated(parse_variable_str, multispace0),
-                                ),
-                                String::from,
-                            ), // more like a key
-                            tag_no_space(":="),
-                            parse_struct_expr,
-                            //),
-                        ),
-                    ),
-                ),
+                many1(preceded(
+                    opt(comments),
+                    terminated(pair_key_value, opt(tag_no_space(";"))),
+                )),
                 tag_no_space("}"),
             ),
             |list| Value::Struct(list.into_iter().collect()),

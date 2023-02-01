@@ -239,39 +239,42 @@ fn test_paren_bug_2023() {
     );
     dbg!(&res);
 }
-
 #[test]
-fn test_struct() {
-    let expr = "struct {x:= 99}";
+fn test_struct1() {
+    let expr = " struct {x: 99}";
     let (res, struc) = parse_instructions(expr).unwrap();
     assert_eq!("", res);
     assert_eq!(
         vec![Value::Struct(HashMap::from([("x".into(), Value::Integer(99))]))],
         struc
     );
+}
+#[test]
+fn test_struct2() {
     let expr = r#"
         # commentaire
       my = struct { # commentaire
           # ici un commentaire
-            a := 7;
-            b := "salut"; # i am a comment
-            c := [1,2,3];
-      # autre := ["commentaire"];
-            d := 1.;
-            x := true;
-            g := null;
-            aa := (n) => {
+            a : 7;
+            b : "salut"; # i am a comment
+            c : [1,2,3];
+      # autre : ["commentaire"];
+            d : 1.;
+            x : true;
+            g : null;
+            aa : (n) => {
                 print("hello" + n)
             }; # commentaire
-            i := ()=> {
+            i : ()=> {
                 1
             };
-            j := 4*2+1 *sqrt(2.);
-            r := () => "hello!";
-            mm := (2 *2)
+            j : 4*2+1 *sqrt(2.);
+            r : () => {"hello!"};
+            mm : (2 *2)
         }
         "#;
     let (res, struc) = parse_instructions(expr).unwrap();
+    dbg!(&struc);
     assert_eq!("", res);
 
     assert_eq!(
@@ -285,7 +288,7 @@ fn test_struct() {
                         parameters: Box::new(Value::BlockParen(vec![
                             Value::Variable("n".into(),),
                         ],)),
-                        exprs: vec![Value::Expression(vec![
+                        exprs: vec![Value::BlockParen(vec![
                             Value::BuiltInFunction {
                                 fn_type: BuiltInFunctionType::Print,
                                 expr: Box::new(BlockParen(vec![
@@ -302,7 +305,7 @@ fn test_struct() {
                     "r".into(),
                     Value::Function {
                         parameters: Box::new(BlockParen(vec![],)),
-                        exprs: vec![Value::Expression(vec![Value::String(
+                        exprs: vec![Value::BlockParen(vec![Value::String(
                             "hello!".into(),
                         ),],),],
                     }
@@ -319,7 +322,7 @@ fn test_struct() {
                     "i".into(),
                     Value::Function {
                         parameters: Box::new(Value::BlockParen(vec![],)),
-                        exprs: vec![Value::Expression(vec![
+                        exprs: vec![Value::BlockParen(vec![
                             Value::Integer(1,),
                         ],),],
                     }
@@ -362,7 +365,7 @@ fn test_struct() {
 #[test]
 fn test_array_fn_access() {
     let expr = r#"
-         x = (i) => println("hello")
+         x = (i) => { println("hello") }
          n = [1, 2, x]
         n[2](5)
         "#;
@@ -377,7 +380,7 @@ fn test_array_fn_access() {
                     parameters: Box::new(Value::BlockParen(vec![
                         Value::Variable("i".into())
                     ])),
-                    exprs: vec![Value::Expression(vec![
+                    exprs: vec![Value::BlockParen(vec![
                         Value::BuiltInFunction {
                             fn_type: BuiltInFunctionType::Println,
                             expr: Box::new(Value::BlockParen(vec![
@@ -413,8 +416,8 @@ fn test_array_fn_access() {
 fn test_inline_fn1() {
     let expr = r#"
         s = [1, (i) => { println(i) },2]
-        a = () => 1 +2
-        hello = (name) => "hello " + name
+        a = () => {1 +2}
+        hello = (name) => {"hello " + name}
 
         "#;
     let (r, instr) = parse_instructions(expr).unwrap();
@@ -447,7 +450,7 @@ fn test_inline_fn1() {
                 name: Box::new(Value::Variable("a".into(),)),
                 expr: Box::new(Value::Function {
                     parameters: Box::new(BlockParen(vec![],)),
-                    exprs: vec![Value::Expression(vec![
+                    exprs: vec![Value::BlockParen(vec![
                         Value::Integer(1,),
                         Value::Operation(Operator::Add,),
                         Value::Integer(2,),
@@ -460,7 +463,7 @@ fn test_inline_fn1() {
                     parameters: Box::new(Value::BlockParen(vec![
                         Value::Variable("name".into(),),
                     ],)),
-                    exprs: vec![Value::Expression(vec![
+                    exprs: vec![Value::BlockParen(vec![
                         Value::String("hello ".into(),),
                         Value::Operation(Operator::Add,),
                         Value::Variable("name".into(),),
