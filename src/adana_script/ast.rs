@@ -288,7 +288,11 @@ pub(super) fn to_ast(
             tree,
             curr_node_id,
         ),
-        Value::Struct(struc_map) => todo!(),
+        Value::Struct(struc_map) => append_to_current_and_return(
+            TreeNodeValue::Struct(struc_map),
+            tree,
+            curr_node_id,
+        ),
         Value::ArrayAccess { arr, index } => match (*arr, *index) {
             (v, Value::Integer(idx)) => append_to_current_and_return(
                 TreeNodeValue::ArrayAccess {

@@ -1,5 +1,6 @@
 use std::{
     cmp::Ordering,
+    collections::HashMap,
     fmt::Display,
     iter::Sum,
     ops::{Add, Div, Mul, Rem, Sub},
@@ -21,6 +22,7 @@ pub enum Primitive {
     Double(f64),
     String(String),
     Array(Vec<Primitive>),
+    Struct(HashMap<String, Primitive>),
     Error(String),
     Function { parameters: Vec<String>, exprs: Vec<Value> },
     Unit,
@@ -166,6 +168,22 @@ impl Display for Primitive {
                     })
                     .collect::<Vec<_>>();
                 write!(f, "[{}]", joined_arr[..].join(", "))
+            }
+            Primitive::Struct(struc) => {
+                let joined_arr = struc
+                    .iter()
+                    .map(|(k, p)| {
+                        format!(
+                            "\t{k}: {}",
+                            if let Primitive::String(s) = p {
+                                format!(r#""{s}""#)
+                            } else {
+                                p.to_string()
+                            }
+                        )
+                    })
+                    .collect::<Vec<_>>();
+                write!(f, "struct {{\n{}\n}}", joined_arr[..].join(", \n"))
             }
             Primitive::Function { parameters, exprs: _ } => {
                 write!(f, "({}) => {{...}}", parameters.join(", "))
@@ -564,7 +582,14 @@ impl PartialOrd for Primitive {
             }
             (Primitive::EarlyReturn(l), a) => l.as_ref().partial_cmp(a),
             (l, Primitive::EarlyReturn(r)) => l.partial_cmp(r),
-
+            (Primitive::Struct(l), Primitive::Struct(r)) => {
+                if l.eq(r) {
+                    Some(Ordering::Equal)
+                } else {
+                    None
+                }
+            }
+            (Primitive::Struct(_), _) => None,
             (Primitive::Int(_), _) => None,
             (Primitive::Double(_), _) => None,
             (Primitive::String(_), _) => None,
@@ -591,6 +616,7 @@ impl TypeOf for Primitive {
             Primitive::Function { parameters: _, exprs: _ } => {
                 Primitive::String("function".to_string())
             }
+            Primitive::Struct(_) => Primitive::String("struct".to_string()),
             Primitive::Unit => Primitive::String("unit".to_string()),
             Primitive::NoReturn => Primitive::String("!".to_string()),
             Primitive::EarlyReturn(v) => v.type_of(),

@@ -1,5 +1,6 @@
 use std::{
     borrow::Borrow,
+    collections::HashMap,
     fs::{read_to_string, File},
     io::{BufRead, BufReader},
     ops::{Neg, Not},
@@ -283,6 +284,24 @@ fn compute_recur(
                     }
                 }
                 Ok(Primitive::Array(primitives))
+            }
+            TreeNodeValue::Struct(struc) => {
+                let mut primitives = HashMap::with_capacity(struc.len());
+                for (k, v) in struc {
+                    let primitive = compute_instructions(vec![v.clone()], ctx)?;
+                    match primitive {
+                        v @ Primitive::Error(_) => return Ok(v),
+                        Primitive::Unit => {
+                            return Ok(Primitive::Error(
+                                "cannot push unit () to struct".to_string(),
+                            ))
+                        }
+                        _ => {
+                            primitives.insert(k.to_string(), primitive);
+                        }
+                    }
+                }
+                Ok(Primitive::Struct(primitives))
             }
             TreeNodeValue::ArrayAccess { index, array } => {
                 let error_message = || {

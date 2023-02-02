@@ -1,5 +1,3 @@
-use nom::combinator::{cut, eof};
-
 use crate::{
     prelude::{
         all_consuming, alt, delimited, double, many0, many1, map, map_parser,

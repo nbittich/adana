@@ -192,6 +192,7 @@ pub(super) enum TreeNodeValue {
     IfExpr(Value),
     WhileExpr(Value),
     Array(Vec<Value>),
+    Struct(HashMap<String, Value>),
     ArrayAccess { index: Primitive, array: Value },
     Function(Value),
     FunctionCall(Value),
