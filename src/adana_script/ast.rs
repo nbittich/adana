@@ -224,6 +224,17 @@ pub(super) fn to_ast(
                         "invalid variable expression {arr:?} => {expr:?}"
                     )))
                 }
+            } else if let Value::StructAccess { struc, key } = *name {
+                if let Value::Variable(n) = *struc {
+                    Ok(TreeNodeValue::VariableArrayAssign {
+                        name: n,
+                        index: Primitive::String(key),
+                    })
+                } else {
+                    Err(anyhow::Error::msg(format!(
+                        "invalid variable expression {struc:?} => {expr:?}"
+                    )))
+                }
             } else {
                 Err(anyhow::Error::msg("invalid variable expression"))
             }?;
@@ -288,6 +299,11 @@ pub(super) fn to_ast(
             tree,
             curr_node_id,
         ),
+        Value::Struct(struc_map) => append_to_current_and_return(
+            TreeNodeValue::Struct(struc_map),
+            tree,
+            curr_node_id,
+        ),
         Value::ArrayAccess { arr, index } => match (*arr, *index) {
             (v, Value::Integer(idx)) => append_to_current_and_return(
                 TreeNodeValue::ArrayAccess {
@@ -311,6 +327,14 @@ pub(super) fn to_ast(
                 "illegal array access! array => {arr:?}, index=> {index:?}"
             ))),
         },
+        Value::StructAccess { struc, key } => append_to_current_and_return(
+            TreeNodeValue::StructAccess {
+                struc: *struc,
+                key: Primitive::String(key),
+            },
+            tree,
+            curr_node_id,
+        ),
         f @ Value::Function { parameters: _, exprs: _ } => {
             append_to_current_and_return(
                 TreeNodeValue::Function(f),

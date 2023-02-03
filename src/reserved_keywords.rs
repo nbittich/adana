@@ -33,6 +33,7 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     WHILE,
     ELSE,
     MULTILINE,
+    STRUCT,
 ];
 
 pub fn check_reserved_keyword(aliases: &[&str]) -> bool {

@@ -3,6 +3,8 @@ mod compute;
 mod parser;
 mod primitive;
 
+use std::collections::HashMap;
+
 pub use compute::compute;
 pub use primitive::Primitive;
 
@@ -59,6 +61,7 @@ pub mod constants {
     pub const DROP: &str = "drop";
     pub const NULL: &str = "null";
     pub const MULTILINE: &str = "multiline";
+    pub const STRUCT: &str = "struct";
     pub const EVAL: &str = "eval";
     pub const TYPE_OF: &str = "type_of";
 }
@@ -134,6 +137,11 @@ pub enum Value {
         arr: Box<Value>,
         index: Box<Value>,
     },
+    Struct(HashMap<String, Value>),
+    StructAccess {
+        struc: Box<Value>,
+        key: String,
+    },
 }
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum BuiltInFunctionType {
@@ -188,6 +196,8 @@ pub(super) enum TreeNodeValue {
     IfExpr(Value),
     WhileExpr(Value),
     Array(Vec<Value>),
+    Struct(HashMap<String, Value>),
+    StructAccess { struc: Value, key: Primitive },
     ArrayAccess { index: Primitive, array: Value },
     Function(Value),
     FunctionCall(Value),

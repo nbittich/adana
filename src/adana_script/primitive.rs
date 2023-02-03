@@ -1,5 +1,6 @@
 use std::{
     cmp::Ordering,
+    collections::HashMap,
     fmt::Display,
     iter::Sum,
     ops::{Add, Div, Mul, Rem, Sub},
@@ -21,6 +22,7 @@ pub enum Primitive {
     Double(f64),
     String(String),
     Array(Vec<Primitive>),
+    Struct(HashMap<String, Primitive>),
     Error(String),
     Function { parameters: Vec<String>, exprs: Vec<Value> },
     Unit,
@@ -133,6 +135,9 @@ impl Primitive {
                 (Primitive::Null, _) | (_, Primitive::Null) => {
                     Primitive::Bool(false)
                 }
+                (Primitive::Struct(_), Primitive::Struct(_)) => {
+                    Primitive::Bool(false)
+                }
                 _ => Primitive::Error(
                     format!("call to is_equal() for two different types {self} => {other}"),
                 ),
@@ -166,6 +171,22 @@ impl Display for Primitive {
                     })
                     .collect::<Vec<_>>();
                 write!(f, "[{}]", joined_arr[..].join(", "))
+            }
+            Primitive::Struct(struc) => {
+                let joined_arr = struc
+                    .iter()
+                    .map(|(k, p)| {
+                        format!(
+                            "\t{k}: {}",
+                            if let Primitive::String(s) = p {
+                                format!(r#""{s}""#)
+                            } else {
+                                p.to_string()
+                            }
+                        )
+                    })
+                    .collect::<Vec<_>>();
+                write!(f, "struct {{\n{}\n}}", joined_arr[..].join(", \n"))
             }
             Primitive::Function { parameters, exprs: _ } => {
                 write!(f, "({}) => {{...}}", parameters.join(", "))
@@ -564,7 +585,14 @@ impl PartialOrd for Primitive {
             }
             (Primitive::EarlyReturn(l), a) => l.as_ref().partial_cmp(a),
             (l, Primitive::EarlyReturn(r)) => l.partial_cmp(r),
-
+            (Primitive::Struct(l), Primitive::Struct(r)) => {
+                if l.eq(r) {
+                    Some(Ordering::Equal)
+                } else {
+                    None
+                }
+            }
+            (Primitive::Struct(_), _) => None,
             (Primitive::Int(_), _) => None,
             (Primitive::Double(_), _) => None,
             (Primitive::String(_), _) => None,
@@ -591,6 +619,7 @@ impl TypeOf for Primitive {
             Primitive::Function { parameters: _, exprs: _ } => {
                 Primitive::String("function".to_string())
             }
+            Primitive::Struct(_) => Primitive::String("struct".to_string()),
             Primitive::Unit => Primitive::String("unit".to_string()),
             Primitive::NoReturn => Primitive::String("!".to_string()),
             Primitive::EarlyReturn(v) => v.type_of(),
@@ -618,6 +647,13 @@ impl Array for Primitive {
                     Primitive::Error("index out of range".to_string())
                 }
             }
+            (Primitive::Struct(struc), Primitive::String(key)) => {
+                if let Some(p) = struc.get(key) {
+                    p.clone()
+                } else {
+                    Primitive::Null
+                }
+            }
             _ => Primitive::Error("illegal access to array!!!".to_string()),
         }
     }
@@ -626,6 +662,7 @@ impl Array for Primitive {
         match self {
             Primitive::String(s) => Primitive::Int(s.len() as i128),
             Primitive::Array(a) => Primitive::Int(a.len() as i128),
+            Primitive::Struct(s) => Primitive::Int(s.len() as i128),
             _ => Primitive::Error(format!(
                 "call to len() on a non array value => {self}"
             )),
@@ -648,6 +685,14 @@ impl Array for Primitive {
                 } else {
                     Primitive::Error("index out of range".to_string())
                 }
+            }
+            (Primitive::Struct(s), Primitive::String(k)) => {
+                if s.contains_key(k) {
+                    std::mem::swap(s.get_mut(k).unwrap(), rhs);
+                } else {
+                    s.insert(k.clone(), rhs.clone());
+                }
+                s[k].clone()
             }
             (Primitive::String(s), Primitive::Int(idx)) => {
                 let idx = *idx as usize;

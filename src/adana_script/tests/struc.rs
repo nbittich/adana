@@ -1,0 +1,169 @@
+use std::collections::{BTreeMap, HashMap};
+
+use serial_test::serial;
+
+use crate::adana_script::{compute, Primitive, Value};
+
+#[test]
+#[serial]
+fn test_simple_struc() {
+    let mut ctx = BTreeMap::new();
+    let expr = "x = struct {x: 8;}";
+    let _ = compute(expr, &mut ctx).unwrap();
+    assert_eq!(ctx.len(), 1);
+    assert_eq!(
+        ctx.get("x"),
+        Some(&Primitive::Struct(HashMap::from([(
+            "x".to_string(),
+            Primitive::Int(8)
+        )])))
+    );
+}
+
+#[test]
+#[serial]
+fn test_simple_struc_with_more_stuff_in_it() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"x = struct {
+                x: 8;
+                y: "hello;";
+                z: ()=> {println("hello")};
+           }"#;
+    let _ = compute(expr, &mut ctx).unwrap();
+    assert_eq!(ctx.len(), 1);
+    assert_eq!(
+        ctx.get("x"),
+        Some(&Primitive::Struct(HashMap::from([
+            ("x".to_string(), Primitive::Int(8)),
+            ("y".to_string(), Primitive::String("hello;".to_string())),
+            (
+                "z".to_string(),
+                Primitive::Function {
+                    parameters: vec![],
+                    exprs: vec![Value::BlockParen(
+                        vec![Value::BuiltInFunction {
+                        fn_type:
+                            crate::adana_script::BuiltInFunctionType::Println,
+                        expr: Box::new(Value::BlockParen(vec![Value::String(
+                            "hello".to_string()
+                        )]))
+                    }]
+                    )]
+                }
+            )
+        ])))
+    );
+}
+
+#[test]
+#[serial]
+fn test_struct_eq() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        x = struct {
+                x: 8;
+                y: "hello;";
+                z: ()=> {println("hello")};
+            }
+        y = struct {
+          z: () => {println("hello")};
+          x: 8;
+          y: "hello;";
+        }
+        x == y
+    "#;
+    let res = compute(expr, &mut ctx).unwrap();
+    assert_eq!(Primitive::Bool(true), res);
+
+    let expr = r#"
+        x = struct {
+                x: 8;
+                y: "hello;";
+                z: ()=> {println("hello")};
+            }
+        y = struct {
+          z: () => {println("hello")};
+          x: 8;
+        }
+        x == y
+    "#;
+    let res = compute(expr, &mut ctx).unwrap();
+    assert_eq!(Primitive::Bool(false), res);
+}
+
+#[test]
+#[serial]
+fn test_struct_access() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        person = struct {
+                    name: "hello";
+                    age: 20;
+                 }
+        person.age
+        "#;
+    let res = compute(expr, &mut ctx).unwrap();
+    assert_eq!(res, Primitive::Int(20));
+}
+
+#[test]
+#[serial]
+fn test_struct_variable_assign() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        person = struct {
+                    name: "hello";
+                    age: 20;
+                 }
+        person.age = 34
+        person.age
+        "#;
+    let res = compute(expr, &mut ctx).unwrap();
+    assert_eq!(res, Primitive::Int(34));
+}
+#[test]
+#[serial]
+fn test_struct_complex_ish() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        person = struct {
+                    name: "hello";
+                    age: 14;
+                    full_name: null;
+                 }
+        # person.age
+
+        person_service = struct {
+            say_hi:    (person) => { "hi " + person.name };
+            check_age: (person) => {
+                if (person.age < 18) {
+                  return "you are too young"
+                } else {
+                  return "you are too old"
+             }
+            };
+            boom: (person) => {
+                if(person.full_name ==null) {
+                    return "John Doe"
+                }
+                person.full_name
+            };
+        }
+        test1 = person_service.say_hi(person)
+        test2 = person_service.check_age(person)
+        person.age = 34
+        test3 = person_service.check_age(person)
+        test4 = person_service.boom(person)
+        person.full_name = "Nordine Bittich"
+        test5 = person_service.boom(person)
+        "#;
+    let _ = compute(expr, &mut ctx).unwrap();
+    assert_eq!(ctx["test1"], Primitive::String("hi hello".to_string()));
+    assert_eq!(
+        ctx["test2"],
+        Primitive::String("you are too young".to_string())
+    );
+    assert_eq!(ctx["test3"], Primitive::String("you are too old".to_string()));
+    assert_eq!(ctx["test4"], Primitive::String("John Doe".to_string()));
+    assert_eq!(ctx["test5"], Primitive::String("Nordine Bittich".to_string()));
+}

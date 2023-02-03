@@ -1,5 +1,6 @@
 use std::{
     borrow::Borrow,
+    collections::HashMap,
     fs::{read_to_string, File},
     io::{BufRead, BufReader},
     ops::{Neg, Not},
@@ -311,6 +312,34 @@ fn compute_recur(
                     _ => Err(anyhow::Error::msg(error_message())),
                 }
             }
+            TreeNodeValue::Struct(struc) => {
+                let mut primitives = HashMap::with_capacity(struc.len());
+                for (k, v) in struc {
+                    let primitive = compute_instructions(vec![v.clone()], ctx)?;
+                    match primitive {
+                        v @ Primitive::Error(_) => return Ok(v),
+                        Primitive::Unit => {
+                            return Ok(Primitive::Error(
+                                "cannot push unit () to struct".to_string(),
+                            ))
+                        }
+                        _ => {
+                            primitives.insert(k.to_string(), primitive);
+                        }
+                    }
+                }
+                Ok(Primitive::Struct(primitives))
+            }
+            TreeNodeValue::StructAccess { struc, key } => match (struc, key) {
+                (Value::Variable(v), key @ Primitive::String(_)) => {
+                    let struc =
+                        ctx.get(v).context("struct not found in context")?;
+                    Ok(struc.index_at(key))
+                }
+                _ => Ok(Primitive::Error(format!(
+                    "Error struct access: struct {struc:?}, key {key} "
+                ))),
+            },
             TreeNodeValue::VariableArrayAssign { name, index } => {
                 let mut v = compute_recur(node.first_child(), ctx)?;
                 let array =
@@ -378,7 +407,7 @@ fn compute_recur(
                         }
 
                         // call function in a specific os thread with its own stack
-                        spawn(move || {
+                        let res = spawn(move || {
                             compute_instructions(exprs, &mut scope_ctx)
                         })
                         .join()
@@ -386,7 +415,11 @@ fn compute_recur(
                             anyhow::Error::msg(format!(
                                 "something wrong: {e:?}"
                             ))
-                        })?
+                        })??;
+                        if let Primitive::EarlyReturn(v) = res {
+                            return Ok(*v);
+                        }
+                        Ok(res)
                     } else {
                         Ok(Primitive::Error(format!(
                             " not a function: {function}"
