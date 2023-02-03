@@ -241,12 +241,85 @@ fn test_paren_bug_2023() {
 }
 #[test]
 fn test_struct1() {
-    let expr = " struct {x: 99}";
+    let expr = " struct {x: 99;}";
     let (res, struc) = parse_instructions(expr).unwrap();
     assert_eq!("", res);
     assert_eq!(
         vec![Value::Struct(HashMap::from([("x".into(), Value::Integer(99))]))],
         struc
+    );
+}
+#[test]
+fn test_struct_array() {
+    let expr = r#"x = [1, 2, struct{x: (name)=> {println("hello" + name)};}, "hello"]"#;
+    let (res, struc_arr) = parse_instructions(expr).unwrap();
+    assert_eq!("", res);
+    assert_eq!(
+        struc_arr,
+        vec![Value::VariableExpr {
+            name: Box::new(Value::Variable("x".into(),)),
+            expr: Box::new(Value::Array(vec![
+                Value::Integer(1,),
+                Value::Integer(2,),
+                Value::Struct(HashMap::from([(
+                    "x".to_string(),
+                    Value::Function {
+                        parameters: Box::new(Value::BlockParen(vec![
+                            Value::Variable("name".to_string(),),
+                        ],)),
+                        exprs: vec![Value::BlockParen(vec![
+                            Value::BuiltInFunction {
+                                fn_type: BuiltInFunctionType::Println,
+                                expr: Box::new(Value::BlockParen(vec![
+                                    Value::String("hello".into(),),
+                                    Value::Operation(Operator::Add,),
+                                    Value::Variable("name".into(),),
+                                ],)),
+                            },
+                        ],),],
+                    },
+                )]),),
+                Value::String("hello".into(),),
+            ]),),
+        }]
+    );
+}
+#[test]
+fn test_struct_array2() {
+    let expr = r#"x = [1, 2, struct{
+                                x: (name)=> {println("hello" + name)};
+                            },
+               "hello"]"#;
+    let (res, struc_arr) = parse_instructions(expr).unwrap();
+    assert_eq!("", res);
+    assert_eq!(
+        struc_arr,
+        vec![Value::VariableExpr {
+            name: Box::new(Value::Variable("x".into(),)),
+            expr: Box::new(Value::Array(vec![
+                Value::Integer(1,),
+                Value::Integer(2,),
+                Value::Struct(HashMap::from([(
+                    "x".to_string(),
+                    Value::Function {
+                        parameters: Box::new(Value::BlockParen(vec![
+                            Value::Variable("name".to_string(),),
+                        ],)),
+                        exprs: vec![Value::BlockParen(vec![
+                            Value::BuiltInFunction {
+                                fn_type: BuiltInFunctionType::Println,
+                                expr: Box::new(Value::BlockParen(vec![
+                                    Value::String("hello".into(),),
+                                    Value::Operation(Operator::Add,),
+                                    Value::Variable("name".into(),),
+                                ],)),
+                            },
+                        ],),],
+                    },
+                )]),),
+                Value::String("hello".into(),),
+            ]),),
+        }]
     );
 }
 #[test]
@@ -270,7 +343,7 @@ fn test_struct2() {
             };
             j : 4*2+1 *sqrt(2.);
             r : () => {"hello!"};
-            mm : (2 *2)
+            mm : (2 *2);
         }
         "#;
     let (res, struc) = parse_instructions(expr).unwrap();

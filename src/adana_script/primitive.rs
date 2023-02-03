@@ -135,6 +135,9 @@ impl Primitive {
                 (Primitive::Null, _) | (_, Primitive::Null) => {
                     Primitive::Bool(false)
                 }
+                (Primitive::Struct(_), Primitive::Struct(_)) => {
+                    Primitive::Bool(false)
+                }
                 _ => Primitive::Error(
                     format!("call to is_equal() for two different types {self} => {other}"),
                 ),

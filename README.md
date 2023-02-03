@@ -211,18 +211,48 @@ There is no type-checking in the language. You can add a string to an array, not
 
 In some cases though, you might get an error. 
 
-Below, is a list of types and how you declare them. You cannot define (yet) your structure.
+Below, is a list of types and how you declare them. You can also define your structure.
 
-| **type** | **examples**                                                                                  |
-|----------|-----------------------------------------------------------------------------------------------|
-| null     | `null`                                                                                        |
-| bool     | `true` / `false`                                                                              |
-| int      | `5`                                                                                           | 
-| double   | `12.` / `12.2`                                                                                |
-| string   | `"hello"`                                                                                     |
-| array    | `[1,2,"3", true]`                                                                             |
+| **type** | **examples**                                                                                      |
+|----------|---------------------------------------------------------------------------------------------------|
+| null     | `null`                                                                                            |
+| bool     | `true` / `false`                                                                                  |
+| int      | `5`                                                                                               | 
+| double   | `12.` / `12.2`                                                                                    |
+| string   | `"hello"`                                                                                         |
+| array    | `[1,2,"3", true]`                                                                                 |
 | function | `() => {"hello"}` <br> `(name) => {"hello" + name}` <br> `(n) => {`<br>&emsp;  `"hello"`<br>`  }` |
+| struct   | `struct {x: 8; y: ()=> {println("hello!")};}`
 <hr>
+
+### Structs
+
+You can define structs. Structs are a way of grouping related variables or functions together.
+You can define function variables within a struct, but you cannot update the members of the function from within
+the struct (there is no `self` or `this`).
+
+The semicolon is required to separate each member, even the latest one.
+
+Example of defining a struct:
+
+```javascript
+person = struct {
+    name: "hello";
+    age: 20;
+}
+
+person_service = struct {
+    say_hi: (person) => { println("hi " + person.name) };
+    check_age: (person) => {
+             if (person.age < 18) {
+                 println("you are too young")
+             } else {
+                 println("you are too old")
+             }
+    };
+}
+
+```
 
 ### Manipulate arrays
 
@@ -293,11 +323,11 @@ Parameters cannot be modified within a function. if you want to update something
 
 ```python
 # no parameters
-hello = () => {println("hello, world!")}
+hello = () => { println("hello, world!") }
 hello()
 
 # one parameter
-hello_name = (name) => {println("hello "+name)}
+hello_name = (name) => { println("hello "+name) }
 hello_name("Bachir")
 
 # takes an array and a function as a parameter
@@ -313,7 +343,7 @@ for_each = (arr, consumer) => {
 
 for_each(["Mohamed", "Hakim", "Sarah", "Yasmine", "Noah", "Sofia", "Sami"], hello_name)
 # or for_each(["Mohamed", "Hakim", "Sarah", "Yasmine", "Noah", "Sofia", "Sami"],  
-              (name) => {println("hello "+name)}
+              (name) => { println("hello "+name) }
              )
 
 ```

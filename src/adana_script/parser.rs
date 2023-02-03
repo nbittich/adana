@@ -113,23 +113,7 @@ fn parse_fn(s: &str) -> Res<Value> {
             alt((
                 parse_expr,
                 parse_block(parse_instructions),
-                map_parser(take_until("\n"), parse_expr), // alt((
-                                                          //     //all_consuming(map(parse_expression, |v| vec![v])),
-                                                          //     preceded(
-                                                          //         tag_no_space("{"),
-                                                          //         terminated(
-                                                          //             map(
-                                                          //                 map(many1(parse_value), Value::BlockParen),
-                                                          //                 |v| vec![v],
-                                                          //             ),
-                                                          //             tag_no_space("}"),
-                                                          //         ),
-                                                          //     ),
-                                                          //     // map_parser(
-                                                          //     //     take_until("\n"),
-                                                          //     //     map(parse_expression, |v| vec![v]),
-                                                          //     // ),
-                                                          // )),
+                map_parser(take_until("\n"), parse_expr),
             )),
         ),
         |(parameters, exprs)| Value::Function {
@@ -212,21 +196,18 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
 
 fn parse_struct_expr(s: &str) -> Res<Value> {
     // hack because the parser is super dumb
-    map_parser(
-        alt((take_until(";"), take_until("}"))),
-        alt((
-            parse_fn_call,
-            parse_fn,
-            map(many1(parse_value), |mut expr| {
-                if expr.len() == 1 {
-                    expr.remove(0)
-                } else {
-                    Value::Expression(expr)
-                }
-            }),
-            parse_value,
-        )),
-    )(s)
+    alt((
+        parse_fn_call,
+        parse_fn,
+        map(many1(parse_value), |mut expr| {
+            if expr.len() == 1 {
+                expr.remove(0)
+            } else {
+                Value::Expression(expr)
+            }
+        }),
+        parse_value,
+    ))(s)
 }
 pub(super) fn parse_struct(s: &str) -> Res<Value> {
     let pair_key_value = |p| {
@@ -242,7 +223,7 @@ pub(super) fn parse_struct(s: &str) -> Res<Value> {
                 tag_no_space("{"),
                 many1(preceded(
                     opt(comments),
-                    terminated(pair_key_value, opt(tag_no_space(";"))),
+                    terminated(pair_key_value, tag_no_space(";")),
                 )),
                 tag_no_space("}"),
             ),
