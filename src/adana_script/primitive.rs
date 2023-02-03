@@ -688,7 +688,7 @@ impl Array for Primitive {
             }
             (Primitive::Struct(s), Primitive::String(k)) => {
                 if s.contains_key(k) {
-                    *s.get_mut(k).unwrap() = rhs.clone();
+                    std::mem::swap(s.get_mut(k).unwrap(), rhs);
                 } else {
                     s.insert(k.clone(), rhs.clone());
                 }
