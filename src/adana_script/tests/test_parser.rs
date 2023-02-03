@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::adana_script::{
-    parser::{parse_instructions, parse_struct},
+    parser::parse_instructions,
     BuiltInFunctionType, Operator,
     Value::{
         self, BlockParen, Expression, Function, Integer, Operation, Variable,
@@ -586,5 +586,48 @@ fn test_comments_end_arr() {
                 },
             ],)),
         },]
+    );
+}
+
+#[test]
+fn test_struct_access_1() {
+    let expr = r#"
+            person = struct {
+                name: "nordine";
+                age: 34;
+            }
+            println(person.age)
+            x = [9, person.name]
+        "#;
+    let (r, ins) = parse_instructions(expr).unwrap();
+    assert_eq!("", r);
+    assert_eq!(
+        ins,
+        vec![
+            Value::VariableExpr {
+                name: Box::new(Value::Variable("person".to_string(),)),
+                expr: Box::new(Value::Struct(HashMap::from([
+                    ("name".to_string(), Value::String("nordine".to_string(),)),
+                    ("age".to_string(), Value::Integer(34,),)
+                ]),)),
+            },
+            Value::Expression(vec![Value::BuiltInFunction {
+                fn_type: BuiltInFunctionType::Println,
+                expr: Box::new(Value::BlockParen(vec![Value::StructAccess {
+                    struc: Box::new(Value::Variable("person".to_string(),)),
+                    key: "age".to_string(),
+                },],)),
+            },],),
+            Value::VariableExpr {
+                name: Box::new(Value::Variable("x".to_string())),
+                expr: Box::new(Value::Array(vec![
+                    Value::Integer(9),
+                    Value::StructAccess {
+                        struc: Box::new(Value::Variable("person".to_string())),
+                        key: "name".to_string()
+                    }
+                ]))
+            }
+        ]
     );
 }

@@ -252,6 +252,8 @@ person_service = struct {
     };
 }
 
+person_service.check_age(person)
+
 ```
 
 ### Manipulate arrays

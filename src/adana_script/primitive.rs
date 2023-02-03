@@ -647,6 +647,13 @@ impl Array for Primitive {
                     Primitive::Error("index out of range".to_string())
                 }
             }
+            (Primitive::Struct(struc), Primitive::String(key)) => {
+                if let Some(p) = struc.get(key) {
+                    p.clone()
+                } else {
+                    Primitive::Null
+                }
+            }
             _ => Primitive::Error("illegal access to array!!!".to_string()),
         }
     }
@@ -655,6 +662,7 @@ impl Array for Primitive {
         match self {
             Primitive::String(s) => Primitive::Int(s.len() as i128),
             Primitive::Array(a) => Primitive::Int(a.len() as i128),
+            Primitive::Struct(s) => Primitive::Int(s.len() as i128),
             _ => Primitive::Error(format!(
                 "call to len() on a non array value => {self}"
             )),
@@ -677,6 +685,14 @@ impl Array for Primitive {
                 } else {
                     Primitive::Error("index out of range".to_string())
                 }
+            }
+            (Primitive::Struct(s), Primitive::String(k)) => {
+                if s.contains_key(k) {
+                    *s.get_mut(k).unwrap() = rhs.clone();
+                } else {
+                    s.insert(k.clone(), rhs.clone());
+                }
+                s[k].clone()
             }
             (Primitive::String(s), Primitive::Int(idx)) => {
                 let idx = *idx as usize;

@@ -116,7 +116,6 @@ pub enum Value {
     Bool(bool),
     String(String),
     BlockParen(Vec<Value>),
-    Struct(HashMap<String, Value>),
     Variable(String),
     Const(char),
     VariableNegate(String),
@@ -137,6 +136,11 @@ pub enum Value {
     ArrayAccess {
         arr: Box<Value>,
         index: Box<Value>,
+    },
+    Struct(HashMap<String, Value>),
+    StructAccess {
+        struc: Box<Value>,
+        key: String,
     },
 }
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -193,6 +197,7 @@ pub(super) enum TreeNodeValue {
     WhileExpr(Value),
     Array(Vec<Value>),
     Struct(HashMap<String, Value>),
+    StructAccess { struc: Value, key: Primitive },
     ArrayAccess { index: Primitive, array: Value },
     Function(Value),
     FunctionCall(Value),
