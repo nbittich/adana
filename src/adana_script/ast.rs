@@ -228,7 +228,7 @@ pub(super) fn to_ast(
                 if let Value::Variable(n) = *struc {
                     Ok(TreeNodeValue::VariableArrayAssign {
                         name: n,
-                        index: Primitive::String(key.to_owned()),
+                        index: Primitive::String(key),
                     })
                 } else {
                     Err(anyhow::Error::msg(format!(
@@ -330,7 +330,7 @@ pub(super) fn to_ast(
         Value::StructAccess { struc, key } => append_to_current_and_return(
             TreeNodeValue::StructAccess {
                 struc: *struc,
-                key: Primitive::String(key.to_owned()),
+                key: Primitive::String(key),
             },
             tree,
             curr_node_id,
