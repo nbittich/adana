@@ -21,6 +21,7 @@ Toy project with the following goals in mind:
     * [Loops](#loops)
     * [Conditions](#conditions)
     * [Types](#types)
+    * [Structs](#structs)
     * [Manipulate arrays](#manipulate-arrays)
     * [Functions](#functions)
     * [Include a script file](#include-a-script-file)
