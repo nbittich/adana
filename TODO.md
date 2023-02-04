@@ -12,6 +12,7 @@
         
 - update readme
 
+- <s>structs</s>
 - <s>early return</s>
 - <s>file_open = fopen, but try cast each line to the right primitive, default to string</s>
 - <s>drop variable</s>

@@ -4,8 +4,20 @@ on:
   push:
     branches:
       - 'master'
-
+env:
+  CARGO_TERM_COLOR: always
 jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain
+        with:
+          toolchain: stable
+          override: true
+          target: x86_64-unknown-linux-musl
+      - name: Tests
+        run: cargo test --verbose -- --nocapture
   docker:
     runs-on: ubuntu-latest
     steps:
