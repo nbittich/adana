@@ -1,8 +1,9 @@
 FROM rust:1.67 as builder
 
-
 WORKDIR /app
+
 RUN cargo new adana
+
 WORKDIR /app/adana
 
 COPY rust-toolchain.toml .
@@ -14,6 +15,7 @@ COPY .cargo/config .cargo/config
 ENV RUSTFLAGS='-C link-arg=-s'
 
 RUN cargo build --release 
+
 RUN rm -rf ./src
 
 COPY ./src/ ./src
@@ -29,4 +31,5 @@ ENV RUST_LOG=info
 VOLUME /root/.local/share
 
 COPY --from=builder  /app/adana/target/x86_64-unknown-linux-musl/release/adana .
+
 ENTRYPOINT [ "/adana" ]

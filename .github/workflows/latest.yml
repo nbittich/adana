@@ -7,17 +7,20 @@ on:
 env:
   CARGO_TERM_COLOR: always
 jobs:
-  checks:
+  test:
+    name: Test Suite
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain
+      - uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: stable
           override: true
           target: x86_64-unknown-linux-musl
-      - name: Tests
-        run: cargo test --verbose -- --nocapture
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test -- --nocapture
   docker:
     runs-on: ubuntu-latest
     steps:
