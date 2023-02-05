@@ -48,7 +48,7 @@ Toy project with the following goals in mind:
 
 1. Docker
     * From the docker hub: 
-        - `docker run -it nbittich/adana`
+        - `docker run -it nbittich/adana # or use the latest released version e.g: docker run -it nbittich/adana:0.12 ` 
     * Manually:
         - clone the repo
         - build the docker image: `docker build -t adana .`
@@ -66,8 +66,7 @@ Toy project with the following goals in mind:
 ## Programming language
 
 ### Introduction
-
-First we start with the traditional hello world:
+First, we start with the traditional hello world:
 
 ```python
 >> println("hello world!") # prints hello world 
