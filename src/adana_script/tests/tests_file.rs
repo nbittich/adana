@@ -226,7 +226,7 @@ fn test_if_else_file() {
     let _ = compute(file_path, &mut ctx);
 
     assert_eq!(
-        Primitive::String("".to_string()),
+        Primitive::String("100 = Buzz".to_string()),
         ctx["text"].lock().unwrap().clone()
     );
     assert_eq!(Primitive::Int(101), ctx["count"].lock().unwrap().clone());

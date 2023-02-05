@@ -169,7 +169,14 @@ fn compute_recur(
             TreeNodeValue::VariableAssign(name) => {
                 let v = compute_recur(node.first_child(), ctx)?;
                 if !matches!(v, Primitive::Error(_)) {
-                    ctx.insert(name.to_owned(), v.clone().to_mut_prim());
+                    let mut old = ctx
+                        .entry(name.clone())
+                        .or_insert(Primitive::Unit.to_mut_prim())
+                        .lock()
+                        .map_err(|e| {
+                            anyhow::format_err!("could not acquire lock {e}")
+                        })?;
+                    *old = v.clone();
                 }
                 Ok(v)
             }
@@ -257,10 +264,12 @@ fn compute_recur(
                 }
             }
             TreeNodeValue::IfExpr(v) => {
-                compute_instructions(vec![v.clone()], ctx)
+                let mut scoped_ctx = ctx.clone();
+                compute_instructions(vec![v.clone()], &mut scoped_ctx)
             }
             TreeNodeValue::WhileExpr(v) => {
-                compute_instructions(vec![v.clone()], ctx)
+                let mut scoped_ctx = ctx.clone();
+                compute_instructions(vec![v.clone()], &mut scoped_ctx)
             }
             TreeNodeValue::Array(arr) => {
                 let mut primitives = vec![];
@@ -529,16 +538,20 @@ fn compute_instructions(
                     return Ok(cond);
                 }
                 if matches!(cond, Primitive::Bool(true)) {
+                    let mut scoped_ctx = ctx.clone();
+
                     for instruction in exprs {
-                        match compute(instruction.clone(), ctx)? {
+                        match compute(instruction.clone(), &mut scoped_ctx)? {
                             v @ Primitive::EarlyReturn(_)
                             | v @ Primitive::Error(_) => return Ok(v),
                             p => result = p,
                         }
                     }
                 } else if let Some(else_expr) = else_expr {
+                    let mut scoped_ctx = ctx.clone();
+
                     for instruction in else_expr {
-                        match compute(instruction.clone(), ctx)? {
+                        match compute(instruction.clone(), &mut scoped_ctx)? {
                             v @ Primitive::EarlyReturn(_)
                             | v @ Primitive::Error(_) => return Ok(v),
                             p => result = p,
@@ -547,12 +560,14 @@ fn compute_instructions(
                 }
             }
             Value::WhileExpr { cond, exprs } => {
+                let mut scoped_ctx = ctx.clone();
+
                 'while_loop: while matches!(
-                    compute(*cond.clone(), ctx)?,
+                    compute(*cond.clone(), &mut scoped_ctx)?,
                     Primitive::Bool(true)
                 ) {
                     for instruction in &exprs {
-                        match compute(instruction.clone(), ctx)? {
+                        match compute(instruction.clone(), &mut scoped_ctx)? {
                             Primitive::NoReturn => break 'while_loop,
                             v @ Primitive::EarlyReturn(_)
                             | v @ Primitive::Error(_) => return Ok(v),
