@@ -165,13 +165,6 @@ fn compute_recur(
                 let right = compute_recur(node.last_child(), ctx)?;
                 Ok(left.is_less_or_equal(&right))
             }
-            TreeNodeValue::Primitive(Primitive::Bool(b)) => {
-                Ok(Primitive::Bool(*b))
-            }
-            TreeNodeValue::Primitive(v @ Primitive::Error(_)) => {
-                //   Err(Error::msg(err.clone()))
-                Ok(v.clone())
-            }
             TreeNodeValue::Primitive(p) => Ok(p.clone()),
             TreeNodeValue::VariableAssign(name) => {
                 let v = compute_recur(node.first_child(), ctx)?;
