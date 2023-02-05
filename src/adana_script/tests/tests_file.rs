@@ -71,7 +71,7 @@ fn test_while_statement() {
             c = a + b;
             a = b;
             b = c;
-            n = n - 1;
+            n -= 1;
         }
         c
     }

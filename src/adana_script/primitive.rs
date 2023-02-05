@@ -35,7 +35,7 @@ pub type MutPrimitive = Arc<Mutex<Primitive>>;
 
 // region: traits
 impl Primitive {
-    pub fn to_mut_prim(self: Self) -> MutPrimitive {
+    pub fn to_mut_prim(self) -> MutPrimitive {
         Arc::new(Mutex::new(self))
     }
 }

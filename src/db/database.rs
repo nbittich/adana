@@ -201,7 +201,7 @@ mod test {
 
         file_db.open_tree("rust");
 
-        file_db.insert(39912u64, format!("new!"));
+        file_db.insert(39912u64, "new!".to_string());
 
         assert_eq!(Some(199), file_db.len());
     }

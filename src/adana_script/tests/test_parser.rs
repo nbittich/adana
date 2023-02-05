@@ -100,7 +100,7 @@ fn test_parse_fn() {
                 Value::Expression(vec![Value::BuiltInFunction {
                     fn_type: BuiltInFunctionType::Println,
                     expr: Box::new(Value::BlockParen(vec![Value::String(
-                        format!("hello")
+                        "hello".to_string()
                     )]))
                 }])
             ],
