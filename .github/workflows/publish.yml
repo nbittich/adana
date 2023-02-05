@@ -22,7 +22,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: nbittich/api-backend
+          images: nbittich/adana
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
