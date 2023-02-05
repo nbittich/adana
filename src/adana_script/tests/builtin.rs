@@ -11,7 +11,7 @@ fn test_builtin_to_int() {
     assert_eq!(res, Primitive::Int(2));
     ctx.insert(
         "a".to_string(),
-        Primitive::String("123".to_string()).to_mut_prim(),
+        Primitive::String("123".to_string()).mut_prim(),
     );
     let res = compute("to_int(a)", &mut ctx).unwrap();
     assert_eq!(res, Primitive::Int(123));
@@ -33,7 +33,7 @@ fn test_builtin_to_bool() {
     assert_eq!(res, Primitive::Bool(true));
     let res = compute(r#"to_bool("false")"#, &mut ctx).unwrap();
     assert_eq!(res, Primitive::Bool(false));
-    ctx.insert("a".to_string(), Primitive::Double(0.0).to_mut_prim());
+    ctx.insert("a".to_string(), Primitive::Double(0.0).mut_prim());
     let res = compute("to_bool(a)", &mut ctx).unwrap();
     assert_eq!(res, Primitive::Bool(false));
 }
@@ -48,28 +48,22 @@ fn test_eval() {
 #[test]
 fn test_type_of() {
     let mut ctx = BTreeMap::new();
-    ctx.insert("x".to_string(), Primitive::Int(3).to_mut_prim());
+    ctx.insert("x".to_string(), Primitive::Int(3).mut_prim());
 
-    ctx.insert("y".to_string(), Primitive::Double(3.).to_mut_prim());
+    ctx.insert("y".to_string(), Primitive::Double(3.).mut_prim());
     ctx.insert(
         "z".to_string(),
-        Primitive::Function { parameters: vec![], exprs: vec![] }.to_mut_prim(),
+        Primitive::Function { parameters: vec![], exprs: vec![] }.mut_prim(),
     );
-    ctx.insert(
-        "a".to_string(),
-        Primitive::Error("err".to_string()).to_mut_prim(),
-    );
-    ctx.insert("b".to_string(), Primitive::Array(vec![]).to_mut_prim());
-    ctx.insert("c".to_string(), Primitive::Bool(true).to_mut_prim());
-    ctx.insert(
-        "d".to_string(),
-        Primitive::String("a".to_string()).to_mut_prim(),
-    );
-    ctx.insert("e".to_string(), Primitive::Unit.to_mut_prim());
-    ctx.insert("f".to_string(), Primitive::NoReturn.to_mut_prim());
+    ctx.insert("a".to_string(), Primitive::Error("err".to_string()).mut_prim());
+    ctx.insert("b".to_string(), Primitive::Array(vec![]).mut_prim());
+    ctx.insert("c".to_string(), Primitive::Bool(true).mut_prim());
+    ctx.insert("d".to_string(), Primitive::String("a".to_string()).mut_prim());
+    ctx.insert("e".to_string(), Primitive::Unit.mut_prim());
+    ctx.insert("f".to_string(), Primitive::NoReturn.mut_prim());
     ctx.insert(
         "g".to_string(),
-        Primitive::EarlyReturn(Box::new(Primitive::Int(1))).to_mut_prim(),
+        Primitive::EarlyReturn(Box::new(Primitive::Int(1))).mut_prim(),
     );
     assert_eq!(
         Primitive::String("int".to_string()),

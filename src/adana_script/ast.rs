@@ -20,7 +20,7 @@ fn variable_from_ctx(
         .or_else(|| {
             Some(
                 Primitive::Error(format!("variable {name} not found in ctx"))
-                    .to_mut_prim(),
+                    .mut_prim(),
             )
         })
         .context(format!("variable {name} not found in ctx"))?;

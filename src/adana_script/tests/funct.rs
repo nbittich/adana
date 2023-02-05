@@ -141,7 +141,7 @@ fn test_drop() {
     assert_eq!(Primitive::Unit, res);
 
     assert_eq!(*ctx["z"].lock().unwrap(), Primitive::Int(35,));
-    assert_eq!(ctx.contains_key("m"), false);
+    assert!(!ctx.contains_key("m"));
 }
 
 #[test]

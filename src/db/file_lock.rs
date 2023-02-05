@@ -161,11 +161,10 @@ mod test {
 
         let open_file_twice = FileLock::open(path);
 
-        match open_file_twice {
-            Err(e) => assert!(e
+        if let Err(e) = open_file_twice {
+            assert!(e
                 .to_string()
-                .starts_with("Could not acquire lock (pid exists: ")),
-            Ok(_) => (),
+                .starts_with("Could not acquire lock (pid exists: "));
         }
     }
 }

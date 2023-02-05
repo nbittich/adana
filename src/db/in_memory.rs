@@ -232,7 +232,7 @@ mod test {
 
         assert_eq!(Some(0), db.len()); // now default is cleared
 
-        assert_eq!(false, db.clear_tree("bababa")); // bababa doesn't exist
+        assert!(!db.clear_tree("bababa")); // bababa doesn't exist
 
         let mut db: InMemoryDb<String, String> = InMemoryDb::default();
 

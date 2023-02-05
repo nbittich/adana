@@ -171,7 +171,7 @@ fn compute_recur(
                 if !matches!(v, Primitive::Error(_)) {
                     let mut old = ctx
                         .entry(name.clone())
-                        .or_insert(Primitive::Unit.to_mut_prim())
+                        .or_insert(Primitive::Unit.mut_prim())
                         .lock()
                         .map_err(|e| {
                             anyhow::format_err!("could not acquire lock {e}")
@@ -420,7 +420,7 @@ fn compute_recur(
                                     ctx,
                                 )?;
                                 scope_ctx
-                                    .insert(param.clone(), value.to_mut_prim());
+                                    .insert(param.clone(), value.mut_prim());
                             } else {
                                 return Ok(Primitive::Error(format!(
                                     "missing parameter {param}"
