@@ -10,11 +10,12 @@
         pi = std.PI # get a variable
     ```    
 - update readme
+- less cloning
 
 ## In progress
-- Context scope
 
 ## Done
+- <s>Context scope</s>
 - <s>break should not be a primitive</s>
 - <s>structs</s>
 - <s>early return</s>
