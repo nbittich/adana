@@ -49,7 +49,7 @@ Toy project with the following goals in mind:
 1. Docker
     * From the docker hub: 
         - `docker run -it nbittich/adana # latest from master` 
-        - `docker run -it nbittich/adana:0.12 # latest release` 
+        - `docker run -it nbittich/adana:0.12.0 # latest release` 
     * Manually:
         - clone the repo
         - build the docker image: `docker build -t adana .`
