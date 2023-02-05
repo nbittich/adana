@@ -10,14 +10,20 @@ use crate::adana_script::{compute, Primitive};
 #[should_panic(expected = "invalid expression!")]
 fn test_expr_invalid() {
     let expr = "uze example";
-    let mut ctx = BTreeMap::from([("x".to_string(), Primitive::Double(2.))]);
+    let mut ctx = BTreeMap::from([(
+        "x".to_string(),
+        Primitive::Double(2.).to_mut_prim(),
+    )]);
     compute(expr, &mut ctx).unwrap();
 }
 #[test]
 #[should_panic(expected = "invalid expression!")]
 fn test_expr_invalid_drc() {
     let expr = "drc logs -f triplestore";
-    let mut ctx = BTreeMap::from([("x".to_string(), Primitive::Double(2.))]);
+    let mut ctx = BTreeMap::from([(
+        "x".to_string(),
+        Primitive::Double(2.).to_mut_prim(),
+    )]);
     compute(expr, &mut ctx).unwrap();
 }
 
@@ -25,14 +31,20 @@ fn test_expr_invalid_drc() {
 #[should_panic]
 fn test_op_invalid() {
     let expr = "use example = wesh";
-    let mut ctx = BTreeMap::from([("x".to_string(), Primitive::Double(2.))]);
+    let mut ctx = BTreeMap::from([(
+        "x".to_string(),
+        Primitive::Double(2.).to_mut_prim(),
+    )]);
     compute(expr, &mut ctx).unwrap();
 }
 
 #[test]
 fn test_compute_with_ctx() {
     let expr = "x * 5";
-    let mut ctx = BTreeMap::from([("x".to_string(), Primitive::Double(2.))]);
+    let mut ctx = BTreeMap::from([(
+        "x".to_string(),
+        Primitive::Double(2.).to_mut_prim(),
+    )]);
 
     let res = compute(expr, &mut ctx).unwrap();
     assert_eq!(Primitive::Double(10.), res);
@@ -40,12 +52,15 @@ fn test_compute_with_ctx() {
 #[test]
 fn test_compute_assign_with_ctx() {
     let expr = "y = x *  5";
-    let mut ctx = BTreeMap::from([("x".to_string(), Primitive::Double(2.))]);
+    let mut ctx = BTreeMap::from([(
+        "x".to_string(),
+        Primitive::Double(2.).to_mut_prim(),
+    )]);
 
     let res = compute(expr, &mut ctx).unwrap();
     assert_eq!(Primitive::Double(10.), res);
 
-    assert_eq!(ctx.get("y"), Some(&Primitive::Double(10.)));
+    assert_eq!(ctx["y"].lock().unwrap().clone(), Primitive::Double(10.));
 }
 
 #[test]
@@ -178,10 +193,16 @@ fn test_compute() {
             compute("f = 555*19-(((((((9*2))))+2*f)-x))/6.-1^2*y/(z-4*(3/9.-(9+3/2.-4))) - x", &mut ctx).unwrap()
         );
 
-    assert_eq!(ctx.get("f"), Some(&Primitive::Double(-4765.37866215695)));
-    assert_eq!(ctx.get("z"), Some(&Primitive::Double(-670.9548307564088)));
-    assert_eq!(ctx.get("y"), Some(&Primitive::Double(3274.9)));
-    assert_eq!(ctx.get("x"), Some(&Primitive::Double(3280.3)));
+    assert_eq!(
+        ctx["f"].lock().unwrap().clone(),
+        Primitive::Double(-4765.37866215695)
+    );
+    assert_eq!(
+        ctx["z"].lock().unwrap().clone(),
+        Primitive::Double(-670.9548307564088)
+    );
+    assert_eq!(ctx["y"].lock().unwrap().clone(), Primitive::Double(3274.9));
+    assert_eq!(ctx["x"].lock().unwrap().clone(), Primitive::Double(3280.3));
 }
 
 #[test]
@@ -391,77 +412,77 @@ fn test_extra() {
 fn test_simple_bool() {
     let mut ctx = BTreeMap::new();
     assert_eq!(Primitive::Bool(true), compute("g = true", &mut ctx).unwrap());
-    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("g"));
+    assert_eq!(Primitive::Bool(true), ctx["g"].lock().unwrap().clone());
     assert_eq!(Primitive::Bool(false), compute("g = false", &mut ctx).unwrap());
-    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("g"));
+    assert_eq!(Primitive::Bool(false), ctx["g"].lock().unwrap().clone());
 }
 #[test]
 fn test_simple_condition() {
     let mut ctx = BTreeMap::new();
     assert_eq!(Primitive::Bool(true), compute("g = 5 < 9", &mut ctx).unwrap());
-    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("g"));
+    assert_eq!(Primitive::Bool(true), ctx["g"].lock().unwrap().clone());
     assert_eq!(Primitive::Bool(false), compute("b = 5 < 1", &mut ctx).unwrap());
-    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("b"));
+    assert_eq!(Primitive::Bool(false), ctx["b"].lock().unwrap().clone());
     assert_eq!(Primitive::Bool(false), compute("x = 5 > 9", &mut ctx).unwrap());
-    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("x"));
+    assert_eq!(Primitive::Bool(false), ctx["x"].lock().unwrap().clone());
     assert_eq!(Primitive::Bool(true), compute("x = 9 > 5", &mut ctx).unwrap());
-    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("x"));
+    assert_eq!(Primitive::Bool(true), ctx["x"].lock().unwrap().clone());
     assert_eq!(Primitive::Bool(true), compute("m = 9 >= 9", &mut ctx).unwrap());
-    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("m"));
+    assert_eq!(Primitive::Bool(true), ctx["m"].lock().unwrap().clone());
     assert_eq!(Primitive::Bool(false), compute("z = 9 > 9", &mut ctx).unwrap());
-    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("z"));
+    assert_eq!(Primitive::Bool(false), ctx["z"].lock().unwrap().clone());
     assert_eq!(Primitive::Bool(true), compute("t = 9 == 9", &mut ctx).unwrap());
-    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("t"));
+    assert_eq!(Primitive::Bool(true), ctx["t"].lock().unwrap().clone());
     assert_eq!(
         Primitive::Bool(false),
         compute("et = 9 != 9", &mut ctx).unwrap()
     );
-    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("et"));
+    assert_eq!(Primitive::Bool(false), ctx["et"].lock().unwrap().clone());
     assert_eq!(
         Primitive::Bool(true),
         compute("zet = 9 != 1", &mut ctx).unwrap()
     );
-    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("zet"));
+    assert_eq!(Primitive::Bool(true), ctx["zet"].lock().unwrap().clone());
     assert_eq!(
         Primitive::Bool(true),
         compute("bzet = 9 <= 9", &mut ctx).unwrap()
     );
-    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("bzet"));
+    assert_eq!(Primitive::Bool(true), ctx["bzet"].lock().unwrap().clone());
     assert_eq!(
         Primitive::Bool(false),
         compute("rbzet = 9 < 9", &mut ctx).unwrap()
     );
-    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("rbzet"));
+    assert_eq!(Primitive::Bool(false), ctx["rbzet"].lock().unwrap().clone());
     assert_eq!(
         Primitive::Bool(true),
         compute("ab = true == true", &mut ctx).unwrap()
     );
-    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("ab"));
+    assert_eq!(Primitive::Bool(true), ctx["ab"].lock().unwrap().clone());
     assert_eq!(
         Primitive::Bool(true),
         compute("bcd = true == ab", &mut ctx).unwrap()
     );
-    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("bcd"));
+    assert_eq!(Primitive::Bool(true), ctx["bcd"].lock().unwrap().clone());
     assert_eq!(
         Primitive::Bool(true),
         compute("bcxkcdd = bcd != !ab", &mut ctx).unwrap()
     );
-    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("bcxkcdd"));
+    assert_eq!(Primitive::Bool(true), ctx["bcxkcdd"].lock().unwrap().clone());
     assert_eq!(
         Primitive::Bool(true),
         compute("mmm = !bcd == !ab", &mut ctx).unwrap()
     );
-    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("bcxkcdd"));
+    assert_eq!(Primitive::Bool(true), ctx["bcxkcdd"].lock().unwrap().clone());
     assert_eq!(
         Primitive::Bool(true),
         compute("xxx = !bcd == (5^2 < 1)", &mut ctx).unwrap()
     );
-    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("xxx"));
+    assert_eq!(Primitive::Bool(true), ctx["xxx"].lock().unwrap().clone());
     assert_eq!(
         Primitive::Bool(false),
         compute("rrr = !bcd != (5^2 < 1)", &mut ctx).unwrap()
     );
-    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("rrr"));
+    assert_eq!(Primitive::Bool(false), ctx["rrr"].lock().unwrap().clone());
 }
 
 #[test]
@@ -472,27 +493,27 @@ fn test_simple_logical_and_or() {
         Primitive::Bool(false),
         compute("s = true && false", &mut ctx).unwrap()
     );
-    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("s"));
+    assert_eq!(Primitive::Bool(false), ctx["s"].lock().unwrap().clone());
     assert_eq!(
         Primitive::Bool(true),
         compute("s = 1^1 == 1. && true", &mut ctx).unwrap()
     );
-    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("s"));
+    assert_eq!(Primitive::Bool(true), ctx["s"].lock().unwrap().clone());
     assert_eq!(
         Primitive::Bool(false),
         compute("s = 1^1 == 1. && !true", &mut ctx).unwrap()
     );
-    assert_eq!(Some(&Primitive::Bool(false)), ctx.get("s"));
+    assert_eq!(Primitive::Bool(false), ctx["s"].lock().unwrap().clone());
     assert_eq!(
         Primitive::Bool(true),
         compute("s = 1^1 == 1. || !true", &mut ctx).unwrap()
     );
-    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("s"));
+    assert_eq!(Primitive::Bool(true), ctx["s"].lock().unwrap().clone());
     assert_eq!(
         Primitive::Bool(true),
         compute("s = !(1^1 == 1.) || true", &mut ctx).unwrap()
     );
-    assert_eq!(Some(&Primitive::Bool(true)), ctx.get("s"));
+    assert_eq!(Primitive::Bool(true), ctx["s"].lock().unwrap().clone());
     assert_eq!(
         Primitive::Bool(true),
         compute(" 5 < 3 || 4 < 8 && 9*5 == 45", &mut ctx).unwrap()

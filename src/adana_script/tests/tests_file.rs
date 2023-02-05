@@ -12,6 +12,11 @@ fn test_simple_file() {
     "#;
     let mut ctx = BTreeMap::new();
     let r = compute(file_path, &mut ctx).unwrap();
+
+    let ctx: BTreeMap<String, Primitive> = ctx
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.lock().unwrap().clone()))
+        .collect();
     assert_eq!(
         &BTreeMap::from([
             ("a".to_string(), Primitive::Int(25)),
@@ -32,6 +37,11 @@ fn test_if_statement() {
     "#;
     let mut ctx = BTreeMap::new();
     let r = compute(file_path, &mut ctx).unwrap();
+
+    let ctx: BTreeMap<String, Primitive> = ctx
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.lock().unwrap().clone()))
+        .collect();
     assert_eq!(
         &BTreeMap::from([
             ("a".to_string(), Primitive::Int(25)),
@@ -67,17 +77,17 @@ fn test_while_statement() {
     }
 
     for n in 0..=10 {
-        ctx.insert("n".to_string(), Primitive::Int(n));
+        ctx.insert("n".to_string(), Primitive::Int(n).to_mut_prim());
         let r = compute(file_path, &mut ctx).unwrap();
         let fibonacci = fib(n);
-        assert_eq!(Some(&Primitive::Int(fibonacci)), ctx.get("c"));
+        assert_eq!(Primitive::Int(fibonacci), ctx["c"].lock().unwrap().clone());
         assert_eq!(Primitive::Int(fibonacci), r);
         if fibonacci < 55 {
             assert_eq!(
-                Some(&Primitive::String(format!(
+                Primitive::String(format!(
                     "this is a complex program: {fibonacci}"
-                ))),
-                ctx.get("x")
+                )),
+                ctx["x"].lock().unwrap().clone()
             );
         }
     }
@@ -92,6 +102,10 @@ fn test_nested_file() {
     let mut ctx = BTreeMap::new();
     let r = compute(file_path, &mut ctx).unwrap();
 
+    let ctx: BTreeMap<String, Primitive> = ctx
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.lock().unwrap().clone()))
+        .collect();
     assert_eq!(
         &BTreeMap::from([
             ("a".to_string(), Primitive::Int(0)),
@@ -115,8 +129,8 @@ fn test_fizz_buzz() {
     let _ = compute(file_path, &mut ctx);
 
     assert_eq!(
-        Some(&Primitive::String("100 = Buzz".to_string())),
-        ctx.get("text")
+        Primitive::String("100 = Buzz".to_string()),
+        ctx["text"].lock().unwrap().clone()
     );
 }
 
@@ -128,6 +142,11 @@ fn test_includes() {
     include("file_tests/includes/reverse.adana")
 "#;
     let _ = compute(file_path, &mut ctx).unwrap();
+
+    let ctx: BTreeMap<String, Primitive> = ctx
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.lock().unwrap().clone()))
+        .collect();
     dbg!("wesh", &ctx);
     assert_eq!(
         ctx,
@@ -167,6 +186,10 @@ fn test_multiline_file() {
     let mut ctx = BTreeMap::new();
     let _ = compute(file_path, &mut ctx);
 
+    let ctx: BTreeMap<String, Primitive> = ctx
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.lock().unwrap().clone()))
+        .collect();
     assert_eq!(Some(&Primitive::Int(77)), ctx.get("s"));
     assert_eq!(
         Some(&Primitive::String(
@@ -190,18 +213,21 @@ fn test_if_else_file() {
     include("file_tests/test_if_else.adana")
 "#;
     let mut ctx = BTreeMap::new();
-    ctx.insert("count".to_string(), Primitive::Int(102));
+    ctx.insert("count".to_string(), Primitive::Int(102).to_mut_prim());
     let _ = compute(file_path, &mut ctx);
 
-    assert_eq!(ctx.get("count"), Some(&Primitive::Int(101)));
+    assert_eq!(ctx["count"].lock().unwrap().clone(), Primitive::Int(101));
     let _ = compute(file_path, &mut ctx);
-    assert_eq!(ctx.get("count"), Some(&Primitive::Int(51)));
+    assert_eq!(ctx["count"].lock().unwrap().clone(), Primitive::Int(51));
     let file_path = r#"
     include("file_tests/test_fizzbuzz_else.adana")
 "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(file_path, &mut ctx);
 
-    assert_eq!(Some(&Primitive::String("".to_string())), ctx.get("text"));
-    assert_eq!(Some(&Primitive::Int(101)), ctx.get("count"));
+    assert_eq!(
+        Primitive::String("".to_string()),
+        ctx["text"].lock().unwrap().clone()
+    );
+    assert_eq!(Primitive::Int(101), ctx["count"].lock().unwrap().clone());
 }

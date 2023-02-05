@@ -3,7 +3,7 @@ use std::{collections::BTreeMap, path::Path};
 use nom::error::ErrorKind;
 
 use crate::{
-    adana_script::Primitive,
+    adana_script::MutPrimitive,
     db::DbOp,
     prelude::colors::*,
     reserved_keywords::{check_reserved_keyword, CACHE_COMMAND_DOC},
@@ -18,7 +18,7 @@ const BACKUP_FILE_NAME: &str = "adanadb.json";
 
 pub fn process_command(
     db: &mut impl DbOp<String, String>,
-    script_context: &BTreeMap<String, Primitive>,
+    script_context: &BTreeMap<String, MutPrimitive>,
     current_cache: &mut String,
     line: &str,
 ) -> anyhow::Result<()> {
