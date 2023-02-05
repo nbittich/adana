@@ -4,25 +4,34 @@ use slab_tree::{NodeId, Tree};
 
 use crate::prelude::{BTreeMap, Context};
 
-use super::{MathConstants, Operator, Primitive, TreeNodeValue, Value};
+use super::{
+    primitive::MutPrimitive, MathConstants, Operator, Primitive, TreeNodeValue,
+    Value,
+};
 
 fn variable_from_ctx(
     name: &str,
     negate: bool,
-    ctx: &mut BTreeMap<String, Primitive>,
+    ctx: &mut BTreeMap<String, MutPrimitive>,
 ) -> anyhow::Result<Primitive> {
     let value = ctx
         .get(name)
         .cloned()
         .or_else(|| {
-            Some(Primitive::Error(format!("variable {name} not found in ctx")))
+            Some(
+                Primitive::Error(format!("variable {name} not found in ctx"))
+                    .mut_prim(),
+            )
         })
         .context(format!("variable {name} not found in ctx"))?;
 
     if cfg!(test) {
         dbg!(&value);
     }
-    let primitive = if negate { value.neg() } else { value };
+    let guard = value
+        .lock()
+        .map_err(|e| anyhow::format_err!("could not acquire lock {e}"))?;
+    let primitive = if negate { guard.clone().neg() } else { guard.clone() };
 
     Ok(primitive)
 }
@@ -39,7 +48,7 @@ fn filter_op(
 }
 
 pub(super) fn to_ast(
-    ctx: &mut BTreeMap<String, Primitive>,
+    ctx: &mut BTreeMap<String, MutPrimitive>,
     value: Value,
     tree: &mut Tree<TreeNodeValue>,
     curr_node_id: &Option<NodeId>,

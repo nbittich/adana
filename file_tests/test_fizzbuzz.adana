@@ -1,8 +1,7 @@
 count = 0
-
+text = ""
 while (count <= 100) {
     toprint = false
-    text = ""
 
     if(count % 3 == 0) {
       #fizz

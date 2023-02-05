@@ -1,5 +1,8 @@
 a = 5 * 5 
-
+b = null
+x = null
+z = null
+r = null
 if(a > 20) {
     b = 12
     x = 15

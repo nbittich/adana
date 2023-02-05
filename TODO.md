@@ -1,17 +1,22 @@
-
+## Todo 
 - stabilize, more tests
 - better error
-- break should not be a primitive
-- map type if not too lazy
 - make a std library
 - import/require => like include but scoped context & functions
     - could be like 
+    ```
         std = import("/path/to/std")
         std.read_file_to_string("/path/to/file") # call to a function
         pi = std.PI # get a variable
-        
+    ```    
 - update readme
+- less cloning
 
+## In progress
+
+## Done
+- <s>Context scope</s>
+- <s>break should not be a primitive</s>
 - <s>structs</s>
 - <s>early return</s>
 - <s>file_open = fopen, but try cast each line to the right primitive, default to string</s>

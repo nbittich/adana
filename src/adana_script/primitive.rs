@@ -4,6 +4,7 @@ use std::{
     fmt::Display,
     iter::Sum,
     ops::{Add, Div, Mul, Rem, Sub},
+    sync::{Arc, Mutex},
 };
 
 use anyhow::Result;
@@ -30,7 +31,15 @@ pub enum Primitive {
     EarlyReturn(Box<Primitive>),
 }
 
+pub type MutPrimitive = Arc<Mutex<Primitive>>;
+
 // region: traits
+impl Primitive {
+    pub fn mut_prim(self) -> MutPrimitive {
+        Arc::new(Mutex::new(self))
+    }
+}
+
 pub trait TypeOf {
     fn type_of(&self) -> Self;
 }

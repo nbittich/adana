@@ -6,6 +6,7 @@ mod primitive;
 use std::collections::HashMap;
 
 pub use compute::compute;
+pub use primitive::MutPrimitive;
 pub use primitive::Primitive;
 
 use serde::{Deserialize, Serialize};

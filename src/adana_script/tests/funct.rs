@@ -25,28 +25,25 @@ fn test_anon_func_call() {
     assert_eq!(Primitive::Int(14), res);
 
     assert_eq!(
-        ctx,
-        BTreeMap::from([(
-            "z".to_string(),
-            Primitive::Function {
-                parameters: vec!["a".to_string(), "b".to_string(),],
-                exprs: vec![
-                    Value::VariableExpr {
-                        name: Box::new(Value::Variable("c".to_string(),)),
-                        expr: Box::new(Value::Expression(vec![
-                            Value::Integer(4,),
-                        ],)),
-                    },
-                    Value::Expression(vec![
-                        Value::Variable("a".to_string(),),
-                        Value::Operation(Operator::Add,),
-                        Value::Variable("b".to_string(),),
-                        Value::Operation(Operator::Mult,),
-                        Value::Variable("c".to_string(),),
-                    ],),
-                ],
-            },
-        )])
+        *ctx["z"].lock().unwrap(),
+        Primitive::Function {
+            parameters: vec!["a".to_string(), "b".to_string(),],
+            exprs: vec![
+                Value::VariableExpr {
+                    name: Box::new(Value::Variable("c".to_string(),)),
+                    expr: Box::new(Value::Expression(
+                        vec![Value::Integer(4,),],
+                    )),
+                },
+                Value::Expression(vec![
+                    Value::Variable("a".to_string(),),
+                    Value::Operation(Operator::Add,),
+                    Value::Variable("b".to_string(),),
+                    Value::Operation(Operator::Mult,),
+                    Value::Variable("c".to_string(),),
+                ],),
+            ],
+        }
     );
 
     let s = r#"
@@ -119,11 +116,11 @@ fn test_override_map() {
     assert_eq!(Primitive::Int(35), res);
 
     assert_eq!(
-        ctx.get("m"),
-        Some(&Primitive::Array(vec![Primitive::Array(vec![
+        *ctx["m"].lock().unwrap(),
+        Primitive::Array(vec![Primitive::Array(vec![
             Primitive::String("nordine".to_string(),),
             Primitive::Int(35,),
-        ],),],),)
+        ],),],)
     );
 }
 
@@ -141,16 +138,10 @@ fn test_drop() {
     let mut ctx = BTreeMap::new();
 
     let res = compute(script, &mut ctx).unwrap();
-    assert_eq!(
-        Primitive::Array(vec![Primitive::Array(vec![Primitive::Array(vec![
-            Primitive::String("nordine".to_string(),),
-            Primitive::Int(35,),
-        ],),],)]),
-        res
-    );
+    assert_eq!(Primitive::Unit, res);
 
-    assert_eq!(ctx.get("z"), Some(&Primitive::Int(35,)));
-    assert_eq!(ctx.get("m"), None);
+    assert_eq!(*ctx["z"].lock().unwrap(), Primitive::Int(35,));
+    assert!(!ctx.contains_key("m"));
 }
 
 #[test]
@@ -167,12 +158,12 @@ fn test_inline_fn() {
     assert_eq!(Primitive::Null, res);
 
     assert_eq!(
-        ctx.get("hello_me"),
-        Some(&Primitive::String("hello nordine".into()))
+        *ctx["hello_me"].lock().unwrap(),
+        Primitive::String("hello nordine".into())
     );
     assert_eq!(
-        ctx.get("hello_world"),
-        Some(&Primitive::String("hello world".into()))
+        *ctx["hello_world"].lock().unwrap(),
+        Primitive::String("hello world".into())
     );
 
     let script = "hello = (name) => { \"hello \" + name}";
@@ -185,8 +176,8 @@ fn test_inline_fn() {
 
     assert_eq!(Primitive::String("hello nordine".into()), res);
     assert_eq!(
-        ctx.get("hello_me"),
-        Some(&Primitive::String("hello nordine".into()))
+        *ctx["hello_me"].lock().unwrap(),
+        Primitive::String("hello nordine".into())
     );
 
     let script = "hello_world = hello(\"world\")";
@@ -194,8 +185,8 @@ fn test_inline_fn() {
     assert_eq!(Primitive::String("hello world".into()), res);
 
     assert_eq!(
-        ctx.get("hello_world"),
-        Some(&Primitive::String("hello world".into()))
+        *ctx["hello_world"].lock().unwrap(),
+        Primitive::String("hello world".into())
     );
 }
 
@@ -319,6 +310,9 @@ fn test_array_access_fn_call() {
         "#;
     let r = compute(expr, &mut ctx).unwrap();
     assert_eq!(r, Primitive::String("hello nordine2".into()));
-    assert_eq!(ctx.get("z"), Some(&Primitive::Int(6)));
-    assert_eq!(ctx.get("y"), Some(&Primitive::String("hello nordine".into())));
+    assert_eq!(*ctx["z"].lock().unwrap(), Primitive::Int(6));
+    assert_eq!(
+        *ctx["y"].lock().unwrap(),
+        Primitive::String("hello nordine".into())
+    );
 }

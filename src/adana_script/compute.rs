@@ -16,15 +16,15 @@ use crate::{adana_script::parser::parse_instructions, prelude::BTreeMap};
 use super::{
     ast::to_ast,
     primitive::{
-        Abs, And, Array, Cos, Logarithm, Or, Pow, Primitive, Sin, Sqrt, Tan,
-        ToBool, ToNumber, TypeOf,
+        Abs, And, Array, Cos, Logarithm, MutPrimitive, Or, Pow, Primitive, Sin,
+        Sqrt, Tan, ToBool, ToNumber, TypeOf,
     },
     Operator, TreeNodeValue, Value,
 };
 
 fn compute_recur(
     node: Option<NodeRef<TreeNodeValue>>,
-    ctx: &mut BTreeMap<String, Primitive>,
+    ctx: &mut BTreeMap<String, MutPrimitive>,
 ) -> anyhow::Result<Primitive> {
     if let Some(node) = node {
         match node.data() {
@@ -165,18 +165,18 @@ fn compute_recur(
                 let right = compute_recur(node.last_child(), ctx)?;
                 Ok(left.is_less_or_equal(&right))
             }
-            TreeNodeValue::Primitive(Primitive::Bool(b)) => {
-                Ok(Primitive::Bool(*b))
-            }
-            TreeNodeValue::Primitive(v @ Primitive::Error(_)) => {
-                //   Err(Error::msg(err.clone()))
-                Ok(v.clone())
-            }
             TreeNodeValue::Primitive(p) => Ok(p.clone()),
             TreeNodeValue::VariableAssign(name) => {
                 let v = compute_recur(node.first_child(), ctx)?;
                 if !matches!(v, Primitive::Error(_)) {
-                    ctx.insert(name.to_owned(), v.clone());
+                    let mut old = ctx
+                        .entry(name.clone())
+                        .or_insert(Primitive::Unit.mut_prim())
+                        .lock()
+                        .map_err(|e| {
+                            anyhow::format_err!("could not acquire lock {e}")
+                        })?;
+                    *old = v.clone();
                 }
                 Ok(v)
             }
@@ -264,10 +264,12 @@ fn compute_recur(
                 }
             }
             TreeNodeValue::IfExpr(v) => {
-                compute_instructions(vec![v.clone()], ctx)
+                let mut scoped_ctx = ctx.clone();
+                compute_instructions(vec![v.clone()], &mut scoped_ctx)
             }
             TreeNodeValue::WhileExpr(v) => {
-                compute_instructions(vec![v.clone()], ctx)
+                let mut scoped_ctx = ctx.clone();
+                compute_instructions(vec![v.clone()], &mut scoped_ctx)
             }
             TreeNodeValue::Array(arr) => {
                 let mut primitives = vec![];
@@ -291,8 +293,15 @@ fn compute_recur(
                 };
                 match (array, index) {
                     (Value::Variable(v), index) => {
-                        let array =
-                            ctx.get(v).context("array not found in context")?;
+                        let array = ctx
+                            .get(v)
+                            .context("array not found in context")?
+                            .lock()
+                            .map_err(|e| {
+                                anyhow::Error::msg(format!(
+                                    "could not acquire lock {e}"
+                                ))
+                            })?;
                         Ok(array.index_at(index))
                     }
                     (Value::String(v), index) => {
@@ -332,8 +341,13 @@ fn compute_recur(
             }
             TreeNodeValue::StructAccess { struc, key } => match (struc, key) {
                 (Value::Variable(v), key @ Primitive::String(_)) => {
-                    let struc =
-                        ctx.get(v).context("struct not found in context")?;
+                    let struc = ctx
+                        .get(v)
+                        .context("struct not found in context")?
+                        .lock()
+                        .map_err(|e| {
+                            anyhow::format_err!("could not acquire lock {e}")
+                        })?;
                     Ok(struc.index_at(key))
                 }
                 _ => Ok(Primitive::Error(format!(
@@ -342,8 +356,13 @@ fn compute_recur(
             },
             TreeNodeValue::VariableArrayAssign { name, index } => {
                 let mut v = compute_recur(node.first_child(), ctx)?;
-                let array =
-                    ctx.get_mut(name).context("array not found in context")?;
+                let mut array = ctx
+                    .get_mut(name)
+                    .context("array not found in context")?
+                    .lock()
+                    .map_err(|e| {
+                        anyhow::format_err!("could not acquire lock {e}")
+                    })?;
                 Ok(array.swap_mem(&mut v, index))
             }
             TreeNodeValue::Function(Value::Function { parameters, exprs }) => {
@@ -381,12 +400,14 @@ fn compute_recur(
 
                         // copy also the function definition to the scoped ctx
                         for (k, p) in ctx.iter() {
+                            let maybe_fn = p.lock().map_err(|e| {
+                                anyhow::format_err!(
+                                    "could not acquire lock {e}"
+                                )
+                            })?;
                             if matches!(
-                                p,
-                                &Primitive::Function {
-                                    parameters: _,
-                                    exprs: _
-                                }
+                                *maybe_fn,
+                                Primitive::Function { parameters: _, exprs: _ }
                             ) {
                                 scope_ctx.insert(k.to_string(), p.clone());
                             }
@@ -398,7 +419,8 @@ fn compute_recur(
                                     vec![value.clone()],
                                     ctx,
                                 )?;
-                                scope_ctx.insert(param.clone(), value);
+                                scope_ctx
+                                    .insert(param.clone(), value.mut_prim());
                             } else {
                                 return Ok(Primitive::Error(format!(
                                     "missing parameter {param}"
@@ -440,16 +462,15 @@ fn compute_recur(
             TreeNodeValue::Break => Ok(Primitive::NoReturn),
             TreeNodeValue::Null => Ok(Primitive::Null),
             TreeNodeValue::Drop(variables) => {
-                let mut dropped = Vec::new();
                 if variables.iter().all(|k| ctx.contains_key(k)) {
                     for var in variables {
-                        dropped.push(ctx.remove(var).unwrap());
+                        ctx.remove(var).unwrap();
                     }
                 } else {
                     return Ok(Primitive::Error(format!("ctx doesn't contain all variables that must be dropped {variables:?}")));
                 }
 
-                Ok(Primitive::Array(dropped))
+                Ok(Primitive::Unit)
             }
             TreeNodeValue::EarlyReturn(v) => {
                 if let Some(v) = v {
@@ -467,7 +488,7 @@ fn compute_recur(
 
 fn value_to_tree(
     value: Value,
-    ctx: &mut BTreeMap<String, Primitive>,
+    ctx: &mut BTreeMap<String, MutPrimitive>,
 ) -> anyhow::Result<Tree<TreeNodeValue>> {
     let mut tree: Tree<TreeNodeValue> = Tree::new();
     to_ast(ctx, value, &mut tree, &None)?;
@@ -486,13 +507,13 @@ fn value_to_tree(
 
 fn compute_instructions(
     instructions: Vec<Value>,
-    ctx: &mut BTreeMap<String, Primitive>,
+    ctx: &mut BTreeMap<String, MutPrimitive>,
 ) -> anyhow::Result<Primitive> {
     let mut result = Primitive::Unit;
 
     fn compute(
         instruction: Value,
-        ctx: &mut BTreeMap<String, Primitive>,
+        ctx: &mut BTreeMap<String, MutPrimitive>,
     ) -> anyhow::Result<Primitive> {
         let tree = value_to_tree(instruction, ctx)?;
 
@@ -517,16 +538,20 @@ fn compute_instructions(
                     return Ok(cond);
                 }
                 if matches!(cond, Primitive::Bool(true)) {
+                    let mut scoped_ctx = ctx.clone();
+
                     for instruction in exprs {
-                        match compute(instruction.clone(), ctx)? {
+                        match compute(instruction.clone(), &mut scoped_ctx)? {
                             v @ Primitive::EarlyReturn(_)
                             | v @ Primitive::Error(_) => return Ok(v),
                             p => result = p,
                         }
                     }
                 } else if let Some(else_expr) = else_expr {
+                    let mut scoped_ctx = ctx.clone();
+
                     for instruction in else_expr {
-                        match compute(instruction.clone(), ctx)? {
+                        match compute(instruction.clone(), &mut scoped_ctx)? {
                             v @ Primitive::EarlyReturn(_)
                             | v @ Primitive::Error(_) => return Ok(v),
                             p => result = p,
@@ -535,12 +560,14 @@ fn compute_instructions(
                 }
             }
             Value::WhileExpr { cond, exprs } => {
+                let mut scoped_ctx = ctx.clone();
+
                 'while_loop: while matches!(
-                    compute(*cond.clone(), ctx)?,
+                    compute(*cond.clone(), &mut scoped_ctx)?,
                     Primitive::Bool(true)
                 ) {
                     for instruction in &exprs {
-                        match compute(instruction.clone(), ctx)? {
+                        match compute(instruction.clone(), &mut scoped_ctx)? {
                             Primitive::NoReturn => break 'while_loop,
                             v @ Primitive::EarlyReturn(_)
                             | v @ Primitive::Error(_) => return Ok(v),
@@ -566,7 +593,7 @@ fn compute_instructions(
 // region: exposed api
 pub fn compute(
     s: &str,
-    ctx: &mut BTreeMap<String, Primitive>,
+    ctx: &mut BTreeMap<String, MutPrimitive>,
 ) -> anyhow::Result<Primitive> {
     let (rest, instructions) = parse_instructions(s).map_err(|e| {
         anyhow::Error::msg(format!("could not parse instructions. {e}"))

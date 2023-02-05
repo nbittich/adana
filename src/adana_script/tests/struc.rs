@@ -12,11 +12,11 @@ fn test_simple_struc() {
     let _ = compute(expr, &mut ctx).unwrap();
     assert_eq!(ctx.len(), 1);
     assert_eq!(
-        ctx.get("x"),
-        Some(&Primitive::Struct(HashMap::from([(
+        ctx["x"].lock().unwrap().clone(),
+        Primitive::Struct(HashMap::from([(
             "x".to_string(),
             Primitive::Int(8)
-        )])))
+        )]))
     );
 }
 
@@ -32,8 +32,8 @@ fn test_simple_struc_with_more_stuff_in_it() {
     let _ = compute(expr, &mut ctx).unwrap();
     assert_eq!(ctx.len(), 1);
     assert_eq!(
-        ctx.get("x"),
-        Some(&Primitive::Struct(HashMap::from([
+        ctx["x"].lock().unwrap().clone(),
+        Primitive::Struct(HashMap::from([
             ("x".to_string(), Primitive::Int(8)),
             ("y".to_string(), Primitive::String("hello;".to_string())),
             (
@@ -51,7 +51,7 @@ fn test_simple_struc_with_more_stuff_in_it() {
                     )]
                 }
             )
-        ])))
+        ]))
     );
 }
 
@@ -158,12 +158,24 @@ fn test_struct_complex_ish() {
         test5 = person_service.boom(person)
         "#;
     let _ = compute(expr, &mut ctx).unwrap();
-    assert_eq!(ctx["test1"], Primitive::String("hi hello".to_string()));
     assert_eq!(
-        ctx["test2"],
+        ctx["test1"].lock().unwrap().clone(),
+        Primitive::String("hi hello".to_string())
+    );
+    assert_eq!(
+        ctx["test2"].lock().unwrap().clone(),
         Primitive::String("you are too young".to_string())
     );
-    assert_eq!(ctx["test3"], Primitive::String("you are too old".to_string()));
-    assert_eq!(ctx["test4"], Primitive::String("John Doe".to_string()));
-    assert_eq!(ctx["test5"], Primitive::String("Nordine Bittich".to_string()));
+    assert_eq!(
+        ctx["test3"].lock().unwrap().clone(),
+        Primitive::String("you are too old".to_string())
+    );
+    assert_eq!(
+        ctx["test4"].lock().unwrap().clone(),
+        Primitive::String("John Doe".to_string())
+    );
+    assert_eq!(
+        ctx["test5"].lock().unwrap().clone(),
+        Primitive::String("Nordine Bittich".to_string())
+    );
 }
