@@ -338,13 +338,22 @@ impl Add for Primitive {
             (Primitive::Double(l), Primitive::Double(r)) => {
                 Primitive::Double(l + r)
             }
-            (l, Primitive::String(s)) => Primitive::String(format!("{l}{s}")),
-
-            (Primitive::String(s), r) => Primitive::String(format!("{s}{r}")),
             (Primitive::Array(mut l), Primitive::Array(mut r)) => {
                 l.append(&mut r);
                 Primitive::Array(l)
             }
+
+            (Primitive::Array(mut l), r) => {
+                l.push(r);
+                Primitive::Array(l)
+            }
+            (l, Primitive::Array(mut r)) => {
+                r.insert(0, l);
+                Primitive::Array(r)
+            }
+            (l, Primitive::String(s)) => Primitive::String(format!("{l}{s}")),
+
+            (Primitive::String(s), r) => Primitive::String(format!("{s}{r}")),
             (l, r) => Primitive::Error(format!(
                 "illegal call to add() => left: {l} right: {r}"
             )),

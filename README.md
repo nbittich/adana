@@ -166,7 +166,11 @@ Add and assign(+=), subtract and assign (-=), etc are not supported.
 
 ### Loops
 
-There's only one loop, the while loop. Just like in plain old C:
+There are two loops, the while loop and the for-each loop.
+The while loop looks like the one in C, while the for-each loop is a little bit more
+modern.
+
+No Parenthesises for for-each (don't ask why :-)).
 
 ```C
 count = 0
@@ -177,7 +181,13 @@ while(count < 10) {
    }
 ```
 
-You can break if you match a certain condition:
+```javascript
+foreach n in [1,2,3] {
+   println(n)
+}
+```
+
+You can break if you match a certain condition within a while:
 
 ```C
 while(count < 10) {
@@ -188,6 +198,7 @@ while(count < 10) {
      }
    }
 ```
+
 <hr>
 
 ### Conditions
@@ -443,6 +454,7 @@ Here is a list of built-in functions available:
 | to_int       | cast to int                                           | `to_int("2")`<br>`to_int(2.2)`     |
 | to_double    | cast to double                                        | `to_double("2.2")`                 |
 | to_bool      | cast to bool                                          | `to_bool("true")`                  |
+| to_string    | cast to string                                        | `to_string(true)`                  |
 | drop         | drop a variable from context                          | `drop("myvar")`                    |
 | eval         | Evaluate a string as code                             | `eval("sqrt(9)")`                  |
 | type_of      | Type of variable                                      | `type_of(true)`                    |

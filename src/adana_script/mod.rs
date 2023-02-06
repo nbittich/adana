@@ -12,6 +12,7 @@ pub use primitive::Primitive;
 use serde::{Deserialize, Serialize};
 use strum::EnumCount;
 
+use self::constants::TO_STRING;
 use self::constants::{
     ABS, COS, EVAL, INCLUDE, LENGTH, LN, LOG, PRINT, PRINT_LN, READ_LINES, SIN,
     SQRT, TAN, TO_BOOL, TO_DOUBLE, TO_INT, TYPE_OF,
@@ -46,6 +47,7 @@ pub mod constants {
     pub const TO_INT: &str = "to_int";
     pub const TO_BOOL: &str = "to_bool";
     pub const TO_DOUBLE: &str = "to_double";
+    pub const TO_STRING: &str = "to_string";
     pub const ABS: &str = "abs";
     pub const LENGTH: &str = "length";
     pub const LOG: &str = "log";
@@ -65,6 +67,8 @@ pub mod constants {
     pub const STRUCT: &str = "struct";
     pub const EVAL: &str = "eval";
     pub const TYPE_OF: &str = "type_of";
+    pub const FOR: &str = "for";
+    pub const IN: &str = "in";
 }
 
 #[derive(Debug, EnumCount)]
@@ -133,6 +137,11 @@ pub enum Value {
         cond: Box<Value>,
         exprs: Vec<Value>,
     },
+    ForeachExpr {
+        var: String,
+        iterator: Box<Value>,
+        exprs: Vec<Value>,
+    },
     Array(Vec<Value>),
     ArrayAccess {
         arr: Box<Value>,
@@ -155,6 +164,7 @@ pub enum BuiltInFunctionType {
     ToInt,
     ToDouble,
     ToBool,
+    ToString,
     Tan,
     Println,
     ReadLines,
@@ -202,6 +212,7 @@ pub(super) enum TreeNodeValue {
     ArrayAccess { index: Primitive, array: Value },
     Function(Value),
     FunctionCall(Value),
+    Foreach(Value),
     Null,
 }
 
@@ -225,6 +236,7 @@ impl BuiltInFunctionType {
             BuiltInFunctionType::ToInt => TO_INT,
             BuiltInFunctionType::ToDouble => TO_DOUBLE,
             BuiltInFunctionType::ToBool => TO_BOOL,
+            BuiltInFunctionType::ToString => TO_STRING,
         }
     }
 }

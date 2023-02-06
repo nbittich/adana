@@ -200,6 +200,9 @@ fn compute_recur(
                     super::BuiltInFunctionType::ToInt => Ok(v.to_int()),
                     super::BuiltInFunctionType::ToDouble => Ok(v.to_double()),
                     super::BuiltInFunctionType::ToBool => Ok(v.to_bool()),
+                    super::BuiltInFunctionType::ToString => {
+                        Ok(Primitive::String(v.to_string()))
+                    }
                     super::BuiltInFunctionType::Length => Ok(v.len()),
                     super::BuiltInFunctionType::Println => {
                         println!("{v}");
@@ -268,6 +271,10 @@ fn compute_recur(
                 compute_instructions(vec![v.clone()], &mut scoped_ctx)
             }
             TreeNodeValue::WhileExpr(v) => {
+                let mut scoped_ctx = ctx.clone();
+                compute_instructions(vec![v.clone()], &mut scoped_ctx)
+            }
+            TreeNodeValue::Foreach(v) => {
                 let mut scoped_ctx = ctx.clone();
                 compute_instructions(vec![v.clone()], &mut scoped_ctx)
             }
@@ -505,27 +512,26 @@ fn value_to_tree(
     Ok(tree)
 }
 
+fn compute_lazy(
+    instruction: Value,
+    ctx: &mut BTreeMap<String, MutPrimitive>,
+) -> anyhow::Result<Primitive> {
+    let tree = value_to_tree(instruction, ctx)?;
+
+    let root = tree.root();
+
+    compute_recur(root, ctx)
+}
 fn compute_instructions(
     instructions: Vec<Value>,
     ctx: &mut BTreeMap<String, MutPrimitive>,
 ) -> anyhow::Result<Primitive> {
     let mut result = Primitive::Unit;
 
-    fn compute(
-        instruction: Value,
-        ctx: &mut BTreeMap<String, MutPrimitive>,
-    ) -> anyhow::Result<Primitive> {
-        let tree = value_to_tree(instruction, ctx)?;
-
-        let root = tree.root();
-
-        compute_recur(root, ctx)
-    }
-
     for instruction in instructions {
         match instruction {
             v @ Value::EarlyReturn(_) => {
-                let res = compute(v, ctx)?;
+                let res = compute_lazy(v, ctx)?;
                 if let Primitive::EarlyReturn(r) = res {
                     return Ok(*r);
                 } else {
@@ -533,7 +539,7 @@ fn compute_instructions(
                 }
             }
             Value::IfExpr { cond, exprs, else_expr } => {
-                let cond = compute(*cond, ctx)?;
+                let cond = compute_lazy(*cond, ctx)?;
                 if matches!(cond, Primitive::Error(_)) {
                     return Ok(cond);
                 }
@@ -541,7 +547,10 @@ fn compute_instructions(
                     let mut scoped_ctx = ctx.clone();
 
                     for instruction in exprs {
-                        match compute(instruction.clone(), &mut scoped_ctx)? {
+                        match compute_lazy(
+                            instruction.clone(),
+                            &mut scoped_ctx,
+                        )? {
                             v @ Primitive::EarlyReturn(_)
                             | v @ Primitive::Error(_) => return Ok(v),
                             p => result = p,
@@ -551,7 +560,10 @@ fn compute_instructions(
                     let mut scoped_ctx = ctx.clone();
 
                     for instruction in else_expr {
-                        match compute(instruction.clone(), &mut scoped_ctx)? {
+                        match compute_lazy(
+                            instruction.clone(),
+                            &mut scoped_ctx,
+                        )? {
                             v @ Primitive::EarlyReturn(_)
                             | v @ Primitive::Error(_) => return Ok(v),
                             p => result = p,
@@ -563,11 +575,14 @@ fn compute_instructions(
                 let mut scoped_ctx = ctx.clone();
 
                 'while_loop: while matches!(
-                    compute(*cond.clone(), &mut scoped_ctx)?,
+                    compute_lazy(*cond.clone(), &mut scoped_ctx)?,
                     Primitive::Bool(true)
                 ) {
                     for instruction in &exprs {
-                        match compute(instruction.clone(), &mut scoped_ctx)? {
+                        match compute_lazy(
+                            instruction.clone(),
+                            &mut scoped_ctx,
+                        )? {
                             Primitive::NoReturn => break 'while_loop,
                             v @ Primitive::EarlyReturn(_)
                             | v @ Primitive::Error(_) => return Ok(v),
@@ -576,8 +591,39 @@ fn compute_instructions(
                     }
                 }
             }
+            Value::ForeachExpr { var, iterator, exprs } => {
+                let iterator = compute_lazy(*iterator, ctx)?;
+
+                let mut scoped_ctx = ctx.clone();
+                let arr = match iterator {
+                    Primitive::Array(arr) => arr,
+                    Primitive::String(s) => s
+                        .chars()
+                        .map(|c| Primitive::String(c.to_string()))
+                        .collect(),
+                    _ => {
+                        return Ok(Primitive::Error(format!(
+                            "not an iterable {iterator:?}"
+                        )));
+                    }
+                };
+                'foreach_loop: for it in arr {
+                    scoped_ctx.insert(var.clone(), it.mut_prim());
+                    for instruction in &exprs {
+                        match compute_lazy(
+                            instruction.clone(),
+                            &mut scoped_ctx,
+                        )? {
+                            Primitive::NoReturn => break 'foreach_loop,
+                            v @ Primitive::EarlyReturn(_)
+                            | v @ Primitive::Error(_) => return Ok(v),
+                            p => result = p,
+                        }
+                    }
+                }
+            }
             _ => {
-                result = compute(instruction, ctx)?;
+                result = compute_lazy(instruction, ctx)?;
             }
         }
         if let Primitive::EarlyReturn(p) = result {
