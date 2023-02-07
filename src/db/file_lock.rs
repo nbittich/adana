@@ -112,10 +112,9 @@ impl FileLock {
         Ok(str::parse::<u32>(&pid)?)
     }
 
-    fn cleanup_and_flush(&mut self) -> anyhow::Result<()> {
-        debug!("remove lock for {}", self._lock_p.as_path().to_string_lossy());
+    pub fn flush(&self) -> anyhow::Result<()> {
+        debug!("flush file");
         let swp = &self.inner_p.with_extension("swp");
-        let pid = &self.inner_p.with_extension("pid");
         let _ = File::create(swp)?;
         let _ = File::options()
             .write(true)
@@ -125,9 +124,21 @@ impl FileLock {
 
         std::fs::rename(&self.inner_p, swp)?;
 
-        std::fs::rename(&self._lock_p, &self.inner_p)?;
+        std::fs::copy(&self._lock_p, &self.inner_p)
+            .map_err(|e| anyhow::format_err!("{e}"))?;
 
         remove_file(swp)?;
+        Ok(())
+    }
+
+    fn cleanup_and_flush(&mut self) -> anyhow::Result<()> {
+        debug!("remove lock for {}", self._lock_p.as_path().to_string_lossy());
+
+        let pid = &self.inner_p.with_extension("pid");
+
+        self.flush()?;
+
+        remove_file(&self._lock_p)?;
         remove_file(pid)?;
 
         Ok(())
