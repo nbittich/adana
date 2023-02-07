@@ -172,6 +172,7 @@ fn parse_foreach(s: &str) -> Res<Value> {
                         parse_fn_call,
                         parse_array_access,
                         parse_array,
+                        parse_string,
                         parse_variable,
                     )),
                 ),

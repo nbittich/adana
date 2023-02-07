@@ -104,6 +104,23 @@ fn simple_foreach_not_assigned() {
 }
 
 #[test]
+fn simple_foreach_string_not_assigned() {
+    let expr = r#"
+         message = ""
+         for letter in "Hello World How Are Ya ?" {
+            message = message + letter
+         }
+       "#;
+    let mut ctx = BTreeMap::new();
+    let _ = compute(expr, &mut ctx).unwrap();
+    assert_eq!(
+        Primitive::String("Hello World How Are Ya ?".into()),
+        ctx["message"].lock().unwrap().clone()
+    );
+    assert!(ctx.get("letter").is_none());
+}
+
+#[test]
 fn simple_foreach_break() {
     let expr = r#"
          message = ""
