@@ -5,7 +5,6 @@ use std::{
     io::{BufRead, BufReader},
     ops::{Neg, Not},
     path::{Path, PathBuf},
-    thread::spawn,
 };
 
 use anyhow::{Context, Error};
@@ -435,16 +434,17 @@ fn compute_recur(
                             }
                         }
 
+                        // TODO remove this and replace Arc<Mutex<T>> by Arc<T>
                         // call function in a specific os thread with its own stack
-                        let res = spawn(move || {
-                            compute_instructions(exprs, &mut scope_ctx)
-                        })
-                        .join()
-                        .map_err(|e| {
-                            anyhow::Error::msg(format!(
-                                "something wrong: {e:?}"
-                            ))
-                        })??;
+                        // This was relative to a small stack allocated by musl
+                        // But now it doesn't seem needed anymore
+                        // let res = spawn(move || {}).join().map_err(|e| {
+                        //     anyhow::Error::msg(format!(
+                        //         "something wrong: {e:?}"
+                        //     ))
+                        // })??;
+                        let res = compute_instructions(exprs, &mut scope_ctx)?;
+
                         if let Primitive::EarlyReturn(v) = res {
                             return Ok(*v);
                         }
