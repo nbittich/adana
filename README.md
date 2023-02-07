@@ -182,7 +182,7 @@ while(count < 10) {
 ```
 
 ```javascript
-foreach n in [1,2,3] {
+for n in [1,2,3] {
    println(n)
 }
 ```
