@@ -187,6 +187,14 @@ for n in [1,2,3] {
 }
 ```
 
+You could have access to the current index in a for-each:
+
+```javascript
+for n, index in [1, 2, 3] {
+    println("index: " + index + " value: " + n)
+}
+```
+
 You can break if you match a certain condition within a while:
 
 ```C

@@ -303,7 +303,12 @@ pub(super) fn to_ast(
             let while_node = TreeNodeValue::WhileExpr(v);
             append_to_current_and_return(while_node, tree, curr_node_id)
         }
-        v @ Value::ForeachExpr { var: _, iterator: _, exprs: _ } => {
+        v @ Value::ForeachExpr {
+            var: _,
+            index_var: _,
+            iterator: _,
+            exprs: _,
+        } => {
             let foreach_node = TreeNodeValue::Foreach(v);
             append_to_current_and_return(foreach_node, tree, curr_node_id)
         }

@@ -231,3 +231,57 @@ fn simple_foreach_two_depth() {
     );
     assert!(ctx.get("depth").is_none());
 }
+
+#[test]
+fn simple_foreach_with_idx() {
+    let expr = r#"
+         arr = [1,2,3,4]
+         total = 0
+         idx_total = 0
+         for a, index in arr {
+             total = total + a
+             idx_total = idx_total + index
+         }
+       "#;
+    let mut ctx = BTreeMap::new();
+    let _ = compute(expr, &mut ctx).unwrap();
+    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
+    assert!(ctx.get("a").is_none());
+}
+#[test]
+fn simple_foreach_with_idx_from_fn() {
+    let expr = r#"
+         arr = () => { [1,2,3,4] }
+         total = 0
+         idx_total = 0
+         for a, index in arr() {
+             total = total + a
+             idx_total = idx_total + index
+         }
+       "#;
+    let mut ctx = BTreeMap::new();
+    let _ = compute(expr, &mut ctx).unwrap();
+    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
+    assert!(ctx.get("a").is_none());
+}
+#[test]
+fn simple_foreach_with_idx_from_struct() {
+    let expr = r#"
+         struc = struct {
+             arr: [1, 2, 3, 4];
+         }
+         total = 0
+         idx_total = 0
+         for a, index in struc.arr {
+             total = total + a
+             idx_total = idx_total + index
+         }
+       "#;
+    let mut ctx = BTreeMap::new();
+    let _ = compute(expr, &mut ctx).unwrap();
+    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
+    assert!(ctx.get("a").is_none());
+}

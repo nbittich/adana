@@ -591,7 +591,7 @@ fn compute_instructions(
                     }
                 }
             }
-            Value::ForeachExpr { var, iterator, exprs } => {
+            Value::ForeachExpr { var, index_var, iterator, exprs } => {
                 let iterator = compute_lazy(*iterator, ctx)?;
 
                 let mut scoped_ctx = ctx.clone();
@@ -607,8 +607,14 @@ fn compute_instructions(
                         )));
                     }
                 };
-                'foreach_loop: for it in arr {
+                'foreach_loop: for (i, it) in arr.into_iter().enumerate() {
                     scoped_ctx.insert(var.clone(), it.mut_prim());
+                    if let Some(index_var) = &index_var {
+                        scoped_ctx.insert(
+                            index_var.clone(),
+                            Primitive::Int(i as i128).mut_prim(),
+                        );
+                    }
                     for instruction in &exprs {
                         match compute_lazy(
                             instruction.clone(),

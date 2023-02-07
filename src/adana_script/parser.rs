@@ -166,11 +166,15 @@ fn parse_foreach(s: &str) -> Res<Value> {
             tag_no_space(FOR),
             pair(
                 separated_pair(
-                    parse_variable_str,
+                    pair(
+                        parse_variable_str,
+                        opt(preceded(tag_no_space(","), parse_variable_str)),
+                    ),
                     tag_no_space(IN),
                     alt((
                         parse_fn_call,
                         parse_array_access,
+                        parse_struct_access,
                         parse_array,
                         parse_string,
                         parse_variable,
@@ -179,8 +183,9 @@ fn parse_foreach(s: &str) -> Res<Value> {
                 parse_block(parse_instructions),
             ),
         ),
-        |((v, arr), exprs)| Value::ForeachExpr {
+        |(((v, idx), arr), exprs)| Value::ForeachExpr {
             var: v.to_string(),
+            index_var: idx.map(String::from),
             iterator: Box::new(arr),
             exprs,
         },

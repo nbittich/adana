@@ -139,6 +139,7 @@ pub enum Value {
     },
     ForeachExpr {
         var: String,
+        index_var: Option<String>,
         iterator: Box<Value>,
         exprs: Vec<Value>,
     },
