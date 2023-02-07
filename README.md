@@ -1,6 +1,8 @@
 # Adana
 
-Toy project with the following goals in mind:
+Scripting programming language, repl and namespaced aliases for commands.
+
+## Goals
 
  - Making something concrete with rust
  - Learning more about parser combinator
@@ -9,7 +11,7 @@ Toy project with the following goals in mind:
  - Making a REPL
  - No tutorials, best practices, design patterns, clean architecture, or fancy frameworks
 
- # Table of Contents
+## Table of Contents
 1. [Features](#features)
 2. [Installation](#installation)
 3. [Programming language](#programming-language)
@@ -187,7 +189,7 @@ for n in [1,2,3] {
 }
 ```
 
-You could have access to the current index in a for-each:
+You have access to the current index in a for-each:
 
 ```javascript
 for n, index in [1, 2, 3] {
@@ -508,7 +510,7 @@ https://user-images.githubusercontent.com/3816305/181606658-b01a0ca5-4507-4d58-8
 | listns           | lsns       | List available namespaces.                                                                                                                                                                        |
 | currentns        | currentns  | Print current namespace.                                                                                                                                                                          |
 | backup           | bckp       | Backup the database of namespaces to the current directory                                                                                                                                        |
-| flush            | flush      | Flush database                                                                                                                                        |
+| flush            | flush      | Force flush database                                                                                                                                        |
 | restore          | N/A        | Restore the database from current directory                                                                                                                                                       |
 | deletens         | delns      | Delete namespace or clear current namespace values.                                                                                                                                               |
 | mergens          | merge      | Merge current with a given namespace                                                                                                                                                              |
