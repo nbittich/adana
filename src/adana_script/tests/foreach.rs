@@ -238,7 +238,7 @@ fn simple_foreach_with_idx() {
          arr = [1,2,3,4]
          total = 0
          idx_total = 0
-         for a, index in arr {
+         for index,a in arr {
              total = total + a
              idx_total = idx_total + index
          }
@@ -255,7 +255,7 @@ fn simple_foreach_with_idx_from_fn() {
          arr = () => { [1,2,3,4] }
          total = 0
          idx_total = 0
-         for a, index in arr() {
+         for index, a in arr() {
              total = total + a
              idx_total = idx_total + index
          }
@@ -274,7 +274,7 @@ fn simple_foreach_with_idx_from_struct() {
          }
          total = 0
          idx_total = 0
-         for a, index in struc.arr {
+         for index,a in struc.arr {
              total = total + a
              idx_total = idx_total + index
          }

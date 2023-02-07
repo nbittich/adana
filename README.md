@@ -172,7 +172,8 @@ There are two loops, the while loop and the for-each loop.
 The while loop looks like the one in C, while the for-each loop is a little bit more
 modern.
 
-No Parenthesises for for-each (don't ask why :-)).
+For-each loop doesn't require parenthesises. You can only iterate over strings and arrays.
+
 
 ```C
 count = 0
@@ -192,8 +193,16 @@ for n in [1,2,3] {
 You have access to the current index in a for-each:
 
 ```javascript
-for n, index in [1, 2, 3] {
+for index, n in [1, 2, 3] {
     println("index: " + index + " value: " + n)
+}
+```
+
+It is also possible to use the for-each loop with a string:
+
+```javascript
+for i, letter in "hello" {
+  println(i)
 }
 ```
 
@@ -220,7 +229,7 @@ if(age > 12) {
     println("age > 12")
 } else if(age <9) {
     println("age < 9")
-}else {
+} else {
     println("dunno")
 }
 
