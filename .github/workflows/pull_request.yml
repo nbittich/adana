@@ -9,7 +9,7 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     env:
-      CARGO_REGISTRY_TOKEN: ${{CARGO_REGISTRY_TOKEN}}
+      CARGO_REGISTRY_TOKEN: ${{secrets.CARGO_REGISTRY_TOKEN}}
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
