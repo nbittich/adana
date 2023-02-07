@@ -5,7 +5,6 @@ use std::{
     io::{BufRead, BufReader},
     ops::{Neg, Not},
     path::{Path, PathBuf},
-    thread::spawn,
 };
 
 use anyhow::{Context, Error};
@@ -172,7 +171,7 @@ fn compute_recur(
                     let mut old = ctx
                         .entry(name.clone())
                         .or_insert(Primitive::Unit.mut_prim())
-                        .lock()
+                        .write()
                         .map_err(|e| {
                             anyhow::format_err!("could not acquire lock {e}")
                         })?;
@@ -200,6 +199,9 @@ fn compute_recur(
                     super::BuiltInFunctionType::ToInt => Ok(v.to_int()),
                     super::BuiltInFunctionType::ToDouble => Ok(v.to_double()),
                     super::BuiltInFunctionType::ToBool => Ok(v.to_bool()),
+                    super::BuiltInFunctionType::ToString => {
+                        Ok(Primitive::String(v.to_string()))
+                    }
                     super::BuiltInFunctionType::Length => Ok(v.len()),
                     super::BuiltInFunctionType::Println => {
                         println!("{v}");
@@ -271,6 +273,10 @@ fn compute_recur(
                 let mut scoped_ctx = ctx.clone();
                 compute_instructions(vec![v.clone()], &mut scoped_ctx)
             }
+            TreeNodeValue::Foreach(v) => {
+                let mut scoped_ctx = ctx.clone();
+                compute_instructions(vec![v.clone()], &mut scoped_ctx)
+            }
             TreeNodeValue::Array(arr) => {
                 let mut primitives = vec![];
                 for v in arr {
@@ -296,7 +302,7 @@ fn compute_recur(
                         let array = ctx
                             .get(v)
                             .context("array not found in context")?
-                            .lock()
+                            .read()
                             .map_err(|e| {
                                 anyhow::Error::msg(format!(
                                     "could not acquire lock {e}"
@@ -344,7 +350,7 @@ fn compute_recur(
                     let struc = ctx
                         .get(v)
                         .context("struct not found in context")?
-                        .lock()
+                        .read()
                         .map_err(|e| {
                             anyhow::format_err!("could not acquire lock {e}")
                         })?;
@@ -359,7 +365,7 @@ fn compute_recur(
                 let mut array = ctx
                     .get_mut(name)
                     .context("array not found in context")?
-                    .lock()
+                    .write()
                     .map_err(|e| {
                         anyhow::format_err!("could not acquire lock {e}")
                     })?;
@@ -400,7 +406,7 @@ fn compute_recur(
 
                         // copy also the function definition to the scoped ctx
                         for (k, p) in ctx.iter() {
-                            let maybe_fn = p.lock().map_err(|e| {
+                            let maybe_fn = p.read().map_err(|e| {
                                 anyhow::format_err!(
                                     "could not acquire lock {e}"
                                 )
@@ -428,16 +434,17 @@ fn compute_recur(
                             }
                         }
 
+                        // TODO remove this and replace Arc<Mutex<T>> by Arc<T>
                         // call function in a specific os thread with its own stack
-                        let res = spawn(move || {
-                            compute_instructions(exprs, &mut scope_ctx)
-                        })
-                        .join()
-                        .map_err(|e| {
-                            anyhow::Error::msg(format!(
-                                "something wrong: {e:?}"
-                            ))
-                        })??;
+                        // This was relative to a small stack allocated by musl
+                        // But now it doesn't seem needed anymore
+                        // let res = spawn(move || {}).join().map_err(|e| {
+                        //     anyhow::Error::msg(format!(
+                        //         "something wrong: {e:?}"
+                        //     ))
+                        // })??;
+                        let res = compute_instructions(exprs, &mut scope_ctx)?;
+
                         if let Primitive::EarlyReturn(v) = res {
                             return Ok(*v);
                         }
@@ -505,27 +512,26 @@ fn value_to_tree(
     Ok(tree)
 }
 
+fn compute_lazy(
+    instruction: Value,
+    ctx: &mut BTreeMap<String, MutPrimitive>,
+) -> anyhow::Result<Primitive> {
+    let tree = value_to_tree(instruction, ctx)?;
+
+    let root = tree.root();
+
+    compute_recur(root, ctx)
+}
 fn compute_instructions(
     instructions: Vec<Value>,
     ctx: &mut BTreeMap<String, MutPrimitive>,
 ) -> anyhow::Result<Primitive> {
     let mut result = Primitive::Unit;
 
-    fn compute(
-        instruction: Value,
-        ctx: &mut BTreeMap<String, MutPrimitive>,
-    ) -> anyhow::Result<Primitive> {
-        let tree = value_to_tree(instruction, ctx)?;
-
-        let root = tree.root();
-
-        compute_recur(root, ctx)
-    }
-
     for instruction in instructions {
         match instruction {
             v @ Value::EarlyReturn(_) => {
-                let res = compute(v, ctx)?;
+                let res = compute_lazy(v, ctx)?;
                 if let Primitive::EarlyReturn(r) = res {
                     return Ok(*r);
                 } else {
@@ -533,7 +539,7 @@ fn compute_instructions(
                 }
             }
             Value::IfExpr { cond, exprs, else_expr } => {
-                let cond = compute(*cond, ctx)?;
+                let cond = compute_lazy(*cond, ctx)?;
                 if matches!(cond, Primitive::Error(_)) {
                     return Ok(cond);
                 }
@@ -541,7 +547,10 @@ fn compute_instructions(
                     let mut scoped_ctx = ctx.clone();
 
                     for instruction in exprs {
-                        match compute(instruction.clone(), &mut scoped_ctx)? {
+                        match compute_lazy(
+                            instruction.clone(),
+                            &mut scoped_ctx,
+                        )? {
                             v @ Primitive::EarlyReturn(_)
                             | v @ Primitive::Error(_) => return Ok(v),
                             p => result = p,
@@ -551,7 +560,10 @@ fn compute_instructions(
                     let mut scoped_ctx = ctx.clone();
 
                     for instruction in else_expr {
-                        match compute(instruction.clone(), &mut scoped_ctx)? {
+                        match compute_lazy(
+                            instruction.clone(),
+                            &mut scoped_ctx,
+                        )? {
                             v @ Primitive::EarlyReturn(_)
                             | v @ Primitive::Error(_) => return Ok(v),
                             p => result = p,
@@ -563,11 +575,14 @@ fn compute_instructions(
                 let mut scoped_ctx = ctx.clone();
 
                 'while_loop: while matches!(
-                    compute(*cond.clone(), &mut scoped_ctx)?,
+                    compute_lazy(*cond.clone(), &mut scoped_ctx)?,
                     Primitive::Bool(true)
                 ) {
                     for instruction in &exprs {
-                        match compute(instruction.clone(), &mut scoped_ctx)? {
+                        match compute_lazy(
+                            instruction.clone(),
+                            &mut scoped_ctx,
+                        )? {
                             Primitive::NoReturn => break 'while_loop,
                             v @ Primitive::EarlyReturn(_)
                             | v @ Primitive::Error(_) => return Ok(v),
@@ -576,8 +591,45 @@ fn compute_instructions(
                     }
                 }
             }
+            Value::ForeachExpr { var, index_var, iterator, exprs } => {
+                let iterator = compute_lazy(*iterator, ctx)?;
+
+                let mut scoped_ctx = ctx.clone();
+                let arr = match iterator {
+                    Primitive::Array(arr) => arr,
+                    Primitive::String(s) => s
+                        .chars()
+                        .map(|c| Primitive::String(c.to_string()))
+                        .collect(),
+                    _ => {
+                        return Ok(Primitive::Error(format!(
+                            "not an iterable {iterator:?}"
+                        )));
+                    }
+                };
+                'foreach_loop: for (i, it) in arr.into_iter().enumerate() {
+                    scoped_ctx.insert(var.clone(), it.mut_prim());
+                    if let Some(index_var) = &index_var {
+                        scoped_ctx.insert(
+                            index_var.clone(),
+                            Primitive::Int(i as i128).mut_prim(),
+                        );
+                    }
+                    for instruction in &exprs {
+                        match compute_lazy(
+                            instruction.clone(),
+                            &mut scoped_ctx,
+                        )? {
+                            Primitive::NoReturn => break 'foreach_loop,
+                            v @ Primitive::EarlyReturn(_)
+                            | v @ Primitive::Error(_) => return Ok(v),
+                            p => result = p,
+                        }
+                    }
+                }
+            }
             _ => {
-                result = compute(instruction, ctx)?;
+                result = compute_lazy(instruction, ctx)?;
             }
         }
         if let Primitive::EarlyReturn(p) = result {

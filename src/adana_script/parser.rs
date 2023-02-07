@@ -10,7 +10,7 @@ use crate::{
 
 use super::{
     constants::{
-        BREAK, DROP, ELSE, IF, MULTILINE, NULL, RETURN, STRUCT, WHILE,
+        BREAK, DROP, ELSE, FOR, IF, IN, MULTILINE, NULL, RETURN, STRUCT, WHILE,
     },
     BuiltInFunctionType, MathConstants, Operator, Value,
 };
@@ -160,6 +160,38 @@ fn parse_fn_call(s: &str) -> Res<Value> {
     )(s)
 }
 
+fn parse_foreach(s: &str) -> Res<Value> {
+    map(
+        preceded(
+            tag_no_space(FOR),
+            pair(
+                separated_pair(
+                    pair(
+                        opt(terminated(parse_variable_str, tag_no_space(","))),
+                        parse_variable_str,
+                    ),
+                    tag_no_space(IN),
+                    alt((
+                        parse_fn_call,
+                        parse_array_access,
+                        parse_struct_access,
+                        parse_array,
+                        parse_string,
+                        parse_variable,
+                    )),
+                ),
+                parse_block(parse_instructions),
+            ),
+        ),
+        |(((idx, v), arr), exprs)| Value::ForeachExpr {
+            var: v.to_string(),
+            index_var: idx.map(String::from),
+            iterator: Box::new(arr),
+            exprs,
+        },
+    )(s)
+}
+
 fn parse_drop(s: &str) -> Res<Value> {
     let parser = |p| separated_list1(tag_no_space(","), parse_variable)(p);
 
@@ -167,6 +199,7 @@ fn parse_drop(s: &str) -> Res<Value> {
         Value::Drop(Box::new(variables))
     })(s)
 }
+
 fn parse_builtin_fn(s: &str) -> Res<Value> {
     fn parse_builtin<'a>(
         fn_type: BuiltInFunctionType,
@@ -189,6 +222,7 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
         parse_builtin(BuiltInFunctionType::ToDouble),
         parse_builtin(BuiltInFunctionType::TypeOf),
         parse_builtin(BuiltInFunctionType::ToBool),
+        parse_builtin(BuiltInFunctionType::ToString),
         parse_builtin(BuiltInFunctionType::Eval),
         parse_builtin(BuiltInFunctionType::Tan),
         parse_builtin(BuiltInFunctionType::Println),
@@ -430,6 +464,7 @@ pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
         many1(preceded(
             opt(comments),
             alt((
+                parse_foreach,
                 parse_while_statement,
                 parse_if_statement,
                 parse_break,

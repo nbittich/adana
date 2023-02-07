@@ -15,7 +15,7 @@ fn test_simple_file() {
 
     let ctx: BTreeMap<String, Primitive> = ctx
         .iter()
-        .map(|(k, v)| (k.to_string(), v.lock().unwrap().clone()))
+        .map(|(k, v)| (k.to_string(), v.read().unwrap().clone()))
         .collect();
     assert_eq!(
         &BTreeMap::from([
@@ -40,7 +40,7 @@ fn test_if_statement() {
 
     let ctx: BTreeMap<String, Primitive> = ctx
         .iter()
-        .map(|(k, v)| (k.to_string(), v.lock().unwrap().clone()))
+        .map(|(k, v)| (k.to_string(), v.read().unwrap().clone()))
         .collect();
     assert_eq!(
         &BTreeMap::from([
@@ -80,14 +80,14 @@ fn test_while_statement() {
         ctx.insert("n".to_string(), Primitive::Int(n).mut_prim());
         let r = compute(file_path, &mut ctx).unwrap();
         let fibonacci = fib(n);
-        assert_eq!(Primitive::Int(fibonacci), ctx["c"].lock().unwrap().clone());
+        assert_eq!(Primitive::Int(fibonacci), ctx["c"].read().unwrap().clone());
         assert_eq!(Primitive::Int(fibonacci), r);
         if fibonacci < 55 {
             assert_eq!(
                 Primitive::String(format!(
                     "this is a complex program: {fibonacci}"
                 )),
-                ctx["x"].lock().unwrap().clone()
+                ctx["x"].read().unwrap().clone()
             );
         }
     }
@@ -104,7 +104,7 @@ fn test_nested_file() {
 
     let ctx: BTreeMap<String, Primitive> = ctx
         .iter()
-        .map(|(k, v)| (k.to_string(), v.lock().unwrap().clone()))
+        .map(|(k, v)| (k.to_string(), v.read().unwrap().clone()))
         .collect();
     assert_eq!(
         &BTreeMap::from([
@@ -130,7 +130,7 @@ fn test_fizz_buzz() {
 
     assert_eq!(
         Primitive::String("100 = Buzz".to_string()),
-        ctx["text"].lock().unwrap().clone()
+        ctx["text"].read().unwrap().clone()
     );
 }
 
@@ -145,7 +145,7 @@ fn test_includes() {
 
     let ctx: BTreeMap<String, Primitive> = ctx
         .iter()
-        .map(|(k, v)| (k.to_string(), v.lock().unwrap().clone()))
+        .map(|(k, v)| (k.to_string(), v.read().unwrap().clone()))
         .collect();
     dbg!("wesh", &ctx);
     assert_eq!(
@@ -188,7 +188,7 @@ fn test_multiline_file() {
 
     let ctx: BTreeMap<String, Primitive> = ctx
         .iter()
-        .map(|(k, v)| (k.to_string(), v.lock().unwrap().clone()))
+        .map(|(k, v)| (k.to_string(), v.read().unwrap().clone()))
         .collect();
     assert_eq!(Some(&Primitive::Int(77)), ctx.get("s"));
     assert_eq!(
@@ -216,9 +216,9 @@ fn test_if_else_file() {
     ctx.insert("count".to_string(), Primitive::Int(102).mut_prim());
     let _ = compute(file_path, &mut ctx);
 
-    assert_eq!(ctx["count"].lock().unwrap().clone(), Primitive::Int(101));
+    assert_eq!(ctx["count"].read().unwrap().clone(), Primitive::Int(101));
     let _ = compute(file_path, &mut ctx);
-    assert_eq!(ctx["count"].lock().unwrap().clone(), Primitive::Int(51));
+    assert_eq!(ctx["count"].read().unwrap().clone(), Primitive::Int(51));
     let file_path = r#"
     include("file_tests/test_fizzbuzz_else.adana")
 "#;
@@ -227,7 +227,7 @@ fn test_if_else_file() {
 
     assert_eq!(
         Primitive::String("100 = Buzz".to_string()),
-        ctx["text"].lock().unwrap().clone()
+        ctx["text"].read().unwrap().clone()
     );
-    assert_eq!(Primitive::Int(101), ctx["count"].lock().unwrap().clone());
+    assert_eq!(Primitive::Int(101), ctx["count"].read().unwrap().clone());
 }

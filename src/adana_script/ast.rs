@@ -29,7 +29,7 @@ fn variable_from_ctx(
         dbg!(&value);
     }
     let guard = value
-        .lock()
+        .read()
         .map_err(|e| anyhow::format_err!("could not acquire lock {e}"))?;
     let primitive = if negate { guard.clone().neg() } else { guard.clone() };
 
@@ -302,6 +302,15 @@ pub(super) fn to_ast(
         v @ Value::WhileExpr { cond: _, exprs: _ } => {
             let while_node = TreeNodeValue::WhileExpr(v);
             append_to_current_and_return(while_node, tree, curr_node_id)
+        }
+        v @ Value::ForeachExpr {
+            var: _,
+            index_var: _,
+            iterator: _,
+            exprs: _,
+        } => {
+            let foreach_node = TreeNodeValue::Foreach(v);
+            append_to_current_and_return(foreach_node, tree, curr_node_id)
         }
         Value::Array(arr) => append_to_current_and_return(
             TreeNodeValue::Array(arr),

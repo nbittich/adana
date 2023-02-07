@@ -12,6 +12,7 @@ use super::{DbOp, FileLock, InMemoryDb, Key, Op, Value};
 
 pub(super) enum Notify {
     Update,
+    FullFlush,
     Stop,
 }
 
@@ -70,7 +71,7 @@ where
     }
 
     fn flush(&self) -> anyhow::Result<&'static str> {
-        match self.get_sender().send(Notify::Update) {
+        match self.get_sender().send(Notify::FullFlush) {
             Ok(_) => Ok("notify db to update itself"),
             Err(e) => Err(anyhow::Error::from(e)),
         }
@@ -229,6 +230,18 @@ where
                             error!("could not flush db. Err: '{e}'.");
                         } else {
                             trace!("sync done");
+                        }
+                    }
+                    Notify::FullFlush => {
+                        debug!("receive full flush!");
+                        if let Err(e) =
+                            Self::__flush(Arc::clone(&clone), &file_lock)
+                        {
+                            error!("could not flush db. Err: '{e}'.");
+                        } else if let Err(e) = file_lock.flush() {
+                            error!("could not write on file lock {e}");
+                        } else {
+                            trace!("full flush done");
                         }
                     }
                     Notify::Stop => {

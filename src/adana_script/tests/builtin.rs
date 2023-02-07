@@ -42,7 +42,7 @@ fn test_builtin_to_bool() {
 fn test_eval() {
     let mut ctx = BTreeMap::new();
     let _ = compute(r#"eval("z = sqrt(9)")"#, &mut ctx).unwrap();
-    assert_eq!(*ctx["z"].lock().unwrap(), Primitive::Double(3.0));
+    assert_eq!(*ctx["z"].read().unwrap(), Primitive::Double(3.0));
 }
 
 #[test]

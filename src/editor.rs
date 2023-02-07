@@ -9,6 +9,8 @@ use rustyline::{
 use rustyline_derive::*;
 use std::path::Path;
 
+use crate::adana_script::constants::PI;
+
 fn get_default_history_path() -> Option<Box<Path>> {
     let mut home_dir = dirs::home_dir()?;
     home_dir.push(".adana.history.txt");
@@ -58,6 +60,8 @@ pub fn build_editor(
     rl.bind_sequence(KeyEvent::alt('n'), Cmd::HistorySearchForward);
     rl.bind_sequence(KeyEvent::alt('p'), Cmd::HistorySearchBackward);
     rl.bind_sequence(KeyEvent::ctrl('x'), Cmd::Newline);
+    rl.bind_sequence(KeyEvent::ctrl('p'), Cmd::Insert(1, format!("{PI} ")));
+
     if rl
         .load_history(
             history_path

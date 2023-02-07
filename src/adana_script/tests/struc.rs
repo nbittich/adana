@@ -12,7 +12,7 @@ fn test_simple_struc() {
     let _ = compute(expr, &mut ctx).unwrap();
     assert_eq!(ctx.len(), 1);
     assert_eq!(
-        ctx["x"].lock().unwrap().clone(),
+        ctx["x"].read().unwrap().clone(),
         Primitive::Struct(HashMap::from([(
             "x".to_string(),
             Primitive::Int(8)
@@ -32,7 +32,7 @@ fn test_simple_struc_with_more_stuff_in_it() {
     let _ = compute(expr, &mut ctx).unwrap();
     assert_eq!(ctx.len(), 1);
     assert_eq!(
-        ctx["x"].lock().unwrap().clone(),
+        ctx["x"].read().unwrap().clone(),
         Primitive::Struct(HashMap::from([
             ("x".to_string(), Primitive::Int(8)),
             ("y".to_string(), Primitive::String("hello;".to_string())),
@@ -159,23 +159,23 @@ fn test_struct_complex_ish() {
         "#;
     let _ = compute(expr, &mut ctx).unwrap();
     assert_eq!(
-        ctx["test1"].lock().unwrap().clone(),
+        ctx["test1"].read().unwrap().clone(),
         Primitive::String("hi hello".to_string())
     );
     assert_eq!(
-        ctx["test2"].lock().unwrap().clone(),
+        ctx["test2"].read().unwrap().clone(),
         Primitive::String("you are too young".to_string())
     );
     assert_eq!(
-        ctx["test3"].lock().unwrap().clone(),
+        ctx["test3"].read().unwrap().clone(),
         Primitive::String("you are too old".to_string())
     );
     assert_eq!(
-        ctx["test4"].lock().unwrap().clone(),
+        ctx["test4"].read().unwrap().clone(),
         Primitive::String("John Doe".to_string())
     );
     assert_eq!(
-        ctx["test5"].lock().unwrap().clone(),
+        ctx["test5"].read().unwrap().clone(),
         Primitive::String("Nordine Bittich".to_string())
     );
 }

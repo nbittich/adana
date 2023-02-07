@@ -4,7 +4,7 @@ use std::{
     fmt::Display,
     iter::Sum,
     ops::{Add, Div, Mul, Rem, Sub},
-    sync::{Arc, Mutex},
+    sync::{Arc, RwLock},
 };
 
 use anyhow::Result;
@@ -31,12 +31,12 @@ pub enum Primitive {
     EarlyReturn(Box<Primitive>),
 }
 
-pub type MutPrimitive = Arc<Mutex<Primitive>>;
+pub type MutPrimitive = Arc<RwLock<Primitive>>;
 
 // region: traits
 impl Primitive {
     pub fn mut_prim(self) -> MutPrimitive {
-        Arc::new(Mutex::new(self))
+        Arc::new(RwLock::new(self))
     }
 }
 
@@ -338,13 +338,22 @@ impl Add for Primitive {
             (Primitive::Double(l), Primitive::Double(r)) => {
                 Primitive::Double(l + r)
             }
-            (l, Primitive::String(s)) => Primitive::String(format!("{l}{s}")),
-
-            (Primitive::String(s), r) => Primitive::String(format!("{s}{r}")),
             (Primitive::Array(mut l), Primitive::Array(mut r)) => {
                 l.append(&mut r);
                 Primitive::Array(l)
             }
+
+            (Primitive::Array(mut l), r) => {
+                l.push(r);
+                Primitive::Array(l)
+            }
+            (l, Primitive::Array(mut r)) => {
+                r.insert(0, l);
+                Primitive::Array(r)
+            }
+            (l, Primitive::String(s)) => Primitive::String(format!("{l}{s}")),
+
+            (Primitive::String(s), r) => Primitive::String(format!("{s}{r}")),
             (l, r) => Primitive::Error(format!(
                 "illegal call to add() => left: {l} right: {r}"
             )),

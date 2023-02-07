@@ -22,7 +22,7 @@ fn test_simple_array() {
     assert_eq!(ctx.len(), 4);
     let ctx: BTreeMap<String, Primitive> = ctx
         .iter()
-        .map(|(k, v)| (k.to_string(), v.lock().unwrap().clone()))
+        .map(|(k, v)| (k.to_string(), v.read().unwrap().clone()))
         .collect();
     assert_eq!(
         &BTreeMap::from([
@@ -74,7 +74,7 @@ fn test_file_array() {
     "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(file_path, &mut ctx).unwrap();
-    assert_eq!(ctx["arrlen"].lock().unwrap().clone(), Int(18));
+    assert_eq!(ctx["arrlen"].read().unwrap().clone(), Int(18));
 
     let arr = Array(vec![
         Str("a".to_string()),
@@ -100,8 +100,8 @@ fn test_file_array() {
     let mut copy = arr.clone();
     copy.swap_mem(&mut Str("a".to_string()), &Int(9));
 
-    assert_eq!(ctx["arr"].lock().unwrap().clone(), arr);
-    assert_eq!(ctx["copy"].lock().unwrap().clone(), copy);
+    assert_eq!(ctx["arr"].read().unwrap().clone(), arr);
+    assert_eq!(ctx["copy"].read().unwrap().clone(), copy);
 
     let fancy_list = Array(vec![
         Int(1),
@@ -128,7 +128,7 @@ fn test_file_array() {
             ]),
         ]),
     ]);
-    assert_eq!(ctx["list"].lock().unwrap().clone(), fancy_list);
+    assert_eq!(ctx["list"].read().unwrap().clone(), fancy_list);
 
     let res = compute("arr[2]", &mut ctx).unwrap();
 
@@ -145,7 +145,7 @@ fn test_string_array() {
     let _ = compute(file_path, &mut ctx).unwrap();
     let ctx: BTreeMap<String, Primitive> = ctx
         .iter()
-        .map(|(k, v)| (k.to_string(), v.lock().unwrap().clone()))
+        .map(|(k, v)| (k.to_string(), v.read().unwrap().clone()))
         .collect();
     assert_eq!(
         &BTreeMap::from([
