@@ -25,7 +25,7 @@ fn test_anon_func_call() {
     assert_eq!(Primitive::Int(14), res);
 
     assert_eq!(
-        *ctx["z"].lock().unwrap(),
+        *ctx["z"].read().unwrap(),
         Primitive::Function {
             parameters: vec!["a".to_string(), "b".to_string(),],
             exprs: vec![
@@ -116,7 +116,7 @@ fn test_override_map() {
     assert_eq!(Primitive::Int(35), res);
 
     assert_eq!(
-        *ctx["m"].lock().unwrap(),
+        *ctx["m"].read().unwrap(),
         Primitive::Array(vec![Primitive::Array(vec![
             Primitive::String("nordine".to_string(),),
             Primitive::Int(35,),
@@ -140,7 +140,7 @@ fn test_drop() {
     let res = compute(script, &mut ctx).unwrap();
     assert_eq!(Primitive::Unit, res);
 
-    assert_eq!(*ctx["z"].lock().unwrap(), Primitive::Int(35,));
+    assert_eq!(*ctx["z"].read().unwrap(), Primitive::Int(35,));
     assert!(!ctx.contains_key("m"));
 }
 
@@ -158,11 +158,11 @@ fn test_inline_fn() {
     assert_eq!(Primitive::Null, res);
 
     assert_eq!(
-        *ctx["hello_me"].lock().unwrap(),
+        *ctx["hello_me"].read().unwrap(),
         Primitive::String("hello nordine".into())
     );
     assert_eq!(
-        *ctx["hello_world"].lock().unwrap(),
+        *ctx["hello_world"].read().unwrap(),
         Primitive::String("hello world".into())
     );
 
@@ -176,7 +176,7 @@ fn test_inline_fn() {
 
     assert_eq!(Primitive::String("hello nordine".into()), res);
     assert_eq!(
-        *ctx["hello_me"].lock().unwrap(),
+        *ctx["hello_me"].read().unwrap(),
         Primitive::String("hello nordine".into())
     );
 
@@ -185,7 +185,7 @@ fn test_inline_fn() {
     assert_eq!(Primitive::String("hello world".into()), res);
 
     assert_eq!(
-        *ctx["hello_world"].lock().unwrap(),
+        *ctx["hello_world"].read().unwrap(),
         Primitive::String("hello world".into())
     );
 }
@@ -310,9 +310,9 @@ fn test_array_access_fn_call() {
         "#;
     let r = compute(expr, &mut ctx).unwrap();
     assert_eq!(r, Primitive::String("hello nordine2".into()));
-    assert_eq!(*ctx["z"].lock().unwrap(), Primitive::Int(6));
+    assert_eq!(*ctx["z"].read().unwrap(), Primitive::Int(6));
     assert_eq!(
-        *ctx["y"].lock().unwrap(),
+        *ctx["y"].read().unwrap(),
         Primitive::String("hello nordine".into())
     );
 }

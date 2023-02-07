@@ -13,7 +13,7 @@ fn simple_foreach() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx).unwrap();
-    assert_eq!(Primitive::Int(10), ctx["total"].lock().unwrap().clone());
+    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }
 
@@ -31,7 +31,7 @@ fn simple_foreach_string() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx).unwrap();
-    assert_eq!(Primitive::Int(43), ctx["total"].lock().unwrap().clone());
+    assert_eq!(Primitive::Int(43), ctx["total"].read().unwrap().clone());
     assert_eq!(
         Array(vec![
             String("n".to_string()),
@@ -78,7 +78,7 @@ fn simple_foreach_string() {
             String("a".to_string()),
             String("S".to_string())
         ]),
-        ctx["reverted"].lock().unwrap().clone()
+        ctx["reverted"].read().unwrap().clone()
     );
     assert!(ctx.get("a").is_none());
 }
@@ -98,7 +98,7 @@ fn simple_foreach_not_assigned() {
     let _ = compute(expr, &mut ctx).unwrap();
     assert_eq!(
         Primitive::String("Hello World How Are Ya ?".into()),
-        ctx["message"].lock().unwrap().clone()
+        ctx["message"].read().unwrap().clone()
     );
     assert!(ctx.get("word").is_none());
 }
@@ -115,7 +115,7 @@ fn simple_foreach_string_not_assigned() {
     let _ = compute(expr, &mut ctx).unwrap();
     assert_eq!(
         Primitive::String("Hello World How Are Ya ?".into()),
-        ctx["message"].lock().unwrap().clone()
+        ctx["message"].read().unwrap().clone()
     );
     assert!(ctx.get("letter").is_none());
 }
@@ -139,7 +139,7 @@ fn simple_foreach_break() {
     let _ = compute(expr, &mut ctx).unwrap();
     assert_eq!(
         Primitive::String("Hello World How Are Ya".into()),
-        ctx["message"].lock().unwrap().clone()
+        ctx["message"].read().unwrap().clone()
     );
     assert!(ctx.get("word").is_none());
 }
@@ -163,7 +163,7 @@ fn simple_foreach_return() {
     let _ = compute(expr, &mut ctx).unwrap();
     assert_eq!(
         Primitive::String("Hello World How Are".into()),
-        ctx["message"].lock().unwrap().clone()
+        ctx["message"].read().unwrap().clone()
     );
     assert!(ctx.get("word").is_none());
 }
@@ -227,7 +227,7 @@ fn simple_foreach_two_depth() {
                 Int(1)
             ]),
         ]),
-        ctx["matrix"].lock().unwrap().clone()
+        ctx["matrix"].read().unwrap().clone()
     );
     assert!(ctx.get("depth").is_none());
 }

@@ -29,7 +29,7 @@ fn variable_from_ctx(
         dbg!(&value);
     }
     let guard = value
-        .lock()
+        .read()
         .map_err(|e| anyhow::format_err!("could not acquire lock {e}"))?;
     let primitive = if negate { guard.clone().neg() } else { guard.clone() };
 

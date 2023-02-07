@@ -171,7 +171,7 @@ fn compute_recur(
                     let mut old = ctx
                         .entry(name.clone())
                         .or_insert(Primitive::Unit.mut_prim())
-                        .lock()
+                        .write()
                         .map_err(|e| {
                             anyhow::format_err!("could not acquire lock {e}")
                         })?;
@@ -302,7 +302,7 @@ fn compute_recur(
                         let array = ctx
                             .get(v)
                             .context("array not found in context")?
-                            .lock()
+                            .read()
                             .map_err(|e| {
                                 anyhow::Error::msg(format!(
                                     "could not acquire lock {e}"
@@ -350,7 +350,7 @@ fn compute_recur(
                     let struc = ctx
                         .get(v)
                         .context("struct not found in context")?
-                        .lock()
+                        .read()
                         .map_err(|e| {
                             anyhow::format_err!("could not acquire lock {e}")
                         })?;
@@ -365,7 +365,7 @@ fn compute_recur(
                 let mut array = ctx
                     .get_mut(name)
                     .context("array not found in context")?
-                    .lock()
+                    .write()
                     .map_err(|e| {
                         anyhow::format_err!("could not acquire lock {e}")
                     })?;
@@ -406,7 +406,7 @@ fn compute_recur(
 
                         // copy also the function definition to the scoped ctx
                         for (k, p) in ctx.iter() {
-                            let maybe_fn = p.lock().map_err(|e| {
+                            let maybe_fn = p.read().map_err(|e| {
                                 anyhow::format_err!(
                                     "could not acquire lock {e}"
                                 )
