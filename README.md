@@ -542,6 +542,7 @@ CTRL + d => quit
 CTRL + c => undo
 CTRL + l => clear screen
 CTRL + r => history search
+CTRL + p => π 
 ```
 
 ### Environment variables
