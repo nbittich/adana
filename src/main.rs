@@ -12,7 +12,7 @@ use db::DbOp;
 use rustyline::error::ReadlineError;
 use std::path::Path;
 
-use prelude::{colors::LightBlue, colors::Style, debug, BTreeMap};
+use prelude::{colors::LightBlue, colors::Style, BTreeMap};
 
 use crate::{
     adana_script::compute,
@@ -25,8 +25,6 @@ const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
 fn main() -> anyhow::Result<()> {
     env_logger::init();
-    // trap SIGINT when CTRL+C for e.g with docker-compose logs -f
-    ctrlc::set_handler(|| debug!("receive ctrl+c signal 2"))?;
 
     let args = parse_args(std::env::args())?;
 

@@ -15,6 +15,7 @@
 ## In progress
 
 ## Done
+- <s>Foreach</s>
 - <s>Context scope</s>
 - <s>break should not be a primitive</s>
 - <s>structs</s>

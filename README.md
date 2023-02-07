@@ -72,12 +72,12 @@ Scripting programming language, repl and namespaced aliases for commands.
 First, we start with the traditional hello world:
 
 ```python
->> println("hello world!") # prints hello world 
+ println("hello world!") # prints hello world 
 ```
 In the repl, you could also simply write:
 
 ```python
->> "hello world!" # prints hello world 
+ "hello world!" # prints hello world 
 ```
 <hr>
 
@@ -87,11 +87,11 @@ Comments are defined like in python, starting with `#`.
 You can put them after the last statement or before any useful code, for example:
 
 ```python
->> # to go to the next line in the repl, press CTRL+x
+ # to go to the next line in the repl, press CTRL+x
 
->> # this will be ignored by the repl
+ # this will be ignored by the repl
 
->> println("hello world!") # this is also ok
+ println("hello world!") # this is also ok
 
 ```
 <hr>
@@ -136,17 +136,17 @@ There are 14 operators & 3 constants:
 
 
 ```python
->> 5 + 5 # 10
->> 5 + 5.5 # 10.5
->> 5 / 5 # 1
->> 5 / 6 # 0
->> 5 / 6. # 0.8333333333333334 -- we force it to make a float division by adding "." 
->> 5 % 6 # 5 -- modulo on int 
->> 5 % 4.1 # 0.9000000000000004 modulo on double
->> 5 ^ 5 # 3125
->> 5 * 5 # 25
->> 5 * 5.1 # 25.5
->> 5 * (5+ 1/ (3.1 ^2) * 9) ^3. # 1046.084549281999
+ 5 + 5 # 10
+ 5 + 5.5 # 10.5
+ 5 / 5 # 1
+ 5 / 6 # 0
+ 5 / 6. # 0.8333333333333334 -- we force it to make a float division by adding "." 
+ 5 % 6 # 5 -- modulo on int 
+ 5 % 4.1 # 0.9000000000000004 modulo on double
+ 5 ^ 5 # 3125
+ 5 * 5 # 25
+ 5 * 5.1 # 25.5
+ 5 * (5+ 1/ (3.1 ^2) * 9) ^3. # 1046.084549281999
 
 ```
 <hr>
@@ -158,11 +158,11 @@ Variable must always start with a letter and can have numerics or "_" in it.
 Add and assign(+=), subtract and assign (-=), etc are not supported.
 
 ```python
->> vat = 1.21 # 1.21
->> sub_total1 = 10000
->> total = vat * sub_total1 # 12100
->> sub_total2 = 500 * vat # 605
->> sub_total1 = sub_total1 + sub_total2 # 10605
+ vat = 1.21 # 1.21
+ sub_total1 = 10000
+ total = vat * sub_total1 # 12100
+ sub_total2 = 500 * vat # 605
+ sub_total1 = sub_total1 + sub_total2 # 10605
 ```
 <hr>
 
@@ -284,9 +284,9 @@ Arrays are declared like in javascript but are "immutable". After declaration, y
 new data in them. to do that, you have to concatenate them with another array using the "+" operator.
 
 ```python
->> arr = [] # declare an empty array
->> arr[0] = "kl" # Err: index out of range
->> arr = arr + ["kl"] # arr now is ["kl"]
+ arr = [] # declare an empty array
+ arr[0] = "kl" # Err: index out of range
+ arr = arr + ["kl"] # arr now is ["kl"]
 ```
 You can update a value in the array with the syntax above, as long as the array is greater than the index
 provided, e.g:
@@ -301,7 +301,7 @@ print(arr[2]) # an
 To get the length of an array, you can use the built-in function `length`
 
 ```python
->> arr_len = length(arr) # 7
+ arr_len = length(arr) # 7
 
 ```
 
@@ -309,11 +309,11 @@ Characters within a string can be accessed & updated just like an array:
 
 
 ```python
->> s = "this is a strink"
->> s[2] # i
->> length(s) # 16
->> s[15] = "g" # fix the typo
->> s # this is a string
+ s = "this is a strink"
+ s[2] # i
+ length(s) # 16
+ s[15] = "g" # fix the typo
+ s # this is a string
 
 ```
 
