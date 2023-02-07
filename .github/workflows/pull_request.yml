@@ -8,6 +8,8 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
+    env:
+      CARGO_REGISTRY_TOKEN: ${{CARGO_REGISTRY_TOKEN}}
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
@@ -16,3 +18,4 @@ jobs:
           targets: x86_64-unknown-linux-musl
       - run: cargo test --verbose -- --nocapture
       - run: cargo clippy --all-targets --all-features -- -D warnings
+      - run: cargo publish --dry-run
