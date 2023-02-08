@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, collections::BTreeMap};
+use std::{collections::BTreeMap};
 
 use crate::adana_script::{compute, Primitive};
 
@@ -371,7 +371,7 @@ fn test_foreach_struct() {
     let _ = compute(expr, &mut ctx).unwrap();
 
     let result = ctx["result"].read().unwrap();
-    let expected = vec![
+    let _expected = vec![
         Primitive::String(
             r#"Id: 0 Key: members Value: ["natalie", "roger", "fred"]"#.into(),
         ),

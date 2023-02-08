@@ -1,6 +1,5 @@
 use std::{
     borrow::Borrow,
-    collections::HashMap,
     fs::{read_to_string, File},
     io::{BufRead, BufReader},
     ops::{Neg, Not},
