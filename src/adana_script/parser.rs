@@ -147,8 +147,8 @@ fn parse_fn_call(s: &str) -> Res<Value> {
         pair(
             alt((
                 parse_fn,
-                parse_array_access,
                 parse_struct_access,
+                parse_array_access,
                 parse_variable,
             )),
             map(parser, Value::BlockParen),
@@ -170,8 +170,8 @@ fn parse_foreach(s: &str) -> Res<Value> {
             tag_no_space(IN),
             alt((
                 parse_fn_call,
-                parse_array_access,
                 parse_struct_access,
+                parse_array_access,
                 parse_array,
                 parse_string,
                 parse_variable,
@@ -312,7 +312,23 @@ fn parse_array_access(s: &str) -> Res<Value> {
 
 fn parse_struct_access(s: &str) -> Res<Value> {
     map(
-        separated_pair(parse_variable, tag_no_space("."), parse_variable_str),
+        alt((
+            pair(
+                parse_variable,
+                preceded(
+                    tag("["),
+                    terminated(
+                        delimited(tag("\""), parse_variable_str, tag("\"")),
+                        tag("]"),
+                    ),
+                ),
+            ),
+            separated_pair(
+                parse_variable,
+                tag_no_space("."),
+                parse_variable_str,
+            ),
+        )),
         |(s, key)| Value::StructAccess {
             struc: Box::new(s),
             key: String::from(key),
@@ -325,8 +341,8 @@ fn parse_value(s: &str) -> Res<Value> {
         multispace0,
         terminated(
             alt((
-                parse_array_access,
                 parse_struct_access,
+                parse_array_access,
                 parse_array,
                 parse_fn,
                 parse_block_paren,

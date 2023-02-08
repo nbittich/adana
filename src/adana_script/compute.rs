@@ -1,6 +1,5 @@
 use std::{
     borrow::Borrow,
-    collections::HashMap,
     fs::{read_to_string, File},
     io::{BufRead, BufReader},
     ops::{Neg, Not},
@@ -328,7 +327,7 @@ fn compute_recur(
                 }
             }
             TreeNodeValue::Struct(struc) => {
-                let mut primitives = HashMap::with_capacity(struc.len());
+                let mut primitives = BTreeMap::new();
                 for (k, v) in struc {
                     let primitive = compute_instructions(vec![v.clone()], ctx)?;
                     match primitive {
@@ -597,6 +596,15 @@ fn compute_instructions(
                 let mut scoped_ctx = ctx.clone();
                 let arr = match iterator {
                     Primitive::Array(arr) => arr,
+                    Primitive::Struct(s) => s
+                        .iter()
+                        .map(|(k, v)| {
+                            Primitive::Struct(BTreeMap::from([
+                                ("key".into(), Primitive::String(k.clone())),
+                                ("value".into(), v.clone()),
+                            ]))
+                        })
+                        .collect(),
                     Primitive::String(s) => s
                         .chars()
                         .map(|c| Primitive::String(c.to_string()))
