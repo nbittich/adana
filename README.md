@@ -206,6 +206,19 @@ for i, letter in "hello" {
 }
 ```
 
+Parenthesises are optional:
+
+```javascript
+arr = [1,2,3,4]
+total = 0
+idx_total = 0
+for (index,a in arr) {
+ total = total + a
+ idx_total = idx_total + index
+}
+
+```
+
 You can break if you match a certain condition within a while:
 
 ```C
