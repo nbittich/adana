@@ -51,7 +51,7 @@ Scripting programming language, repl and namespaced aliases for commands.
 1. Docker
     * From the docker hub: 
         - `docker run -it nbittich/adana # latest from master` 
-        - `docker run -it nbittich/adana:0.12.0 # latest release` 
+        - `docker run -it nbittich/adana:0.13.2 # latest release` 
     * Manually:
         - clone the repo
         - build the docker image: `docker build -t adana .`
