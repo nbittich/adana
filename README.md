@@ -172,8 +172,8 @@ There are two loops, the while loop and the for-each loop.
 The while loop looks like the one in C, while the for-each loop is a little bit more
 modern.
 
-For-each loop doesn't require parenthesises. You can only iterate over strings and arrays.
-
+For-each loop doesn't require parenthesizes. 
+You can only iterate over structs, strings and arrays.
 
 ```C
 count = 0
@@ -206,7 +206,21 @@ for i, letter in "hello" {
 }
 ```
 
-Parenthesises are optional:
+In the case of a struct, the variable will be an entry (a struct with key/value)
+
+```javascript
+        s = struct {
+            name: "nordine";
+            age: 34;
+            members: ["natalie", "roger","fred"];
+        }
+        for  id, entry in s {
+             println("Id: "+id +" Key: "+entry.key + " Value: " + to_string(entry.value))
+        }
+```
+
+
+Parenthesizes are optional for for-each:
 
 ```javascript
 arr = [1,2,3,4]
@@ -297,6 +311,17 @@ person_service = struct {
 }
 
 person_service.check_age(person)
+
+```
+
+You can access a struct in two ways:
+
+```javascript
+name = person["name"] # name contains "hello"
+println(person["age"])
+
+age=person.age # age contains "age"
+println(person.age)
 
 ```
 

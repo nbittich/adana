@@ -1,6 +1,6 @@
 use std::{
     cmp::Ordering,
-    collections::HashMap,
+    collections::BTreeMap,
     fmt::Display,
     iter::Sum,
     ops::{Add, Div, Mul, Rem, Sub},
@@ -23,7 +23,7 @@ pub enum Primitive {
     Double(f64),
     String(String),
     Array(Vec<Primitive>),
-    Struct(HashMap<String, Primitive>),
+    Struct(BTreeMap<String, Primitive>),
     Error(String),
     Function { parameters: Vec<String>, exprs: Vec<Value> },
     Unit,

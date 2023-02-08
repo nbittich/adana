@@ -13,7 +13,7 @@ fn test_simple_struc() {
     assert_eq!(ctx.len(), 1);
     assert_eq!(
         ctx["x"].read().unwrap().clone(),
-        Primitive::Struct(HashMap::from([(
+        Primitive::Struct(BTreeMap::from([(
             "x".to_string(),
             Primitive::Int(8)
         )]))
@@ -33,7 +33,7 @@ fn test_simple_struc_with_more_stuff_in_it() {
     assert_eq!(ctx.len(), 1);
     assert_eq!(
         ctx["x"].read().unwrap().clone(),
-        Primitive::Struct(HashMap::from([
+        Primitive::Struct(BTreeMap::from([
             ("x".to_string(), Primitive::Int(8)),
             ("y".to_string(), Primitive::String("hello;".to_string())),
             (
@@ -178,4 +178,20 @@ fn test_struct_complex_ish() {
         ctx["test5"].read().unwrap().clone(),
         Primitive::String("Nordine Bittich".to_string())
     );
+}
+
+#[test]
+fn test_struct_access_key() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        s = struct {
+            name: "nordine";
+            age: 34;
+            members: ["natalie", "roger","fred"];
+        }
+        s["name"]
+
+       "#;
+    let r = compute(expr, &mut ctx).unwrap();
+    assert_eq!(r, Primitive::String("nordine".into()));
 }

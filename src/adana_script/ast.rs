@@ -151,7 +151,7 @@ pub(super) fn to_ast(
 
                 Ok(curr_node_id)
             } else {
-                Err(anyhow::Error::msg("invalid expression!"))
+                Err(anyhow::Error::msg("AST ERROR: invalid expression!"))
             }
         }
 

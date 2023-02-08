@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::{borrow::Borrow, collections::BTreeMap};
 
 use crate::adana_script::{compute, Primitive};
 
@@ -337,4 +337,48 @@ fn simple_foreach_with_idx_from_struct_with_paren() {
     assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
     assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
+}
+
+#[test]
+fn test_handle_error() {
+    let expr = r#"
+        x = 1
+        for n in x {
+            println(n)
+        }
+        "#;
+
+    let mut ctx = BTreeMap::new();
+    let r = compute(expr, &mut ctx).unwrap();
+    assert_eq!(Primitive::Error("not an iterable Int(1)".into()), r);
+}
+
+#[test]
+fn test_foreach_struct() {
+    let expr = r#"
+        result = [] 
+        s = struct {
+            name: "nordine";
+            age: 34;
+            members: ["natalie", "roger","fred"];
+        }
+        for  id, entry in s {
+            result = result + ("Id: "+id +" Key: "+entry.key + " Value: " +to_string(entry.value))
+        }
+
+        "#;
+    let mut ctx = BTreeMap::new();
+    let _ = compute(expr, &mut ctx).unwrap();
+
+    let result = ctx["result"].read().unwrap();
+    let expected = vec![
+        Primitive::String(
+            r#"Id: 0 Key: members Value: ["natalie", "roger", "fred"]"#.into(),
+        ),
+        Primitive::String("Id: 1 Key: age Value: 34".into()),
+        Primitive::String("Id: 2 Key: name Value: nordine".into()),
+    ];
+    let actual = result.as_ref_ok().unwrap();
+    assert!(matches!(actual, &Primitive::Array(_)));
+    //assert!(actual.0)
 }
