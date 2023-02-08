@@ -9,6 +9,7 @@ mod reserved_keywords;
 use adana_script::Primitive;
 use args::*;
 use db::DbOp;
+use log::debug;
 use rustyline::error::ReadlineError;
 use std::path::Path;
 
@@ -25,7 +26,9 @@ const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
 fn main() -> anyhow::Result<()> {
     env_logger::init();
-
+    ctrlc::set_handler(|| {
+        debug!("catch CTRL-C! DO NOT REMOVE this. receive ctrl+c signal 2")
+    })?;
     let args = parse_args(std::env::args())?;
 
     clear_terminal();
