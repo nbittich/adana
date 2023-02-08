@@ -161,25 +161,34 @@ fn parse_fn_call(s: &str) -> Res<Value> {
 }
 
 fn parse_foreach(s: &str) -> Res<Value> {
+    let parse_for_expr_header = |s| {
+        separated_pair(
+            pair(
+                opt(terminated(parse_variable_str, tag_no_space(","))),
+                parse_variable_str,
+            ),
+            tag_no_space(IN),
+            alt((
+                parse_fn_call,
+                parse_array_access,
+                parse_struct_access,
+                parse_array,
+                parse_string,
+                parse_variable,
+            )),
+        )(s)
+    };
     map(
         preceded(
             tag_no_space(FOR),
             pair(
-                separated_pair(
-                    pair(
-                        opt(terminated(parse_variable_str, tag_no_space(","))),
-                        parse_variable_str,
+                alt((
+                    preceded(
+                        tag_no_space("("),
+                        terminated(parse_for_expr_header, tag_no_space(")")),
                     ),
-                    tag_no_space(IN),
-                    alt((
-                        parse_fn_call,
-                        parse_array_access,
-                        parse_struct_access,
-                        parse_array,
-                        parse_string,
-                        parse_variable,
-                    )),
-                ),
+                    parse_for_expr_header,
+                )),
                 parse_block(parse_instructions),
             ),
         ),
