@@ -4,7 +4,7 @@ mod parser;
 mod primitive;
 
 use std::collections::BTreeMap;
-use std::collections::HashMap;
+
 
 pub use compute::compute;
 pub use primitive::MutPrimitive;
