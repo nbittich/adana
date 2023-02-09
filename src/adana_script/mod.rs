@@ -5,7 +5,6 @@ mod primitive;
 
 use std::collections::BTreeMap;
 
-
 pub use compute::compute;
 pub use primitive::MutPrimitive;
 pub use primitive::Primitive;
