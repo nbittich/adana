@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap};
+use std::collections::BTreeMap;
 
 use serial_test::serial;
 
@@ -8,7 +8,7 @@ use crate::adana_script::{compute, Primitive, Value};
 #[serial]
 fn test_simple_struc() {
     let mut ctx = BTreeMap::new();
-    let expr = "x = struct {x: 8;}";
+    let expr = "x = struct {x: 8}";
     let _ = compute(expr, &mut ctx).unwrap();
     assert_eq!(ctx.len(), 1);
     assert_eq!(
@@ -25,9 +25,9 @@ fn test_simple_struc() {
 fn test_simple_struc_with_more_stuff_in_it() {
     let mut ctx = BTreeMap::new();
     let expr = r#"x = struct {
-                x: 8;
-                y: "hello;";
-                z: ()=> {println("hello")};
+                x: 8,
+                y: "hello;",
+                z: ()=> {println("hello")}
            }"#;
     let _ = compute(expr, &mut ctx).unwrap();
     assert_eq!(ctx.len(), 1);
@@ -61,14 +61,14 @@ fn test_struct_eq() {
     let mut ctx = BTreeMap::new();
     let expr = r#"
         x = struct {
-                x: 8;
-                y: "hello;";
-                z: ()=> {println("hello")};
+                x: 8,
+                y: "hello;",
+                z: ()=> {println("hello")},
             }
         y = struct {
-          z: () => {println("hello")};
-          x: 8;
-          y: "hello;";
+          z: () => {println("hello")},
+          x: 8,
+          y: "hello;"
         }
         x == y
     "#;
@@ -77,13 +77,13 @@ fn test_struct_eq() {
 
     let expr = r#"
         x = struct {
-                x: 8;
-                y: "hello;";
-                z: ()=> {println("hello")};
+                x: 8,
+                y: "hello;",
+                z: ()=> {println("hello")}
             }
         y = struct {
-          z: () => {println("hello")};
-          x: 8;
+          z: () => {println("hello")},
+          x: 8
         }
         x == y
     "#;
@@ -97,8 +97,8 @@ fn test_struct_access() {
     let mut ctx = BTreeMap::new();
     let expr = r#"
         person = struct {
-                    name: "hello";
-                    age: 20;
+                    name: "hello",
+                    age: 20,
                  }
         person.age
         "#;
@@ -112,8 +112,8 @@ fn test_struct_variable_assign() {
     let mut ctx = BTreeMap::new();
     let expr = r#"
         person = struct {
-                    name: "hello";
-                    age: 20;
+                    name: "hello",
+                    age: 20,
                  }
         person.age = 34
         person.age
@@ -127,27 +127,27 @@ fn test_struct_complex_ish() {
     let mut ctx = BTreeMap::new();
     let expr = r#"
         person = struct {
-                    name: "hello";
-                    age: 14;
-                    full_name: null;
+                    name: "hello",
+                    age: 14,
+                    full_name: null,
                  }
         # person.age
 
         person_service = struct {
-            say_hi:    (person) => { "hi " + person.name };
+            say_hi:    (person) => { "hi " + person.name },
             check_age: (person) => {
                 if (person.age < 18) {
                   return "you are too young"
                 } else {
                   return "you are too old"
              }
-            };
+            },
             boom: (person) => {
                 if(person.full_name ==null) {
                     return "John Doe"
                 }
                 person.full_name
-            };
+            },
         }
         test1 = person_service.say_hi(person)
         test2 = person_service.check_age(person)
@@ -185,9 +185,9 @@ fn test_struct_access_key() {
     let mut ctx = BTreeMap::new();
     let expr = r#"
         s = struct {
-            name: "nordine";
-            age: 34;
-            members: ["natalie", "roger","fred"];
+            name: "nordine",
+            age: 34,
+            members: ["natalie", "roger","fred"],
         }
         s["name"]
 

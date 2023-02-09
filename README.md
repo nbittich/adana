@@ -21,6 +21,7 @@ Scripting programming language, repl and namespaced aliases for commands.
     * [Operators and constants](#operators-and-constants)
     * [Variable definition](#variable-definition)
     * [Loops](#loops)
+    * [Ranges](#ranges)
     * [Conditions](#conditions)
     * [Types](#types)
     * [Structs](#structs)
@@ -210,9 +211,9 @@ In the case of a struct, the variable will be an entry (a struct with key/value)
 
 ```javascript
         s = struct {
-            name: "nordine";
-            age: 34;
-            members: ["natalie", "roger","fred"];
+            name: "nordine",
+            age: 34,
+            members: ["natalie", "roger","fred"]
         }
         for  id, entry in s {
              println("Id: "+id +" Key: "+entry.key + " Value: " + to_string(entry.value))
@@ -243,6 +244,22 @@ while(count < 10) {
         break
      }
    }
+```
+
+<hr>
+
+### Ranges
+
+It is possible to define a range (inclusive, exclusive):
+
+```javascript
+
+x = 1..11 # [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+for i in 1..11 {
+  println("print 10 times this message")
+}
+
 ```
 
 <hr>
@@ -280,7 +297,7 @@ Below, is a list of types and how you declare them. You can also define your str
 | string   | `"hello"`                                                                                         |
 | array    | `[1,2,"3", true]`                                                                                 |
 | function | `() => {"hello"}` <br> `(name) => {"hello" + name}` <br> `(n) => {`<br>&emsp;  `"hello"`<br>`  }` |
-| struct   | `struct {x: 8; y: ()=> {println("hello!")};}`
+| struct   | `struct {x: 8, y: ()=> {println("hello!")}}`
 <hr>
 
 ### Structs
@@ -289,32 +306,32 @@ You can define structs. Structs are a way of grouping related variables or funct
 You can define function variables within a struct, but you cannot update the members of the function from within
 the struct (there is no `self` or `this`).
 
-The semicolon is required to separate each member, even the latest one.
+The comma is required to separate each member, but not for the latest one.
 
 Example of defining a struct:
 
 ```javascript
 person = struct {
-    name: "hello";
-    age: 20;
+    name: "hello",
+    age: 20
 }
 
 person_service = struct {
-    say_hi: (person) => { println("hi " + person.name) };
+    say_hi: (person) => { println("hi " + person.name) },
     check_age: (person) => {
              if (person.age < 18) {
                  println("you are too young")
              } else {
                  println("you are too old")
              }
-    };
+    }
 }
 
 person_service.check_age(person)
 
 ```
 
-You can access a struct in two ways:
+You can access a struct in two ways, except for the functions members:
 
 ```javascript
 name = person["name"] # name contains "hello"

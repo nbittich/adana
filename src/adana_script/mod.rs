@@ -3,6 +3,7 @@ mod compute;
 mod parser;
 mod primitive;
 
+use std::collections::BTreeMap;
 use std::collections::HashMap;
 
 pub use compute::compute;
@@ -152,7 +153,7 @@ pub enum Value {
         arr: Box<Value>,
         index: Box<Value>,
     },
-    Struct(HashMap<String, Value>),
+    Struct(BTreeMap<String, Value>),
     StructAccess {
         struc: Box<Value>,
         key: String,
@@ -212,7 +213,7 @@ pub(super) enum TreeNodeValue {
     IfExpr(Value),
     WhileExpr(Value),
     Array(Vec<Value>),
-    Struct(HashMap<String, Value>),
+    Struct(BTreeMap<String, Value>),
     StructAccess { struc: Value, key: Primitive },
     ArrayAccess { index: Primitive, array: Value },
     Function(Value),

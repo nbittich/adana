@@ -38,8 +38,8 @@ fn simple_range() {
 fn simple_range_struct() {
     let expr = r#"
             s = struct {
-                x: 2; #end
-                a: [1,2,3,4]; #end
+                x: 2, #end
+                a: [1,2,3,4]#end
             }#end
          "#;
     let mut ctx = BTreeMap::new();

@@ -1,3 +1,5 @@
+use nom::combinator::{cut, eof};
+
 use crate::{
     prelude::{
         all_consuming, alt, delimited, double, many0, many1, map, map_parser,
@@ -44,7 +46,10 @@ fn parse_number(s: &str) -> Res<Value> {
 fn parse_range(s: &str) -> Res<Value> {
     map(
         separated_pair(
-            map_parser(take_until(".."), alt((parse_variable, parse_number))),
+            map_parser(
+                take_until(".."),
+                preceded(multispace0, alt((parse_variable, parse_number))),
+            ),
             tag(".."),
             alt((parse_variable, parse_number)),
         ),
@@ -262,13 +267,19 @@ fn parse_struct_expr(s: &str) -> Res<Value> {
     alt((
         parse_fn_call,
         parse_fn,
-        map(map_parser(take_until(";"), many1(parse_value)), |mut expr| {
-            if expr.len() == 1 {
-                expr.remove(0)
-            } else {
-                Value::Expression(expr)
-            }
-        }),
+        map(
+            map_parser(
+                alt((take_until(","), take_until("}"))),
+                many1(parse_value),
+            ),
+            |mut expr| {
+                if expr.len() == 1 {
+                    expr.remove(0)
+                } else {
+                    Value::Expression(expr)
+                }
+            },
+        ),
         parse_value,
     ))(s)
 }
@@ -286,7 +297,7 @@ pub(super) fn parse_struct(s: &str) -> Res<Value> {
                 tag_no_space("{"),
                 many1(preceded(
                     opt(comments),
-                    terminated(pair_key_value, tag_no_space(";")),
+                    terminated(pair_key_value, opt(tag_no_space(","))),
                 )),
                 preceded(opt(comments), tag_no_space("}")),
             ),
@@ -360,8 +371,8 @@ fn parse_value(s: &str) -> Res<Value> {
                 parse_array_access,
                 parse_array,
                 parse_fn,
-                parse_range,
                 parse_block_paren,
+                parse_range,
                 parse_builtin_fn,
                 parse_operation,
                 parse_string,

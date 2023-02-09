@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap};
+use std::collections::BTreeMap;
 
 use crate::adana_script::{compute, Primitive};
 
@@ -270,7 +270,7 @@ fn simple_foreach_with_idx_from_fn() {
 fn simple_foreach_with_idx_from_struct() {
     let expr = r#"
          struc = struct {
-             arr: [1, 2, 3, 4];
+             arr: [1, 2, 3, 4]
          }
          total = 0
          idx_total = 0
@@ -323,7 +323,7 @@ fn simple_foreach_with_idx_with_paren() {
 fn simple_foreach_with_idx_from_struct_with_paren() {
     let expr = r#"
          struc = struct {
-             arr: [1, 2, 3, 4];
+             arr: [1, 2, 3, 4],
          }
          total = 0
          idx_total = 0
@@ -358,9 +358,9 @@ fn test_foreach_struct() {
     let expr = r#"
         result = [] 
         s = struct {
-            name: "nordine";
-            age: 34;
-            members: ["natalie", "roger","fred"];
+            name: "nordine",
+            age: 34,
+            members: ["natalie", "roger","fred"]
         }
         for  id, entry in s {
             result = result + ("Id: "+id +" Key: "+entry.key + " Value: " +to_string(entry.value))
