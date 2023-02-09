@@ -3,7 +3,7 @@ mod compute;
 mod parser;
 mod primitive;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 pub use compute::compute;
 pub use primitive::MutPrimitive;
@@ -119,6 +119,10 @@ pub enum Value {
     Decimal(f64),
     Integer(i128),
     Bool(bool),
+    Range {
+        incl: Box<Value>,
+        excl: Box<Value>,
+    },
     String(String),
     BlockParen(Vec<Value>),
     Variable(String),
@@ -148,7 +152,7 @@ pub enum Value {
         arr: Box<Value>,
         index: Box<Value>,
     },
-    Struct(HashMap<String, Value>),
+    Struct(BTreeMap<String, Value>),
     StructAccess {
         struc: Box<Value>,
         key: String,
@@ -208,7 +212,7 @@ pub(super) enum TreeNodeValue {
     IfExpr(Value),
     WhileExpr(Value),
     Array(Vec<Value>),
-    Struct(HashMap<String, Value>),
+    Struct(BTreeMap<String, Value>),
     StructAccess { struc: Value, key: Primitive },
     ArrayAccess { index: Primitive, array: Value },
     Function(Value),

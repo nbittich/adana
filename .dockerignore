@@ -1,4 +1,4 @@
-.idea
-.git
+.idea/
+.git/
 target/
-.vscode
+file_tests/

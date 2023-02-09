@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use crate::adana_script::{
     parser::parse_instructions,
@@ -241,17 +241,17 @@ fn test_paren_bug_2023() {
 }
 #[test]
 fn test_struct1() {
-    let expr = " struct {x: 99;}";
+    let expr = " struct {x: 99,}";
     let (res, struc) = parse_instructions(expr).unwrap();
     assert_eq!("", res);
     assert_eq!(
-        vec![Value::Struct(HashMap::from([("x".into(), Value::Integer(99))]))],
+        vec![Value::Struct(BTreeMap::from([("x".into(), Value::Integer(99))]))],
         struc
     );
 }
 #[test]
 fn test_struct_array() {
-    let expr = r#"x = [1, 2, struct{x: (name)=> {println("hello" + name)};}, "hello"]"#;
+    let expr = r#"x = [1, 2, struct{x: (name)=> {println("hello" + name)},}, "hello"]"#;
     let (res, struc_arr) = parse_instructions(expr).unwrap();
     assert_eq!("", res);
     assert_eq!(
@@ -261,7 +261,7 @@ fn test_struct_array() {
             expr: Box::new(Value::Array(vec![
                 Value::Integer(1,),
                 Value::Integer(2,),
-                Value::Struct(HashMap::from([(
+                Value::Struct(BTreeMap::from([(
                     "x".to_string(),
                     Value::Function {
                         parameters: Box::new(Value::BlockParen(vec![
@@ -287,7 +287,7 @@ fn test_struct_array() {
 #[test]
 fn test_struct_array2() {
     let expr = r#"x = [1, 2, struct{
-                                x: (name)=> {println("hello" + name)};
+                                x: (name)=> {println("hello" + name)},
                             },
                "hello"]"#;
     let (res, struc_arr) = parse_instructions(expr).unwrap();
@@ -299,7 +299,7 @@ fn test_struct_array2() {
             expr: Box::new(Value::Array(vec![
                 Value::Integer(1,),
                 Value::Integer(2,),
-                Value::Struct(HashMap::from([(
+                Value::Struct(BTreeMap::from([(
                     "x".to_string(),
                     Value::Function {
                         parameters: Box::new(Value::BlockParen(vec![
@@ -328,23 +328,24 @@ fn test_struct2() {
         # commentaire
       my = struct { # commentaire
           # ici un commentaire
-            a : 7;
-            b : "salut"; # i am a comment
-            c : [1,2,3];
-      # autre : ["commentaire"];
-            d : 1.;
-            x : true;
-            g : null;
+            b : "salut", # i am a comment
+            c : [1,2,3],
+            a : 7,
+      # autre : ["commentaire"],
+            d : 1.,
+            x : true,
+            g : null,
             aa : (n) => {
                 print("hello" + n)
-            }; # commentaire
+            }, # commentaire
             i : ()=> {
                 1
-            };
-            j : 4*2+1 *sqrt(2.);
-            r : () => {"hello!"};
-            mm : (2 *2);
+            },
+            j : 4*2+1 *sqrt(2.),
+            r : () => {"hello!"},
+            mm : (2 *2),
         }
+        #parse_number,
         "#;
     let (res, struc) = parse_instructions(expr).unwrap();
     dbg!(&struc);
@@ -354,7 +355,8 @@ fn test_struct2() {
         struc,
         vec![Value::VariableExpr {
             name: Box::new(Value::Variable("my".to_string(),)),
-            expr: Box::new(Value::Struct(HashMap::from([
+            expr: Box::new(Value::Struct(BTreeMap::from([
+                ("a".into(), Value::Integer(7,)),
                 (
                     "aa".into(),
                     Value::Function {
@@ -373,16 +375,7 @@ fn test_struct2() {
                         ],),],
                     }
                 ),
-                ("a".into(), Value::Integer(7,)),
-                (
-                    "r".into(),
-                    Value::Function {
-                        parameters: Box::new(BlockParen(vec![],)),
-                        exprs: vec![Value::BlockParen(vec![Value::String(
-                            "hello!".into(),
-                        ),],),],
-                    }
-                ),
+                ("b".into(), Value::String("salut".into(),)),
                 (
                     "c".into(),
                     Value::Array(vec![
@@ -391,6 +384,8 @@ fn test_struct2() {
                         Value::Integer(3,),
                     ],)
                 ),
+                ("d".into(), Value::Decimal(1.0,)),
+                ("g".into(), Value::Null),
                 (
                     "i".into(),
                     Value::Function {
@@ -399,15 +394,6 @@ fn test_struct2() {
                             Value::Integer(1,),
                         ],),],
                     }
-                ),
-                ("x".into(), Value::Bool(true,)),
-                (
-                    "mm".into(),
-                    Value::BlockParen(vec![
-                        Value::Integer(2,),
-                        Value::Operation(Operator::Mult,),
-                        Value::Integer(2,),
-                    ],)
                 ),
                 (
                     "j".into(),
@@ -426,9 +412,24 @@ fn test_struct2() {
                         },
                     ]),
                 ),
-                ("b".into(), Value::String("salut".into(),)),
-                ("d".into(), Value::Decimal(1.0,)),
-                ("g".into(), Value::Null),
+                (
+                    "mm".into(),
+                    Value::BlockParen(vec![
+                        Value::Integer(2,),
+                        Value::Operation(Operator::Mult,),
+                        Value::Integer(2,),
+                    ],)
+                ),
+                (
+                    "r".into(),
+                    Value::Function {
+                        parameters: Box::new(BlockParen(vec![],)),
+                        exprs: vec![Value::BlockParen(vec![Value::String(
+                            "hello!".into(),
+                        ),],),],
+                    }
+                ),
+                ("x".into(), Value::Bool(true,)),
             ]),)),
         }]
     );
@@ -593,8 +594,8 @@ fn test_comments_end_arr() {
 fn test_struct_access_1() {
     let expr = r#"
             person = struct {
-                name: "nordine";
-                age: 34;
+                name: "nordine",
+                age: 34,
             }
             println(person.age)
             x = [9, person.name]
@@ -606,7 +607,7 @@ fn test_struct_access_1() {
         vec![
             Value::VariableExpr {
                 name: Box::new(Value::Variable("person".to_string(),)),
-                expr: Box::new(Value::Struct(HashMap::from([
+                expr: Box::new(Value::Struct(BTreeMap::from([
                     ("name".to_string(), Value::String("nordine".to_string(),)),
                     ("age".to_string(), Value::Integer(34,),)
                 ]),)),

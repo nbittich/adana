@@ -41,6 +41,28 @@ fn parse_number(s: &str) -> Res<Value> {
     )(s)
 }
 
+fn parse_range(s: &str) -> Res<Value> {
+    map(
+        pair(
+            preceded(
+                multispace0,
+                terminated(
+                    map_parser(
+                        take_until(".."),
+                        all_consuming(alt((parse_variable, parse_number))),
+                    ),
+                    tag_no_space(".."),
+                ),
+            ),
+            alt((parse_variable, parse_number)),
+        ),
+        |(incl, excl)| Value::Range {
+            incl: Box::new(incl),
+            excl: Box::new(excl),
+        },
+    )(s)
+}
+
 fn parse_bool(s: &str) -> Res<Value> {
     alt((
         map(tag_no_space("true"), |_| Value::Bool(true)),
@@ -169,6 +191,7 @@ fn parse_foreach(s: &str) -> Res<Value> {
             ),
             tag_no_space(IN),
             alt((
+                parse_range,
                 parse_fn_call,
                 parse_struct_access,
                 parse_array_access,
@@ -243,17 +266,23 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
 }
 
 fn parse_struct_expr(s: &str) -> Res<Value> {
-    // hack because the parser is super dumb
+    // FIXME because this super dumb
     alt((
         parse_fn_call,
         parse_fn,
-        map(many1(parse_value), |mut expr| {
-            if expr.len() == 1 {
-                expr.remove(0)
-            } else {
-                Value::Expression(expr)
-            }
-        }),
+        map(
+            map_parser(
+                alt((take_until(","), take_until("}"))),
+                many1(parse_value),
+            ),
+            |mut expr| {
+                if expr.len() == 1 {
+                    expr.remove(0)
+                } else {
+                    Value::Expression(expr)
+                }
+            },
+        ),
         parse_value,
     ))(s)
 }
@@ -262,7 +291,7 @@ pub(super) fn parse_struct(s: &str) -> Res<Value> {
         separated_pair(
             preceded(multispace0, terminated(map(parse_variable_str, String::from), multispace0)),
             tag_no_space(":"),
-            parse_struct_expr)
+            preceded(opt(comments),parse_struct_expr))
     }(p);
     preceded(
         tag_no_space(STRUCT),
@@ -271,9 +300,9 @@ pub(super) fn parse_struct(s: &str) -> Res<Value> {
                 tag_no_space("{"),
                 many1(preceded(
                     opt(comments),
-                    terminated(pair_key_value, tag_no_space(";")),
+                    terminated(pair_key_value, opt(tag_no_space(","))),
                 )),
-                tag_no_space("}"),
+                preceded(opt(comments), tag_no_space("}")),
             ),
             |list| Value::Struct(list.into_iter().collect()),
         ),
@@ -338,12 +367,13 @@ fn parse_struct_access(s: &str) -> Res<Value> {
 
 fn parse_value(s: &str) -> Res<Value> {
     preceded(
-        multispace0,
+        opt(comments),
         terminated(
             alt((
                 parse_struct_access,
                 parse_array_access,
                 parse_array,
+                parse_range,
                 parse_fn,
                 parse_block_paren,
                 parse_builtin_fn,

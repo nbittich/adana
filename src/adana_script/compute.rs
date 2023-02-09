@@ -663,6 +663,7 @@ pub fn compute(
         dbg!(rest);
         dbg!(&instructions);
     }
+
     anyhow::ensure!(
         rest.trim().is_empty(),
         format!("Invalid operation! {instructions:?} => {rest}")
