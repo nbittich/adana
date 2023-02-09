@@ -43,12 +43,17 @@ fn parse_number(s: &str) -> Res<Value> {
 
 fn parse_range(s: &str) -> Res<Value> {
     map(
-        separated_pair(
-            map_parser(
-                take_until(".."),
-                preceded(multispace0, alt((parse_variable, parse_number))),
+        pair(
+            preceded(
+                multispace0,
+                terminated(
+                    map_parser(
+                        take_until(".."),
+                        all_consuming(alt((parse_variable, parse_number))),
+                    ),
+                    tag_no_space(".."),
+                ),
             ),
-            tag(".."),
             alt((parse_variable, parse_number)),
         ),
         |(incl, excl)| Value::Range {
@@ -368,9 +373,9 @@ fn parse_value(s: &str) -> Res<Value> {
                 parse_struct_access,
                 parse_array_access,
                 parse_array,
+                parse_range,
                 parse_fn,
                 parse_block_paren,
-                parse_range,
                 parse_builtin_fn,
                 parse_operation,
                 parse_string,

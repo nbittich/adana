@@ -35,6 +35,49 @@ fn simple_range() {
     assert!(ctx.get("a").is_none());
 }
 #[test]
+fn simple_range_in_array() {
+    let expr = r#"
+            arr = [ 9, 1, 3, true, 1..5 ]
+         "#;
+    let mut ctx = BTreeMap::new();
+    let _ = compute(expr, &mut ctx).unwrap();
+    assert_eq!(
+        Primitive::Array(vec![
+            Primitive::Int(9),
+            Primitive::Int(1),
+            Primitive::Int(3),
+            Primitive::Bool(true),
+            Primitive::Array(vec![
+                Primitive::Int(1),
+                Primitive::Int(2),
+                Primitive::Int(3),
+                Primitive::Int(4),
+            ])
+        ]),
+        ctx["arr"].read().unwrap().clone()
+    );
+    assert!(ctx.get("a").is_none());
+}
+#[test]
+fn simple_range_in_function() {
+    let expr = r#"
+            x = () => {1..5}
+            arr = x()
+         "#;
+    let mut ctx = BTreeMap::new();
+    let _ = compute(expr, &mut ctx).unwrap();
+    assert_eq!(
+        Primitive::Array(vec![
+            Primitive::Int(1),
+            Primitive::Int(2),
+            Primitive::Int(3),
+            Primitive::Int(4),
+        ]),
+        ctx["arr"].read().unwrap().clone()
+    );
+    assert!(ctx.get("a").is_none());
+}
+#[test]
 fn simple_range_struct() {
     let expr = r#"
             s = struct {
