@@ -119,6 +119,10 @@ pub enum Value {
     Decimal(f64),
     Integer(i128),
     Bool(bool),
+    Range {
+        incl: Box<Value>,
+        excl: Box<Value>,
+    },
     String(String),
     BlockParen(Vec<Value>),
     Variable(String),

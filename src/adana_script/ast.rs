@@ -193,6 +193,53 @@ pub(super) fn to_ast(
             tree,
             curr_node_id,
         ),
+        Value::Range { incl, excl } => {
+            let incl = match *incl {
+                Value::Variable(name) => {
+                    let primitive =
+                        variable_from_ctx(name.as_str(), false, ctx)?;
+                    if let Primitive::Int(num) = primitive {
+                        Ok(num)
+                    } else {
+                        Err(anyhow::format_err!(
+                            "range error: {primitive:?} is not an integer"
+                        ))
+                    }
+                }
+                Value::Integer(num) => Ok(num),
+                _ => {
+                    return Err(anyhow::format_err!(
+                        "range error: {incl:?} is not an integer"
+                    ))
+                }
+            }?;
+            let excl = match *excl {
+                Value::Variable(name) => {
+                    let primitive =
+                        variable_from_ctx(name.as_str(), false, ctx)?;
+                    if let Primitive::Int(num) = primitive {
+                        Ok(num)
+                    } else {
+                        Err(anyhow::format_err!(
+                            "range error: {primitive:?} is not an integer"
+                        ))
+                    }
+                }
+                Value::Integer(num) => Ok(num),
+                _ => {
+                    return Err(anyhow::format_err!(
+                        "range error: {excl:?} is not an integer"
+                    ))
+                }
+            }?;
+            let range: Vec<Primitive> =
+                (incl..excl).map(Primitive::Int).collect();
+            append_to_current_and_return(
+                TreeNodeValue::Primitive(Primitive::Array(range)),
+                tree,
+                curr_node_id,
+            )
+        }
         Value::Variable(name) => {
             let value = variable_from_ctx(name.as_str(), false, ctx)?;
             append_to_current_and_return(

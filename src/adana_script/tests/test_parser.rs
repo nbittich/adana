@@ -328,9 +328,9 @@ fn test_struct2() {
         # commentaire
       my = struct { # commentaire
           # ici un commentaire
-            a : 7;
             b : "salut"; # i am a comment
             c : [1,2,3];
+            a : 7;
       # autre : ["commentaire"];
             d : 1.;
             x : true;

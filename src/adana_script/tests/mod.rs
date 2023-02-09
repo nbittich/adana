@@ -2,6 +2,7 @@ mod builtin;
 mod foreach;
 mod funct;
 mod misc;
+mod range;
 mod struc;
 mod test_array;
 mod test_parser;
