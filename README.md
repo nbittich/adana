@@ -108,6 +108,16 @@ fancy_string = multiline {
     "\t\ton several\n" +
     "lines\n"
 }
+
+```
+For strings, you can use string blocks:
+
+```java
+block_string= """ Hello world
+I hope you are well.
+This is a string block. you can use stuff like "string"
+there, nothing will stop you
+"""
 ```
 <hr>
 

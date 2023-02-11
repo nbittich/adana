@@ -1,8 +1,3 @@
-use nom::{
-    character::complete::{alpha1, alphanumeric1, digit1, none_of},
-    multi::fold_many0,
-};
-
 use crate::{
     prelude::{
         all_consuming, alt, delimited, double, many0, many1, map, map_parser,
@@ -76,14 +71,10 @@ fn parse_bool(s: &str) -> Res<Value> {
     ))(s)
 }
 
-fn parse_string(s: &str) -> Res<Value> {
+fn parse_multistring(s: &str) -> Res<Value> {
     map(
-        delimited(
-            preceded(multispace0, tag("\"")),
-            take_until("\""),
-            tag_no_space("\""),
-        ),
-        |s| {
+        delimited(tag(r#"""""#), take_until(r#"""""#), tag(r#"""""#)),
+        |s: &str| {
             Value::String(
                 s.replace("\\n", "\n")
                     .replace("\\t", "\t")
@@ -92,6 +83,16 @@ fn parse_string(s: &str) -> Res<Value> {
             )
         },
     )(s)
+}
+fn parse_string(s: &str) -> Res<Value> {
+    map(delimited(tag("\""), take_until("\""), tag("\"")), |s: &str| {
+        Value::String(
+            s.replace("\\n", "\n")
+                .replace("\\t", "\t")
+                .replace("\\r", "\r")
+                .replace("\\\\", "\\"),
+        )
+    })(s)
 }
 
 fn parse_variable_str(s: &str) -> Res<&str> {
@@ -401,6 +402,7 @@ fn parse_value(s: &str) -> Res<Value> {
         opt(comments),
         terminated(
             alt((
+                parse_multistring,
                 parse_struct_access,
                 parse_array_access,
                 parse_array,
@@ -470,6 +472,7 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                 alt((parse_struct_access, parse_array_access, parse_variable)),
                 tag_no_space("="),
                 alt((
+                    parse_multistring,
                     parse_fn_call,
                     parse_fn,
                     parse_struct_access, /* FIXME seems not necessary or
@@ -486,6 +489,7 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
             },
         ),
         alt((
+            parse_multistring,
             parse_fn_call,
             parse_fn,
             parse_struct_access,

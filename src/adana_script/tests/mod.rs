@@ -3,6 +3,7 @@ mod foreach;
 mod funct;
 mod misc;
 mod range;
+mod strings;
 mod struc;
 mod test_array;
 mod test_drop;
