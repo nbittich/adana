@@ -357,12 +357,12 @@ impl Add for Primitive {
             }
 
             (Primitive::Array(mut l), r) => {
-                let r: Primitive = r.to_owned();
+                let r: Primitive = r;
                 l.push(r);
                 Primitive::Array(l)
             }
             (l, Primitive::Array(mut r)) => {
-                r.insert(0, l.clone());
+                r.insert(0, l);
                 Primitive::Array(r)
             }
             (l, Primitive::String(s)) => Primitive::String(format!("{l}{s}")),
