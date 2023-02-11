@@ -646,3 +646,11 @@ fn test_parser_array_directly_access() {
         }]
     )
 }
+
+#[test]
+fn test_parse_string_escaped() {
+    let expr = r#""u\nno""#;
+    let (r, v) = parse_instructions(expr).unwrap();
+    assert_eq!("", r);
+    assert_eq!(v, vec![Value::String("u\nno".into())]);
+}

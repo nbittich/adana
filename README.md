@@ -103,11 +103,21 @@ Semicolons are not needed, if you need multiline statements, you can use a multi
 
 ```python
 fancy_string = multiline {
-    "this string" +
-    "is " +
-    "on several " +
-    "lines"
+    "this string\n" +
+    "\tis\n" +
+    "\t\ton several\n" +
+    "lines\n"
 }
+
+```
+For strings, you can use string blocks:
+
+```java
+block_string= """ Hello world
+I hope you are well.
+This is a string block. you can use stuff like "string"
+there, nothing will stop you
+"""
 ```
 <hr>
 
@@ -548,7 +558,7 @@ Here is a list of built-in functions available:
 | to_double    | cast to double                                        | `to_double("2.2")`                 |
 | to_bool      | cast to bool                                          | `to_bool("true")`                  |
 | to_string    | cast to string                                        | `to_string(true)`                  |
-| drop         | drop a variable from context                          | `drop("myvar")`                    |
+| drop         | drop a variable from context                          | `drop("myvar")`<br>`drop(arr[0])`  |
 | eval         | Evaluate a string as code                             | `eval("sqrt(9)")`                  |
 | type_of      | Type of variable                                      | `type_of(true)`                    |
 <hr>

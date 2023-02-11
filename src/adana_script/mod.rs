@@ -1,5 +1,6 @@
 mod ast;
 mod compute;
+
 mod parser;
 mod primitive;
 
@@ -205,7 +206,7 @@ pub enum Operator {
 pub(super) enum TreeNodeValue {
     Break,
     EarlyReturn(Option<Value>),
-    Drop(Vec<String>),
+    Drop(Vec<Value>),
     VariableUnused,
     VariableAssign(Option<String>),
     VariableArrayAssign { name: String, index: Primitive },

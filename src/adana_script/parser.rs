@@ -71,15 +71,28 @@ fn parse_bool(s: &str) -> Res<Value> {
     ))(s)
 }
 
-fn parse_string(s: &str) -> Res<Value> {
+fn parse_multistring(s: &str) -> Res<Value> {
     map(
-        delimited(
-            preceded(multispace0, tag("\"")),
-            take_until("\""),
-            tag_no_space("\""),
-        ),
-        |s| Value::String(s.to_string()),
+        delimited(tag(r#"""""#), take_until(r#"""""#), tag(r#"""""#)),
+        |s: &str| {
+            Value::String(
+                s.replace("\\n", "\n")
+                    .replace("\\t", "\t")
+                    .replace("\\r", "\r")
+                    .replace("\\\\", "\\"),
+            )
+        },
     )(s)
+}
+fn parse_string(s: &str) -> Res<Value> {
+    map(delimited(tag("\""), take_until("\""), tag("\"")), |s: &str| {
+        Value::String(
+            s.replace("\\n", "\n")
+                .replace("\\t", "\t")
+                .replace("\\r", "\r")
+                .replace("\\\\", "\\"),
+        )
+    })(s)
 }
 
 fn parse_variable_str(s: &str) -> Res<&str> {
@@ -236,7 +249,12 @@ fn parse_foreach(s: &str) -> Res<Value> {
 }
 
 fn parse_drop(s: &str) -> Res<Value> {
-    let parser = |p| separated_list1(tag_no_space(","), parse_variable)(p);
+    let parser = |p| {
+        separated_list1(
+            tag_no_space(","),
+            alt((parse_struct_access, parse_array_access, parse_variable)),
+        )(p)
+    };
 
     map(preceded(tag_no_space(DROP), parse_paren(parser)), |variables| {
         Value::Drop(Box::new(variables))
@@ -384,6 +402,7 @@ fn parse_value(s: &str) -> Res<Value> {
         opt(comments),
         terminated(
             alt((
+                parse_multistring,
                 parse_struct_access,
                 parse_array_access,
                 parse_array,
@@ -453,6 +472,7 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                 alt((parse_struct_access, parse_array_access, parse_variable)),
                 tag_no_space("="),
                 alt((
+                    parse_multistring,
                     parse_fn_call,
                     parse_fn,
                     parse_struct_access, /* FIXME seems not necessary or
@@ -469,6 +489,7 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
             },
         ),
         alt((
+            parse_multistring,
             parse_fn_call,
             parse_fn,
             parse_struct_access,

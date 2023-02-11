@@ -489,14 +489,47 @@ fn compute_recur(
             TreeNodeValue::Break => Ok(Primitive::NoReturn),
             TreeNodeValue::Null => Ok(Primitive::Null),
             TreeNodeValue::Drop(variables) => {
-                if variables.iter().all(|k| ctx.contains_key(k)) {
-                    for var in variables {
-                        ctx.remove(var).unwrap();
+                pub use Primitive::{Error as PrimErr, Int};
+                pub use Value::Variable;
+                for var in variables {
+                    match var {
+                        Variable(v) => {
+                            ctx.remove(v);
+                        }
+                        Value::StructAccess { struc, key } => {
+                            match struc.borrow(){
+                                Variable(s) => {
+                                     let struc = ctx.get_mut(s)
+                                         .ok_or_else(||anyhow::format_err!("ctx doesn't contains array {s}"))?;
+                                    let mut struc = struc.write()
+                                        .map_err(|e| anyhow::format_err!("DROP STRUC : could not acquire lock {e}"))?;
+                                   struc.remove(&Primitive::String(key.into()))?;
+                                }
+                                _ => return Ok(PrimErr(format!("only primitive within the ctx can be dropped {struc:?}")))
+                            }
+                        }
+                        Value::ArrayAccess { arr, index } => {
+                            match arr.borrow(){
+                                Variable(s) => {
+                                     let array = ctx.get_mut(s)
+                                         .ok_or_else(||anyhow::format_err!("ctx doesn't contains array {s}"))?;
+                                    let mut array = array.write()
+                                        .map_err(|e| anyhow::format_err!("DROP ARRAY : could not acquire lock {e}"))?;
+                                    let Value::Integer(index) = *index.clone() else {
+                                        return Ok(PrimErr("index not an int!".to_string()))
+                                    };
+                                   array.remove(&Int(index))?;
+                                }
+                                _ => return Ok(PrimErr(format!("only primitive within the ctx can be dropped {arr:?}")))
+                            }
+                        }
+                        _ => {
+                            return Err(Error::msg(format!(
+                                "ERROR DROP: not a valid variable {var:?}"
+                            )))
+                        }
                     }
-                } else {
-                    return Ok(Primitive::Error(format!("ctx doesn't contain all variables that must be dropped {variables:?}")));
                 }
-
                 Ok(Primitive::Unit)
             }
             TreeNodeValue::EarlyReturn(v) => {
