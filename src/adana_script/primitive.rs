@@ -89,6 +89,14 @@ pub trait Add {
     fn add(&self, rhs: &Self) -> Self;
 }
 
+pub trait Neg {
+    fn neg(&self) -> Self;
+}
+
+pub trait Not {
+    fn not(&self) -> Self;
+}
+
 pub trait Sub {
     fn sub(&self, rhs: &Self) -> Self;
 }
@@ -472,10 +480,8 @@ impl Div for Primitive {
     }
 }
 
-impl std::ops::Neg for Primitive {
-    type Output = Primitive;
-
-    fn neg(self) -> Self::Output {
+impl Neg for Primitive {
+    fn neg(&self) -> Self {
         match self {
             Primitive::Int(n) => Primitive::Int(-n),
             Primitive::Double(n) => Primitive::Double(-n),
@@ -484,10 +490,8 @@ impl std::ops::Neg for Primitive {
     }
 }
 
-impl std::ops::Not for Primitive {
-    type Output = Primitive;
-
-    fn not(self) -> Self::Output {
+impl Not for Primitive {
+    fn not(&self) -> Self {
         match self {
             Primitive::Bool(b) => Primitive::Bool(!b),
             _ => Primitive::Error(format!("invalid call to not() {self}")),

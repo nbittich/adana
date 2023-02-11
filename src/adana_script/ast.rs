@@ -1,12 +1,10 @@
-use std::ops::Neg;
-
 use slab_tree::{NodeId, Tree};
 
 use crate::prelude::{BTreeMap, Context};
 
 use super::{
-    primitive::RefPrimitive, MathConstants, Operator, Primitive, TreeNodeValue,
-    Value,
+    primitive::{Neg, RefPrimitive},
+    MathConstants, Operator, Primitive, TreeNodeValue, Value,
 };
 
 fn variable_from_ctx(
@@ -31,7 +29,7 @@ fn variable_from_ctx(
     let guard = value
         .read()
         .map_err(|e| anyhow::format_err!("could not acquire lock {e}"))?;
-    let primitive = if negate { guard.clone().neg() } else { guard.clone() };
+    let primitive = if negate { guard.neg() } else { guard.clone() };
 
     Ok(primitive)
 }

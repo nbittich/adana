@@ -2,7 +2,6 @@ use std::{
     borrow::Borrow,
     fs::{read_to_string, File},
     io::{BufRead, BufReader},
-    ops::{Neg, Not},
     path::{Path, PathBuf},
 };
 
@@ -14,8 +13,9 @@ use crate::{adana_script::parser::parse_instructions, prelude::BTreeMap};
 use super::{
     ast::to_ast,
     primitive::{
-        Abs, Add, And, Array, Cos, Div, Logarithm, Mul, Or, Pow, Primitive,
-        RefPrimitive, Rem, Sin, Sqrt, Sub, Tan, ToBool, ToNumber, TypeOf,
+        Abs, Add, And, Array, Cos, Div, Logarithm, Mul, Neg, Not, Or, Pow,
+        Primitive, RefPrimitive, Rem, Sin, Sqrt, Sub, Tan, ToBool, ToNumber,
+        TypeOf,
     },
     Operator, TreeNodeValue, Value,
 };
@@ -33,7 +33,7 @@ fn compute_recur(
                     ));
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
-                Ok(!left)
+                Ok(left.not())
             }
             TreeNodeValue::Ops(Operator::Add) => {
                 if node.children().count() == 1 {
