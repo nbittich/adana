@@ -200,3 +200,62 @@ fn test_struct_access_key() {
     let r = compute(expr, &mut ctx).unwrap();
     assert_eq!(r, Primitive::String("nordine".into()));
 }
+#[test]
+fn test_struct_access_key2() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        struct {
+            name: "nordine",
+            age: 34,
+            members: ["natalie", "roger","fred"],
+        }["name"]
+
+       "#;
+    let r = compute(expr, &mut ctx).unwrap();
+    assert_eq!(r, Primitive::String("nordine".into()));
+}
+
+#[test]
+fn test_struct_access_key3() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        struct {
+            name: "nordine",
+            age: 34,
+            members: ["natalie", "roger","fred"],
+        }.name
+
+       "#;
+    let r = compute(expr, &mut ctx).unwrap();
+    assert_eq!(r, Primitive::String("nordine".into()));
+}
+
+#[test]
+fn test_struct_access_key4() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        struct {
+            name: () => {"nordine"},
+            age: 34,
+            members: ["natalie", "roger","fred"],
+        }.name()
+
+       "#;
+    let r = compute(expr, &mut ctx).unwrap();
+    assert_eq!(r, Primitive::String("nordine".into()));
+}
+
+#[test]
+fn test_struct_access_key5() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        struct {
+            name: () => {"nordine"},
+            age: 34,
+            members: ["natalie", "roger","fred"],
+        }["name"]()
+
+       "#;
+    let r = compute(expr, &mut ctx).unwrap();
+    assert_eq!(r, Primitive::String("nordine".into()));
+}

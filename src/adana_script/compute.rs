@@ -365,6 +365,10 @@ fn compute_recur(
                         })?;
                     Ok(struc.index_at(key))
                 }
+                (s @ Value::Struct(_), key @ Primitive::String(_)) => {
+                    let prim_s = compute_lazy(s.clone(), ctx)?;
+                    Ok(prim_s.index_at(key))
+                }
                 _ => Ok(Primitive::Error(format!(
                     "Error struct access: struct {struc:?}, key {key} "
                 ))),

@@ -354,7 +354,7 @@ fn parse_struct_access(s: &str) -> Res<Value> {
     map(
         alt((
             pair(
-                parse_variable,
+                alt((parse_struct, parse_variable)),
                 preceded(
                     tag("["),
                     terminated(
@@ -364,7 +364,7 @@ fn parse_struct_access(s: &str) -> Res<Value> {
                 ),
             ),
             separated_pair(
-                parse_variable,
+                alt((parse_struct, parse_variable)),
                 tag_no_space("."),
                 parse_variable_str,
             ),
@@ -456,7 +456,14 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                 expr: Box::new(expr),
             },
         ),
-        alt((parse_fn_call, parse_fn, parse_struct, parse_expression)),
+        alt((
+            parse_fn_call,
+            parse_fn,
+            parse_struct_access,
+            parse_array_access,
+            parse_struct,
+            parse_expression,
+        )),
     ))(s)
 }
 
