@@ -51,14 +51,15 @@ fn parse_range(s: &str) -> Res<Value> {
                         take_until(".."),
                         all_consuming(alt((parse_variable, parse_number))),
                     ),
-                    tag_no_space(".."),
+                    tag(".."),
                 ),
             ),
-            alt((parse_variable, parse_number)),
+            pair(opt(tag("=")), alt((parse_variable, parse_number))),
         ),
-        |(incl, excl)| Value::Range {
-            incl: Box::new(incl),
-            excl: Box::new(excl),
+        |(start, (incl_both_end, end))| Value::Range {
+            start: Box::new(start),
+            end: Box::new(end),
+            incl_both_end: incl_both_end.is_some(),
         },
     )(s)
 }
