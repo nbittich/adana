@@ -227,17 +227,15 @@ impl Display for Primitive {
                 let len = parameters.len();
                 for (idx, p) in parameters.iter().enumerate() {
                     match p {
-                        Value::VariableUnused => {
-                            parameters_formatted.push_str("_")
-                        }
+                        Value::VariableUnused => parameters_formatted.push('_'),
                         _ => {
-                            parameters_formatted.push_str("p");
+                            parameters_formatted.push('p');
                             parameters_formatted
                                 .extend(['p', idx as u8 as char]);
                         }
                     }
                     if idx < len {
-                        parameters_formatted.push_str(",");
+                        parameters_formatted.push(',');
                     }
                 }
                 write!(f, "({parameters_formatted}) => {{..}}")

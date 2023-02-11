@@ -100,7 +100,7 @@ fn parse_variable_str(s: &str) -> Res<&str> {
 
 fn parse_variable(s: &str) -> Res<Value> {
     map(parse_variable_str, |s: &str| {
-        if s.starts_with("_") {
+        if s.starts_with('_') {
             Value::VariableUnused
         } else {
             Value::Variable(s.to_string())

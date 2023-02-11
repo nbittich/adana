@@ -336,7 +336,7 @@ fn compute_recur(
             TreeNodeValue::Struct(struc) => {
                 let mut primitives = BTreeMap::new();
                 for (k, v) in struc {
-                    if !k.starts_with("_") {
+                    if !k.starts_with('_') {
                         let primitive =
                             compute_instructions(vec![v.clone()], ctx)?;
                         match primitive {
@@ -649,11 +649,11 @@ fn compute_instructions(
                     }
                 };
                 'foreach_loop: for (i, it) in arr.into_iter().enumerate() {
-                    if !var.starts_with("_") {
+                    if !var.starts_with('_') {
                         scoped_ctx.insert(var.clone(), it.ref_prim());
                     }
                     match &index_var {
-                        Some(index_var) if !index_var.starts_with("_") => {
+                        Some(index_var) if !index_var.starts_with('_') => {
                             scoped_ctx.insert(
                                 index_var.clone(),
                                 Primitive::Int(i as i128).ref_prim(),
