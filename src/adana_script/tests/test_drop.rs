@@ -71,3 +71,40 @@ fn test_drop_struct_access() {
         ]),)
     );
 }
+#[test]
+fn test_drop_struct_access_alt() {
+    let exp = r#"
+    s = struct {
+        x: (_, n) => {println(n)},
+        y: "hello",
+        z: "world"
+    }
+    drop(s.z)
+    "#;
+    let mut ctx = BTreeMap::new();
+
+    let _ = compute(exp, &mut ctx).unwrap();
+    assert_eq!(
+        ctx["s"].read().unwrap().clone(),
+        Primitive::Struct(BTreeMap::from([
+            (
+                "x".to_string(),
+                Primitive::Function {
+                    parameters: vec![
+                        Value::VariableUnused,
+                        Value::Variable("n".to_string(),),
+                    ],
+                    exprs: vec![Value::BlockParen(vec![
+                        Value::BuiltInFunction {
+                            fn_type: BuiltInFunctionType::Println,
+                            expr: Box::new(Value::BlockParen(vec![
+                                Value::Variable("n".to_string(),),
+                            ],)),
+                        },
+                    ],),],
+                }
+            ),
+            ("y".to_string(), Primitive::String("hello".to_string(),)),
+        ]),)
+    );
+}
