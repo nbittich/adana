@@ -386,18 +386,6 @@ fn compute_recur(
             }
             TreeNodeValue::Function(Value::Function { parameters, exprs }) => {
                 if let Value::BlockParen(parameters) = parameters.borrow() {
-                    // let mut params = Vec::with_capacity(parameters.len());
-                    // for parameter in parameters {
-                    //     if let Value::Variable(parameter) = parameter {
-                    //         params.push(parameter.clone());
-                    //     } else if let Value::VariableUnused = parameter {
-                    //         continue;
-                    //     } else {
-                    //         return Ok(Primitive::Error(format!(
-                    //             "not a valid parameter: {parameter:?}"
-                    //         )));
-                    //     }
-                    // }
                     if !parameters.iter().all(|v| {
                         matches!(v, Value::Variable(_))
                          //   || matches!(v, Value::String(_))
