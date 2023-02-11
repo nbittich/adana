@@ -232,7 +232,7 @@ impl Display for Primitive {
                             parameters_formatted.push('p');
                             parameters_formatted.push(
                                 char::from_digit(idx as u32, 10)
-                                    .unwrap_or_else(|| '0'),
+                                    .unwrap_or('0'),
                             );
                         }
                     }
