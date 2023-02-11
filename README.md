@@ -548,7 +548,7 @@ Here is a list of built-in functions available:
 | to_double    | cast to double                                        | `to_double("2.2")`                 |
 | to_bool      | cast to bool                                          | `to_bool("true")`                  |
 | to_string    | cast to string                                        | `to_string(true)`                  |
-| drop         | drop a variable from context                          | `drop("myvar")`                    |
+| drop         | drop a variable from context                          | `drop("myvar")`<br>`drop(arr[0])`  |
 | eval         | Evaluate a string as code                             | `eval("sqrt(9)")`                  |
 | type_of      | Type of variable                                      | `type_of(true)`                    |
 <hr>
