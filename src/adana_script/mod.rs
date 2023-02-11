@@ -6,8 +6,8 @@ mod primitive;
 use std::collections::BTreeMap;
 
 pub use compute::compute;
-pub use primitive::MutPrimitive;
 pub use primitive::Primitive;
+pub use primitive::RefPrimitive;
 
 use serde::{Deserialize, Serialize};
 use strum::EnumCount;
@@ -127,6 +127,7 @@ pub enum Value {
     String(String),
     BlockParen(Vec<Value>),
     Variable(String),
+    VariableUnused,
     Const(char),
     VariableNegate(String),
     VariableExpr {
@@ -205,7 +206,8 @@ pub(super) enum TreeNodeValue {
     Break,
     EarlyReturn(Option<Value>),
     Drop(Vec<String>),
-    VariableAssign(String),
+    VariableUnused,
+    VariableAssign(Option<String>),
     VariableArrayAssign { name: String, index: Primitive },
     Ops(Operator),
     Primitive(Primitive),

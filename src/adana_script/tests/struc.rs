@@ -156,6 +156,7 @@ fn test_struct_complex_ish() {
         test4 = person_service.boom(person)
         person.full_name = "Nordine Bittich"
         test5 = person_service.boom(person)
+        test6 = person_service["boom"](person)
         "#;
     let _ = compute(expr, &mut ctx).unwrap();
     assert_eq!(
@@ -178,6 +179,10 @@ fn test_struct_complex_ish() {
         ctx["test5"].read().unwrap().clone(),
         Primitive::String("Nordine Bittich".to_string())
     );
+    assert_eq!(
+        ctx["test6"].read().unwrap().clone(),
+        Primitive::String("Nordine Bittich".to_string())
+    );
 }
 
 #[test]
@@ -190,6 +195,65 @@ fn test_struct_access_key() {
             members: ["natalie", "roger","fred"],
         }
         s["name"]
+
+       "#;
+    let r = compute(expr, &mut ctx).unwrap();
+    assert_eq!(r, Primitive::String("nordine".into()));
+}
+#[test]
+fn test_struct_access_key2() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        struct {
+            name: "nordine",
+            age: 34,
+            members: ["natalie", "roger","fred"],
+        }["name"]
+
+       "#;
+    let r = compute(expr, &mut ctx).unwrap();
+    assert_eq!(r, Primitive::String("nordine".into()));
+}
+
+#[test]
+fn test_struct_access_key3() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        struct {
+            name: "nordine",
+            age: 34,
+            members: ["natalie", "roger","fred"],
+        }.name
+
+       "#;
+    let r = compute(expr, &mut ctx).unwrap();
+    assert_eq!(r, Primitive::String("nordine".into()));
+}
+
+#[test]
+fn test_struct_access_key4() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        struct {
+            name: () => {"nordine"},
+            age: 34,
+            members: ["natalie", "roger","fred"],
+        }.name()
+
+       "#;
+    let r = compute(expr, &mut ctx).unwrap();
+    assert_eq!(r, Primitive::String("nordine".into()));
+}
+
+#[test]
+fn test_struct_access_key5() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        struct {
+            name: () => {"nordine"},
+            age: 34,
+            members: ["natalie", "roger","fred"],
+        }["name"]()
 
        "#;
     let r = compute(expr, &mut ctx).unwrap();

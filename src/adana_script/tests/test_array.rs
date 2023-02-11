@@ -158,3 +158,26 @@ fn test_string_array() {
         &ctx
     );
 }
+
+#[test]
+#[serial]
+fn test_array_expr_access() {
+    let expr = r#"
+           x = [1, 2, 3][0]
+        "#;
+    let mut ctx = BTreeMap::new();
+    let r = compute(expr, &mut ctx).unwrap();
+    assert_eq!(ctx["x"].read().unwrap().clone(), Primitive::Int(1));
+    assert_eq!(r, Primitive::Int(1));
+}
+
+#[test]
+#[serial]
+fn test_array_expr_access_not_assigned() {
+    let expr = r#"
+           [1, 2, 3][1]
+        "#;
+    let mut ctx = BTreeMap::new();
+    let r = compute(expr, &mut ctx).unwrap();
+    assert_eq!(r, Primitive::Int(2));
+}

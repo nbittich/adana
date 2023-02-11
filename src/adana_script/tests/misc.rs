@@ -11,7 +11,7 @@ use crate::adana_script::{compute, Primitive};
 fn test_expr_invalid() {
     let expr = "uze example";
     let mut ctx =
-        BTreeMap::from([("x".to_string(), Primitive::Double(2.).mut_prim())]);
+        BTreeMap::from([("x".to_string(), Primitive::Double(2.).ref_prim())]);
     compute(expr, &mut ctx).unwrap();
 }
 #[test]
@@ -19,7 +19,7 @@ fn test_expr_invalid() {
 fn test_expr_invalid_drc() {
     let expr = "drc logs -f triplestore";
     let mut ctx =
-        BTreeMap::from([("x".to_string(), Primitive::Double(2.).mut_prim())]);
+        BTreeMap::from([("x".to_string(), Primitive::Double(2.).ref_prim())]);
     compute(expr, &mut ctx).unwrap();
 }
 
@@ -28,7 +28,7 @@ fn test_expr_invalid_drc() {
 fn test_op_invalid() {
     let expr = "use example = wesh";
     let mut ctx =
-        BTreeMap::from([("x".to_string(), Primitive::Double(2.).mut_prim())]);
+        BTreeMap::from([("x".to_string(), Primitive::Double(2.).ref_prim())]);
     compute(expr, &mut ctx).unwrap();
 }
 
@@ -36,7 +36,7 @@ fn test_op_invalid() {
 fn test_compute_with_ctx() {
     let expr = "x * 5";
     let mut ctx =
-        BTreeMap::from([("x".to_string(), Primitive::Double(2.).mut_prim())]);
+        BTreeMap::from([("x".to_string(), Primitive::Double(2.).ref_prim())]);
 
     let res = compute(expr, &mut ctx).unwrap();
     assert_eq!(Primitive::Double(10.), res);
@@ -45,7 +45,7 @@ fn test_compute_with_ctx() {
 fn test_compute_assign_with_ctx() {
     let expr = "y = x *  5";
     let mut ctx =
-        BTreeMap::from([("x".to_string(), Primitive::Double(2.).mut_prim())]);
+        BTreeMap::from([("x".to_string(), Primitive::Double(2.).ref_prim())]);
 
     let res = compute(expr, &mut ctx).unwrap();
     assert_eq!(Primitive::Double(10.), res);

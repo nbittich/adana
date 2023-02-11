@@ -1,18 +1,16 @@
-use std::ops::Neg;
-
 use slab_tree::{NodeId, Tree};
 
 use crate::prelude::{BTreeMap, Context};
 
 use super::{
-    primitive::MutPrimitive, MathConstants, Operator, Primitive, TreeNodeValue,
-    Value,
+    primitive::{Neg, RefPrimitive},
+    MathConstants, Operator, Primitive, TreeNodeValue, Value,
 };
 
 fn variable_from_ctx(
     name: &str,
     negate: bool,
-    ctx: &mut BTreeMap<String, MutPrimitive>,
+    ctx: &mut BTreeMap<String, RefPrimitive>,
 ) -> anyhow::Result<Primitive> {
     let value = ctx
         .get(name)
@@ -20,7 +18,7 @@ fn variable_from_ctx(
         .or_else(|| {
             Some(
                 Primitive::Error(format!("variable {name} not found in ctx"))
-                    .mut_prim(),
+                    .ref_prim(),
             )
         })
         .context(format!("variable {name} not found in ctx"))?;
@@ -31,7 +29,7 @@ fn variable_from_ctx(
     let guard = value
         .read()
         .map_err(|e| anyhow::format_err!("could not acquire lock {e}"))?;
-    let primitive = if negate { guard.clone().neg() } else { guard.clone() };
+    let primitive = if negate { guard.neg() } else { guard.clone() };
 
     Ok(primitive)
 }
@@ -48,7 +46,7 @@ fn filter_op(
 }
 
 pub(super) fn to_ast(
-    ctx: &mut BTreeMap<String, MutPrimitive>,
+    ctx: &mut BTreeMap<String, RefPrimitive>,
     value: Value,
     tree: &mut Tree<TreeNodeValue>,
     curr_node_id: &Option<NodeId>,
@@ -249,6 +247,11 @@ pub(super) fn to_ast(
                 curr_node_id,
             )
         }
+        Value::VariableUnused => append_to_current_and_return(
+            TreeNodeValue::VariableUnused,
+            tree,
+            curr_node_id,
+        ),
         Value::VariableNegate(name) => {
             let value = variable_from_ctx(name.as_str(), true, ctx)?;
             append_to_current_and_return(
@@ -262,9 +265,10 @@ pub(super) fn to_ast(
                 tree.root().is_none(),
                 "invalid variable assignment "
             );
-
             let variable_assign_node = if let Value::Variable(n) = *name {
-                Ok(TreeNodeValue::VariableAssign(n))
+                Ok(TreeNodeValue::VariableAssign(Some(n)))
+            } else if let Value::VariableUnused = *name {
+                Ok(TreeNodeValue::VariableAssign(None))
             } else if let Value::ArrayAccess { arr, index } = *name {
                 let index = match *index {
                     Value::Integer(n) => Ok(Primitive::Int(n)),

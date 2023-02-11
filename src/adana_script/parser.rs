@@ -87,15 +87,25 @@ fn parse_variable_str(s: &str) -> Res<&str> {
         |s| take_while1(|s: char| s.is_alphanumeric() || s == '_')(s);
     map_parser(
         verify(allowed_values, |s: &str| {
-            s.chars().next().filter(|c| c.is_alphabetic()).is_some()
+            s.chars()
+                .next()
+                .filter(|c| c.is_alphabetic() || c == &'_')
+                .is_some()
         }),
         verify(all_consuming(allowed_values), |s: &str| {
             !check_reserved_keyword(&[s])
         }),
     )(s)
 }
+
 fn parse_variable(s: &str) -> Res<Value> {
-    map(parse_variable_str, |s: &str| Value::Variable(s.to_string()))(s)
+    map(parse_variable_str, |s: &str| {
+        if s.starts_with('_') {
+            Value::VariableUnused
+        } else {
+            Value::Variable(s.to_string())
+        }
+    })(s)
 }
 fn parse_constant(s: &str) -> Res<Value> {
     map(one_of(MathConstants::get_symbols()), Value::Const)(s)
@@ -327,10 +337,13 @@ fn parse_array(s: &str) -> Res<Value> {
 fn parse_array_access(s: &str) -> Res<Value> {
     map(
         pair(
-            alt((parse_variable, parse_array, parse_string)),
+            alt((parse_array, parse_variable, parse_string)),
             preceded(
                 tag_no_space("["),
-                terminated(parse_value, tag_no_space("]")),
+                terminated(
+                    alt((parse_variable, parse_number)),
+                    tag_no_space("]"),
+                ),
             ),
         ),
         |(arr, idx)| Value::ArrayAccess {
@@ -344,7 +357,7 @@ fn parse_struct_access(s: &str) -> Res<Value> {
     map(
         alt((
             pair(
-                parse_variable,
+                alt((parse_struct, parse_variable)),
                 preceded(
                     tag("["),
                     terminated(
@@ -354,7 +367,7 @@ fn parse_struct_access(s: &str) -> Res<Value> {
                 ),
             ),
             separated_pair(
-                parse_variable,
+                alt((parse_struct, parse_variable)),
                 tag_no_space("."),
                 parse_variable_str,
             ),
@@ -423,7 +436,13 @@ fn parse_operation(s: &str) -> Res<Value> {
 fn parse_expression(s: &str) -> Res<Value> {
     map_parser(
         parse_multiline, // todo this is probably the source of all issues
-        map(many1(preceded(opt(comments), parse_value)), Value::Expression),
+        map(many1(preceded(opt(comments), parse_value)), |mut v| {
+            if v.len() == 1 {
+                v.remove(0)
+            } else {
+                Value::Expression(v)
+            }
+        }),
     )(s)
 }
 
@@ -436,6 +455,9 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                 alt((
                     parse_fn_call,
                     parse_fn,
+                    parse_struct_access, /* FIXME seems not necessary or
+                                         missing test */
+                    parse_array_access,
                     parse_array,
                     parse_struct,
                     parse_expression,
@@ -446,7 +468,15 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                 expr: Box::new(expr),
             },
         ),
-        alt((parse_fn_call, parse_fn, parse_struct, parse_expression)),
+        alt((
+            parse_fn_call,
+            parse_fn,
+            parse_struct_access,
+            parse_array_access,
+            parse_struct,
+            parse_array,
+            parse_expression,
+        )),
     ))(s)
 }
 
