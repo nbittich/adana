@@ -265,7 +265,6 @@ pub(super) fn to_ast(
                 tree.root().is_none(),
                 "invalid variable assignment "
             );
-
             let variable_assign_node = if let Value::Variable(n) = *name {
                 Ok(TreeNodeValue::VariableAssign(Some(n)))
             } else if let Value::VariableUnused = *name {

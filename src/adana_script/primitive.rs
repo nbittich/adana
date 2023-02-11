@@ -23,7 +23,7 @@ pub enum Primitive {
     Array(Vec<Primitive>),
     Struct(BTreeMap<String, Primitive>),
     Error(String),
-    Function { parameters: Vec<String>, exprs: Vec<Value> },
+    Function { parameters: Vec<Value>, exprs: Vec<Value> },
     Unit,
     NoReturn,
     EarlyReturn(Box<Primitive>),
@@ -223,7 +223,24 @@ impl Display for Primitive {
                 write!(f, "struct {{\n{}\n}}", joined_arr[..].join(", \n"))
             }
             Primitive::Function { parameters, exprs: _ } => {
-                write!(f, "({}) => {{...}}", parameters.join(", "))
+                let mut parameters_formatted = String::new();
+                let len = parameters.len();
+                for (idx, p) in parameters.iter().enumerate() {
+                    match p {
+                        Value::VariableUnused => {
+                            parameters_formatted.push_str("_")
+                        }
+                        _ => {
+                            parameters_formatted.push_str("p");
+                            parameters_formatted
+                                .extend(['p', idx as u8 as char]);
+                        }
+                    }
+                    if idx < len {
+                        parameters_formatted.push_str(",");
+                    }
+                }
+                write!(f, "({parameters_formatted}) => {{..}}")
             }
             Primitive::NoReturn => write!(f, "!"),
             Primitive::Null => write!(f, "{NULL}"),

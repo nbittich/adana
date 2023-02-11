@@ -44,9 +44,7 @@ fn test_parse_fn() {
                 ),],)),
                 exprs: vec![Value::VariableExpr {
                     name: Box::new(Value::Variable("x".to_string(),)),
-                    expr: Box::new(Value::Expression(
-                        vec![Value::Integer(0,),],
-                    )),
+                    expr: Box::new(Value::Integer(0,)),
                 },],
             }),
         },]
@@ -69,7 +67,7 @@ fn test_parse_fn() {
             ],)),
             exprs: vec![Value::VariableExpr {
                 name: Box::new(Value::Variable("x".to_string(),)),
-                expr: Box::new(Value::Expression(vec![Value::Integer(0,),],)),
+                expr: Box::new(Value::Integer(0,)),
             },],
         },]
     );
@@ -93,16 +91,14 @@ fn test_parse_fn() {
             exprs: vec![
                 Value::VariableExpr {
                     name: Box::new(Value::Variable("x".to_string(),)),
-                    expr: Box::new(Value::Expression(
-                        vec![Value::Integer(0,),],
-                    )),
+                    expr: Box::new(Value::Integer(0,),),
                 },
-                Value::Expression(vec![Value::BuiltInFunction {
+                Value::BuiltInFunction {
                     fn_type: BuiltInFunctionType::Println,
                     expr: Box::new(Value::BlockParen(vec![Value::String(
                         "hello".to_string()
                     )]))
-                }])
+                }
             ],
         },]
     );
@@ -142,7 +138,7 @@ fn test_parse_break() {
                 exprs: vec![
                     VariableExpr {
                         name: Box::new(Variable("count".to_string(),)),
-                        expr: Box::new(Expression(vec![Integer(0,),],),)
+                        expr: Box::new(Integer(0))
                     },
                     VariableExpr {
                         name: Box::new(Variable("res".to_string(),)),
@@ -165,16 +161,12 @@ fn test_parse_break() {
                         exprs: vec![
                             VariableExpr {
                                 name: Box::new(Variable("k".to_string(),)),
-                                expr: Box::new(Expression(vec![
-                                    Value::ArrayAccess {
-                                        arr: Box::new(Variable(
-                                            "m".to_string(),
-                                        )),
-                                        index: Box::new(Variable(
-                                            "count".to_string(),
-                                        )),
-                                    },
-                                ],)),
+                                expr: Box::new(Value::ArrayAccess {
+                                    arr: Box::new(Variable("m".to_string(),)),
+                                    index: Box::new(Variable(
+                                        "count".to_string(),
+                                    )),
+                                },)
                             },
                             Value::IfExpr {
                                 cond: Box::new(BlockParen(vec![
@@ -192,9 +184,9 @@ fn test_parse_break() {
                                         name: Box::new(Variable(
                                             "res".to_string(),
                                         )),
-                                        expr: Box::new(Expression(vec![
-                                            Variable("count".to_string(),),
-                                        ],)),
+                                        expr: Box::new(Variable(
+                                            "count".to_string(),
+                                        ),),
                                     },
                                     Value::Break,
                                 ],
@@ -211,7 +203,7 @@ fn test_parse_break() {
                             },
                         ],
                     },
-                    Expression(vec![Variable("res".to_string(),),],),
+                    Variable("res".to_string(),),
                 ],
             },)
         },],
@@ -225,7 +217,7 @@ fn test_paren_bug_2023() {
     assert_eq!("", res);
     assert_eq!(
         instructions,
-        vec![Value::Expression(vec![Value::BlockParen(vec![
+        vec![Value::BlockParen(vec![
             Value::Integer(4,),
             Value::Operation(Operator::Mult,),
             Value::Integer(3,),
@@ -235,7 +227,7 @@ fn test_paren_bug_2023() {
                 Value::Operation(Operator::Add,),
                 Value::Integer(2,),
             ],),
-        ],),],),]
+        ],),]
     );
     dbg!(&res);
 }
@@ -612,13 +604,13 @@ fn test_struct_access_1() {
                     ("age".to_string(), Value::Integer(34,),)
                 ]),)),
             },
-            Value::Expression(vec![Value::BuiltInFunction {
+            Value::BuiltInFunction {
                 fn_type: BuiltInFunctionType::Println,
                 expr: Box::new(Value::BlockParen(vec![Value::StructAccess {
                     struc: Box::new(Value::Variable("person".to_string(),)),
                     key: "age".to_string(),
                 },],)),
-            },],),
+            },
             Value::VariableExpr {
                 name: Box::new(Value::Variable("x".to_string())),
                 expr: Box::new(Value::Array(vec![
@@ -631,4 +623,26 @@ fn test_struct_access_1() {
             }
         ]
     );
+}
+
+#[test]
+fn test_parser_array_directly_access() {
+    use Value::*;
+    let expr = r#"x = [1, 2, 3][0]"#;
+    let (r, v) = parse_instructions(expr).unwrap();
+    assert_eq!("", r);
+    assert_eq!(
+        v,
+        vec![VariableExpr {
+            name: Box::new(Variable("x".into()),),
+            expr: Box::new(ArrayAccess {
+                arr: Box::new(Array(vec![
+                    Integer(1,),
+                    Integer(2,),
+                    Integer(3,),
+                ],)),
+                index: Box::new(Integer(0,)),
+            }),
+        }]
+    )
 }

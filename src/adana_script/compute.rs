@@ -386,18 +386,29 @@ fn compute_recur(
             }
             TreeNodeValue::Function(Value::Function { parameters, exprs }) => {
                 if let Value::BlockParen(parameters) = parameters.borrow() {
-                    let mut params = Vec::with_capacity(parameters.len());
-                    for parameter in parameters {
-                        if let Value::Variable(parameter) = parameter {
-                            params.push(parameter.clone());
-                        } else {
-                            return Ok(Primitive::Error(format!(
-                                "not a valid parameter: {parameter:?}"
-                            )));
-                        }
+                    // let mut params = Vec::with_capacity(parameters.len());
+                    // for parameter in parameters {
+                    //     if let Value::Variable(parameter) = parameter {
+                    //         params.push(parameter.clone());
+                    //     } else if let Value::VariableUnused = parameter {
+                    //         continue;
+                    //     } else {
+                    //         return Ok(Primitive::Error(format!(
+                    //             "not a valid parameter: {parameter:?}"
+                    //         )));
+                    //     }
+                    // }
+                    if !parameters.iter().all(|v| {
+                        matches!(v, Value::Variable(_))
+                         //   || matches!(v, Value::String(_))
+                            || matches!(v, Value::VariableUnused)
+                    }) {
+                        return Ok(Primitive::Error(format!(
+                            "not a valid parameter: {parameters:?}"
+                        )));
                     }
                     Ok(Primitive::Function {
-                        parameters: params,
+                        parameters: parameters.clone(),
                         exprs: exprs.to_owned(),
                     })
                 } else {
@@ -413,7 +424,10 @@ fn compute_recur(
                 if let Value::BlockParen(param_values) = parameters.borrow() {
                     let function =
                         compute_instructions(vec![*function.clone()], ctx)?;
-                    if let Primitive::Function { parameters, exprs } = function
+                    if let Primitive::Function {
+                        parameters: function_parameters,
+                        exprs,
+                    } = function
                     {
                         let mut scope_ctx = BTreeMap::new();
 
@@ -432,17 +446,22 @@ fn compute_recur(
                             }
                         }
 
-                        for (i, param) in parameters.iter().enumerate() {
+                        for (i, param) in function_parameters.iter().enumerate()
+                        {
                             if let Some(value) = param_values.get(i) {
-                                let value = compute_instructions(
-                                    vec![value.clone()],
-                                    ctx,
-                                )?;
-                                scope_ctx
-                                    .insert(param.clone(), value.ref_prim());
+                                if let Value::Variable(variable_from_fn_def) =
+                                    param
+                                {
+                                    let variable_from_fn_call =
+                                        compute_lazy(value.clone(), ctx)?;
+                                    scope_ctx.insert(
+                                        variable_from_fn_def.clone(),
+                                        variable_from_fn_call.ref_prim(),
+                                    );
+                                }
                             } else {
                                 return Ok(Primitive::Error(format!(
-                                    "missing parameter {param}"
+                                    "missing parameter {param:?}"
                                 )));
                             }
                         }

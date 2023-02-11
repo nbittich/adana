@@ -27,13 +27,14 @@ fn test_anon_func_call() {
     assert_eq!(
         *ctx["z"].read().unwrap(),
         Primitive::Function {
-            parameters: vec!["a".to_string(), "b".to_string(),],
+            parameters: vec![
+                Value::Variable("a".to_string()),
+                Value::Variable("b".to_string()),
+            ],
             exprs: vec![
                 Value::VariableExpr {
                     name: Box::new(Value::Variable("c".to_string(),)),
-                    expr: Box::new(Value::Expression(
-                        vec![Value::Integer(4,),],
-                    )),
+                    expr: Box::new(Value::Integer(4,),),
                 },
                 Value::Expression(vec![
                     Value::Variable("a".to_string(),),
