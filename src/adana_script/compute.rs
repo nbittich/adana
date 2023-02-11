@@ -103,7 +103,9 @@ fn compute_recur(
                 let right = compute_recur(node.last_child(), ctx)?;
                 Ok(left.and(right))
             }
-            TreeNodeValue::VariableUnused => Ok(Primitive::Unit),
+            TreeNodeValue::VariableUnused => {
+                Err(Error::msg("forbidden usage of VariableUnused"))
+            }
             TreeNodeValue::Ops(Operator::Or) => {
                 if node.children().count() == 1 {
                     return Err(Error::msg(
@@ -168,14 +170,18 @@ fn compute_recur(
             TreeNodeValue::VariableAssign(name) => {
                 let v = compute_recur(node.first_child(), ctx)?;
                 if !matches!(v, Primitive::Error(_)) {
-                    let mut old = ctx
-                        .entry(name.clone())
-                        .or_insert(Primitive::Unit.ref_prim())
-                        .write()
-                        .map_err(|e| {
-                            anyhow::format_err!("could not acquire lock {e}")
-                        })?;
-                    *old = v.clone();
+                    if let Some(name) = name {
+                        let mut old = ctx
+                            .entry(name.clone())
+                            .or_insert(Primitive::Unit.ref_prim())
+                            .write()
+                            .map_err(|e| {
+                                anyhow::format_err!(
+                                    "could not acquire lock {e}"
+                                )
+                            })?;
+                        *old = v.clone();
+                    }
                 }
                 Ok(v)
             }
@@ -617,13 +623,18 @@ fn compute_instructions(
                     }
                 };
                 'foreach_loop: for (i, it) in arr.into_iter().enumerate() {
-                    scoped_ctx.insert(var.clone(), it.ref_prim());
-                    if let Some(index_var) = &index_var {
-                        scoped_ctx.insert(
-                            index_var.clone(),
-                            Primitive::Int(i as i128).ref_prim(),
-                        );
+                    if !var.starts_with("_") {
+                        scoped_ctx.insert(var.clone(), it.ref_prim());
                     }
+                    match &index_var {
+                        Some(index_var) if !index_var.starts_with("_") => {
+                            scoped_ctx.insert(
+                                index_var.clone(),
+                                Primitive::Int(i as i128).ref_prim(),
+                            );
+                        }
+                        _ => (),
+                    };
                     for instruction in &exprs {
                         match compute_lazy(
                             instruction.clone(),

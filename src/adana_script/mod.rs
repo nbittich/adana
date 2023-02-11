@@ -207,7 +207,7 @@ pub(super) enum TreeNodeValue {
     EarlyReturn(Option<Value>),
     Drop(Vec<String>),
     VariableUnused,
-    VariableAssign(String),
+    VariableAssign(Option<String>),
     VariableArrayAssign { name: String, index: Primitive },
     Ops(Operator),
     Primitive(Primitive),

@@ -267,7 +267,9 @@ pub(super) fn to_ast(
             );
 
             let variable_assign_node = if let Value::Variable(n) = *name {
-                Ok(TreeNodeValue::VariableAssign(n))
+                Ok(TreeNodeValue::VariableAssign(Some(n)))
+            } else if let Value::VariableUnused = *name {
+                Ok(TreeNodeValue::VariableAssign(None))
             } else if let Value::ArrayAccess { arr, index } = *name {
                 let index = match *index {
                     Value::Integer(n) => Ok(Primitive::Int(n)),
