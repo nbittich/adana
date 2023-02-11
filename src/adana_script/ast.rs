@@ -432,13 +432,18 @@ pub(super) fn to_ast(
         Value::Drop(v) => {
             if let Value::BlockParen(variables) = *v {
                 let mut vars = Vec::with_capacity(variables.len());
-                for var in variables {
-                    if let Value::Variable(var) = var {
-                        vars.push(var);
-                    } else {
-                        return Err(anyhow::Error::msg(format!(
-                            "not a variable: {var:?}"
-                        )));
+                for variable in variables {
+                    match variable {
+                        v @ Value::Variable(_)
+                        | v @ Value::ArrayAccess { arr: _, index: _ }
+                        | v @ Value::StructAccess { struc: _, key: _ } => {
+                            vars.push(v)
+                        }
+                        _ => {
+                            return Err(anyhow::Error::msg(format!(
+                                "not a variable: {variable:?}"
+                            )));
+                        }
                     }
                 }
                 append_to_current_and_return(

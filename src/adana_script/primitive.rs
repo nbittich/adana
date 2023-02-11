@@ -75,7 +75,8 @@ pub trait Sin {
 pub trait Array {
     fn index_at(&self, rhs: &Self) -> Self;
     fn len(&self) -> Primitive;
-    fn swap_mem(&mut self, rhs: &mut Self, index: &Primitive) -> Primitive;
+    fn swap_mem(&mut self, rhs: &mut Self, index: &Primitive) -> Self;
+    fn remove(&mut self, key: &Self) -> anyhow::Result<()>;
 }
 
 pub trait Cos {
@@ -753,6 +754,37 @@ impl Array for Primitive {
                 }
             }
             _ => Primitive::Error("invalid call to swap_mem()".to_string()),
+        }
+    }
+
+    fn remove(&mut self, key: &Primitive) -> anyhow::Result<()> {
+        match (self, key) {
+            (Primitive::Array(arr), Primitive::Int(idx)) => {
+                let idx = *idx as usize;
+                if idx < arr.len() {
+                    arr.remove(idx);
+                    Ok(())
+                } else {
+                    Err(anyhow::Error::msg("index out of range"))
+                }
+            }
+            (Primitive::String(s), Primitive::Int(idx)) => {
+                let idx = *idx as usize;
+                if idx < s.len() {
+                    s.remove(idx);
+                    Ok(())
+                } else {
+                    Err(anyhow::Error::msg("index out of range"))
+                }
+            }
+            (Primitive::Struct(struc), Primitive::String(key)) => {
+                if let Some(p) = struc.remove(key) {
+                    Ok(())
+                } else {
+                    Err(anyhow::Error::msg("key doesn't exist"))
+                }
+            }
+            _ => Err(anyhow::Error::msg("illegal access to array!!!")),
         }
     }
 }

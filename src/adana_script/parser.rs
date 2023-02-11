@@ -236,7 +236,12 @@ fn parse_foreach(s: &str) -> Res<Value> {
 }
 
 fn parse_drop(s: &str) -> Res<Value> {
-    let parser = |p| separated_list1(tag_no_space(","), parse_variable)(p);
+    let parser = |p| {
+        separated_list1(
+            tag_no_space(","),
+            alt((parse_struct_access, parse_array_access, parse_variable)),
+        )(p)
+    };
 
     map(preceded(tag_no_space(DROP), parse_paren(parser)), |variables| {
         Value::Drop(Box::new(variables))

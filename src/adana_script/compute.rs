@@ -489,13 +489,48 @@ fn compute_recur(
             TreeNodeValue::Break => Ok(Primitive::NoReturn),
             TreeNodeValue::Null => Ok(Primitive::Null),
             TreeNodeValue::Drop(variables) => {
-                if variables.iter().all(|k| ctx.contains_key(k)) {
-                    for var in variables {
-                        ctx.remove(var).unwrap();
+                for var in variables {
+                    match var {
+                        Value::Variable(v) => {
+                            ctx.remove(v);
+                        }
+                        Value::StructAccess { struc, key } => {
+                            match struc.borrow(){
+                                Value::Variable(s) => {
+                                     let Some(struc) = ctx.get_mut(s) else { return Ok(Primitive::Error(format!("ctx doesn't contain the struct {s}")))};
+                                   let struc = struc.clone(); 
+                                    let mut struc = struc.write().map_err(|e| anyhow::format_err!("DROP STRUC : could not acquire lock {e}"))?;
+                                   struc.remove(&Primitive::String(key.into()))?;
+                                }
+                                _ => return Ok(Primitive::Error(format!("only primitive within the ctx can be dropped {struc:?}")))
+                            }
+                        }
+                        Value::ArrayAccess { arr, index } => {
+                            match arr.borrow(){
+                                Value::Variable(s) => {
+                                     let Some(array) = ctx.get_mut(s) else { return Ok(Primitive::Error(format!("ctx doesn't contain the array {s}")))};
+                                   let array = array.clone(); 
+                                    let mut array = array.write().map_err(|e| anyhow::format_err!("DROP ARRAY : could not acquire lock {e}"))?;
+                                    let Value::Integer(index) = *index.clone() else {return Ok(Primitive::Error(format!("index not an int!")))};
+                                   array.remove(&Primitive::Int(index))?;
+                                }
+                                _ => return Ok(Primitive::Error(format!("only primitive within the ctx can be dropped {arr:?}")))
+                            }
+                        }
+                        _ => {
+                            return Err(Error::msg(format!(
+                                "ERROR DROP: not a valid variable {var:?}"
+                            )))
+                        }
                     }
-                } else {
-                    return Ok(Primitive::Error(format!("ctx doesn't contain all variables that must be dropped {variables:?}")));
                 }
+                // if variables.iter().all(|k| ctx.contains_key(k)) {
+                //     for var in variables {
+                //         ctx.remove(var).unwrap();
+                //     }
+                // } else {
+                //     return Ok(Primitive::Error(format!("ctx doesn't contain all variables that must be dropped {variables:?}")));
+                // }
 
                 Ok(Primitive::Unit)
             }
