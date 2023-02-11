@@ -165,6 +165,23 @@ Add and assign(+=), subtract and assign (-=), etc are not supported.
  sub_total2 = 500 * vat # 605
  sub_total1 = sub_total1 + sub_total2 # 10605
 ```
+
+It's also possible to use the special variable name "_" to notify the language that this value 
+is not used and doesn't have to be stored in context:
+
+```python
+_ = 1
+
+for _, n in 1..3 {
+   println(n)
+}
+
+_ = struct {
+   _: "I will not be stored!",
+   x: 39
+}
+```
+
 <hr>
 
 ### Loops
@@ -333,7 +350,7 @@ person_service.check_age(person)
 
 ```
 
-You can access a struct in two ways, except for the functions members:
+You can access a struct in two ways:
 
 ```javascript
 name = person["name"] # name contains "hello"

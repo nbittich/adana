@@ -336,16 +336,19 @@ fn compute_recur(
             TreeNodeValue::Struct(struc) => {
                 let mut primitives = BTreeMap::new();
                 for (k, v) in struc {
-                    let primitive = compute_instructions(vec![v.clone()], ctx)?;
-                    match primitive {
-                        v @ Primitive::Error(_) => return Ok(v),
-                        Primitive::Unit => {
-                            return Ok(Primitive::Error(
-                                "cannot push unit () to struct".to_string(),
-                            ))
-                        }
-                        _ => {
-                            primitives.insert(k.to_string(), primitive);
+                    if !k.starts_with("_") {
+                        let primitive =
+                            compute_instructions(vec![v.clone()], ctx)?;
+                        match primitive {
+                            v @ Primitive::Error(_) => return Ok(v),
+                            Primitive::Unit => {
+                                return Ok(Primitive::Error(
+                                    "cannot push unit () to struct".to_string(),
+                                ))
+                            }
+                            _ => {
+                                primitives.insert(k.to_string(), primitive);
+                            }
                         }
                     }
                 }

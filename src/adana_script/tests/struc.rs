@@ -156,6 +156,7 @@ fn test_struct_complex_ish() {
         test4 = person_service.boom(person)
         person.full_name = "Nordine Bittich"
         test5 = person_service.boom(person)
+        test6 = person_service["boom"](person)
         "#;
     let _ = compute(expr, &mut ctx).unwrap();
     assert_eq!(
@@ -176,6 +177,10 @@ fn test_struct_complex_ish() {
     );
     assert_eq!(
         ctx["test5"].read().unwrap().clone(),
+        Primitive::String("Nordine Bittich".to_string())
+    );
+    assert_eq!(
+        ctx["test6"].read().unwrap().clone(),
         Primitive::String("Nordine Bittich".to_string())
     );
 }
