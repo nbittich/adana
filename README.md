@@ -210,14 +210,14 @@ for i, letter in "hello" {
 In the case of a struct, the variable will be an entry (a struct with key/value)
 
 ```javascript
-        s = struct {
-            name: "nordine",
-            age: 34,
-            members: ["natalie", "roger","fred"]
-        }
-        for  id, entry in s {
-             println("Id: "+id +" Key: "+entry.key + " Value: " + to_string(entry.value))
-        }
+s = struct {
+    name: "nordine",
+    age: 34,
+    members: ["natalie", "roger","fred"]
+}
+for  id, entry in s {
+     println("Id: "+id +" Key: "+entry.key + " Value: " + to_string(entry.value))
+}
 ```
 
 
@@ -243,20 +243,22 @@ while(count < 10) {
      if(count % 3 ==0) {
         break
      }
-   }
+}
 ```
 
 <hr>
 
 ### Ranges
 
-It is possible to define a range (inclusive, exclusive):
+It is possible to define a range like so "start..end" (end exclusive), 
+or "start..=end" (end inclusive):
 
 ```javascript
 
-x = 1..11 # [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+x = 0..10 # [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+x = 0..=10 # [0,1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-for i in 1..11 {
+for i in 1..=10 {
   println("print 10 times this message")
 }
 
@@ -603,7 +605,7 @@ CTRL + p => π
 ### Environment variables
 
 ```
-RUST_LOG=info adana
+RUST_LOG=adana=debug adana
 ```
 
 ### Arguments

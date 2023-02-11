@@ -193,8 +193,8 @@ pub(super) fn to_ast(
             tree,
             curr_node_id,
         ),
-        Value::Range { incl, excl } => {
-            let incl = match *incl {
+        Value::Range { start, end, incl_both_end } => {
+            let start = match *start {
                 Value::Variable(name) => {
                     let primitive =
                         variable_from_ctx(name.as_str(), false, ctx)?;
@@ -209,11 +209,11 @@ pub(super) fn to_ast(
                 Value::Integer(num) => Ok(num),
                 _ => {
                     return Err(anyhow::format_err!(
-                        "range error: {incl:?} is not an integer"
+                        "range error: {start:?} is not an integer"
                     ))
                 }
             }?;
-            let excl = match *excl {
+            let end = match *end {
                 Value::Variable(name) => {
                     let primitive =
                         variable_from_ctx(name.as_str(), false, ctx)?;
@@ -228,12 +228,13 @@ pub(super) fn to_ast(
                 Value::Integer(num) => Ok(num),
                 _ => {
                     return Err(anyhow::format_err!(
-                        "range error: {excl:?} is not an integer"
+                        "range error: {end:?} is not an integer"
                     ))
                 }
             }?;
+            let end = if incl_both_end { end + 1 } else { end };
             let range: Vec<Primitive> =
-                (incl..excl).map(Primitive::Int).collect();
+                (start..end).map(Primitive::Int).collect();
             append_to_current_and_return(
                 TreeNodeValue::Primitive(Primitive::Array(range)),
                 tree,

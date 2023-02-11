@@ -120,8 +120,9 @@ pub enum Value {
     Integer(i128),
     Bool(bool),
     Range {
-        incl: Box<Value>,
-        excl: Box<Value>,
+        start: Box<Value>,
+        incl_both_end: bool,
+        end: Box<Value>,
     },
     String(String),
     BlockParen(Vec<Value>),
