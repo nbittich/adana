@@ -2,8 +2,6 @@ use std::{
     cmp::Ordering,
     collections::BTreeMap,
     fmt::Display,
-    iter::Sum,
-    ops::{Div, Mul, Rem, Sub},
     sync::{Arc, RwLock},
 };
 
@@ -31,11 +29,11 @@ pub enum Primitive {
     EarlyReturn(Box<Primitive>),
 }
 
-pub type MutPrimitive = Arc<RwLock<Primitive>>;
+pub type RefPrimitive = Arc<RwLock<Primitive>>;
 
 // region: traits
 impl Primitive {
-    pub fn mut_prim(self) -> MutPrimitive {
+    pub fn ref_prim(self) -> RefPrimitive {
         Arc::new(RwLock::new(self))
     }
 }
@@ -89,6 +87,22 @@ pub trait Tan {
 
 pub trait Add {
     fn add(&self, rhs: &Self) -> Self;
+}
+
+pub trait Sub {
+    fn sub(&self, rhs: &Self) -> Self;
+}
+
+pub trait Mul {
+    fn mul(&self, rhs: &Self) -> Self;
+}
+
+pub trait Div {
+    fn div(&self, rhs: &Self) -> Self;
+}
+
+pub trait Rem {
+    fn rem(&self, rhs: &Self) -> Self;
 }
 // endregion traits
 
@@ -312,16 +326,6 @@ impl Pow for Primitive {
     }
 }
 
-impl Sum for Primitive {
-    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let mut first = Primitive::Int(0);
-        for next in iter {
-            first = first.add(&next);
-        }
-        first
-    }
-}
-
 impl Add for Primitive {
     fn add(&self, rhs: &Self) -> Self {
         match (self.clone(), rhs.clone()) {
@@ -364,10 +368,8 @@ impl Add for Primitive {
 }
 
 impl Sub for Primitive {
-    type Output = Primitive;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
+    fn sub(&self, rhs: &Self) -> Self {
+        match (self.clone(), rhs.clone()) {
             (Primitive::Int(l), Primitive::Int(r)) => Primitive::Int(l - r),
             (Primitive::Int(l), Primitive::Double(r)) => {
                 Primitive::Double(l as f64 - r)
@@ -386,10 +388,8 @@ impl Sub for Primitive {
 }
 
 impl Rem for Primitive {
-    type Output = Primitive;
-
-    fn rem(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
+    fn rem(&self, rhs: &Self) -> Self {
+        match (self.clone(), rhs.clone()) {
             (Primitive::Int(l), Primitive::Int(r)) if r != 0 => {
                 Primitive::Int(l % r)
             }
@@ -412,14 +412,12 @@ impl Rem for Primitive {
     }
 }
 impl Mul for Primitive {
-    type Output = Primitive;
-
-    fn mul(self, rhs: Self) -> Self::Output {
+    fn mul(&self, rhs: &Self) -> Self {
         fn multiply_array(arr: Vec<Primitive>, n: i128) -> Vec<Primitive> {
             let arr_size = arr.len();
             arr.into_iter().cycle().take(n as usize * arr_size).collect()
         }
-        match (self, rhs) {
+        match (self.clone(), rhs.clone()) {
             (Primitive::Int(l), Primitive::Int(r)) => {
                 Primitive::Int(l.wrapping_mul(r))
             }
@@ -449,10 +447,8 @@ impl Mul for Primitive {
     }
 }
 impl Div for Primitive {
-    type Output = Primitive;
-
-    fn div(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
+    fn div(&self, rhs: &Self) -> Self {
+        match (self.clone(), rhs.clone()) {
             (Primitive::Int(l), Primitive::Int(r)) if r != 0 => {
                 Primitive::Int(l / r)
             }

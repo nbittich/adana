@@ -6,8 +6,8 @@ mod primitive;
 use std::collections::BTreeMap;
 
 pub use compute::compute;
-pub use primitive::MutPrimitive;
 pub use primitive::Primitive;
+pub use primitive::RefPrimitive;
 
 use serde::{Deserialize, Serialize};
 use strum::EnumCount;

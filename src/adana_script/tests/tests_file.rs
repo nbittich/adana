@@ -77,7 +77,7 @@ fn test_while_statement() {
     }
 
     for n in 0..=10 {
-        ctx.insert("n".to_string(), Primitive::Int(n).mut_prim());
+        ctx.insert("n".to_string(), Primitive::Int(n).ref_prim());
         let r = compute(file_path, &mut ctx).unwrap();
         let fibonacci = fib(n);
         assert_eq!(Primitive::Int(fibonacci), ctx["c"].read().unwrap().clone());
@@ -213,7 +213,7 @@ fn test_if_else_file() {
     include("file_tests/test_if_else.adana")
 "#;
     let mut ctx = BTreeMap::new();
-    ctx.insert("count".to_string(), Primitive::Int(102).mut_prim());
+    ctx.insert("count".to_string(), Primitive::Int(102).ref_prim());
     let _ = compute(file_path, &mut ctx);
 
     assert_eq!(ctx["count"].read().unwrap().clone(), Primitive::Int(101));

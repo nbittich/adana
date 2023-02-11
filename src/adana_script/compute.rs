@@ -14,15 +14,15 @@ use crate::{adana_script::parser::parse_instructions, prelude::BTreeMap};
 use super::{
     ast::to_ast,
     primitive::{
-        Abs, Add, And, Array, Cos, Logarithm, MutPrimitive, Or, Pow, Primitive,
-        Sin, Sqrt, Tan, ToBool, ToNumber, TypeOf,
+        Abs, Add, And, Array, Cos, Div, Logarithm, Mul, Or, Pow, Primitive,
+        RefPrimitive, Rem, Sin, Sqrt, Sub, Tan, ToBool, ToNumber, TypeOf,
     },
     Operator, TreeNodeValue, Value,
 };
 
 fn compute_recur(
     node: Option<NodeRef<TreeNodeValue>>,
-    ctx: &mut BTreeMap<String, MutPrimitive>,
+    ctx: &mut BTreeMap<String, RefPrimitive>,
 ) -> anyhow::Result<Primitive> {
     if let Some(node) = node {
         match node.data() {
@@ -49,7 +49,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                Ok(left * right)
+                Ok(left.mul(&right))
             }
             TreeNodeValue::Ops(Operator::Mod) => {
                 if node.children().count() == 1 {
@@ -57,7 +57,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                Ok(left % right)
+                Ok(left.rem(&right))
             }
             TreeNodeValue::Ops(Operator::Subtr) => {
                 if node.children().count() == 1 {
@@ -65,7 +65,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                Ok(left - right)
+                Ok(left.sub(&right))
             }
             TreeNodeValue::Ops(Operator::Pow) => {
                 if node.children().count() == 1 {
@@ -81,7 +81,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                Ok(left / right)
+                Ok(left.div(&right))
             }
             TreeNodeValue::Ops(Operator::Equal) => {
                 if node.children().count() == 1 {
@@ -169,7 +169,7 @@ fn compute_recur(
                 if !matches!(v, Primitive::Error(_)) {
                     let mut old = ctx
                         .entry(name.clone())
-                        .or_insert(Primitive::Unit.mut_prim())
+                        .or_insert(Primitive::Unit.ref_prim())
                         .write()
                         .map_err(|e| {
                             anyhow::format_err!("could not acquire lock {e}")
@@ -425,7 +425,7 @@ fn compute_recur(
                                     ctx,
                                 )?;
                                 scope_ctx
-                                    .insert(param.clone(), value.mut_prim());
+                                    .insert(param.clone(), value.ref_prim());
                             } else {
                                 return Ok(Primitive::Error(format!(
                                     "missing parameter {param}"
@@ -494,7 +494,7 @@ fn compute_recur(
 
 fn value_to_tree(
     value: Value,
-    ctx: &mut BTreeMap<String, MutPrimitive>,
+    ctx: &mut BTreeMap<String, RefPrimitive>,
 ) -> anyhow::Result<Tree<TreeNodeValue>> {
     let mut tree: Tree<TreeNodeValue> = Tree::new();
     to_ast(ctx, value, &mut tree, &None)?;
@@ -513,7 +513,7 @@ fn value_to_tree(
 
 fn compute_lazy(
     instruction: Value,
-    ctx: &mut BTreeMap<String, MutPrimitive>,
+    ctx: &mut BTreeMap<String, RefPrimitive>,
 ) -> anyhow::Result<Primitive> {
     let tree = value_to_tree(instruction, ctx)?;
 
@@ -523,7 +523,7 @@ fn compute_lazy(
 }
 fn compute_instructions(
     instructions: Vec<Value>,
-    ctx: &mut BTreeMap<String, MutPrimitive>,
+    ctx: &mut BTreeMap<String, RefPrimitive>,
 ) -> anyhow::Result<Primitive> {
     let mut result = Primitive::Unit;
 
@@ -616,11 +616,11 @@ fn compute_instructions(
                     }
                 };
                 'foreach_loop: for (i, it) in arr.into_iter().enumerate() {
-                    scoped_ctx.insert(var.clone(), it.mut_prim());
+                    scoped_ctx.insert(var.clone(), it.ref_prim());
                     if let Some(index_var) = &index_var {
                         scoped_ctx.insert(
                             index_var.clone(),
-                            Primitive::Int(i as i128).mut_prim(),
+                            Primitive::Int(i as i128).ref_prim(),
                         );
                     }
                     for instruction in &exprs {
@@ -653,7 +653,7 @@ fn compute_instructions(
 // region: exposed api
 pub fn compute(
     s: &str,
-    ctx: &mut BTreeMap<String, MutPrimitive>,
+    ctx: &mut BTreeMap<String, RefPrimitive>,
 ) -> anyhow::Result<Primitive> {
     let (rest, instructions) = parse_instructions(s).map_err(|e| {
         anyhow::Error::msg(format!("could not parse instructions. {e}"))
