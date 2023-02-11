@@ -498,7 +498,6 @@ fn compute_recur(
                             match struc.borrow(){
                                 Value::Variable(s) => {
                                      let Some(struc) = ctx.get_mut(s) else { return Ok(Primitive::Error(format!("ctx doesn't contain the struct {s}")))};
-                                   let struc = struc.clone(); 
                                     let mut struc = struc.write().map_err(|e| anyhow::format_err!("DROP STRUC : could not acquire lock {e}"))?;
                                    struc.remove(&Primitive::String(key.into()))?;
                                 }
@@ -509,9 +508,8 @@ fn compute_recur(
                             match arr.borrow(){
                                 Value::Variable(s) => {
                                      let Some(array) = ctx.get_mut(s) else { return Ok(Primitive::Error(format!("ctx doesn't contain the array {s}")))};
-                                   let array = array.clone(); 
                                     let mut array = array.write().map_err(|e| anyhow::format_err!("DROP ARRAY : could not acquire lock {e}"))?;
-                                    let Value::Integer(index) = *index.clone() else {return Ok(Primitive::Error(format!("index not an int!")))};
+                                    let Value::Integer(index) = *index.clone() else {return Ok(Primitive::Error("index not an int!".to_string()))};
                                    array.remove(&Primitive::Int(index))?;
                                 }
                                 _ => return Ok(Primitive::Error(format!("only primitive within the ctx can be dropped {arr:?}")))

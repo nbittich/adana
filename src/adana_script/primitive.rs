@@ -778,7 +778,7 @@ impl Array for Primitive {
                 }
             }
             (Primitive::Struct(struc), Primitive::String(key)) => {
-                if let Some(p) = struc.remove(key) {
+                if let Some(_p) = struc.remove(key) {
                     Ok(())
                 } else {
                     Err(anyhow::Error::msg("key doesn't exist"))
