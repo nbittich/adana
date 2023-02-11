@@ -230,8 +230,10 @@ impl Display for Primitive {
                         Value::VariableUnused => parameters_formatted.push('_'),
                         _ => {
                             parameters_formatted.push('p');
-                            parameters_formatted
-                                .extend(['p', idx as u8 as char]);
+                            parameters_formatted.push(
+                                char::from_digit(idx as u32, 10)
+                                    .unwrap_or_else(|| '0'),
+                            );
                         }
                     }
                     if idx < len {
