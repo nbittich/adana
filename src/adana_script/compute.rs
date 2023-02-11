@@ -103,6 +103,7 @@ fn compute_recur(
                 let right = compute_recur(node.last_child(), ctx)?;
                 Ok(left.and(right))
             }
+            TreeNodeValue::VariableUnused => Ok(Primitive::Unit),
             TreeNodeValue::Ops(Operator::Or) => {
                 if node.children().count() == 1 {
                     return Err(Error::msg(

@@ -127,6 +127,7 @@ pub enum Value {
     String(String),
     BlockParen(Vec<Value>),
     Variable(String),
+    VariableUnused,
     Const(char),
     VariableNegate(String),
     VariableExpr {
@@ -205,6 +206,7 @@ pub(super) enum TreeNodeValue {
     Break,
     EarlyReturn(Option<Value>),
     Drop(Vec<String>),
+    VariableUnused,
     VariableAssign(String),
     VariableArrayAssign { name: String, index: Primitive },
     Ops(Operator),

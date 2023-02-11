@@ -87,15 +87,25 @@ fn parse_variable_str(s: &str) -> Res<&str> {
         |s| take_while1(|s: char| s.is_alphanumeric() || s == '_')(s);
     map_parser(
         verify(allowed_values, |s: &str| {
-            s.chars().next().filter(|c| c.is_alphabetic()).is_some()
+            s.chars()
+                .next()
+                .filter(|c| c.is_alphabetic() || c == &'_')
+                .is_some()
         }),
         verify(all_consuming(allowed_values), |s: &str| {
             !check_reserved_keyword(&[s])
         }),
     )(s)
 }
+
 fn parse_variable(s: &str) -> Res<Value> {
-    map(parse_variable_str, |s: &str| Value::Variable(s.to_string()))(s)
+    map(parse_variable_str, |s: &str| {
+        if s.starts_with("_") {
+            Value::VariableUnused
+        } else {
+            Value::Variable(s.to_string())
+        }
+    })(s)
 }
 fn parse_constant(s: &str) -> Res<Value> {
     map(one_of(MathConstants::get_symbols()), Value::Const)(s)

@@ -247,6 +247,11 @@ pub(super) fn to_ast(
                 curr_node_id,
             )
         }
+        Value::VariableUnused => append_to_current_and_return(
+            TreeNodeValue::VariableUnused,
+            tree,
+            curr_node_id,
+        ),
         Value::VariableNegate(name) => {
             let value = variable_from_ctx(name.as_str(), true, ctx)?;
             append_to_current_and_return(
