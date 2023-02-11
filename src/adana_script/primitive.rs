@@ -195,7 +195,9 @@ impl Display for Primitive {
             Primitive::Double(d) => write!(f, "{d}"),
             Primitive::Bool(b) => write!(f, "{b}"),
             Primitive::Error(e) => write!(f, "Err: {e}"),
-            Primitive::String(s) => write!(f, "{s}"),
+            Primitive::String(s) => {
+                write!(f, "{s}")
+            }
             Primitive::Unit => write!(f, "()"),
             Primitive::Array(arr) => {
                 let joined_arr = arr

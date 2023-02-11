@@ -103,10 +103,10 @@ Semicolons are not needed, if you need multiline statements, you can use a multi
 
 ```python
 fancy_string = multiline {
-    "this string" +
-    "is " +
-    "on several " +
-    "lines"
+    "this string\n" +
+    "\tis\n" +
+    "\t\ton several\n" +
+    "lines\n"
 }
 ```
 <hr>

@@ -1,3 +1,8 @@
+use nom::{
+    character::complete::{alpha1, alphanumeric1, digit1, none_of},
+    multi::fold_many0,
+};
+
 use crate::{
     prelude::{
         all_consuming, alt, delimited, double, many0, many1, map, map_parser,
@@ -78,7 +83,14 @@ fn parse_string(s: &str) -> Res<Value> {
             take_until("\""),
             tag_no_space("\""),
         ),
-        |s| Value::String(s.to_string()),
+        |s| {
+            Value::String(
+                s.replace("\\n", "\n")
+                    .replace("\\t", "\t")
+                    .replace("\\r", "\r")
+                    .replace("\\\\", "\\"),
+            )
+        },
     )(s)
 }
 
