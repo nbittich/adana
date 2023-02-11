@@ -3,7 +3,7 @@ use std::{
     collections::BTreeMap,
     fmt::Display,
     iter::Sum,
-    ops::{Add, Div, Mul, Rem, Sub},
+    ops::{Div, Mul, Rem, Sub},
     sync::{Arc, RwLock},
 };
 
@@ -51,7 +51,7 @@ pub trait ToNumber {
     fn to_double(&self) -> Self;
 }
 pub trait Pow {
-    fn pow(&self, n: Self) -> Self;
+    fn pow(&self, n: &Self) -> Self;
 }
 
 pub trait And {
@@ -87,6 +87,9 @@ pub trait Tan {
     fn tan(&self) -> Self;
 }
 
+pub trait Add {
+    fn add(&self, rhs: &Self) -> Self;
+}
 // endregion traits
 
 // region: impl primitive
@@ -282,25 +285,25 @@ impl Abs for Primitive {
 }
 
 impl Pow for Primitive {
-    fn pow(&self, rhs: Self) -> Self {
+    fn pow(&self, rhs: &Self) -> Self {
         match (self, rhs) {
             #[allow(clippy::manual_range_contains)]
             (Primitive::Int(l), Primitive::Int(r))
-                if r >= 0 && r <= MAX_U32_AS_I128 =>
+                if r >= &0 && r <= &MAX_U32_AS_I128 =>
             {
-                Primitive::Int(l.pow(r as u32))
+                Primitive::Int(l.pow(*r as u32))
             }
             (Primitive::Int(l), Primitive::Int(r)) => {
-                Primitive::Double((*l as f64).powf(r as f64))
+                Primitive::Double((*l as f64).powf(*r as f64))
             }
             (Primitive::Int(l), Primitive::Double(r)) => {
-                Primitive::Double((*l as f64).powf(r))
+                Primitive::Double((*l as f64).powf(*r))
             }
             (Primitive::Double(l), Primitive::Int(r)) => {
-                Primitive::Double(l.powf(r as f64))
+                Primitive::Double(l.powf(*r as f64))
             }
             (Primitive::Double(l), Primitive::Double(r)) => {
-                Primitive::Double(l.powf(r))
+                Primitive::Double(l.powf(*r))
             }
             (l, r) => Primitive::Error(format!(
                 "illegal call to pow() => left: {l} right: {r}"
@@ -313,17 +316,15 @@ impl Sum for Primitive {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let mut first = Primitive::Int(0);
         for next in iter {
-            first = first + next;
+            first = first.add(&next);
         }
         first
     }
 }
 
 impl Add for Primitive {
-    type Output = Primitive;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
+    fn add(&self, rhs: &Self) -> Self {
+        match (self.clone(), rhs.clone()) {
             (Primitive::Int(l), Primitive::Int(r)) => Primitive::Int(l + r),
             (Primitive::Int(l), Primitive::Double(r)) => {
                 Primitive::Double(l as f64 + r)
@@ -344,11 +345,12 @@ impl Add for Primitive {
             }
 
             (Primitive::Array(mut l), r) => {
+                let r: Primitive = r.to_owned();
                 l.push(r);
                 Primitive::Array(l)
             }
             (l, Primitive::Array(mut r)) => {
-                r.insert(0, l);
+                r.insert(0, l.clone());
                 Primitive::Array(r)
             }
             (l, Primitive::String(s)) => Primitive::String(format!("{l}{s}")),
@@ -594,9 +596,19 @@ impl PartialOrd for Primitive {
             (Primitive::Unit, Primitive::Unit) => Some(Ordering::Equal),
             (Primitive::Array(l), Primitive::Array(r)) => l.partial_cmp(r),
             (
-                l @ Primitive::Function { parameters: _, exprs: _ },
-                r @ Primitive::Function { parameters: _, exprs: _ },
-            ) => l.partial_cmp(r),
+                Primitive::Function { parameters: pl, exprs: el },
+                Primitive::Function { parameters: pr, exprs: er },
+            ) => {
+                if pl.eq(pr)
+                    && el.iter().zip(er.iter()).filter(|&(a, b)| a != b).count()
+                        == 0
+                {
+                    Some(Ordering::Equal)
+                } else {
+                    None
+                }
+            }
+            (Primitive::Error(l), Primitive::Error(r)) => l.partial_cmp(r),
             (Primitive::Null, Primitive::Null) => Some(Ordering::Equal),
             (Primitive::EarlyReturn(l), Primitive::EarlyReturn(r)) => {
                 l.partial_cmp(r)
@@ -733,24 +745,26 @@ impl Array for Primitive {
 
 #[cfg(test)]
 mod test {
+    use crate::adana_script::primitive::Add;
+
     use super::Primitive;
 
     #[test]
     fn test_add_valid() {
         let l = Primitive::Int(1);
         let r = Primitive::Int(2);
-        assert_eq!(l + r, Primitive::Int(3));
+        assert_eq!(l.add(&r), Primitive::Int(3));
 
         let l = Primitive::Int(1);
         let r = Primitive::Double(2.);
-        assert_eq!(l + r, Primitive::Double(3.));
+        assert_eq!(l.add(&r), Primitive::Double(3.));
 
         let l = Primitive::Double(1.);
         let r = Primitive::Int(2);
-        assert_eq!(l + r, Primitive::Double(3.));
+        assert_eq!(l.add(&r), Primitive::Double(3.));
 
         let l = Primitive::Double(1.);
         let r = Primitive::Double(2.);
-        assert_eq!(l + r, Primitive::Double(3.));
+        assert_eq!(l.add(&r), Primitive::Double(3.));
     }
 }

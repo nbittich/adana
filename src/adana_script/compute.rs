@@ -14,8 +14,8 @@ use crate::{adana_script::parser::parse_instructions, prelude::BTreeMap};
 use super::{
     ast::to_ast,
     primitive::{
-        Abs, And, Array, Cos, Logarithm, MutPrimitive, Or, Pow, Primitive, Sin,
-        Sqrt, Tan, ToBool, ToNumber, TypeOf,
+        Abs, Add, And, Array, Cos, Logarithm, MutPrimitive, Or, Pow, Primitive,
+        Sin, Sqrt, Tan, ToBool, ToNumber, TypeOf,
     },
     Operator, TreeNodeValue, Value,
 };
@@ -41,7 +41,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                Ok(left + right)
+                Ok(left.add(&right))
             }
             TreeNodeValue::Ops(Operator::Mult) => {
                 if node.children().count() == 1 {
@@ -73,7 +73,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                Ok(left.pow(right))
+                Ok(left.pow(&right))
             }
             TreeNodeValue::Ops(Operator::Div) => {
                 if node.children().count() == 1 {
