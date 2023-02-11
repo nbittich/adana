@@ -231,8 +231,7 @@ impl Display for Primitive {
                         _ => {
                             parameters_formatted.push('p');
                             parameters_formatted.push(
-                                char::from_digit(idx as u32, 10)
-                                    .unwrap_or('0'),
+                                char::from_digit(idx as u32, 10).unwrap_or('0'),
                             );
                         }
                     }
