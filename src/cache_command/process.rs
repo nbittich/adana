@@ -4,7 +4,7 @@ use nom::error::ErrorKind;
 
 use crate::{
     adana_script::RefPrimitive,
-    db::DbOp,
+    db::{DbOp, SCRIPT_CACHE_KEY},
     prelude::colors::*,
     reserved_keywords::{check_reserved_keyword, CACHE_COMMAND_DOC},
 };
