@@ -127,7 +127,7 @@ pub fn process_command(
                         println!(
                             "remove {cache_name}: {}",
                             remove_cache(db, cache_name, false)
-                                .unwrap_or_else(|| false)
+                                .unwrap_or(false)
                         );
                     } else {
                         clear_values(db, current_cache, false);
@@ -208,7 +208,7 @@ pub fn process_command(
                 println!("{json}")
             }
             CacheCommand::StoreScriptContext(name) => {
-                let name = name.unwrap_or_else(|| "latest.json");
+                let name = name.unwrap_or("latest.json");
                 let binary = bincode::serialize(&script_context)?;
                 remove_value(db, SCRIPT_CACHE_KEY, name, true);
 
@@ -230,7 +230,7 @@ pub fn process_command(
                 }
             }
             CacheCommand::LoadScriptContext(name) => {
-                let name = name.unwrap_or_else(|| "latest.json");
+                let name = name.unwrap_or("latest.json");
                 let value = get_value(db, SCRIPT_CACHE_KEY, name);
                 if let Some(value) = value.and_then(|v| {
                     bincode::deserialize::<BTreeMap<String, RefPrimitive>>(
