@@ -18,7 +18,7 @@ const BACKUP_FILE_NAME: &str = "adanadb.json";
 
 pub fn process_command(
     db: &mut impl DbOp<String, String>,
-    script_context: &BTreeMap<String, RefPrimitive>,
+    script_context: &mut BTreeMap<String, RefPrimitive>,
     current_cache: &mut String,
     line: &str,
 ) -> anyhow::Result<()> {
@@ -27,10 +27,10 @@ pub fn process_command(
             CacheCommand::Put { aliases, value } => {
                 if check_reserved_keyword(&aliases) {
                     return Err(anyhow::Error::msg(
-                        "You cannot use a reserved keyword name as an alias.",
+                        format!("{}",Red.paint("You cannot use a reserved keyword name as an alias.")),
                     ));
                 } else if let Some(key) =
-                    insert_value(db, current_cache, aliases, value)
+                    insert_value(db, current_cache, aliases, value, false)
                 {
                     println!(
                         "added {} with hash keys {}",
@@ -38,11 +38,14 @@ pub fn process_command(
                         Red.paint(key)
                     );
                 } else {
-                    return Err(anyhow::Error::msg("could not insert!"));
+                    return Err(anyhow::Error::msg(format!(
+                        "{}",
+                        Red.paint("could not insert! Key already exists")
+                    )));
                 }
             }
             CacheCommand::Del(key) => {
-                if let Some(v) = remove_value(db, current_cache, key) {
+                if let Some(v) = remove_value(db, current_cache, key, false) {
                     println!(
                         "removed {} with hash key {}",
                         Yellow.paint(v),
@@ -123,10 +126,11 @@ pub fn process_command(
                     if cache_name != current_cache {
                         println!(
                             "remove {cache_name}: {}",
-                            remove_cache(db, cache_name)
+                            remove_cache(db, cache_name, false)
+                                .unwrap_or_else(|| false)
                         );
                     } else {
-                        clear_values(db, current_cache);
+                        clear_values(db, current_cache, false);
                         println!("clear all values from {current_cache}",);
                     }
                 }
@@ -202,6 +206,44 @@ pub fn process_command(
             CacheCommand::PrintScriptContext => {
                 let json = serde_json::to_string_pretty(&script_context)?;
                 println!("{json}")
+            }
+            CacheCommand::StoreScriptContext(name) => {
+                let name = name.unwrap_or_else(|| "latest.json");
+                let binary = bincode::serialize(&script_context)?;
+                remove_value(db, SCRIPT_CACHE_KEY, name, true);
+
+                if insert_value(
+                    db,
+                    SCRIPT_CACHE_KEY,
+                    vec![name],
+                    &String::from_utf8_lossy(&binary),
+                    true,
+                )
+                .is_none()
+                {
+                    return Err(anyhow::Error::msg(format!(
+                        "{}",
+                        Red.paint("could not insert/update script context!")
+                    )));
+                } else {
+                    println!("Script context stored with key {name}");
+                }
+            }
+            CacheCommand::LoadScriptContext(name) => {
+                let name = name.unwrap_or_else(|| "latest.json");
+                let value = get_value(db, SCRIPT_CACHE_KEY, name);
+                if let Some(value) = value.and_then(|v| {
+                    bincode::deserialize::<BTreeMap<String, RefPrimitive>>(
+                        v.as_bytes(),
+                    )
+                    .ok()
+                }) {
+                    *script_context = value;
+                    println!(
+                        "{}",
+                        Green.paint("Script context restored from cache.")
+                    );
+                }
             }
         },
         Err(e) => match e {

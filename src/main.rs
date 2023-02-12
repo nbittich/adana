@@ -95,7 +95,7 @@ fn start_app(
                     Err(calc_err) => {
                         match process_command(
                             db,
-                            &script_context,
+                            &mut script_context,
                             &mut current_cache,
                             &line,
                         ) {

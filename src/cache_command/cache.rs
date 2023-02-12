@@ -1,17 +1,10 @@
-use std::collections::hash_map::DefaultHasher;
-use std::hash::Hasher;
 use std::path::Path;
 
 use crate::db::{Batch, DbOp, Op, Tree, DEFAULT_TREE};
 use crate::prelude::*;
 
 const DEFAULT_CACHE_KEY: &str = "$___DEF_CACHE_KEY_LOC___$";
-
-fn calculate_hash<T: Hash>(t: &T) -> u64 {
-    let mut s = DefaultHasher::new();
-    t.hash(&mut s);
-    s.finish()
-}
+pub const SCRIPT_CACHE_KEY: &str = "__SCRIPT_CACHE";
 
 pub fn get_value(
     db: &mut impl DbOp<String, String>,
@@ -34,7 +27,11 @@ pub fn remove_value(
     db: &mut impl DbOp<String, String>,
     namespace: &str,
     key: &str,
+    bypass_check: bool,
 ) -> Option<String> {
+    if !bypass_check {
+        check_cache_name(namespace)?;
+    }
     let mut consumer = |tree: &mut Tree<String, String>| {
         let value = tree.get_value(key)?;
         let to_delete: Vec<String> = tree
@@ -56,7 +53,11 @@ pub fn insert_value(
     namespace: &str,
     aliases: Vec<&str>,
     value: &str,
+    bypass_check: bool,
 ) -> Option<String> {
+    if !bypass_check {
+        check_cache_name(namespace)?;
+    }
     db.open_tree(namespace)?;
     let mut batch = crate::db::Batch::default();
     let keys = db.keys();
@@ -77,9 +78,7 @@ pub fn insert_value(
     }
 
     if aliases.is_empty() {
-        let uniq_id = calculate_hash(&value);
-
-        batch.add_insert(uniq_id.to_string(), value.to_string());
+        return None;
     }
 
     db.apply_batch(batch)?;
@@ -87,17 +86,31 @@ pub fn insert_value(
     Some(aliases.join(", "))
 }
 
-pub fn clear_values(db: &mut impl DbOp<String, String>, cache_name: &str) {
+pub fn clear_values(
+    db: &mut impl DbOp<String, String>,
+    cache_name: &str,
+    bypass_check: bool,
+) -> Option<()> {
+    if !bypass_check {
+        check_cache_name(cache_name)?;
+    }
     if db.open_tree(cache_name).is_some() {
         db.clear();
+        Some(())
+    } else {
+        None
     }
 }
 
 pub fn remove_cache(
     db: &mut impl DbOp<String, String>,
     cache_name: &str,
-) -> bool {
-    db.drop_tree(cache_name)
+    bypass_check: bool,
+) -> Option<bool> {
+    if !bypass_check {
+        check_cache_name(cache_name)?;
+    }
+    Some(db.drop_tree(cache_name))
 }
 
 pub fn get_cache_names(db: &mut impl DbOp<String, String>) -> Vec<String> {
@@ -186,7 +199,7 @@ pub fn restore(db: &mut impl DbOp<String, String>, path: &Path) -> Option<()> {
 }
 
 fn check_cache_name(cache_name: &str) -> Option<()> {
-    if cache_name != DEFAULT_TREE {
+    if cache_name != DEFAULT_TREE && cache_name != SCRIPT_CACHE_KEY {
         Some(())
     } else {
         println!("{} you cannot do this.", colors::Red.paint("Warning!"));
