@@ -2,21 +2,13 @@
 
 Scripting programming language, repl and namespaced aliases for commands.
 
-## Goals
-
-- Making something concrete with rust
-- Learning more about parser combinator
-- Use the minimum amount of libraries
-- Making a scripting language
-- Making a REPL
-- No tutorials, best practices, design patterns, clean architecture, or fancy frameworks
-
 ## Table of Contents
 
-1. [Features](#features)
+1. [Introduction](#introduction)
+   - [Demo](#demo)
 2. [Installation](#installation)
 3. [Programming language](#programming-language)
-   - [Introduction](#introduction)
+   - [Getting started](#getting-started)
    - [Comments](#comments)
    - [Multiline](#multiline)
    - [Operators and constants](#operators-and-constants)
@@ -32,7 +24,6 @@ Scripting programming language, repl and namespaced aliases for commands.
    - [Builtin functions](#builtin-functions)
 4. [Namespaced aliases](#namespaced-aliases)
    - [Introduction](#namespaced-aliases)
-   - [Demo](#demo)
    - [Try it](#try-it)
    - [Available commands](#available-commands)
    - [Shortcuts](#shortcuts)
@@ -41,11 +32,19 @@ Scripting programming language, repl and namespaced aliases for commands.
 
 <hr>
 
-## Features
+## Introduction
 
-- alias commands in separate namespaces (dump, merge namespaces, backup, run,...)
-- calculator
-- simple scripting language
+This project started as a way to put into practice what I learned while reading the Rust programming language book.
+
+It includes features that I find useful, such as a REPL, a calculator,
+a scripting language, and a way to store, execute, and load command-line aliases based on the project I'm working on.
+
+Best practices and performance optimization were not a priority, so the code may not be the cleanest or most optimized.
+
+If you would like to contribute, your pull request would be welcome.
+
+### Demo
+
 <hr>
 
 ## Installation
@@ -70,7 +69,7 @@ Scripting programming language, repl and namespaced aliases for commands.
 
 ## Programming language
 
-### Introduction
+### Getting Started
 
 First, we start with the traditional hello world:
 
@@ -584,10 +583,6 @@ They will be save in disk so you can backup them, restore them etc.
 You can also add any kind of values (e.g, ssh keys) to store them.
 
 There is no possible interaction with the scripting language yet.
-
-### Demo
-
-https://user-images.githubusercontent.com/3816305/181606658-b01a0ca5-4507-4d58-8625-4ccf9a662b86.mp4
 
 ### Try it
 
