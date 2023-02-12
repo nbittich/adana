@@ -5,7 +5,6 @@ Scripting programming language, repl and namespaced aliases for commands.
 ## Table of Contents
 
 1. [Introduction](#introduction)
-   - [Demo](#demo)
 2. [Installation](#installation)
 3. [Programming language](#programming-language)
    - [Getting started](#getting-started)
@@ -42,12 +41,6 @@ a scripting language, and a way to store, execute, and load command-line aliases
 Best practices and performance optimization were not a priority, so the code may not be the cleanest or most optimized.
 
 If you would like to contribute, your pull request would be welcome.
-
-### Demo
-
-https://user-images.githubusercontent.com/3816305/218313572-5fdf0f85-dbb0-4373-9c99-0442ea421893.mp4
-
-
 
 <hr>
 
