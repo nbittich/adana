@@ -66,6 +66,36 @@ fn backup_command(command: &str) -> Res<CacheCommand> {
 fn restore_command(command: &str) -> Res<CacheCommand> {
     extract_no_args(tag_no_case(RESTORE), |_| CacheCommand::Restore)(command)
 }
+fn store_script_context_command(command: &str) -> Res<CacheCommand> {
+    map(
+        preceded(
+            tag_no_case(STORE_SCRIPT_CONTEXT),
+            cut(verify(rest, |s: &str| {
+                s.is_empty() || s.starts_with(' ') || s == "\n"
+            }))
+            .and_then(opt(preceded(
+                multispace1,
+                take_while1(|s: char| s.is_alphanumeric() || s == '-'),
+            ))),
+        ),
+        CacheCommand::StoreScriptContext,
+    )(command)
+}
+fn load_script_context_command(command: &str) -> Res<CacheCommand> {
+    map(
+        preceded(
+            tag_no_case(LOAD_SCRIPT_CONTEXT),
+            cut(verify(rest, |s: &str| {
+                s.is_empty() || s.starts_with(' ') || s == "\n"
+            }))
+            .and_then(opt(preceded(
+                multispace1,
+                take_while1(|s: char| s.is_alphanumeric() || s == '-'),
+            ))),
+        ),
+        CacheCommand::LoadScriptContext,
+    )(command)
+}
 fn print_script_context_command(command: &str) -> Res<CacheCommand> {
     extract_no_args(
         |s| {
@@ -220,6 +250,8 @@ pub fn parse_command(command: &str) -> Res<CacheCommand> {
             flush_command,
             restore_command,
             print_script_context_command,
+            store_script_context_command,
+            load_script_context_command,
             exec_command,
         )),
     )(command)
