@@ -191,6 +191,11 @@ pub(super) fn to_ast(
             tree,
             curr_node_id,
         ),
+        Value::FString(string_v, para) => append_to_current_and_return(
+            TreeNodeValue::FString(string_v, para),
+            tree,
+            curr_node_id,
+        ),
         Value::Range { start, end, incl_both_end } => {
             let start = match *start {
                 Value::Variable(name) => {

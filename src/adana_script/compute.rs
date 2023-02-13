@@ -106,6 +106,19 @@ fn compute_recur(
             TreeNodeValue::VariableUnused => {
                 Err(Error::msg("forbidden usage of VariableUnused"))
             }
+            TreeNodeValue::FString(p, parameters) => {
+                let mut s = String::from(p);
+                for (key, param) in parameters {
+                    let primitive = compute_lazy(param.clone(), ctx)?;
+                    if let err @ Primitive::Error(_) = primitive {
+                        return Ok(err);
+                    }
+                    let string_value = primitive.to_string();
+                    s = s.replacen(key, &string_value, 1);
+                }
+
+                Ok(Primitive::String(s))
+            }
             TreeNodeValue::Ops(Operator::Or) => {
                 if node.children().count() == 1 {
                     return Err(Error::msg(

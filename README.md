@@ -10,6 +10,7 @@ Scripting programming language, repl and namespaced aliases for commands.
    - [Getting started](#getting-started)
    - [Comments](#comments)
    - [Multiline](#multiline)
+   - [F-Strings](#f-strings)
    - [Operators and constants](#operators-and-constants)
    - [Variable definition](#variable-definition)
    - [Loops](#loops)
@@ -112,14 +113,50 @@ fancy_string = multiline {
 
 ```
 
-For strings, you can use string blocks:
+Multiline is useful when you want to process different instructions in several lines:
+
+```
+complex_math_stuff = multiline {
+    1 *2
+    + 5 *sqrt(2) / 2.
+    + 300 / 3
+    * 400 % 2 - (1 * 10^3)
+}
+
+```
+
+<hr>
+
+### F-Strings
+
+For more complex strings, you can use string blocks / F-Strings.
+You can define them using the java syntax:
 
 ```java
-block_string= """ Hello world
+block_string= """Hello world
 I hope you are well.
 This is a string block. you can use stuff like "string"
-there, nothing will stop you
-"""
+there, nothing will stop you"""
+```
+
+Like in javascript, you can add parameters to an f-string:
+
+```javascript
+person = struct {
+            name  : "nordine",
+            wasup : (age) => {
+                if (age > 30) {
+                    "you are old!"
+                } else {
+                    "you are young!"
+                }
+            },
+            age  : 34
+        }
+
+s1 = """Hello ${person.name}!
+You are ${person.age} years old.
+${person.wasup(person.age)}"""
 ```
 
 <hr>
