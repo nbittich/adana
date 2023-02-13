@@ -2,6 +2,8 @@ use crate::prelude::*;
 
 pub const DEFAULT_TREE: &str = "__adana_default";
 
+pub const SCRIPT_CACHE_KEY: &str = "__SCRIPT_CACHE";
+
 use super::{tree::Tree, DbOp, Key, Op, Value};
 
 type InnerMap<K, V> = BTreeMap<String, Tree<K, V>>;

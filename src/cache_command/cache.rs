@@ -1,10 +1,9 @@
 use std::path::Path;
 
-use crate::db::{Batch, DbOp, Op, Tree, DEFAULT_TREE};
+use crate::db::{Batch, DbOp, Op, Tree, DEFAULT_TREE, SCRIPT_CACHE_KEY};
 use crate::prelude::*;
 
 const DEFAULT_CACHE_KEY: &str = "$___DEF_CACHE_KEY_LOC___$";
-pub const SCRIPT_CACHE_KEY: &str = "__SCRIPT_CACHE";
 
 pub fn get_value(
     db: &mut impl DbOp<String, String>,
@@ -114,7 +113,10 @@ pub fn remove_cache(
 }
 
 pub fn get_cache_names(db: &mut impl DbOp<String, String>) -> Vec<String> {
-    db.tree_names().into_iter().filter(|v| v != DEFAULT_TREE).collect()
+    db.tree_names()
+        .into_iter()
+        .filter(|v| v != DEFAULT_TREE && v != SCRIPT_CACHE_KEY)
+        .collect()
 }
 
 pub fn merge(

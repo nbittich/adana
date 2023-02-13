@@ -71,18 +71,44 @@ fn parse_bool(s: &str) -> Res<Value> {
     ))(s)
 }
 
-fn parse_multistring(s: &str) -> Res<Value> {
-    map(
-        delimited(tag(r#"""""#), take_until(r#"""""#), tag(r#"""""#)),
-        |s: &str| {
-            Value::String(
-                s.replace("\\n", "\n")
-                    .replace("\\t", "\t")
-                    .replace("\\r", "\r")
-                    .replace("\\\\", "\\"),
-            )
-        },
-    )(s)
+fn parse_fstring(s: &str) -> Res<Value> {
+    const DELIMITER_F_STRING: &str = r#"""""#;
+    let delimiter = |x| tag(DELIMITER_F_STRING)(x);
+    let take_unless = |x| take_until(DELIMITER_F_STRING)(x);
+
+    let (rest, content) =
+        delimited(delimiter, take_unless, terminated(delimiter, multispace0))(
+            s,
+        )?;
+    let mut parameters = vec![];
+
+    let mut param_rest = content;
+
+    while let Ok((pr, param_str)) = preceded(
+        take_until("${"),
+        delimited(
+            tag_no_space("${"),
+            delimited(multispace0, take_until("}"), multispace0),
+            tag_no_space("}"),
+        ),
+    )(param_rest)
+    {
+        param_rest = pr;
+        let (_, param_value) = parse_value(param_str)?;
+        parameters.push((format!("${{{param_str}}}"), param_value));
+    }
+
+    Ok((
+        rest,
+        Value::FString(
+            content
+                .replace("\\n", "\n")
+                .replace("\\t", "\t")
+                .replace("\\r", "\r")
+                .replace("\\\\", "\\"),
+            parameters,
+        ),
+    ))
 }
 fn parse_string(s: &str) -> Res<Value> {
     map(delimited(tag("\""), take_until("\""), tag("\"")), |s: &str| {
@@ -220,6 +246,7 @@ fn parse_foreach(s: &str) -> Res<Value> {
                 parse_struct_access,
                 parse_array_access,
                 parse_array,
+                parse_fstring,
                 parse_string,
                 parse_variable,
             )),
@@ -355,7 +382,7 @@ fn parse_array(s: &str) -> Res<Value> {
 fn parse_array_access(s: &str) -> Res<Value> {
     map(
         pair(
-            alt((parse_array, parse_variable, parse_string)),
+            alt((parse_array, parse_variable, parse_fstring, parse_string)),
             preceded(
                 tag_no_space("["),
                 terminated(
@@ -402,7 +429,8 @@ fn parse_value(s: &str) -> Res<Value> {
         opt(comments),
         terminated(
             alt((
-                parse_multistring,
+                parse_fstring,
+                parse_fn_call,
                 parse_struct_access,
                 parse_array_access,
                 parse_array,
@@ -414,7 +442,6 @@ fn parse_value(s: &str) -> Res<Value> {
                 parse_string,
                 parse_number,
                 parse_bool,
-                parse_fn_call,
                 parse_struct,
                 parse_variable,
                 parse_constant,
@@ -472,7 +499,7 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                 alt((parse_struct_access, parse_array_access, parse_variable)),
                 tag_no_space("="),
                 alt((
-                    parse_multistring,
+                    parse_fstring,
                     parse_fn_call,
                     parse_fn,
                     parse_struct_access, /* FIXME seems not necessary or
@@ -489,7 +516,7 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
             },
         ),
         alt((
-            parse_multistring,
+            parse_fstring,
             parse_fn_call,
             parse_fn,
             parse_struct_access,
