@@ -54,7 +54,7 @@ fn test_string_block_with_parameters_struct() {
                     "you are young!"
                 }
             },
-            age  : 34
+            age : 34
         }
 
         s = """Hello ${person.name}! You are ${person.age} years old. ${person.wasup(person.age)}"""
@@ -85,7 +85,19 @@ fn test_string_block_complete() {
 
         s0 = """Hello ${person.name}! You are ${person.age} years old. ${person.wasup(person.age)}"""
         s1 = """Hello ${person.name}! You are ${person.age} years old. ${person.wasup(person.age)}"""
+        s3 = ""
 
+        for n in 1..10 {
+           s3 = s3+"""Hey: ${n}"""
+        }
+        println(s3)
+
+        x = 0
+
+        while(person.age > 1){
+            person.age = person.age -1
+        }
+        
         "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx).unwrap();
@@ -100,5 +112,95 @@ fn test_string_block_complete() {
             r#"Hello nordine! You are 34 years old. you are old!"#.to_string()
         ),
         ctx["s1"].read().unwrap().clone()
+    );
+}
+
+#[test]
+fn parse_multi_values() {
+    let expr = r#"
+        person = struct {
+                    name  : "nordine",
+                    wasup : (age) => {
+                        if (age > 30) {
+                            "you are old!"
+                        } else {
+                            "you are young!"
+                        }
+                    },
+                    age  : 12,
+                    calc: (a1, a2) => { a1* a2 },
+                    x: "hi"
+                }
+
+        s0 = """Hello ${person.name}! You are ${person.age + person.calc(11,2)} years old.
+            ${person.wasup(person.age)}"""
+        x = 1
+        while(person.age <10) {
+            person.age = person.age - x
+            if(x % 2 == 0) {
+                x = x-2
+            }else{
+                x = x +1
+            }
+        println("""Loop ${person.age}""")
+            
+        }
+        println(s0)
+
+        "#;
+    let mut ctx = BTreeMap::new();
+    let _ = compute(expr, &mut ctx).unwrap();
+    assert_eq!(
+        Primitive::String(
+            r#"Hello nordine! You are 34 years old.
+            you are young!"#
+                .to_string()
+        ),
+        ctx["s0"].read().unwrap().clone()
+    );
+}
+
+#[test]
+fn parse_f_strings_fn() {
+    let expr = r#"
+        person = struct {
+                    name  : "nordine",
+                    wasup : (age) => {
+                        if (age > 30) {
+                            "you are old!"
+                        } else {
+                            "you are young!"
+                        }
+                    },
+                    calc: (a1, a2) => { a1* a2 },
+                    age  : 12,
+                    s0 : (person) => { """Hello ${person.name}! You are ${person.age + person.calc(11,2)} years old.
+            ${person.wasup(person.age)}""" }
+        }
+        x = 1
+        while(person.age <10) {
+            person.age = person.age - x
+            if(x % 2 == 0) {
+                x = x-2
+            }else{
+                x = x +1
+            }
+        println("""Loop ${person.age}""")
+            
+        }
+
+        println(person.s0(person))
+            s0 = person.s0(person)
+
+        "#;
+    let mut ctx = BTreeMap::new();
+    let _ = compute(expr, &mut ctx).unwrap();
+    assert_eq!(
+        Primitive::String(
+            r#"Hello nordine! You are 34 years old.
+            you are young!"#
+                .to_string()
+        ),
+        ctx["s0"].read().unwrap().clone()
     );
 }
