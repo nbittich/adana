@@ -75,11 +75,8 @@ fn parse_fstring(s: &str) -> Res<Value> {
     const DELIMITER_F_STRING: &str = r#"""""#;
     let delimiter = |x| tag(DELIMITER_F_STRING)(x);
     let take_unless = |x| take_until(DELIMITER_F_STRING)(x);
-
     let (rest, content) =
-        delimited(delimiter, take_unless, terminated(delimiter, multispace0))(
-            s,
-        )?;
+        preceded(delimiter, terminated(take_unless, delimiter))(s)?;
     let mut parameters = vec![];
 
     let mut param_rest = content;
@@ -94,7 +91,7 @@ fn parse_fstring(s: &str) -> Res<Value> {
     )(param_rest)
     {
         param_rest = pr;
-        let (_, param_value) = parse_value(param_str)?;
+        let (_, param_value) = parse_expression(param_str)?;
         parameters.push((format!("${{{param_str}}}"), param_value));
     }
 
@@ -326,19 +323,13 @@ fn parse_struct_expr(s: &str) -> Res<Value> {
     alt((
         parse_fn_call,
         parse_fn,
-        map(
-            map_parser(
-                alt((take_until(","), take_until("}"))),
-                many1(parse_value),
-            ),
-            |mut expr| {
-                if expr.len() == 1 {
-                    expr.remove(0)
-                } else {
-                    Value::Expression(expr)
-                }
-            },
-        ),
+        map(many1(parse_value), |mut expr| {
+            if expr.len() == 1 {
+                expr.remove(0)
+            } else {
+                Value::Expression(expr)
+            }
+        }),
         parse_value,
     ))(s)
 }
@@ -429,20 +420,20 @@ fn parse_value(s: &str) -> Res<Value> {
         opt(comments),
         terminated(
             alt((
-                parse_fstring,
                 parse_fn_call,
                 parse_struct_access,
                 parse_array_access,
                 parse_array,
+                parse_struct,
                 parse_range,
                 parse_fn,
                 parse_block_paren,
                 parse_builtin_fn,
                 parse_operation,
-                parse_string,
                 parse_number,
                 parse_bool,
-                parse_struct,
+                parse_fstring,
+                parse_string,
                 parse_variable,
                 parse_constant,
                 parse_null,
@@ -499,14 +490,15 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                 alt((parse_struct_access, parse_array_access, parse_variable)),
                 tag_no_space("="),
                 alt((
+                    parse_struct,
                     parse_fstring,
                     parse_fn_call,
                     parse_fn,
-                    parse_struct_access, /* FIXME seems not necessary or
-                                         missing test */
+                    // parse_struct_access, /* FIXME seems not necessary or
+                    //                     and also buggy
+                    //                     missing test */
                     parse_array_access,
                     parse_array,
-                    parse_struct,
                     parse_expression,
                 )),
             ),
@@ -516,12 +508,12 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
             },
         ),
         alt((
-            parse_fstring,
             parse_fn_call,
             parse_fn,
             parse_struct_access,
             parse_array_access,
             parse_struct,
+            parse_fstring,
             parse_array,
             parse_expression,
         )),

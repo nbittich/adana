@@ -1,9 +1,9 @@
-name: ci
+name: Latest
 
 on:
   push:
     branches:
-      - 'master'
+      - "master"
 env:
   CARGO_TERM_COLOR: always
 jobs:
