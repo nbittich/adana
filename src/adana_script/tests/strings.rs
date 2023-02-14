@@ -54,7 +54,7 @@ fn test_string_block_with_parameters_struct() {
                     "you are young!"
                 }
             },
-            age : 34,
+            age : 34
         }
 
         s = """Hello ${person.name}! You are ${person.age} years old. ${person.wasup(person.age)}"""
