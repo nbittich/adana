@@ -393,26 +393,24 @@ fn parse_array_access(s: &str) -> Res<Value> {
     // FIXME this is highly HACKY, fix me along with :463
     'while_loop: while let Ok((rest, array)) = parse_array(new_rest) {
         if let Value::Array(mut array) = array {
-            if array.len() == 1 {
-                if array.len() == 1 {
-                    match array.remove(0) {
-                        v @ Value::Integer(_) => {
-                            array_access = Value::ArrayAccess {
-                                arr: Box::new(array_access),
-                                index: Box::new(v),
-                            };
-                        }
-
-                        Value::String(s) => {
-                            array_access = Value::StructAccess {
-                                struc: Box::new(array_access),
-                                key: s.to_string(),
-                            };
-                        }
-                        _ => break 'while_loop,
+            if array.len() == 1 && array.len() == 1 {
+                match array.remove(0) {
+                    v @ Value::Integer(_) => {
+                        array_access = Value::ArrayAccess {
+                            arr: Box::new(array_access),
+                            index: Box::new(v),
+                        };
                     }
-                    new_rest = rest;
+
+                    Value::String(s) => {
+                        array_access = Value::StructAccess {
+                            struc: Box::new(array_access),
+                            key: s.to_string(),
+                        };
+                    }
+                    _ => break 'while_loop,
                 }
+                new_rest = rest;
             }
         }
     }
