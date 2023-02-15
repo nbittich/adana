@@ -371,7 +371,7 @@ fn parse_array(s: &str) -> Res<Value> {
     )(s)
 }
 fn parse_array_access(s: &str) -> Res<Value> {
-    map(
+    let (rest, mut array_access) = map(
         pair(
             alt((parse_array, parse_variable, parse_fstring, parse_string)),
             preceded(
@@ -386,7 +386,23 @@ fn parse_array_access(s: &str) -> Res<Value> {
             arr: Box::new(arr),
             index: Box::new(idx),
         },
-    )(s)
+    )(s)?;
+
+    let mut new_rest = rest;
+
+    while let Ok((rest, array)) = parse_array(new_rest) {
+        if let Value::Array(mut array) = array {
+            if array.len() == 1 {
+                array_access = Value::ArrayAccess {
+                    arr: Box::new(array_access),
+                    index: Box::new(array.remove(0)),
+                };
+                new_rest = rest;
+            }
+        }
+    }
+
+    Ok((new_rest, array_access))
 }
 
 fn parse_struct_access(s: &str) -> Res<Value> {

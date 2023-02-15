@@ -343,6 +343,16 @@ fn compute_recur(
                         }
                         Err(anyhow::Error::msg(error_message()))
                     }
+                    (
+                        v @ Value::ArrayAccess { arr: _, index: _ },
+                        index @ Primitive::Int(_),
+                    ) => {
+                        let v = compute_lazy(v.clone(), ctx)?;
+                        match v {
+                            p @ Primitive::Array(_) => Ok(p.index_at(index)),
+                            _ => Err(anyhow::Error::msg(error_message())),
+                        }
+                    }
                     _ => Err(anyhow::Error::msg(error_message())),
                 }
             }
