@@ -1,12 +1,12 @@
+use anyhow::{Context, Error};
+use nu_ansi_term::Color::Red;
+use slab_tree::{NodeRef, Tree};
 use std::{
     borrow::Borrow,
     fs::{read_to_string, File},
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
 };
-
-use anyhow::{Context, Error};
-use slab_tree::{NodeRef, Tree};
 
 use crate::{adana_script::parser::parse_instructions, prelude::BTreeMap};
 
@@ -344,12 +344,14 @@ fn compute_recur(
                         Err(anyhow::Error::msg(error_message()))
                     }
                     (
-                        v @ Value::ArrayAccess { arr: _, index: _ },
+                        v @ Value::ArrayAccess { arr: _, index: _ }
+                        | v @ Value::StructAccess { struc: _, key: _ },
                         index @ Primitive::Int(_),
                     ) => {
                         let v = compute_lazy(v.clone(), ctx)?;
                         match v {
                             p @ Primitive::Array(_) => Ok(p.index_at(index)),
+
                             _ => Err(anyhow::Error::msg(error_message())),
                         }
                     }
@@ -388,7 +390,15 @@ fn compute_recur(
                         })?;
                     Ok(struc.index_at(key))
                 }
-                (s @ Value::Struct(_), key @ Primitive::String(_)) => {
+                (s @ Value::Struct(_), key @ Primitive::String(_))
+                | (
+                    s @ Value::StructAccess { struc: _, key: _ },
+                    key @ Primitive::String(_),
+                )
+                | (
+                    s @ Value::ArrayAccess { arr: _, index: _ },
+                    key @ Primitive::String(_),
+                ) => {
                     let prim_s = compute_lazy(s.clone(), ctx)?;
                     Ok(prim_s.index_at(key))
                 }
@@ -748,7 +758,7 @@ pub fn compute(
 
     anyhow::ensure!(
         rest.trim().is_empty(),
-        format!("Invalid operation! {instructions:?} => {rest}")
+        format!("{}: {instructions:?} => {rest}", Red.paint("Parsing Error!"))
     );
 
     compute_instructions(instructions, ctx)
