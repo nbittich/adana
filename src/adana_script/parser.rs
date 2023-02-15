@@ -390,6 +390,7 @@ fn parse_array_access(s: &str) -> Res<Value> {
 
     let mut new_rest = rest;
 
+    // FIXME this is highly HACKY, fix me along with :463
     'while_loop: while let Ok((rest, array)) = parse_array(new_rest) {
         if let Value::Array(mut array) = array {
             if array.len() == 1 {
@@ -458,6 +459,7 @@ fn parse_struct_access(s: &str) -> Res<Value> {
         new_rest = rest;
     }
 
+    // FIXME this is highly HACKY, fix me along with :393
     'while_loop: while let Ok((rest, array)) = parse_array(new_rest) {
         if let Value::Array(mut array) = array {
             if array.len() == 1 {
@@ -490,6 +492,8 @@ fn parse_value(s: &str) -> Res<Value> {
         opt(comments),
         terminated(
             alt((
+                parse_block_paren,
+                parse_operation,
                 parse_struct,
                 parse_fn_call,
                 parse_struct_access,
@@ -497,9 +501,7 @@ fn parse_value(s: &str) -> Res<Value> {
                 parse_array,
                 parse_range,
                 parse_fn,
-                parse_block_paren,
                 parse_builtin_fn,
-                parse_operation,
                 parse_number,
                 parse_bool,
                 parse_fstring,
@@ -560,14 +562,14 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                 alt((parse_struct_access, parse_array_access, parse_variable)),
                 tag_no_space("="),
                 alt((
-                    parse_struct,
-                    parse_fstring,
                     parse_fn_call,
                     parse_fn,
-                    // parse_struct_access, /* FIXME seems not necessary or
+                    parse_array_access,
+                    //parse_struct_access, /* FIXME seems not necessary or
                     //                     and also buggy
                     //                     missing test */
-                    parse_array_access,
+                    parse_struct,
+                    parse_fstring,
                     parse_array,
                     parse_expression,
                 )),

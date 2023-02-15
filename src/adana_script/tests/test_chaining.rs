@@ -28,7 +28,7 @@ fn complex_struct_array_struct() {
              m: 12,
              y: ["hello", 3, struct {n: "world"}]
          }
-        x = x.y[0]  + " " + x.y[2]["n"]
+        x = x.y[0]  + " " + x.y[2]["n"] # FIXME HACKY
 
         "#;
     let mut ctx = BTreeMap::new();
@@ -106,8 +106,24 @@ fn complex_struct_struct_struct_fn2() {
                  }
              } 
          }
-        x = multiline {x.a() + x.y.sp + x.y.z.m()}
+        x = multiline {x.a() + x.y.sp + x.y.z.m()} # FIXME it requires parenthesises or multiline
 
+        "#;
+    let mut ctx = BTreeMap::new();
+    let res = compute(expr, &mut ctx).unwrap();
+
+    assert_eq!(
+        ctx["x"].read().unwrap().clone(),
+        Primitive::String("hello world".into())
+    );
+    assert_eq!(res, Primitive::String("hello world".into()));
+}
+
+#[test]
+fn simple_array_two_depth() {
+    let expr = r#"
+             z = [0, 2, "hello", [3," ", "world"]]
+             x = (z[2] + z[3][1] + z[3][2]) # FIXME requires parenthesises
         "#;
     let mut ctx = BTreeMap::new();
     let res = compute(expr, &mut ctx).unwrap();
