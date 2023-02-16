@@ -302,7 +302,13 @@ pub(super) fn to_ast(
                     )))
                 }
             } else {
-                Err(anyhow::Error::msg("invalid variable expression"))
+                // FIXME for my future self. x.y.z or x[0][1] is not yet supported
+                // for assignment
+                // We need Primitive::Ref to make it happen
+                Err(anyhow::Error::msg(format!(
+                    "{} invalid variable expression {name:?} => {expr:?}",
+                    nu_ansi_term::Color::Red.paint("AST ERROR:"),
+                )))
             }?;
 
             let node_id = Some(tree.set_root(variable_assign_node));
