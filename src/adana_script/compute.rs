@@ -101,7 +101,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                Ok(left.and(right))
+                Ok(left.and(&right))
             }
             TreeNodeValue::VariableUnused => {
                 Err(Error::msg("forbidden usage of VariableUnused"))
@@ -127,7 +127,7 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
-                Ok(left.or(right))
+                Ok(left.or(&right))
             }
             TreeNodeValue::Ops(Operator::NotEqual) => {
                 if node.children().count() == 1 {
