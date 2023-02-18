@@ -141,7 +141,7 @@ fn parse_variable(s: &str) -> Res<Value> {
         if s.starts_with('_') {
             Value::VariableUnused
         } else if s.starts_with('&') {
-            Value::VariableRef(s.replace("&", ""))
+            Value::VariableRef(s.replace('&', ""))
         } else {
             Value::Variable(s.to_string())
         }

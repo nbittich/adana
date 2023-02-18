@@ -57,7 +57,7 @@ fn compute_recur(
                     .get(name)
                     .cloned()
                     .context(format!("ref {name} not found in context!"))?;
-                let v = v.clone();
+                let v = v;
                 let lock = v.read().map_err(|e| {
                     anyhow::format_err!("variable ref err: {e}")
                 })?;
@@ -204,7 +204,7 @@ fn compute_recur(
                             .entry(name.clone())
                             .or_insert(Primitive::Unit.ref_prim());
                         match &v {
-                            Primitive::Ref(v) if Arc::ptr_eq(&old, v) => (),
+                            Primitive::Ref(v) if Arc::ptr_eq(old, v) => (),
                             _ => {
                                 let mut old = old.write().map_err(|e| {
                                     anyhow::format_err!(

@@ -376,7 +376,7 @@ impl Pow for Primitive {
             (Primitive::Ref(l), r) => {
                 let l = l.read().expect("POW L ERORR: could not acquire lock!");
 
-                l.pow(&r)
+                l.pow(r)
             }
             (l, Primitive::Ref(r)) => {
                 let r = r.read().expect("POW R ERORR: could not acquire lock!");
@@ -800,7 +800,7 @@ impl PartialOrd for Primitive {
                     .read()
                     .expect("PARTIAL_CMP L ERORR: could not acquire lock!");
 
-                l.partial_cmp(&r)
+                l.partial_cmp(r)
             }
             (l, Primitive::Ref(r)) => {
                 let r = r
@@ -908,7 +908,7 @@ impl Array for Primitive {
                     .read()
                     .expect("INDEX_AT L ERORR: could not acquire lock!");
 
-                l.index_at(&r)
+                l.index_at(r)
             }
             (l, Primitive::Ref(r)) => {
                 let r = r
@@ -1087,7 +1087,7 @@ impl PartialEq for Primitive {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Ref(l0), Self::Ref(r0)) => {
-                if Arc::ptr_eq(&l0, &r0) {
+                if Arc::ptr_eq(l0, r0) {
                     return true;
                 }
 
@@ -1095,7 +1095,7 @@ impl PartialEq for Primitive {
                     l0.read().expect("EQ L ERORR: could not acquire lock!");
 
                 let r = r0.read().expect("EQ R ERORR: could not acquire lock!");
-                return l0.eq(&r);
+                l0.eq(&r)
             }
             (Primitive::Ref(l), _) => {
                 let l = l.read().expect("EQ L ERORR: could not acquire lock!");
