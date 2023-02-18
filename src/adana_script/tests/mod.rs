@@ -9,6 +9,7 @@ mod test_array;
 mod test_chaining;
 mod test_drop;
 mod test_parser;
+mod test_reference;
 mod test_scope_ctx;
 mod tests_file;
 mod unused;

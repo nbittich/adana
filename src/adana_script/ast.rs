@@ -1,6 +1,9 @@
 use slab_tree::{NodeId, Tree};
 
-use crate::prelude::{BTreeMap, Context};
+use crate::{
+    adana_script::primitive::ToNumber,
+    prelude::{BTreeMap, Context},
+};
 
 use super::{
     primitive::{Neg, RefPrimitive},
@@ -198,10 +201,10 @@ pub(super) fn to_ast(
         ),
         Value::Range { start, end, incl_both_end } => {
             let start = match *start {
-                Value::Variable(name) => {
+                Value::Variable(name) | Value::VariableRef(name) => {
                     let primitive =
                         variable_from_ctx(name.as_str(), false, ctx)?;
-                    if let Primitive::Int(num) = primitive {
+                    if let Primitive::Int(num) = primitive.to_int() {
                         Ok(num)
                     } else {
                         Err(anyhow::format_err!(
@@ -209,6 +212,7 @@ pub(super) fn to_ast(
                         ))
                     }
                 }
+
                 Value::Integer(num) => Ok(num),
                 _ => {
                     return Err(anyhow::format_err!(
@@ -217,10 +221,10 @@ pub(super) fn to_ast(
                 }
             }?;
             let end = match *end {
-                Value::Variable(name) => {
+                Value::Variable(name) | Value::VariableRef(name) => {
                     let primitive =
                         variable_from_ctx(name.as_str(), false, ctx)?;
-                    if let Primitive::Int(num) = primitive {
+                    if let Primitive::Int(num) = primitive.to_int() {
                         Ok(num)
                     } else {
                         Err(anyhow::format_err!(
@@ -252,6 +256,11 @@ pub(super) fn to_ast(
                 curr_node_id,
             )
         }
+        Value::VariableRef(name) => append_to_current_and_return(
+            TreeNodeValue::VariableRef(name),
+            tree,
+            curr_node_id,
+        ),
         Value::VariableUnused => append_to_current_and_return(
             TreeNodeValue::VariableUnused,
             tree,

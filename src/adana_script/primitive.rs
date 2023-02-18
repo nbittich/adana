@@ -13,10 +13,11 @@ use super::{constants::NULL, Value};
 
 const MAX_U32_AS_I128: i128 = u32::MAX as i128;
 
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Primitive {
     Int(i128),
     Bool(bool),
+    Ref(RefPrimitive),
     Null,
     Double(f64),
     String(String),
@@ -53,10 +54,10 @@ pub trait Pow {
 }
 
 pub trait And {
-    fn and(&self, n: Self) -> Self;
+    fn and(&self, n: &Self) -> Self;
 }
 pub trait Or {
-    fn or(&self, n: Self) -> Self;
+    fn or(&self, n: &Self) -> Self;
 }
 pub trait Sqrt {
     fn sqrt(&self) -> Self;
@@ -191,6 +192,10 @@ impl Primitive {
 impl Display for Primitive {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Primitive::Ref(s) => {
+                let lock = s.read().expect("FMT ERROR: could not acquire lock");
+                write!(f, "{lock}")
+            }
             Primitive::Int(i) => write!(f, "{i}"),
             Primitive::Double(d) => write!(f, "{d}"),
             Primitive::Bool(b) => write!(f, "{b}"),
@@ -254,6 +259,11 @@ impl Display for Primitive {
 impl Sin for Primitive {
     fn sin(&self) -> Self {
         match self {
+            Primitive::Ref(s) => {
+                let lock =
+                    s.read().expect("SIN ERORR: could not acquire lock!");
+                lock.sin()
+            }
             Primitive::Int(i) => Primitive::Double((*i as f64).sin()),
             Primitive::Double(d) => Primitive::Double(d.sin()),
 
@@ -266,6 +276,11 @@ impl Sin for Primitive {
 impl Cos for Primitive {
     fn cos(&self) -> Self {
         match self {
+            Primitive::Ref(s) => {
+                let lock =
+                    s.read().expect("COS ERORR: could not acquire lock!");
+                lock.cos()
+            }
             Primitive::Int(i) => Primitive::Double((*i as f64).cos()),
             Primitive::Double(d) => Primitive::Double(d.cos()),
             Primitive::Error(e) => panic!("call to cos() on an error. {e}"),
@@ -277,6 +292,11 @@ impl Cos for Primitive {
 impl Tan for Primitive {
     fn tan(&self) -> Self {
         match self {
+            Primitive::Ref(s) => {
+                let lock =
+                    s.read().expect("TAN ERORR: could not acquire lock!");
+                lock.tan()
+            }
             Primitive::Int(i) => Primitive::Double((*i as f64).tan()),
             Primitive::Double(d) => Primitive::Double(d.tan()),
             Primitive::Error(e) => panic!("call to tan() on an error. {e}"),
@@ -288,6 +308,11 @@ impl Tan for Primitive {
 impl Logarithm for Primitive {
     fn log(&self) -> Self {
         match self {
+            Primitive::Ref(s) => {
+                let lock =
+                    s.read().expect("LOG ERORR: could not acquire lock!");
+                lock.log()
+            }
             Primitive::Int(i) => Primitive::Double((*i as f64).log10()),
             Primitive::Double(d) => Primitive::Double(d.log10()),
             Primitive::Error(e) => panic!("call to log() on an error. {e}"),
@@ -296,6 +321,10 @@ impl Logarithm for Primitive {
     }
     fn ln(&self) -> Self {
         match self {
+            Primitive::Ref(s) => {
+                let lock = s.read().expect("LN ERORR: could not acquire lock!");
+                lock.ln()
+            }
             Primitive::Int(i) => Primitive::Double((*i as f64).ln()),
             Primitive::Double(d) => Primitive::Double(d.ln()),
             Primitive::Error(e) => panic!("call to ln() on an error. {e}"),
@@ -307,6 +336,11 @@ impl Logarithm for Primitive {
 impl Sqrt for Primitive {
     fn sqrt(&self) -> Self {
         match self {
+            Primitive::Ref(s) => {
+                let lock =
+                    s.read().expect("SQRT ERORR: could not acquire lock!");
+                lock.sqrt()
+            }
             Primitive::Int(i) => Primitive::Double((*i as f64).sqrt()),
             Primitive::Double(d) => Primitive::Double(d.sqrt()),
             Primitive::Error(e) => panic!("call to sqrt() on an error. {e}"),
@@ -317,6 +351,11 @@ impl Sqrt for Primitive {
 impl Abs for Primitive {
     fn abs(&self) -> Self {
         match self {
+            Primitive::Ref(s) => {
+                let lock =
+                    s.read().expect("ABS ERORR: could not acquire lock!");
+                lock.abs()
+            }
             Primitive::Int(i) => Primitive::Int(i.abs()),
             Primitive::Double(d) => Primitive::Double(d.abs()),
             Primitive::Error(e) => panic!("call to abs() on an error. {e}"),
@@ -328,6 +367,22 @@ impl Abs for Primitive {
 impl Pow for Primitive {
     fn pow(&self, rhs: &Self) -> Self {
         match (self, rhs) {
+            (Primitive::Ref(l), Primitive::Ref(r)) => {
+                let l = l.read().expect("POW L ERORR: could not acquire lock!");
+
+                let r = r.read().expect("POW R ERORR: could not acquire lock!");
+                l.pow(&r)
+            }
+            (Primitive::Ref(l), r) => {
+                let l = l.read().expect("POW L ERORR: could not acquire lock!");
+
+                l.pow(r)
+            }
+            (l, Primitive::Ref(r)) => {
+                let r = r.read().expect("POW R ERORR: could not acquire lock!");
+
+                l.pow(&r)
+            }
             #[allow(clippy::manual_range_contains)]
             (Primitive::Int(l), Primitive::Int(r))
                 if r >= &0 && r <= &MAX_U32_AS_I128 =>
@@ -356,6 +411,22 @@ impl Pow for Primitive {
 impl Add for Primitive {
     fn add(&self, rhs: &Self) -> Self {
         match (self.clone(), rhs.clone()) {
+            (Primitive::Ref(l), Primitive::Ref(r)) => {
+                let l = l.read().expect("ADD L ERORR: could not acquire lock!");
+
+                let r = r.read().expect("ADD R ERORR: could not acquire lock!");
+                l.add(&r)
+            }
+            (Primitive::Ref(l), r) => {
+                let l = l.read().expect("ADD L ERORR: could not acquire lock!");
+
+                l.add(&r)
+            }
+            (l, Primitive::Ref(r)) => {
+                let r = r.read().expect("ADD R ERORR: could not acquire lock!");
+
+                l.add(&r)
+            }
             (Primitive::Int(l), Primitive::Int(r)) => Primitive::Int(l + r),
             (Primitive::Int(l), Primitive::Double(r)) => {
                 Primitive::Double(l as f64 + r)
@@ -397,6 +468,22 @@ impl Add for Primitive {
 impl Sub for Primitive {
     fn sub(&self, rhs: &Self) -> Self {
         match (self.clone(), rhs.clone()) {
+            (Primitive::Ref(l), Primitive::Ref(r)) => {
+                let l = l.read().expect("SUB L ERORR: could not acquire lock!");
+
+                let r = r.read().expect("SUB R ERORR: could not acquire lock!");
+                l.sub(&r)
+            }
+            (Primitive::Ref(l), r) => {
+                let l = l.read().expect("SUB L ERORR: could not acquire lock!");
+
+                l.sub(&r)
+            }
+            (l, Primitive::Ref(r)) => {
+                let r = r.read().expect("SUB R ERORR: could not acquire lock!");
+
+                l.sub(&r)
+            }
             (Primitive::Int(l), Primitive::Int(r)) => Primitive::Int(l - r),
             (Primitive::Int(l), Primitive::Double(r)) => {
                 Primitive::Double(l as f64 - r)
@@ -417,6 +504,22 @@ impl Sub for Primitive {
 impl Rem for Primitive {
     fn rem(&self, rhs: &Self) -> Self {
         match (self.clone(), rhs.clone()) {
+            (Primitive::Ref(l), Primitive::Ref(r)) => {
+                let l = l.read().expect("REM L ERORR: could not acquire lock!");
+
+                let r = r.read().expect("REM R ERORR: could not acquire lock!");
+                l.rem(&r)
+            }
+            (Primitive::Ref(l), r) => {
+                let l = l.read().expect("REM L ERORR: could not acquire lock!");
+
+                l.rem(&r)
+            }
+            (l, Primitive::Ref(r)) => {
+                let r = r.read().expect("REM R ERORR: could not acquire lock!");
+
+                l.rem(&r)
+            }
             (Primitive::Int(l), Primitive::Int(r)) if r != 0 => {
                 Primitive::Int(l % r)
             }
@@ -445,6 +548,22 @@ impl Mul for Primitive {
             arr.into_iter().cycle().take(n as usize * arr_size).collect()
         }
         match (self.clone(), rhs.clone()) {
+            (Primitive::Ref(l), Primitive::Ref(r)) => {
+                let l = l.read().expect("MUL L ERORR: could not acquire lock!");
+
+                let r = r.read().expect("MUL R ERORR: could not acquire lock!");
+                l.mul(&r)
+            }
+            (Primitive::Ref(l), r) => {
+                let l = l.read().expect("MUL L ERORR: could not acquire lock!");
+
+                l.mul(&r)
+            }
+            (l, Primitive::Ref(r)) => {
+                let r = r.read().expect("MUL R ERORR: could not acquire lock!");
+
+                l.mul(&r)
+            }
             (Primitive::Int(l), Primitive::Int(r)) => {
                 Primitive::Int(l.wrapping_mul(r))
             }
@@ -476,6 +595,22 @@ impl Mul for Primitive {
 impl Div for Primitive {
     fn div(&self, rhs: &Self) -> Self {
         match (self.clone(), rhs.clone()) {
+            (Primitive::Ref(l), Primitive::Ref(r)) => {
+                let l = l.read().expect("DIV L ERORR: could not acquire lock!");
+
+                let r = r.read().expect("DIV R ERORR: could not acquire lock!");
+                l.div(&r)
+            }
+            (Primitive::Ref(l), r) => {
+                let l = l.read().expect("DIV L ERORR: could not acquire lock!");
+
+                l.div(&r)
+            }
+            (l, Primitive::Ref(r)) => {
+                let r = r.read().expect("DIV R ERORR: could not acquire lock!");
+
+                l.div(&r)
+            }
             (Primitive::Int(l), Primitive::Int(r)) if r != 0 => {
                 Primitive::Int(l / r)
             }
@@ -502,6 +637,11 @@ impl Div for Primitive {
 impl Neg for Primitive {
     fn neg(&self) -> Self {
         match self {
+            Primitive::Ref(s) => {
+                let lock =
+                    s.read().expect("NEG ERORR: could not acquire lock!");
+                lock.neg()
+            }
             Primitive::Int(n) => Primitive::Int(-n),
             Primitive::Double(n) => Primitive::Double(-n),
             _ => Primitive::Error(format!("invalid call to neg() {self}")),
@@ -512,6 +652,11 @@ impl Neg for Primitive {
 impl Not for Primitive {
     fn not(&self) -> Self {
         match self {
+            Primitive::Ref(s) => {
+                let lock =
+                    s.read().expect("NOT ERORR: could not acquire lock!");
+                lock.not()
+            }
             Primitive::Bool(b) => Primitive::Bool(!b),
             _ => Primitive::Error(format!("invalid call to not() {self}")),
         }
@@ -521,6 +666,11 @@ impl Not for Primitive {
 impl ToBool for Primitive {
     fn to_bool(&self) -> Self {
         match self {
+            Primitive::Ref(s) => {
+                let lock =
+                    s.read().expect("TO_BOOL ERORR: could not acquire lock!");
+                lock.to_bool()
+            }
             v @ Primitive::Bool(_) => v.clone(),
             Primitive::Double(n) => Primitive::Bool(n > &0.0),
             Primitive::Int(n) => Primitive::Bool(n > &0),
@@ -540,6 +690,11 @@ impl ToBool for Primitive {
 impl ToNumber for Primitive {
     fn to_int(&self) -> Self {
         match self {
+            Primitive::Ref(s) => {
+                let lock =
+                    s.read().expect("TO_INT ERORR: could not acquire lock!");
+                lock.to_int()
+            }
             v @ Primitive::Int(_) => v.clone(),
             Primitive::Bool(false) => Primitive::Int(0),
             Primitive::Bool(true) => Primitive::Int(1),
@@ -556,6 +711,11 @@ impl ToNumber for Primitive {
 
     fn to_double(&self) -> Self {
         match self {
+            Primitive::Ref(s) => {
+                let lock =
+                    s.read().expect("TO_DOUBLE ERORR: could not acquire lock!");
+                lock.to_double()
+            }
             Primitive::Int(d) => Primitive::Double(*d as f64),
             v @ Primitive::Double(_) => v.clone(),
             Primitive::String(s) => match s.parse::<f64>() {
@@ -569,7 +729,18 @@ impl ToNumber for Primitive {
     }
 }
 impl Or for Primitive {
-    fn or(&self, rhs: Self) -> Self {
+    fn or(&self, rhs: &Self) -> Self {
+        if let (&Primitive::Ref(l), &Primitive::Ref(r)) = (&self, &rhs) {
+            let l = l.read().expect("OR L ERROR: could not acquire lock!");
+            let r = r.read().expect("OR R ERROR: could not acquire lock!");
+            return l.or(&r);
+        } else if let &Primitive::Ref(l) = &self {
+            let l = l.read().expect("OR SELF ERROR: could not acquire lock!");
+            return l.or(rhs);
+        } else if let &Primitive::Ref(r) = &rhs {
+            let r = r.read().expect("OR RHS ERROR: could not acquire lock!");
+            return self.or(&r);
+        }
         if let &Primitive::Bool(true) = &self {
             return Primitive::Bool(true);
         }
@@ -578,11 +749,22 @@ impl Or for Primitive {
                 "illegal call to 'or' => left: {self} right: {rhs}"
             ));
         }
-        rhs
+        rhs.clone()
     }
 }
 impl And for Primitive {
-    fn and(&self, rhs: Self) -> Self {
+    fn and(&self, rhs: &Self) -> Self {
+        if let (&Primitive::Ref(l), &Primitive::Ref(r)) = (&self, &rhs) {
+            let l = l.read().expect("AND L ERROR: could not acquire lock!");
+            let r = r.read().expect("AND R ERROR: could not acquire lock!");
+            return l.and(&r);
+        } else if let &Primitive::Ref(l) = &self {
+            let l = l.read().expect("AND SELF ERROR: could not acquire lock!");
+            return l.and(rhs);
+        } else if let &Primitive::Ref(r) = &rhs {
+            let r = r.read().expect("AND RHS ERROR: could not acquire lock!");
+            return self.and(&r);
+        }
         if let &Primitive::Bool(false) = &self {
             return Primitive::Bool(false);
         }
@@ -593,13 +775,40 @@ impl And for Primitive {
             ));
         }
 
-        rhs
+        rhs.clone()
     }
 }
 
 impl PartialOrd for Primitive {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         match (self, other) {
+            (Primitive::Ref(l), Primitive::Ref(r)) => {
+                if Arc::ptr_eq(l, r) {
+                    return Some(Ordering::Equal);
+                }
+                let l = l
+                    .read()
+                    .expect("PARTIAL_CMP L ERORR: could not acquire lock!");
+
+                let r = r
+                    .read()
+                    .expect("PARTIAL_CMP R ERORR: could not acquire lock!");
+                l.partial_cmp(&r)
+            }
+            (Primitive::Ref(l), r) => {
+                let l = l
+                    .read()
+                    .expect("PARTIAL_CMP L ERORR: could not acquire lock!");
+
+                l.partial_cmp(r)
+            }
+            (l, Primitive::Ref(r)) => {
+                let r = r
+                    .read()
+                    .expect("PARTIAL_CMP R ERORR: could not acquire lock!");
+
+                l.partial_cmp(&r)
+            }
             (Primitive::Int(l), Primitive::Int(r)) => l.partial_cmp(r),
             (Primitive::Int(l), Primitive::Double(r)) => {
                 (*l as f64).partial_cmp(r)
@@ -658,6 +867,11 @@ impl PartialOrd for Primitive {
 impl TypeOf for Primitive {
     fn type_of(&self) -> Self {
         match self {
+            Primitive::Ref(l) => {
+                let l =
+                    l.read().expect("TYPE_OF ERROR: could not acquire lock!");
+                l.type_of()
+            }
             Primitive::Int(_) => Primitive::String("int".to_string()),
             Primitive::Bool(_) => Primitive::String("bool".to_string()),
             Primitive::Null => Primitive::String("null".to_string()),
@@ -679,6 +893,30 @@ impl TypeOf for Primitive {
 impl Array for Primitive {
     fn index_at(&self, rhs: &Primitive) -> Primitive {
         match (self, rhs) {
+            (Primitive::Ref(l), Primitive::Ref(r)) => {
+                let l = l
+                    .read()
+                    .expect("INDEX_AT L ERORR: could not acquire lock!");
+
+                let r = r
+                    .read()
+                    .expect("INDEX_AT R ERORR: could not acquire lock!");
+                l.index_at(&r)
+            }
+            (Primitive::Ref(l), r) => {
+                let l = l
+                    .read()
+                    .expect("INDEX_AT L ERORR: could not acquire lock!");
+
+                l.index_at(r)
+            }
+            (l, Primitive::Ref(r)) => {
+                let r = r
+                    .read()
+                    .expect("INDEX_AT R ERORR: could not acquire lock!");
+
+                l.index_at(&r)
+            }
             (Primitive::Array(arr), Primitive::Int(idx)) => {
                 let idx = *idx as usize;
                 if idx < arr.len() {
@@ -709,6 +947,10 @@ impl Array for Primitive {
 
     fn len(&self) -> Primitive {
         match self {
+            Primitive::Ref(l) => {
+                let l = l.read().expect("LEN ERROR: could not acquire lock!");
+                l.len()
+            }
             Primitive::String(s) => Primitive::Int(s.len() as i128),
             Primitive::Array(a) => Primitive::Int(a.len() as i128),
             Primitive::Struct(s) => Primitive::Int(s.len() as i128),
@@ -724,6 +966,33 @@ impl Array for Primitive {
         index: &Primitive,
     ) -> Primitive {
         match (self, index) {
+            // FIXME this might be more complex than that
+            // RHS could be equal to self
+            // using Arc::ptr_eq(&arc1, &arc2) might be safer
+            (Primitive::Ref(l), Primitive::Ref(r)) => {
+                let mut l = l
+                    .write()
+                    .expect("SWAP_MEM L ERORR: could not acquire lock!");
+
+                let r = r
+                    .read()
+                    .expect("SWAP_MEM R ERORR: could not acquire lock!");
+                l.swap_mem(rhs, &r)
+            }
+            (Primitive::Ref(l), _) => {
+                let mut l = l
+                    .write()
+                    .expect("SWAP_MEM L ERORR: could not acquire lock!");
+
+                l.swap_mem(rhs, index)
+            }
+            (l, Primitive::Ref(index)) => {
+                let index = index
+                    .read()
+                    .expect("SWAP_MEM R ERORR: could not acquire lock!");
+
+                l.swap_mem(rhs, &index)
+            }
             (Primitive::Array(arr), Primitive::Int(idx)) => {
                 let idx = *idx as usize;
                 if !matches!(rhs, Primitive::Error(_) | Primitive::Unit)
@@ -761,6 +1030,30 @@ impl Array for Primitive {
 
     fn remove(&mut self, key: &Primitive) -> anyhow::Result<()> {
         match (self, key) {
+            // FIXME this might be more complex than that
+            // RHS could be equal to self
+            // using Arc::ptr_eq(&arc1, &arc2) might be safer
+            (Primitive::Ref(l), Primitive::Ref(r)) => {
+                let mut l =
+                    l.write().expect("REMOVE L ERORR: could not acquire lock!");
+
+                let r =
+                    r.read().expect("REMOVE R ERORR: could not acquire lock!");
+                l.remove(&r)
+            }
+            (Primitive::Ref(l), _) => {
+                let mut l =
+                    l.write().expect("REMOVE L ERORR: could not acquire lock!");
+
+                l.remove(key)
+            }
+            (l, Primitive::Ref(index)) => {
+                let index = index
+                    .read()
+                    .expect("REMOVE R ERORR: could not acquire lock!");
+
+                l.remove(&index)
+            }
             (Primitive::Array(arr), Primitive::Int(idx)) => {
                 let idx = *idx as usize;
                 if idx < arr.len() {
@@ -790,7 +1083,46 @@ impl Array for Primitive {
         }
     }
 }
+impl PartialEq for Primitive {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Ref(l0), Self::Ref(r0)) => {
+                if Arc::ptr_eq(l0, r0) {
+                    return true;
+                }
 
+                let l0 =
+                    l0.read().expect("EQ L ERORR: could not acquire lock!");
+
+                let r = r0.read().expect("EQ R ERORR: could not acquire lock!");
+                l0.eq(&r)
+            }
+            (Primitive::Ref(l), _) => {
+                let l = l.read().expect("EQ L ERORR: could not acquire lock!");
+                l.eq(other)
+            }
+            (_, Primitive::Ref(r)) => {
+                let r = r.read().expect("EQ R ERORR: could not acquire lock!");
+                self.eq(&r)
+            }
+            (Self::Int(l0), Self::Int(r0)) => l0 == r0,
+            (Self::Bool(l0), Self::Bool(r0)) => l0 == r0,
+            (Self::Double(l0), Self::Double(r0)) => l0 == r0,
+            (Self::String(l0), Self::String(r0)) => l0 == r0,
+            (Self::Array(l0), Self::Array(r0)) => l0 == r0,
+            (Self::Struct(l0), Self::Struct(r0)) => l0 == r0,
+            (Self::Error(l0), Self::Error(r0)) => l0 == r0,
+            (
+                Self::Function { parameters: l_parameters, exprs: l_exprs },
+                Self::Function { parameters: r_parameters, exprs: r_exprs },
+            ) => l_parameters == r_parameters && l_exprs == r_exprs,
+            (Self::EarlyReturn(l0), Self::EarlyReturn(r0)) => l0 == r0,
+            _ => {
+                core::mem::discriminant(self) == core::mem::discriminant(other)
+            }
+        }
+    }
+}
 // endregion
 
 #[cfg(test)]
