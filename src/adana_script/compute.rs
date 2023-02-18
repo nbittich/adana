@@ -6,6 +6,7 @@ use std::{
     fs::{read_to_string, File},
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use crate::{adana_script::parser::parse_instructions, prelude::BTreeMap};
@@ -54,8 +55,17 @@ fn compute_recur(
             TreeNodeValue::VariableRef(name) => {
                 let v = ctx
                     .get(name)
-                    .context("ref {name} not found in context!")?;
-                Ok(Primitive::Ref(v.clone()))
+                    .cloned()
+                    .context(format!("ref {name} not found in context!"))?;
+                let v = v.clone();
+                let lock = v.read().map_err(|e| {
+                    anyhow::format_err!("variable ref err: {e}")
+                })?;
+                let primitive: &Primitive = &lock;
+                match primitive {
+                    v @ &Primitive::Ref(_) => Ok(v.clone()),
+                    _ => Ok(Primitive::Ref(v.clone())),
+                }
             }
             TreeNodeValue::Ops(Operator::Mod) => {
                 if node.children().count() == 1 {
@@ -190,16 +200,20 @@ fn compute_recur(
                 let v = compute_recur(node.first_child(), ctx)?;
                 if !matches!(v, Primitive::Error(_)) {
                     if let Some(name) = name {
-                        let mut old = ctx
+                        let old = ctx
                             .entry(name.clone())
-                            .or_insert(Primitive::Unit.ref_prim())
-                            .write()
-                            .map_err(|e| {
-                                anyhow::format_err!(
-                                    "could not acquire lock {e}"
-                                )
-                            })?;
-                        *old = v.clone();
+                            .or_insert(Primitive::Unit.ref_prim());
+                        match &v {
+                            Primitive::Ref(v) if Arc::ptr_eq(&old, v) => (),
+                            _ => {
+                                let mut old = old.write().map_err(|e| {
+                                    anyhow::format_err!(
+                                        "could not acquire lock {e}"
+                                    )
+                                })?;
+                                *old = v.clone();
+                            }
+                        }
                     }
                 }
                 Ok(v)
