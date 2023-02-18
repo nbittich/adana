@@ -51,6 +51,12 @@ fn compute_recur(
                 let right = compute_recur(node.last_child(), ctx)?;
                 Ok(left.mul(&right))
             }
+            TreeNodeValue::VariableRef(name) => {
+                let v = ctx
+                    .get(name)
+                    .context("ref {name} not found in context!")?;
+                Ok(Primitive::Ref(v.clone()))
+            }
             TreeNodeValue::Ops(Operator::Mod) => {
                 if node.children().count() == 1 {
                     return compute_recur(node.first_child(), ctx);

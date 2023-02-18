@@ -252,6 +252,11 @@ pub(super) fn to_ast(
                 curr_node_id,
             )
         }
+        Value::VariableRef(name) => append_to_current_and_return(
+            TreeNodeValue::VariableRef(name),
+            tree,
+            curr_node_id,
+        ),
         Value::VariableUnused => append_to_current_and_return(
             TreeNodeValue::VariableUnused,
             tree,

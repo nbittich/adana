@@ -783,6 +783,9 @@ impl PartialOrd for Primitive {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         match (self, other) {
             (Primitive::Ref(l), Primitive::Ref(r)) => {
+                if Arc::ptr_eq(l, r) {
+                    return Some(Ordering::Equal);
+                }
                 let l = l
                     .read()
                     .expect("PARTIAL_CMP L ERORR: could not acquire lock!");

@@ -119,14 +119,16 @@ fn parse_string(s: &str) -> Res<Value> {
 }
 
 fn parse_variable_str(s: &str) -> Res<&str> {
-    let allowed_values =
-        |s| take_while1(|s: char| s.is_alphanumeric() || s == '_')(s);
+    let allowed_values = |s| {
+        take_while1(|s: char| s.is_alphanumeric() || s == '_' || s == '&')(s)
+    };
     map_parser(
         verify(allowed_values, |s: &str| {
             s.chars()
                 .next()
-                .filter(|c| c.is_alphabetic() || c == &'_')
+                .filter(|c| c.is_alphabetic() || c == &'_' || c == &'&')
                 .is_some()
+                && s.chars().filter(|c| c == &'&').count() <= 1
         }),
         verify(all_consuming(allowed_values), |s: &str| {
             !check_reserved_keyword(&[s])
@@ -138,6 +140,8 @@ fn parse_variable(s: &str) -> Res<Value> {
     map(parse_variable_str, |s: &str| {
         if s.starts_with('_') {
             Value::VariableUnused
+        } else if s.starts_with('&') {
+            Value::VariableRef(s.replace("&", ""))
         } else {
             Value::Variable(s.to_string())
         }
