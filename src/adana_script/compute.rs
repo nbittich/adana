@@ -463,8 +463,20 @@ fn compute_recur(
                 function,
             }) => {
                 if let Value::BlockParen(param_values) = parameters.borrow() {
-                    let function =
+                    let mut function =
                         compute_instructions(vec![*function.clone()], ctx)?;
+
+                    // FIXME clone again
+                    if let Primitive::Ref(r) = function {
+                        function = r
+                            .read()
+                            .map_err(|e| {
+                                anyhow::format_err!(
+                                    "could not acquire lock in fn call{e}"
+                                )
+                            })?
+                            .clone();
+                    }
                     if let Primitive::Function {
                         parameters: function_parameters,
                         exprs,

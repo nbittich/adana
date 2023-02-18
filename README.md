@@ -13,6 +13,7 @@ Scripting programming language, repl and namespaced aliases for commands.
    - [F-Strings](#f-strings)
    - [Operators and constants](#operators-and-constants)
    - [Variable definition](#variable-definition)
+   - [Memory Management](#memory-management)
    - [Loops](#loops)
    - [Ranges](#ranges)
    - [Conditions](#conditions)
@@ -230,6 +231,32 @@ _ = struct {
    _: "I will not be stored!",
    x: 39
 }
+```
+
+<hr>
+
+### Memory Management
+
+By default, everything is cloned. As a hobby project, this was a simple way to achieve
+more and have fun.
+
+Now that enough features have been built, an attempt to implement automatic-ish
+reference counting has started.
+
+This is highly experimental and a partial or full rewrite of the ast / parser may
+be needed to implement it properly. To keep the fun working on this, it is not a priority
+for now.
+
+You can define a reference as such:
+
+```go
+      x = 100
+      y = &x # y points to x, no clone
+      p = 0
+      for _ in 0..&x {
+          p = p+1
+      }
+
 ```
 
 <hr>
