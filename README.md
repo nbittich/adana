@@ -250,12 +250,19 @@ for now.
 You can define a reference as such:
 
 ```go
-      x = 100
-      y = &x # y points to x, no clone
-      p = 0
-      for _ in 0..&x {
-          p = p+1
-      }
+x = 100
+y = &x # y points to x, no clone
+p = 0
+for _ in 0..&x {
+  p = p+1
+}
+
+```
+
+```go
+x = 99
+y = &x
+x = 100 # now y == 100
 
 ```
 
