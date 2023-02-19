@@ -1,15 +1,37 @@
+use std::ffi::OsString;
+
 use crate::prelude::*;
-fn extract_args(s: &str) -> Res<Vec<&str>> {
+fn extract_args(s: &str) -> Res<Vec<OsString>> {
     preceded(
         multispace0,
         separated_list0(
             multispace1,
-            alt((
-                delimited(tag("\""), take_while(|s: char| s != '"'), tag("\"")),
-                verify(take_while(|s: char| !s.is_whitespace()), |s: &str| {
-                    !s.is_empty()
-                }),
-            )),
+            map(
+                alt((
+                    delimited(
+                        tag("\""),
+                        take_while(|s: char| s != '"'),
+                        tag("\""),
+                    ),
+                    verify(
+                        take_while(|s: char| !s.is_whitespace()),
+                        |s: &str| !s.is_empty(),
+                    ),
+                )),
+                |s: &str| {
+                    if s.starts_with('$') {
+                        let key = s.replace('$', "");
+                        let env = std::env::var_os(key);
+                        if let Some(env) = env {
+                            env
+                        } else {
+                            OsString::from(s)
+                        }
+                    } else {
+                        s.into()
+                    }
+                },
+            ),
         ),
     )(s)
 }

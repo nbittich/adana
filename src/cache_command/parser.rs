@@ -124,7 +124,10 @@ fn cd_command(command: &str) -> Res<CacheCommand> {
     map(
         preceded(
             tag_no_case(CD),
-            preceded(multispace1, rest.map(|r: &str| r.trim())),
+            opt(preceded(
+                multispace1,
+                verify(rest.map(|r: &str| r.trim()), |s: &str| !s.is_empty()),
+            )),
         ),
         CacheCommand::Cd,
     )(command)

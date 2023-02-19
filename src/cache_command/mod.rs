@@ -54,7 +54,7 @@ pub enum CacheCommand<'a> {
     Del(&'a str),
     Get(&'a str),
     Exec { key: &'a str, args: Option<&'a str> },
-    Cd(&'a str),
+    Cd(Option<&'a str>),
     Using(&'a str),
     Dump(Option<&'a str>),
     Clear,

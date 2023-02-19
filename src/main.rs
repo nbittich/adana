@@ -81,7 +81,9 @@ fn start_app(
 
         match readline {
             Ok(line) => {
-                rl.add_history_entry(line.as_str());
+                if let Err(e) = rl.add_history_entry(line.as_str()) {
+                    debug!("could not write history entry! {e}");
+                }
 
                 let script_res = {
                     match compute(&line, &mut script_context) {
