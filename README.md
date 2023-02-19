@@ -654,7 +654,7 @@ There is no possible interaction with the scripting language yet.
 
 ### Try it
 
-`docker run -it -v $PWD/sample.json:/adanadb.json  adana --inmemory`
+`docker run -it -v $PWD/sample.json:/adanadb.json  nbittich/adana -im`
 
 `restore`
 
