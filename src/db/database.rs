@@ -14,7 +14,7 @@ fn get_default_db_path() -> Option<Box<Path>> {
     debug!("db dir: {}", db_dir.as_path().to_string_lossy());
     db_dir.push(".adanadb");
     if !db_dir.exists() {
-        std::fs::create_dir(&db_dir).ok()?;
+        std::fs::create_dir_all(&db_dir).ok()?;
     }
     db_dir.push("adana.db");
 

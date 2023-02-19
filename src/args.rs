@@ -5,6 +5,7 @@ pub enum Argument {
     DbPath(String),
     NoFallbackInMemory,
     HistoryPath(String),
+    DefaultCache(String),
 }
 
 pub fn parse_args(
@@ -54,6 +55,11 @@ pub fn parse_args(
                 );
                 let path = args.next().context("history path missing!!")?;
                 arguments.push(Argument::HistoryPath(path));
+            }
+            "--cache" | "-c" => {
+                let default_cache =
+                    args.next().context("default cache missing!!")?;
+                arguments.push(Argument::DefaultCache(default_cache));
             }
 
             _ => (), // ignore unknown argument
