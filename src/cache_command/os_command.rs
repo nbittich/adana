@@ -19,8 +19,8 @@ fn extract_args(s: &str) -> Res<Vec<OsString>> {
                     ),
                 )),
                 |s: &str| {
-                    if s.starts_with("$") {
-                        let key = s.replace("$", "");
+                    if s.starts_with('$') {
+                        let key = s.replace('$', "");
                         let env = std::env::var_os(key);
                         if let Some(env) = env {
                             env

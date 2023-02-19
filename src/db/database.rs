@@ -10,7 +10,7 @@ use super::{
 };
 
 fn get_default_db_path() -> Option<Box<Path>> {
-    let mut db_dir = dirs::data_dir().or_else(|| dirs::home_dir())?;
+    let mut db_dir = dirs::data_dir().or_else(dirs::home_dir)?;
     debug!("db dir: {}", db_dir.as_path().to_string_lossy());
     db_dir.push(".adanadb");
     if !db_dir.exists() {

@@ -1,7 +1,4 @@
-use std::{
-    collections::BTreeMap,
-    path::{Path, PathBuf},
-};
+use std::{collections::BTreeMap, path::PathBuf};
 
 use anyhow::Context;
 use nom::error::ErrorKind;
@@ -177,10 +174,8 @@ pub fn process_command(
                 }
             }
             CacheCommand::Cd(path) => {
-                let path_buf = path
-                    .map(PathBuf::from)
-                    .or_else(|| dirs::home_dir())
-                    .context(
+                let path_buf =
+                    path.map(PathBuf::from).or_else(dirs::home_dir).context(
                         "could not change directory. path {path:?} not found!",
                     )?;
                 if path_buf.exists() {
