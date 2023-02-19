@@ -1,4 +1,5 @@
 use anyhow::Context;
+use log::debug;
 use rustyline::completion::FilenameCompleter;
 use rustyline::highlight::MatchingBracketHighlighter;
 use rustyline::hint::HistoryHinter;
@@ -7,7 +8,8 @@ use rustyline::{
     Cmd, CompletionType, Config, EditMode, Editor, KeyEvent, Movement,
 };
 use rustyline_derive::*;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 
 use crate::adana_script::constants::PI;
 
@@ -33,8 +35,48 @@ pub fn read_line(
     rl: &mut Editor<CustomHelper>,
     curr_cache: &str,
 ) -> Result<String, rustyline::error::ReadlineError> {
-    let p = format!("[{curr_cache}] >> ");
-    rl.readline(&format!("\x1b[1;32m{p}\x1b[0m"))
+    use nu_ansi_term::Color;
+    let bold_white = Color::White.bold();
+    let mut line = format!(
+        "{}{}",
+        bold_white.paint("["),
+        Color::LightYellow.paint(curr_cache)
+    );
+
+    // show current dir & replace home dir by ~
+    if let Ok(path) = std::env::current_dir() {
+        let path = path.to_string_lossy().to_string();
+        let home = dirs::home_dir()
+            .unwrap_or(PathBuf::new())
+            .to_string_lossy()
+            .to_string();
+        let path = path.replace(&home, "~");
+        line += &format!("::{}", Color::LightBlue.paint(path));
+    }
+
+    // show current git branch
+    let git_cmd = Command::new("git")
+        .args(["rev-parse", "--abbrev-ref", "HEAD"])
+        .output();
+    match git_cmd {
+        Ok(out) => {
+            let branch = String::from_utf8_lossy(&out.stdout);
+            let branch = branch.trim();
+            if !branch.is_empty() {
+                let branch = format!("({branch})");
+                line += &format!("{}", Color::LightMagenta.paint(branch));
+            }
+        }
+        Err(e) => {
+            debug!(
+                "Could not determine git current branch. Is git installed? {e}"
+            );
+        }
+    }
+
+    line += &format!("{} ", bold_white.paint("]"));
+
+    rl.readline(&line)
 }
 
 pub fn build_editor(

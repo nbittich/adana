@@ -1,5 +1,9 @@
-use std::{collections::BTreeMap, path::Path};
+use std::{
+    collections::BTreeMap,
+    path::{Path, PathBuf},
+};
 
+use anyhow::Context;
 use nom::error::ErrorKind;
 
 use crate::{
@@ -74,10 +78,10 @@ pub fn process_command(
             }
             CacheCommand::Using(key) => {
                 if set_default_cache(db, key).is_some() {
-                    println!(
-                        "previous: {}",
-                        LightCyan.paint(current_cache.as_str())
-                    );
+                    // println!(
+                    //     "previous: {}",
+                    //     LightCyan.paint(current_cache.as_str())
+                    // );
                     current_cache.clear();
                     current_cache.push_str(key);
                 }
@@ -173,16 +177,22 @@ pub fn process_command(
                 }
             }
             CacheCommand::Cd(path) => {
-                if Path::new(path).exists() {
-                    std::env::set_current_dir(path)?;
-                    println!(
-                        ">> working directory {}",
-                        LightMagenta.paint(path)
-                    );
+                let path_buf = path
+                    .map(PathBuf::from)
+                    .or_else(|| dirs::home_dir())
+                    .context(
+                        "could not change directory. path {path:?} not found!",
+                    )?;
+                if path_buf.exists() {
+                    std::env::set_current_dir(path_buf.as_path())?;
+                    // println!(
+                    //     ">> working directory {}",
+                    //     LightMagenta.paint(path_buf.to_string_lossy())
+                    // );
                 } else {
                     return Err(anyhow::Error::msg(format!(
                         "path {} doesn't exist",
-                        Red.paint(path)
+                        Red.paint(path_buf.to_string_lossy())
                     )));
                 }
             }
@@ -196,7 +206,7 @@ pub fn process_command(
                             .map(|c| Yellow.paint(*c).to_string())
                             .collect::<Vec<_>>()
                             .join("/"),
-                        LightBlue.paint(*doc)
+                        White.paint(*doc)
                     );
                 }
             }
