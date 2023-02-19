@@ -284,16 +284,19 @@ pub(super) fn to_ast(
             } else if let Value::VariableUnused = *name {
                 Ok(TreeNodeValue::VariableAssign(None))
             } else if let Value::ArrayAccess { arr, index } = *name {
-                let index = match *index {
-                    Value::Integer(n) => Ok(Primitive::Int(n)),
-                    Value::Variable(v) => variable_from_ctx(&v, false, ctx),
-                    v => {
-                        Err(anyhow::Error::msg(format!("invalid index {v:?}")))
-                    }
-                }?;
+                // let index = match *index {
+                //     Value::Integer(n) => Ok(Primitive::Int(n)),
+                //     Value::Variable(v) => variable_from_ctx(&v, false, ctx),
+                //     v => {
+                //         Err(anyhow::Error::msg(format!("invalid index {v:?}")))
+                //     }
+                // }?;
 
                 if let Value::Variable(n) = *arr {
-                    Ok(TreeNodeValue::VariableArrayAssign { name: n, index })
+                    Ok(TreeNodeValue::VariableArrayAssign {
+                        name: n,
+                        index: *index,
+                    })
                 } else {
                     Err(anyhow::Error::msg(format!(
                         "invalid variable expression {arr:?} => {expr:?}"
@@ -303,7 +306,7 @@ pub(super) fn to_ast(
                 if let Value::Variable(n) = *struc {
                     Ok(TreeNodeValue::VariableArrayAssign {
                         name: n,
-                        index: Primitive::String(key),
+                        index: Value::String(key),
                     })
                 } else {
                     Err(anyhow::Error::msg(format!(
@@ -395,19 +398,19 @@ pub(super) fn to_ast(
             curr_node_id,
         ),
         Value::ArrayAccess { arr, index } => match (*arr, *index) {
-            (v, Value::Integer(idx)) => append_to_current_and_return(
-                TreeNodeValue::ArrayAccess {
-                    index: Primitive::Int(idx),
-                    array: v,
-                },
+            (v, index @ Value::Integer(_)) => append_to_current_and_return(
+                TreeNodeValue::ArrayAccess { index, array: v },
                 tree,
                 curr_node_id,
             ),
-            (v, Value::Variable(idx_var)) => {
-                let idx = variable_from_ctx(&idx_var, false, ctx)?;
-
+            (v, variable @ Value::Variable(_)) => append_to_current_and_return(
+                TreeNodeValue::ArrayAccess { index: variable, array: v },
+                tree,
+                curr_node_id,
+            ),
+            (v, variable @ Value::BlockParen(_)) => {
                 append_to_current_and_return(
-                    TreeNodeValue::ArrayAccess { index: idx, array: v },
+                    TreeNodeValue::ArrayAccess { index: variable, array: v },
                     tree,
                     curr_node_id,
                 )

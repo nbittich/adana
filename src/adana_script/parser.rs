@@ -366,7 +366,7 @@ fn parse_array(s: &str) -> Res<Value> {
             terminated(
                 separated_list0(
                     tag_no_space(","),
-                    alt((parse_fn, parse_value)),
+                    alt((parse_fn, parse_range, parse_number, parse_value)),
                 ),
                 preceded(multispace0, tag_no_space("]")),
             ),
@@ -381,7 +381,20 @@ fn parse_array_access(s: &str) -> Res<Value> {
             preceded(
                 tag_no_space("["),
                 terminated(
-                    alt((parse_variable, parse_number)),
+                    alt((
+                        map_parser(
+                            take_until("]"),
+                            map(many1(parse_value), |mut v| {
+                                if v.len() == 1 {
+                                    v.remove(0)
+                                } else {
+                                    Value::BlockParen(v)
+                                }
+                            }),
+                        ),
+                        parse_variable,
+                        parse_number,
+                    )),
                     tag_no_space("]"),
                 ),
             ),
@@ -502,9 +515,9 @@ fn parse_value(s: &str) -> Res<Value> {
                 parse_array_access,
                 parse_array,
                 parse_range,
+                parse_number,
                 parse_fn,
                 parse_builtin_fn,
-                parse_number,
                 parse_bool,
                 parse_fstring,
                 parse_string,
