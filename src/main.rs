@@ -58,11 +58,22 @@ fn main() -> anyhow::Result<()> {
         }
     });
 
+    let default_cache = args.iter().find_map(|a| {
+        if let Argument::DefaultCache(dc) = a {
+            Some(dc.clone())
+        } else {
+            None
+        }
+    });
     println!();
 
     match Db::open(config) {
-        Ok(Db::InMemory(mut db)) => start_app(&mut db, history_path),
-        Ok(Db::FileBased(mut db)) => start_app(&mut db, history_path),
+        Ok(Db::InMemory(mut db)) => {
+            start_app(&mut db, history_path, default_cache)
+        }
+        Ok(Db::FileBased(mut db)) => {
+            start_app(&mut db, history_path, default_cache)
+        }
         Err(e) => Err(e),
     }
 }
@@ -70,12 +81,22 @@ fn main() -> anyhow::Result<()> {
 fn start_app(
     db: &mut impl DbOp<String, String>,
     history_path: Option<impl AsRef<Path> + Copy>,
+    default_cache: Option<String>,
 ) -> anyhow::Result<()> {
     let mut current_cache = {
         get_default_cache(db).as_ref().map_or("DEFAULT".into(), |v| v.clone())
     };
     let mut rl = editor::build_editor(history_path);
     let mut script_context = BTreeMap::new();
+    if let Some(dc) = default_cache {
+        process_command(
+            db,
+            &mut script_context,
+            &mut current_cache,
+            &format!("use {dc}"),
+        )
+        .unwrap();
+    }
     loop {
         let readline = editor::read_line(&mut rl, &current_cache);
 

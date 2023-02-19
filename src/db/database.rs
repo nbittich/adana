@@ -36,7 +36,12 @@ impl Config {
         fall_back_in_memory: bool,
     ) -> Config {
         if in_memory {
-            Config { in_memory, path: None, fall_back_in_memory: false }
+            Config {
+                in_memory,
+                path: None,
+                fall_back_in_memory: false,
+                ..Default::default()
+            }
         } else {
             Config {
                 in_memory,
