@@ -3,6 +3,7 @@ use log::debug;
 use rustyline::completion::FilenameCompleter;
 use rustyline::highlight::MatchingBracketHighlighter;
 use rustyline::hint::HistoryHinter;
+use rustyline::history::FileHistory;
 use rustyline::validate::MatchingBracketValidator;
 use rustyline::{
     Cmd, CompletionType, Config, EditMode, Editor, KeyEvent, Movement,
@@ -20,7 +21,7 @@ fn get_default_history_path() -> Option<Box<Path>> {
 }
 
 pub fn save_history(
-    rl: &mut Editor<CustomHelper>,
+    rl: &mut Editor<CustomHelper, FileHistory>,
     history_path: Option<impl AsRef<Path>>,
 ) -> anyhow::Result<()> {
     let history_path = history_path
@@ -32,7 +33,7 @@ pub fn save_history(
 }
 
 pub fn read_line(
-    rl: &mut Editor<CustomHelper>,
+    rl: &mut Editor<CustomHelper, FileHistory>,
     curr_cache: &str,
 ) -> Result<String, rustyline::error::ReadlineError> {
     use nu_ansi_term::Color;
@@ -81,7 +82,7 @@ pub fn read_line(
 
 pub fn build_editor(
     history_path: Option<impl AsRef<Path>>,
-) -> Editor<CustomHelper> {
+) -> Editor<CustomHelper, FileHistory> {
     let config = Config::builder()
         .history_ignore_space(true)
         .completion_type(CompletionType::List)
