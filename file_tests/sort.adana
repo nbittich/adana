@@ -1,0 +1,16 @@
+sort = (array) => {
+  sort = false
+  while (sort == false) {
+    sort = true
+    bound = length(array) - 1
+    for i in 0..bound {
+      if (array[i] > array[i+1]) {
+        sort = false
+        temp = array[i+1]
+        array[i+1] = array[i]
+        array[i] = temp
+      }  
+    }
+  }
+  array
+}

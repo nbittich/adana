@@ -181,3 +181,46 @@ fn test_array_expr_access_not_assigned() {
     let r = compute(expr, &mut ctx).unwrap();
     assert_eq!(r, Primitive::Int(2));
 }
+#[test]
+#[serial]
+fn test_array_access_expr() {
+    use Primitive::{Array, Int, String};
+    let expr = r#"
+        include("file_tests/sort.adana")
+        arr_ints = [9,2,8,19,3,7,1,-1,12]
+        arr_str = ["s","b","z","a","d","f","j","h"]
+        arr_ints = sort(arr_ints)
+        arr_str = sort(arr_str)
+    "#;
+    let mut ctx = BTreeMap::new();
+    let _ = compute(expr, &mut ctx).unwrap();
+
+    assert_eq!(
+        ctx["arr_ints"].read().unwrap().clone(),
+        Array(vec![
+            Int(-1),
+            Int(1),
+            Int(2),
+            Int(3),
+            Int(7),
+            Int(8),
+            Int(9),
+            Int(12),
+            Int(19),
+        ])
+    );
+
+    assert_eq!(
+        ctx["arr_str"].read().unwrap().clone(),
+        Array(vec![
+            String("a".into()),
+            String("b".into()),
+            String("d".into()),
+            String("f".into()),
+            String("h".into()),
+            String("j".into()),
+            String("s".into()),
+            String("z".into()),
+        ])
+    );
+}

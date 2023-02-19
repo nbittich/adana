@@ -87,6 +87,7 @@ pub fn build_editor(
         .history_ignore_space(true)
         .completion_type(CompletionType::List)
         .edit_mode(EditMode::Vi)
+        .color_mode(rustyline::ColorMode::Enabled)
         .build();
     let h = CustomHelper {
         completer: FilenameCompleter::new(),
@@ -104,7 +105,6 @@ pub fn build_editor(
     rl.bind_sequence(KeyEvent::alt('p'), Cmd::HistorySearchBackward);
     rl.bind_sequence(KeyEvent::ctrl('x'), Cmd::Newline);
     rl.bind_sequence(KeyEvent::ctrl('p'), Cmd::Insert(1, format!("{PI} ")));
-
     if rl
         .load_history(
             history_path

@@ -334,10 +334,13 @@ fn compute_recur(
             }
             TreeNodeValue::ArrayAccess { index, array } => {
                 let error_message = || {
-                    format!("illegal index {index} for array access {array:?}")
+                    format!(
+                        "illegal index {index:?} for array access {array:?}"
+                    )
                 };
                 match (array, index) {
                     (Value::Variable(v), index) => {
+                        let index = compute_lazy(index.clone(), ctx)?;
                         let array = ctx
                             .get(v)
                             .context("array not found in context")?
@@ -347,14 +350,19 @@ fn compute_recur(
                                     "could not acquire lock {e}"
                                 ))
                             })?;
-                        Ok(array.index_at(index))
+                        Ok(array.index_at(&index))
                     }
                     (Value::String(v), index) => {
                         let v = Primitive::String(v.clone());
-                        Ok(v.index_at(index))
+                        let index = compute_lazy(index.clone(), ctx)?;
+                        Ok(v.index_at(&index))
                     }
-                    (Value::Array(array), Primitive::Int(index)) => {
-                        let index = *index as usize;
+                    (Value::Array(array), index) => {
+                        let Primitive::Int(index) = compute_lazy(index.clone(), ctx)? else {
+                           return Err(anyhow::format_err!("COMPUTE: illegal array access! {index:?}"));
+                        };
+
+                        let index = index as usize;
                         let value = array.get(index).context(error_message())?;
                         if index < array.len() {
                             let primitive =
@@ -366,11 +374,12 @@ fn compute_recur(
                     (
                         v @ Value::ArrayAccess { arr: _, index: _ }
                         | v @ Value::StructAccess { struc: _, key: _ },
-                        index @ Primitive::Int(_),
+                        index,
                     ) => {
                         let v = compute_lazy(v.clone(), ctx)?;
+                        let index = compute_lazy(index.clone(), ctx)?;
                         match v {
-                            p @ Primitive::Array(_) => Ok(p.index_at(index)),
+                            p @ Primitive::Array(_) => Ok(p.index_at(&index)),
 
                             _ => Err(anyhow::Error::msg(error_message())),
                         }
@@ -427,6 +436,7 @@ fn compute_recur(
                 ))),
             },
             TreeNodeValue::VariableArrayAssign { name, index } => {
+                let index = compute_lazy(index.clone(), ctx)?;
                 let mut v = compute_recur(node.first_child(), ctx)?;
                 let mut array = ctx
                     .get_mut(name)
@@ -435,7 +445,7 @@ fn compute_recur(
                     .map_err(|e| {
                         anyhow::format_err!("could not acquire lock {e}")
                     })?;
-                Ok(array.swap_mem(&mut v, index))
+                Ok(array.swap_mem(&mut v, &index))
             }
             TreeNodeValue::Function(Value::Function { parameters, exprs }) => {
                 if let Value::BlockParen(parameters) = parameters.borrow() {
