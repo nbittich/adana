@@ -1,6 +1,6 @@
 sort = (array) => {
   is_sorted = false
-  while (is_sorted == false) {
+  while (!is_sorted) {
     is_sorted = true
     bound = length(array) - 1
     for i in 0..bound {

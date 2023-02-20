@@ -184,7 +184,6 @@ fn test_array_expr_access_not_assigned() {
 #[test]
 #[serial]
 fn test_array_access_expr() {
-    use Primitive::{Array, Int, String};
     let expr = r#"
         include("file_tests/sort.adana")
         arr_ints = [9,2,8,19,3,7,1,-1,12]
@@ -213,14 +212,14 @@ fn test_array_access_expr() {
     assert_eq!(
         ctx["arr_str"].read().unwrap().clone(),
         Array(vec![
-            String("a".into()),
-            String("b".into()),
-            String("d".into()),
-            String("f".into()),
-            String("h".into()),
-            String("j".into()),
-            String("s".into()),
-            String("z".into()),
+            Str("a".into()),
+            Str("b".into()),
+            Str("d".into()),
+            Str("f".into()),
+            Str("h".into()),
+            Str("j".into()),
+            Str("s".into()),
+            Str("z".into()),
         ])
     );
 }
