@@ -85,17 +85,17 @@ pub fn process_command(
             }
             CacheCommand::ListCache => {
                 println!(
-                    ">> [ {} ]",
+                    "{}",
                     get_cache_names(db)
                         .iter()
                         .map(|c| Red.bold().paint(c).to_string())
                         .collect::<Vec<_>>()
-                        .join(", ")
+                        .join("\n")
                 );
             }
             CacheCommand::CurrentCache => {
                 println!(
-                    ">> {}",
+                    "{}",
                     LightBlue.bold().paint(current_cache.to_string())
                 );
             }
@@ -140,9 +140,9 @@ pub fn process_command(
                 if let Some(values) = list_values(db, current_cache) {
                     for (key, value) in values {
                         println!(
-                            ">> Key: {} => Value: '{}'",
-                            Red.paint(key),
-                            LightCyan.paint(value)
+                            "{}\n{}",
+                            Red.bold().underline().paint(key),
+                            LightCyan.italic().paint(value)
                         );
                     }
                 }
@@ -195,13 +195,17 @@ pub fn process_command(
                 for doc in CACHE_COMMAND_DOC {
                     let (command, doc) = doc;
                     println!(
-                        ">> {} : {}",
+                        "{}\n{}",
                         command
                             .iter()
-                            .map(|c| Yellow.paint(*c).to_string())
+                            .map(|c| Yellow
+                                .bold()
+                                .underline()
+                                .paint(*c)
+                                .to_string())
                             .collect::<Vec<_>>()
                             .join("/"),
-                        White.paint(*doc)
+                        White.italic().paint(*doc)
                     );
                 }
             }
