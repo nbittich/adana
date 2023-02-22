@@ -45,6 +45,8 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     Operator::Div.as_str(),
     Operator::Mult.as_str(),
     Operator::Pow.as_str(),
+    Operator::Pow2.as_str(),
+    Operator::Pow3.as_str(),
     Operator::Not.as_str(),
     Operator::Mod.as_str(),
     Operator::Less.as_str(),

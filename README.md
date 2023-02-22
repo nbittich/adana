@@ -164,7 +164,7 @@ ${person.wasup(person.age)}"""
 
 ### Operators and constants
 
-There are 14 operators & 3 constants:
+There are 16 operators & 3 constants:
 
 | **operator** | **description**  |
 | ------------ | ---------------- |
