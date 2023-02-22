@@ -1,6 +1,6 @@
 [package]
 name = "adana"
-version = "0.13.14"
+version = "0.13.15"
 edition = "2021"
 authors = ["Nordine Bittich"]
 license = "MIT"

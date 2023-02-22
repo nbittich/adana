@@ -91,6 +91,14 @@ fn compute_recur(
                 let right = compute_recur(node.last_child(), ctx)?;
                 Ok(left.pow(&right))
             }
+            TreeNodeValue::Ops(Operator::Pow2) => {
+                let left = compute_recur(node.first_child(), ctx)?;
+                Ok(left.pow(&Primitive::Int(2)))
+            }
+            TreeNodeValue::Ops(Operator::Pow3) => {
+                let left = compute_recur(node.first_child(), ctx)?;
+                Ok(left.pow(&Primitive::Int(3)))
+            }
             TreeNodeValue::Ops(Operator::Div) => {
                 if node.children().count() == 1 {
                     return compute_recur(node.first_child(), ctx);

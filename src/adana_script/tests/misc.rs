@@ -526,3 +526,34 @@ fn test_str() {
         compute(r#""a"+5.1"#, &mut ctx).unwrap()
     );
 }
+
+#[test]
+fn test_op_pow_sugar() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(Primitive::Int(4), compute(r#"2²"#, &mut ctx).unwrap());
+    assert_eq!(Primitive::Int(8), compute(r#"2³"#, &mut ctx).unwrap());
+
+    let mut ctx = BTreeMap::new();
+    assert_eq!(Primitive::Int(4), compute(r#"x = 2²"#, &mut ctx).unwrap());
+    assert_eq!(Primitive::Int(8), compute(r#"y =2³"#, &mut ctx).unwrap());
+    assert_eq!(Primitive::Int(4), ctx["x"].clone().read().unwrap().clone());
+    assert_eq!(Primitive::Int(8), ctx["y"].clone().read().unwrap().clone());
+
+    let mut ctx = BTreeMap::new();
+    assert_eq!(Primitive::Int(25), compute(r#"x = (2-7)²"#, &mut ctx).unwrap());
+    assert_eq!(
+        Primitive::Int(-125),
+        compute(r#"y =(2-7)³"#, &mut ctx).unwrap()
+    );
+    assert_eq!(Primitive::Int(25), ctx["x"].clone().read().unwrap().clone());
+    assert_eq!(Primitive::Int(-125), ctx["y"].clone().read().unwrap().clone());
+
+    assert_eq!(
+        Primitive::Int(624250225),
+        compute(r#"z = (2-7)² * ( 3-2³ * x²)² "#, &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Primitive::Int(624250225),
+        ctx["z"].clone().read().unwrap().clone()
+    );
+}
