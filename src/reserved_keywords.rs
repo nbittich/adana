@@ -1,4 +1,7 @@
-use crate::{adana_script::constants::*, cache_command::CacheCommand};
+use crate::{
+    adana_script::{constants::*, Operator},
+    cache_command::CacheCommand,
+};
 
 pub const CACHE_COMMAND_DOC: &[(&[&str], &str)] = CacheCommand::doc();
 
@@ -37,6 +40,21 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     ELSE,
     MULTILINE,
     STRUCT,
+    Operator::Add.as_str(),
+    Operator::Subtr.as_str(),
+    Operator::Div.as_str(),
+    Operator::Mult.as_str(),
+    Operator::Pow.as_str(),
+    Operator::Not.as_str(),
+    Operator::Mod.as_str(),
+    Operator::Less.as_str(),
+    Operator::Greater.as_str(),
+    Operator::LessOrEqual.as_str(),
+    Operator::GreaterOrEqual.as_str(),
+    Operator::Equal.as_str(),
+    Operator::NotEqual.as_str(),
+    Operator::And.as_str(),
+    Operator::Or.as_str(),
 ];
 
 pub fn check_reserved_keyword(aliases: &[&str]) -> bool {

@@ -193,6 +193,8 @@ pub enum Operator {
     Div,
     Mod,
     Pow,
+    Pow2,
+    Pow3,
     Not,
     Less,
     Greater,
@@ -254,13 +256,15 @@ impl BuiltInFunctionType {
     }
 }
 impl Operator {
-    pub(super) fn as_str(&self) -> &'static str {
+    pub(super) const fn as_str(&self) -> &'static str {
         match self {
             Operator::Add => "+",
             Operator::Subtr => "-",
             Operator::Div => "/",
             Operator::Mult => "*",
             Operator::Pow => "^",
+            Operator::Pow2 => "²",
+            Operator::Pow3 => "³",
             Operator::Not => "!",
             Operator::Mod => "%",
             Operator::Less => "<",

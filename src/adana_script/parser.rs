@@ -120,7 +120,11 @@ fn parse_string(s: &str) -> Res<Value> {
 
 fn parse_variable_str(s: &str) -> Res<&str> {
     let allowed_values = |s| {
-        take_while1(|s: char| s.is_alphanumeric() || s == '_' || s == '&')(s)
+        take_while1(|s: char| {
+            (s.is_alphanumeric() && s != '²' && s != '³')
+                || s == '_'
+                || s == '&'
+        })(s)
     };
     map_parser(
         verify(allowed_values, |s: &str| {
@@ -540,6 +544,8 @@ fn parse_operation(s: &str) -> Res<Value> {
     }
     alt((
         parse_op(Operator::Pow),
+        parse_op(Operator::Pow2),
+        parse_op(Operator::Pow3),
         parse_op(Operator::Mult),
         parse_op(Operator::Mod),
         parse_op(Operator::Div),

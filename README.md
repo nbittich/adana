@@ -174,6 +174,8 @@ There are 14 operators & 3 constants:
 | `*`          | multiply         |
 | `%`          | modulo           |
 | `^`          | pow              |
+| `²`          | pow 2            |
+| `³`          | pow 3            |
 | `<`          | less than        |
 | `>`          | greater than     |
 | `<=`         | less or equal    |
@@ -198,6 +200,8 @@ There are 14 operators & 3 constants:
  5 * 5 # 25
  5 * 5.1 # 25.5
  5 * (5+ 1/ (3.1 ^2) * 9) ^3. # 1046.084549281999
+ 2² # 4
+ 2³ # 8
 
 ```
 
