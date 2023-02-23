@@ -88,7 +88,7 @@ pub(super) fn to_ast(
 
             // handle implicit multiply e.g 2x²
             let mut operations = {
-                let mut new_operations = vec![];
+                let mut new_operations = Vec::with_capacity(operations.len());
 
                 for operation in operations {
                     match operation {
