@@ -88,29 +88,46 @@ pub(super) fn to_ast(
 
             // handle implicit multiply e.g 2x²
             let mut operations = {
-                let mut new_operations = Vec::with_capacity(operations.len());
+                let count_special_values = operations
+                    .iter()
+                    .filter(|o| {
+                        matches!(
+                            o,
+                            Value::ImplicitMultiply(_)
+                                | Value::Operation(Operator::Pow2)
+                                | Value::Operation(Operator::Pow3)
+                        )
+                    })
+                    .count();
 
-                for operation in operations {
-                    match operation {
-                        Value::ImplicitMultiply(v) => {
-                            new_operations.push(*v);
-                            new_operations
-                                .push(Value::Operation(Operator::Mult));
+                if count_special_values != 0 {
+                    let mut new_operations = Vec::with_capacity(
+                        operations.len() + count_special_values,
+                    );
+                    for operation in operations {
+                        match operation {
+                            Value::ImplicitMultiply(v) => {
+                                new_operations.push(*v);
+                                new_operations
+                                    .push(Value::Operation(Operator::Mult));
+                            }
+                            Value::Operation(Operator::Pow2) => {
+                                new_operations
+                                    .push(Value::Operation(Operator::Pow));
+                                new_operations.push(Value::Integer(2));
+                            }
+                            Value::Operation(Operator::Pow3) => {
+                                new_operations
+                                    .push(Value::Operation(Operator::Pow));
+                                new_operations.push(Value::Integer(3));
+                            }
+                            _ => new_operations.push(operation),
                         }
-                        Value::Operation(Operator::Pow2) => {
-                            new_operations
-                                .push(Value::Operation(Operator::Pow));
-                            new_operations.push(Value::Integer(2));
-                        }
-                        Value::Operation(Operator::Pow3) => {
-                            new_operations
-                                .push(Value::Operation(Operator::Pow));
-                            new_operations.push(Value::Integer(3));
-                        }
-                        _ => new_operations.push(operation),
                     }
+                    new_operations
+                } else {
+                    operations
                 }
-                new_operations
             };
 
             let op_pos = None
