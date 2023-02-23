@@ -88,54 +88,37 @@ pub(super) fn to_ast(
                 return to_ast(ctx, operations.remove(0), tree, curr_node_id);
             }
 
-            // handle implicit multiply e.g 2x²
-            let mut operations = {
-                let count_special_values = operations
-                    .iter()
-                    .filter(|o| {
-                        matches!(
-                            o,
-                            Value::ImplicitMultiply(_)
-                                | Value::Operation(Operator::Pow2)
-                                | Value::Operation(Operator::Pow3)
-                        )
-                    })
-                    .count();
-
-                if count_special_values != 0 {
-                    let mut new_operations = Vec::with_capacity(
-                        operations.len() + count_special_values,
-                    );
-                    for operation in operations {
-                        match operation {
-                            Value::ImplicitMultiply(v)
-                                if matches!(
-                                    v.borrow(),
-                                    &Value::Integer(_) | &Value::Decimal(_)
-                                ) =>
-                            {
-                                new_operations.push(*v);
-                                new_operations
-                                    .push(Value::Operation(Operator::Mult));
-                            }
-                            Value::Operation(Operator::Pow2) => {
-                                new_operations
-                                    .push(Value::Operation(Operator::Pow));
-                                new_operations.push(Value::Integer(2));
-                            }
-                            Value::Operation(Operator::Pow3) => {
-                                new_operations
-                                    .push(Value::Operation(Operator::Pow));
-                                new_operations.push(Value::Integer(3));
-                            }
-                            _ => new_operations.push(operation),
-                        }
+            // handle implicit multiply and pow2,pow3. e.g 2x²
+            while let Some(pos) = operations.iter().position(|o| {
+                matches!(
+                    o,
+                    Value::ImplicitMultiply(_)
+                        | Value::Operation(Operator::Pow2)
+                        | Value::Operation(Operator::Pow3)
+                )
+            }) {
+                let operation = operations.remove(pos);
+                match operation {
+                    Value::ImplicitMultiply(v)
+                        if matches!(
+                            v.borrow(),
+                            &Value::Integer(_) | &Value::Decimal(_)
+                        ) =>
+                    {
+                        operations.insert(pos,*v);
+                        operations.insert(pos+1, Value::Operation(Operator::Mult));
                     }
-                    new_operations
-                } else {
-                    operations
+                    Value::Operation(Operator::Pow2) => {
+                        operations.insert(pos,Value::Operation(Operator::Pow));
+                        operations.insert(pos+1,Value::Integer(2));
+                    }
+                    Value::Operation(Operator::Pow3) => {
+                        operations.insert(pos,Value::Operation(Operator::Pow));
+                        operations.insert(pos+1,Value::Integer(3));
+                    }
+                    _ => unreachable!("AST ERROR: unreachable implicit parameter {operation:?}"),
                 }
-            };
+            }
 
             let op_pos = None
                 .or_else(filter_op(Operator::Or, &operations))
