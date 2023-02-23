@@ -118,8 +118,28 @@ pub fn build_editor(
     {
         println!("No previous history.");
     }
+
+    // let mut screen = stdout();
+    //
+    // std::thread::spawn(move || loop {
+    //     //thread::sleep(Duration::from_millis(100));
+    //     write!(screen, "\x1B[s\r{}\x1B[u", format_current_time(),).unwrap();
+    //     screen.flush().unwrap();
+    // });
+
     rl
 }
+
+// fn format_current_time() -> String {
+//     let system_time = SystemTime::now();
+//     let datetime: DateTime<Local> = system_time.into();
+//     format!(
+//         "{}",
+//         nu_ansi_term::Color::White
+//             .bold()
+//             .paint(datetime.format("%T").to_string())
+//     )
+// }
 
 #[derive(Helper, Completer, Highlighter, Validator, Hinter)]
 pub struct CustomHelper {
