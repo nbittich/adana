@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+
 use slab_tree::{NodeId, Tree};
 
 use crate::{
@@ -106,7 +108,12 @@ pub(super) fn to_ast(
                     );
                     for operation in operations {
                         match operation {
-                            Value::ImplicitMultiply(v) => {
+                            Value::ImplicitMultiply(v)
+                                if matches!(
+                                    v.borrow(),
+                                    &Value::Integer(_) | &Value::Decimal(_)
+                                ) =>
+                            {
                                 new_operations.push(*v);
                                 new_operations
                                     .push(Value::Operation(Operator::Mult));
