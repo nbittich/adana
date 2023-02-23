@@ -116,7 +116,7 @@ fancy_string = multiline {
 
 Multiline is useful when you want to process different instructions in several lines:
 
-```
+```python
 complex_math_stuff = multiline {
     1 *2
     + 5 *sqrt(2) / 2.
