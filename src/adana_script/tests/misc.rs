@@ -180,7 +180,7 @@ fn test_compute() {
     // compute with variables
     assert_eq!(
             Primitive::Double(-4765.37866215695),
-            compute("f = 555*19-(((((((9*2))))+2*f)-x))/6.-1^2*y/(z-4*(3/9.-(9+3/2.-4))) - x", &mut ctx).unwrap()
+            compute("f = 555*19-(((((((9*2))))+2f)-x))/6.-1^2y/(z-4*(3/9.-(9+3/2.-4))) - x", &mut ctx).unwrap()
         );
 
     assert_eq!(
@@ -555,5 +555,34 @@ fn test_op_pow_sugar() {
     assert_eq!(
         Primitive::Int(624250225),
         ctx["z"].clone().read().unwrap().clone()
+    );
+}
+
+#[test]
+fn test_implicit_multiply() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(Primitive::Int(2), compute(r#"x = 2"#, &mut ctx).unwrap());
+    assert_eq!(Primitive::Int(4), compute(r#"2x"#, &mut ctx).unwrap());
+    assert_eq!(Primitive::Double(1.), compute(r#"0.5x"#, &mut ctx).unwrap());
+    assert_eq!(
+        Primitive::Bool(true),
+        compute(r#"x² == 2x"#, &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Primitive::Bool(true),
+        compute(r#"x² == 2x^(0.5x)"#, &mut ctx).unwrap()
+    );
+
+    assert_eq!(
+        Primitive::Bool(true),
+        compute(r#"3x²+2x== x*(3*x+2)"#, &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Primitive::Bool(true),
+        compute(r#"3x²+2x== x*(3x+2)"#, &mut ctx).unwrap()
+    );
+    assert_eq!(
+        Primitive::Bool(true),
+        compute(r#"2*2^0.5*2== 2x^0.5x"#, &mut ctx).unwrap()
     );
 }

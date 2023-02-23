@@ -9,8 +9,8 @@ pub use nom::{
         multispace1, none_of, one_of, space1,
     },
     combinator::{
-        all_consuming, consumed, cut, eof, fail, map, map_parser, opt, peek,
-        rest, verify,
+        all_consuming, consumed, cut, eof, fail, map, map_parser, map_res, opt,
+        peek, recognize, rest, verify,
     },
     multi::{many0, many1, separated_list0, separated_list1},
     number::complete::{double, recognize_float},

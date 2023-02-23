@@ -86,6 +86,23 @@ pub(super) fn to_ast(
                 return to_ast(ctx, operations.remove(0), tree, curr_node_id);
             }
 
+            // handle implicit multiply e.g 2x²
+            let mut operations = {
+                let mut new_operations = vec![];
+
+                for operation in operations {
+                    match operation {
+                        Value::ImplicitMultiply(v) => {
+                            new_operations.push(*v);
+                            new_operations
+                                .push(Value::Operation(Operator::Mult));
+                        }
+                        _ => new_operations.push(operation),
+                    }
+                }
+                new_operations
+            };
+
             let op_pos = None
                 .or_else(filter_op(Operator::Or, &operations))
                 .or_else(filter_op(Operator::And, &operations))
@@ -175,6 +192,10 @@ pub(super) fn to_ast(
                 Ok(tree.root_id())
             }
         }
+        Value::ImplicitMultiply(value) => Err(anyhow::Error::msg(format!(
+            "{} invalid implicit multiplier, unreachable branch: {value:?}",
+            nu_ansi_term::Color::Red.paint("AST BUG:"),
+        ))),
 
         Value::Decimal(num) => append_to_current_and_return(
             TreeNodeValue::Primitive(Primitive::Double(num)),
