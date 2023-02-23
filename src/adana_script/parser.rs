@@ -1,10 +1,9 @@
 use crate::{
     prelude::{
         all_consuming, alt, delimited, double, many0, many1, map, map_parser,
-        map_res, multispace0, one_of, opt, pair, peek, preceded, recognize,
-        recognize_float, rest, separated_list0, separated_list1,
-        separated_pair, tag, tag_no_case, take_until, take_while1, terminated,
-        tuple, verify, Res, I128,
+        multispace0, one_of, opt, pair, peek, preceded, recognize_float, rest,
+        separated_list0, separated_list1, separated_pair, tag, tag_no_case,
+        take_until, take_while1, terminated, tuple, verify, Res, I128,
     },
     reserved_keywords::check_reserved_keyword,
 };
