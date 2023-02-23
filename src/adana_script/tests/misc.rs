@@ -125,13 +125,13 @@ fn test_modulo() {
     assert_eq!(Primitive::Double(0.625), compute("5/8.%2", &mut ctx).unwrap());
     assert_eq!(
         Primitive::Double(3278.9),
-        compute("2   * (9  *(5-(1 /2.) )  ) ^2 -1 / 5. * 8 - 4 %4", &mut ctx)
+        compute("2   * (9  *(5-(1 /2.) )  )² -1 / 5. * 8 - 4 %4", &mut ctx)
             .unwrap()
     );
     assert_eq!(
         Primitive::Double(-1.1),
         compute(
-            "    2* (9   *(5-(1  /2.)   )) ^2 %2 -1 /5. * 8 - 4 %4",
+            "    2* (9   *(5-(1  /2.)   ))² %2 -1 /5. * 8 - 4 %4",
             &mut ctx
         )
         .unwrap()
@@ -143,11 +143,11 @@ fn test_compute() {
     let mut ctx = BTreeMap::new();
     assert_eq!(
         Primitive::Double(3280.3),
-        compute("x=2* (9*(5-(1./     2.) )) ^2 -1 / 5.", &mut ctx).unwrap()
+        compute("x=2* (9*(5-(1./     2.) ))² -1 / 5.", &mut ctx).unwrap()
     );
     assert_eq!(
         Primitive::Double(3274.9),
-        compute("y = 2* (9*(5-(1/2.))) ^2 -1 / 5. * 8 - 4", &mut ctx).unwrap()
+        compute("y = 2* (9*(5-(1/2.)))² -1 / 5. * 8 - 4", &mut ctx).unwrap()
     );
     assert_eq!(
         Primitive::Double(-670.9548307564088),
@@ -584,5 +584,40 @@ fn test_implicit_multiply() {
     assert_eq!(
         Primitive::Bool(true),
         compute(r#"2*2^0.5*2== 2x^0.5x"#, &mut ctx).unwrap()
+    );
+}
+
+#[test]
+fn test_bug_pow_sugar() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        x = 2
+        4==2x²-2x
+        "#;
+    assert_eq!(Primitive::Bool(true), compute(expr, &mut ctx).unwrap());
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        x = 2
+        12==2x³-2x
+        "#;
+    assert_eq!(Primitive::Bool(true), compute(expr, &mut ctx).unwrap());
+
+    let expr = r#"
+        multiline {
+            1 *2
+            + 5 *sqrt(2) / 2.
+            + 300 / 3
+            * 400 % 2 - (1 * 10³)
+        ==
+            1 *2
+            + 5 *sqrt(2) / 2.
+            + 300 / 3
+            * 400 % 2 - (1 * 10^3)
+        }
+        "#;
+    assert_eq!(Primitive::Bool(true), compute(expr, &mut ctx).unwrap());
+    assert_eq!(
+        Primitive::Bool(true),
+        compute("2x² --2x == 2x²+2x", &mut ctx).unwrap()
     );
 }

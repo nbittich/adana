@@ -97,6 +97,16 @@ pub(super) fn to_ast(
                             new_operations
                                 .push(Value::Operation(Operator::Mult));
                         }
+                        Value::Operation(Operator::Pow2) => {
+                            new_operations
+                                .push(Value::Operation(Operator::Pow));
+                            new_operations.push(Value::Integer(2));
+                        }
+                        Value::Operation(Operator::Pow3) => {
+                            new_operations
+                                .push(Value::Operation(Operator::Pow));
+                            new_operations.push(Value::Integer(3));
+                        }
                         _ => new_operations.push(operation),
                     }
                 }
@@ -118,8 +128,6 @@ pub(super) fn to_ast(
                 .or_else(filter_op(Operator::Mod, &operations))
                 .or_else(filter_op(Operator::Div, &operations))
                 .or_else(filter_op(Operator::Pow, &operations))
-                .or_else(filter_op(Operator::Pow2, &operations))
-                .or_else(filter_op(Operator::Pow3, &operations))
                 .or_else(filter_op(Operator::Not, &operations));
 
             if let Some(op_pos) = op_pos {

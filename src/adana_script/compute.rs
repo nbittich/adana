@@ -92,12 +92,10 @@ fn compute_recur(
                 Ok(left.pow(&right))
             }
             TreeNodeValue::Ops(Operator::Pow2) => {
-                let left = compute_recur(node.first_child(), ctx)?;
-                Ok(left.pow(&Primitive::Int(2)))
+                Err(Error::msg("BUG: unreacheable pow2 in compute!"))
             }
             TreeNodeValue::Ops(Operator::Pow3) => {
-                let left = compute_recur(node.first_child(), ctx)?;
-                Ok(left.pow(&Primitive::Int(3)))
+                Err(Error::msg("BUG: unreacheable pow3 in compute!"))
             }
             TreeNodeValue::Ops(Operator::Div) => {
                 if node.children().count() == 1 {
