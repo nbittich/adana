@@ -103,6 +103,7 @@ pub enum Value {
     EarlyReturn(Box<Option<Value>>),
     Drop(Box<Value>),
     Expression(Vec<Value>),
+    ImplicitMultiply(Box<Value>),
     Operation(Operator),
     BuiltInFunction {
         fn_type: BuiltInFunctionType,

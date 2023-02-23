@@ -1,7 +1,7 @@
 use crate::{
     prelude::{
         all_consuming, alt, delimited, double, many0, many1, map, map_parser,
-        multispace0, one_of, opt, pair, preceded, recognize_float, rest,
+        multispace0, one_of, opt, pair, peek, preceded, recognize_float, rest,
         separated_list0, separated_list1, separated_pair, tag, tag_no_case,
         take_until, take_while1, terminated, tuple, verify, Res, I128,
     },
@@ -506,6 +506,12 @@ fn parse_struct_access(s: &str) -> Res<Value> {
     Ok((new_rest, struc_access))
 }
 
+fn parse_implicit_multiply(s: &str) -> Res<Value> {
+    map(pair(parse_number, peek(parse_variable_str)), |(multiplier, _)| {
+        Value::ImplicitMultiply(Box::new(multiplier))
+    })(s)
+}
+
 fn parse_value(s: &str) -> Res<Value> {
     preceded(
         opt(comments),
@@ -513,6 +519,7 @@ fn parse_value(s: &str) -> Res<Value> {
             alt((
                 parse_block_paren,
                 parse_operation,
+                parse_implicit_multiply,
                 parse_struct,
                 parse_fn_call,
                 parse_struct_access,

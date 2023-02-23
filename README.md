@@ -205,6 +205,17 @@ There are 16 operators & 3 constants:
 
 ```
 
+It is legal in some circumstances to use the multiply operator implicitly.
+It will only work when there is no space between a number (int, decimal) and a variable name.
+
+Example:
+
+```python
+x=2
+3x²+2x== x*(3x+2) # true
+y=0.5x # 1
+```
+
 <hr>
 
 ### Variable definition
