@@ -126,6 +126,7 @@ pub enum Value {
         incl_both_end: bool,
         end: Box<Value>,
     },
+    NoOp,
     String(String),
     FString(String, Vec<(String, Value)>),
     BlockParen(Vec<Value>),
