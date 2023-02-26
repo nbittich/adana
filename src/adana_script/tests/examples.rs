@@ -60,4 +60,5 @@ fn test_example2() {
     let expr = include_str!("../../../examples/example2.adana");
     let res = compute(expr, &mut ctx).unwrap();
     assert_eq!(res, Array(vec![Int(15), Int(1), Int(11), Int(22)]));
+    assert_eq!(compute("fun([1])", &mut ctx).unwrap(), Array(vec![Int(0)]));
 }
