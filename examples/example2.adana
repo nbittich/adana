@@ -1,0 +1,31 @@
+# leet code 2574
+# answers.length == input.length
+# answer[i] = left_sum[i] - righSum[i]
+# where left_sum[i] is the sum of elts of the left of the index i of
+# array input. if no elt, left_sum[i] = 0
+# same for right but at the right
+# e.g: 
+# input = [10,4,8,3]
+# output = [15,1,11,22]
+
+fun =(input) => {
+  len = length(input)
+
+  output = []
+  for i in 0..len {
+    left_sum = 0
+    for j in 0..i {
+       left_sum = left_sum + input[j]
+    }
+    right_sum = 0
+    right_bound = i+1
+    for j in right_bound..len {
+        right_sum = right_sum + input[j]
+    }
+    num = abs(left_sum - right_sum)
+    output = output + num
+  }
+
+  output
+}
+fun([10,4,8,3])

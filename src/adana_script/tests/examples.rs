@@ -1,11 +1,8 @@
 use std::collections::BTreeMap;
 
-use serial_test::serial;
-
 use crate::adana_script::{compute, Primitive::*};
 
 #[test]
-#[serial]
 fn test_example1() {
     let mut ctx = BTreeMap::new();
 
@@ -55,4 +52,12 @@ fn test_example1() {
     );
 
     assert_eq!(ctx["sorted_students"].read().unwrap().clone(), res);
+}
+
+#[test]
+fn test_example2() {
+    let mut ctx = BTreeMap::new();
+    let expr = include_str!("../../../examples/example2.adana");
+    let res = compute(expr, &mut ctx).unwrap();
+    assert_eq!(res, Array(vec![Int(15), Int(1), Int(11), Int(22)]));
 }
