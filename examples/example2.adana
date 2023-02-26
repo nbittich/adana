@@ -8,7 +8,7 @@
 # input = [10,4,8,3]
 # output = [15,1,11,22]
 
-fun =(input) => {
+fun = (input) => {
   len = length(input)
 
   output = []
