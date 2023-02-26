@@ -51,7 +51,7 @@ If you would like to contribute, your pull request would be welcome.
 1. Docker
    - From the docker hub:
      - `docker run -it nbittich/adana # latest from master`
-     - `docker run -it nbittich/adana:0.13.2 # latest release`
+     - `docker run -it nbittich/adana:0.13.18 # latest release`
    - Manually:
      - clone the repo
      - build the docker image: `docker build -t adana .`

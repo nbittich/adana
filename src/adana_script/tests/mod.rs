@@ -1,4 +1,5 @@
 mod builtin;
+mod examples;
 mod foreach;
 mod funct;
 mod misc;

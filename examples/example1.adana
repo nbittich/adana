@@ -1,0 +1,45 @@
+# demo adana
+# press CTRL+X to go to the next line
+
+student_1 = struct {
+      first_name: "John",
+      last_name: "Doe",
+      note: 18
+}
+student_2 = struct {
+      first_name: "Jane",
+      last_name: "Dow",
+      note: 9
+}
+
+student_3 = struct {
+      first_name: "Bryan",
+      last_name: "Bower",
+      note: -10
+}
+
+students = [student_1, student_2, student_3]
+
+sort = (students) => {
+          sorted = false
+          while(!sorted) {
+              sorted = true
+              len = length(students)-1
+              for i in 0..len {
+                  left = students[i]
+                  right = students[i+1]
+                  if(left.note > right.note) {
+                       sorted = false
+                       students[i] = right
+                       students[i+1] = left
+                  }
+              }
+         }
+         students
+}
+
+# sort array of students
+
+sorted_students = sort(students)
+
+
