@@ -686,6 +686,11 @@ fn parse_early_return(s: &str) -> Res<Value> {
 }
 
 pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
+    let (instructions, _) = opt(comments)(instructions)?;
+    let instructions = instructions.trim();
+    if instructions.is_empty() {
+        return Ok((instructions, vec![Value::NoOp]));
+    }
     terminated(
         many1(preceded(
             opt(comments),

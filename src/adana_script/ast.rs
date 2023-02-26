@@ -207,6 +207,11 @@ pub(super) fn to_ast(
                 Ok(tree.root_id())
             }
         }
+        Value::NoOp => append_to_current_and_return(
+            TreeNodeValue::Primitive(Primitive::Unit),
+            tree,
+            curr_node_id,
+        ),
         Value::ImplicitMultiply(value) => Err(anyhow::Error::msg(format!(
             "{} invalid implicit multiplier, unreachable branch: {value:?}",
             nu_ansi_term::Color::Red.paint("AST BUG:"),
