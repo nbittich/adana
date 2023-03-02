@@ -114,6 +114,7 @@ fn start_app(
                     }
                 };
                 match script_res {
+                    Ok(Primitive::Unit) => {}
                     Ok(calc) => println!("{calc}"),
                     Err(calc_err) => {
                         match process_command(
