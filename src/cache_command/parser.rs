@@ -213,7 +213,9 @@ fn dump_command(command: &str) -> Res<CacheCommand> {
             }))
             .and_then(opt(preceded(
                 multispace1,
-                take_while1(|s: char| s.is_alphanumeric() || s == '-'),
+                take_while1(|s: char| {
+                    s.is_alphanumeric() || s == '-' || s == '_'
+                }),
             ))),
         ),
         CacheCommand::Dump,
