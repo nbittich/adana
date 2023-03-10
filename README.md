@@ -44,6 +44,12 @@ Best practices and performance optimization were not a priority, so the code may
 
 If you would like to contribute, your pull request would be welcome.
 
+### Where the name comes from?
+
+My favorite dish 😋
+
+![image](https://user-images.githubusercontent.com/3816305/224366611-1b8963d9-e96f-4804-80a6-d245988d6e65.png)
+
 <hr>
 
 ## Installation

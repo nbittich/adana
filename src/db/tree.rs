@@ -58,7 +58,7 @@ impl<K: Key + Clone, V: Value> Op<K, V> for Tree<K, V> {
     }
 
     fn keys(&self) -> Vec<K> {
-        self.0.keys().into_iter().cloned().collect()
+        self.0.keys().cloned().collect()
     }
 
     fn list_all(&self) -> BTreeMap<K, V> {
