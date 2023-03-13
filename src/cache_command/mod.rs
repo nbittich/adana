@@ -8,6 +8,7 @@ use strum::EnumCount;
 
 pub mod constants {
     pub const PUT: &str = "put";
+    pub const ALIAS: &str = "alias";
     pub const GET: &str = "get";
     pub const DESCRIBE: &str = "describe";
     pub const DESCRIBE_ALT: &str = "ds";
@@ -51,6 +52,7 @@ pub enum CacheCommand<'a> {
     Restore,
     DeleteCache(Option<&'a str>),
     Merge(&'a str),
+    Alias((&'a str, &'a str)),
     Del(&'a str),
     Get(&'a str),
     Exec { key: &'a str, args: Option<&'a str> },
@@ -66,7 +68,7 @@ pub enum CacheCommand<'a> {
 
 impl CacheCommand<'_> {
     pub const fn doc() -> &'static [(&'static [&'static str], &'static str)] {
-        if CacheCommand::COUNT != 20 {
+        if CacheCommand::COUNT != 21 {
             panic!("CacheCommand::doc() no longer valid!");
         }
         &[
@@ -77,6 +79,7 @@ impl CacheCommand<'_> {
             (&[BACKUP, BACKUP_ALT], "Backup the database of namespaces to the current directory"),
             (&[FLUSH], "Flush to database."),
             (&[RESTORE], "Restore the database from current directory"),
+            (&[ALIAS], "Alias a key with another. e.g alias commit gc"),
             (&[DEL_CACHE,DEL_CACHE_ALT], "Delete namespace or clear current namespace values."),
             (&[MERGE_CACHE,MERGE_CACHE_ALT], "Merge current with a given namespace"),
             (&[DEL,DEL_ALT], "Remove value from namespace. Accept either a hashkey or an alias. e.g `del drc`"),
