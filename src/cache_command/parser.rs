@@ -42,6 +42,13 @@ fn get_command(command: &str) -> Res<CacheCommand> {
     map(extract_key(tag_no_case(GET)), CacheCommand::Get)(command)
 }
 
+fn alias_command(command: &str) -> Res<CacheCommand> {
+    map(
+        pair(extract_key(tag_no_case(ALIAS)), extract_command),
+        |(left, right)| CacheCommand::Alias((left, right)),
+    )(command)
+}
+
 fn concat_command(command: &str) -> Res<CacheCommand> {
     map(
         alt((
@@ -187,23 +194,19 @@ fn extract_key<'a, F>(parser: F) -> impl Fn(&'a str) -> Res<&'a str>
 where
     F: Fn(&'a str) -> Res<&'a str>,
 {
-    move |s: &str| {
-        preceded(
-            &parser,
-            preceded(
-                multispace1,
-                take_while1(|s: char| {
-                    s.is_alphanumeric() || s == '-' || s == '_'
-                }),
-            ),
-        )(s)
-    }
+    move |s: &str| preceded(&parser, extract_command)(s)
 }
 
 fn using_command(command: &str) -> Res<CacheCommand> {
     map(extract_key(tag_no_case(USE)), CacheCommand::Using)(command)
 }
 
+fn extract_command(command: &str) -> Res<&str> {
+    preceded(
+        multispace1,
+        take_while1(|s: char| s.is_alphanumeric() || s == '-' || s == '_'),
+    )(command)
+}
 fn dump_command(command: &str) -> Res<CacheCommand> {
     map(
         preceded(
@@ -211,12 +214,7 @@ fn dump_command(command: &str) -> Res<CacheCommand> {
             cut(verify(rest, |s: &str| {
                 s.is_empty() || s.starts_with(' ') || s == "\n"
             }))
-            .and_then(opt(preceded(
-                multispace1,
-                take_while1(|s: char| {
-                    s.is_alphanumeric() || s == '-' || s == '_'
-                }),
-            ))),
+            .and_then(opt(extract_command)),
         ),
         CacheCommand::Dump,
     )(command)
@@ -242,6 +240,7 @@ pub fn parse_command(command: &str) -> Res<CacheCommand> {
             cd_command,
             del_command,
             get_command,
+            alias_command,
             using_command,
             dump_command,
             list_cache_command,

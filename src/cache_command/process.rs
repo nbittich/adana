@@ -34,7 +34,7 @@ pub fn process_command(
                     insert_value(db, current_cache, aliases, value, false)
                 {
                     println!(
-                        "added {} with hash keys {}",
+                        "added {} with keys {}",
                         Yellow.paint(value),
                         Red.paint(key)
                     );
@@ -43,6 +43,46 @@ pub fn process_command(
                         "{}",
                         Red.paint("could not insert! Key already exists")
                     )));
+                }
+            }
+            CacheCommand::Alias((left, right)) => {
+                if check_reserved_keyword(&[right]) {
+                    return Err(anyhow::Error::msg(
+                        format!("{}",Red.paint("You cannot use a reserved keyword name as an alias.")),
+                    ));
+                }
+                match (
+                    get_value(db, current_cache, left),
+                    get_value(db, current_cache, right),
+                ) {
+                    (Some(value), None) => {
+                        if let Some(key) = insert_value(
+                            db,
+                            current_cache,
+                            vec![right],
+                            &value,
+                            false,
+                        ) {
+                            println!(
+                                "aliased {} with keys {}",
+                                Yellow.paint(value),
+                                Red.paint(key)
+                            );
+                        } else {
+                            return Err(anyhow::Error::msg(format!(
+                                "{}",
+                                Red.paint(
+                                    "could not alias! Right Key already exists"
+                                )
+                            )));
+                        }
+                    }
+                    _ => {
+                        return Err(anyhow::Error::msg(format!(
+                            "{}",
+                            Red.paint("could not alias! Wrong combination")
+                        )))
+                    }
                 }
             }
             CacheCommand::Del(key) => {
