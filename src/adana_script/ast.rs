@@ -138,23 +138,6 @@ pub(super) fn to_ast(
                     .or_else(filter_op(Operator::Not, operations))
             };
 
-            // handl special case operator <,>,<=,>=,==, !=
-            let _match_cmp_op = |o: Option<&Value>| {
-                if let Some(o) = o {
-                    matches!(
-                        o,
-                        Value::Operation(Operator::Less)
-                            | Value::Operation(Operator::LessOrEqual)
-                            | Value::Operation(Operator::Greater)
-                            | Value::Operation(Operator::GreaterOrEqual)
-                            | Value::Operation(Operator::Equal)
-                            | Value::Operation(Operator::NotEqual)
-                    )
-                } else {
-                    false
-                }
-            };
-
             let op_pos = get_next_op_pos(&operations);
 
             if let Some(op_pos) = op_pos {
@@ -165,8 +148,17 @@ pub(super) fn to_ast(
 
                 // handle negation
                 if operation == Value::Operation(Operator::Subtr)
-                    && matches!(left.last(), Some(Value::Operation(_)))
+                    && matches!(
+                        left.last(),
+                        Some(
+                            Value::Operation(Operator::Subtr)
+                                | Value::Operation(Operator::Mult)
+                                | Value::Operation(Operator::Pow)
+                                | Value::Operation(Operator::Div)
+                        )
+                    )
                 {
+                    dbg!(&left.last());
                     let right_first = match operations.first() {
                         Some(Value::Decimal(d)) => Some(Value::Decimal(-d)),
                         Some(Value::Integer(d)) => Some(Value::Integer(-d)),
@@ -176,7 +168,8 @@ pub(super) fn to_ast(
                         _ => None,
                     };
                     if let Some(first) = right_first {
-                        operations[0] = first;
+                        operations[0] = first; // override one of the negate operator by the
+                                               // negated value
                         left.append(&mut operations);
                         return to_ast(
                             ctx,
@@ -210,7 +203,10 @@ pub(super) fn to_ast(
 
                 Ok(curr_node_id)
             } else {
-                Err(anyhow::Error::msg("AST ERROR: invalid expression!"))
+                Err(anyhow::Error::msg(format!(
+                    "{} invalid expression!",
+                    nu_ansi_term::Color::Red.paint("AST ERROR:")
+                )))
             }
         }
 
