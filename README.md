@@ -709,6 +709,7 @@ There is no possible interaction with the scripting language yet.
 | print_script_ctx | script_ctx | Print script context                                                                                                                                                                            |
 | store_script_ctx |            | Store script context (optional name) e.g `store_script_ctx 12022023` or `store_script_ctx`                                                                                                      |
 | load_script_ctx  |            | Load script context (optional name) e.g `load_script_ctx 12022023` or `load_script_ctx`                                                                                                         |
+| ast              |            | print ast for script code e.g `ast 9*9`                                                                                                                                                         |
 | help             |            | Display help.                                                                                                                                                                                   |
 
 ### Shortcuts

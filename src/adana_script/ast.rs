@@ -50,7 +50,7 @@ fn filter_op(
     }
 }
 
-pub(super) fn to_ast(
+pub fn to_ast(
     ctx: &mut BTreeMap<String, RefPrimitive>,
     value: Value,
     tree: &mut Tree<TreeNodeValue>,
@@ -340,7 +340,7 @@ pub(super) fn to_ast(
         Value::VariableExpr { name, expr } => {
             anyhow::ensure!(
                 tree.root().is_none(),
-                "invalid variable assignment "
+                "invalid variable assignment, tree root is not none"
             );
             let variable_assign_node = if let Value::Variable(n) = *name {
                 Ok(TreeNodeValue::VariableAssign(Some(n)))

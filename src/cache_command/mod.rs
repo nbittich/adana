@@ -36,6 +36,7 @@ pub mod constants {
     pub const PRINT_SCRIPT_CONTEXT_ALT: &str = "script_ctx";
     pub const STORE_SCRIPT_CONTEXT: &str = "store_script_ctx";
     pub const LOAD_SCRIPT_CONTEXT: &str = "load_script_ctx";
+    pub const PRINT_AST: &str = "ast";
     pub const HELP: &str = "help";
 }
 
@@ -63,17 +64,18 @@ pub enum CacheCommand<'a> {
     PrintScriptContext,
     StoreScriptContext(Option<&'a str>),
     LoadScriptContext(Option<&'a str>),
+    PrintAst(&'a str),
     Help,
 }
 
 impl CacheCommand<'_> {
     pub const fn doc() -> &'static [(&'static [&'static str], &'static str)] {
-        if CacheCommand::COUNT != 21 {
+        if CacheCommand::COUNT != 22 {
             panic!("CacheCommand::doc() no longer valid!");
         }
         &[
             (&[PUT], "Put a new value to current namespace. can have multiple aliases with option '-a'. e.g `put -a drc -a drcomp docker-compose`"),
-            (&[DESCRIBE,DESCRIBE_ALT], "List values within the current namespace."),
+            (&[DESCRIBE,DESCRIBE_ALT], "List values within the current namespace. Optional parameter for searching e.g `ds ssh`"),
             (&[LIST_CACHE, LIST_CACHE_ALT], "List available namespaces."),
             (&[CURR_CACHE, CURR_CACHE_ALT], "Print current namespace."),
             (&[BACKUP, BACKUP_ALT], "Backup the database of namespaces to the current directory"),
@@ -92,6 +94,7 @@ impl CacheCommand<'_> {
             (&[PRINT_SCRIPT_CONTEXT, PRINT_SCRIPT_CONTEXT_ALT], "Print script context"),
             (&[STORE_SCRIPT_CONTEXT], "Store script context (name optional), e.g store_script_ctx 12022023"),
             (&[LOAD_SCRIPT_CONTEXT], "Load script context (name optional), e.g load_script_ctx 12022023"),
+            (&[PRINT_AST], "print ast for script code."),
             (&[HELP], "Display Help."),
         ]
     }

@@ -164,6 +164,15 @@ fn help_command(command: &str) -> Res<CacheCommand> {
     extract_no_args(tag_no_case(HELP), |_| CacheCommand::Help)(command)
 }
 
+fn tag_no_space_no_case<'a>(t: &'a str) -> impl Fn(&'a str) -> Res<&'a str> {
+    move |s: &str| delimited(multispace0, tag_no_case(t), multispace0)(s)
+}
+
+fn print_ast_command(command: &str) -> Res<CacheCommand> {
+    let (rest, _) = tag_no_space_no_case(PRINT_AST)(command)?;
+    Ok(("", CacheCommand::PrintAst(rest)))
+}
+
 fn clear_command(command: &str) -> Res<CacheCommand> {
     extract_no_args(
         |s| alt((tag_no_case(CLEAR), tag_no_case(CLEAR_ALT)))(s),
@@ -262,7 +271,8 @@ pub fn parse_command(command: &str) -> Res<CacheCommand> {
             print_script_context_command,
             store_script_context_command,
             load_script_context_command,
-            exec_command,
+            // max 21 tuples, thus the next commands must be nested into a new alt
+            alt((print_ast_command, exec_command)),
         )),
     )(command)
 }

@@ -5,7 +5,7 @@ use nom::error::ErrorKind;
 use regex::Regex;
 
 use crate::{
-    adana_script::RefPrimitive,
+    adana_script::{print_ast, RefPrimitive},
     db::{DbOp, SCRIPT_CACHE_KEY},
     prelude::colors::*,
     reserved_keywords::{check_reserved_keyword, CACHE_COMMAND_DOC},
@@ -308,6 +308,9 @@ pub fn process_command(
                         Green.paint("Script context restored from cache.")
                     );
                 }
+            }
+            CacheCommand::PrintAst(script) => {
+                print_ast(script)?;
             }
         },
         Err(e) => match e {
