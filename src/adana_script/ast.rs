@@ -154,12 +154,13 @@ pub fn to_ast(
                             Value::Operation(Operator::Subtr)
                                 | Value::Operation(Operator::Mult)
                                 | Value::Operation(Operator::Pow)
+                                | Value::Operation(Operator::Add) // FIXME too tired to think about
+                                                                  // it. Is it needed?
                                 | Value::Operation(Operator::Mod)
                                 | Value::Operation(Operator::Div)
                         )
                     )
                 {
-                    dbg!(&left.last());
                     let right_first = match operations.first() {
                         Some(Value::Decimal(d)) => Some(Value::Decimal(-d)),
                         Some(Value::Integer(d)) => Some(Value::Integer(-d)),
