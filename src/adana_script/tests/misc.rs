@@ -628,6 +628,6 @@ fn bug_javascript_meme() {
     assert_eq!(Primitive::Bool(true), compute("3<2<1", &mut ctx).unwrap()); // FIXME
                                                                             // python returns false
                                                                             // which is correct
-    assert_eq!(Primitive::Bool(false), compute("3>2>1<3", &mut ctx).unwrap()); // this should be
-                                                                               // true
+                                                                            // *mathematically*
+    assert_eq!(Primitive::Bool(false), compute("3>2>1<3", &mut ctx).unwrap());
 }
