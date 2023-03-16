@@ -154,6 +154,7 @@ pub fn to_ast(
                             Value::Operation(Operator::Subtr)
                                 | Value::Operation(Operator::Mult)
                                 | Value::Operation(Operator::Pow)
+                                | Value::Operation(Operator::Mod)
                                 | Value::Operation(Operator::Div)
                         )
                     )
