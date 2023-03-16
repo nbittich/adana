@@ -105,16 +105,6 @@ fn compute_recur(
                 let right = compute_recur(node.last_child(), ctx)?;
                 Ok(left.div(&right))
             }
-            TreeNodeValue::Ops(Operator::Equal) => {
-                if node.children().count() == 1 {
-                    return Err(Error::msg(
-                        "only one value, no '==' comparison possible",
-                    ));
-                }
-                let left = compute_recur(node.first_child(), ctx)?;
-                let right = compute_recur(node.last_child(), ctx)?;
-                Ok(left.is_equal(&right))
-            }
             TreeNodeValue::Ops(Operator::And) => {
                 if node.children().count() == 1 {
                     return Err(Error::msg(
@@ -150,6 +140,16 @@ fn compute_recur(
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
                 Ok(left.or(&right))
+            }
+            TreeNodeValue::Ops(Operator::Equal) => {
+                if node.children().count() == 1 {
+                    return Err(Error::msg(
+                        "only one value, no '==' comparison possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx)?;
+                let right = compute_recur(node.last_child(), ctx)?;
+                Ok(left.is_equal(&right))
             }
             TreeNodeValue::Ops(Operator::NotEqual) => {
                 if node.children().count() == 1 {
@@ -796,7 +796,10 @@ pub fn compute(
     ctx: &mut BTreeMap<String, RefPrimitive>,
 ) -> anyhow::Result<Primitive> {
     let (rest, instructions) = parse_instructions(s).map_err(|e| {
-        anyhow::Error::msg(format!("could not parse instructions. {e}"))
+        anyhow::Error::msg(format!(
+            "{} could not parse instructions. {e}",
+            Red.paint("PARSER ERROR:")
+        ))
     })?;
 
     if cfg!(test) {
@@ -806,7 +809,10 @@ pub fn compute(
 
     anyhow::ensure!(
         rest.trim().is_empty(),
-        format!("{}: {instructions:?} => {rest}", Red.paint("Parsing Error!"))
+        format!(
+            "{} rest is not empty! {instructions:?} => {rest}",
+            Red.paint("PARSING ERROR:")
+        )
     );
 
     compute_instructions(instructions, ctx)

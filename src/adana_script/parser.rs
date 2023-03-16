@@ -2,8 +2,8 @@ use crate::{
     prelude::{
         all_consuming, alt, delimited, double, many0, many1, map, map_parser,
         multispace0, one_of, opt, pair, peek, preceded, recognize_float, rest,
-        separated_list0, separated_list1, separated_pair, tag, tag_no_case,
-        take_until, take_while1, terminated, tuple, verify, Res, I128,
+        separated_list0, separated_list1, separated_pair, tag, take_until,
+        take_while1, terminated, tuple, verify, Res, I128,
     },
     reserved_keywords::check_reserved_keyword,
 };
@@ -24,11 +24,6 @@ pub(super) fn comments(s: &str) -> Res<Vec<&str>> {
 
 fn tag_no_space<'a>(t: &'a str) -> impl Fn(&'a str) -> Res<&'a str> {
     move |s: &str| delimited(multispace0, tag(t), multispace0)(s)
-}
-
-#[allow(dead_code)]
-fn tag_no_space_no_case<'a>(t: &'a str) -> impl Fn(&'a str) -> Res<&'a str> {
-    move |s: &str| delimited(multispace0, tag_no_case(t), multispace0)(s)
 }
 
 fn parse_number(s: &str) -> Res<Value> {
@@ -685,7 +680,7 @@ fn parse_early_return(s: &str) -> Res<Value> {
     })(s)
 }
 
-pub(super) fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
+pub fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
     let (instructions, _) = opt(comments)(instructions)?;
     let instructions = instructions.trim();
     if instructions.is_empty() {

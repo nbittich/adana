@@ -621,3 +621,13 @@ fn test_bug_pow_sugar() {
         compute("2x² --2x == 2x²+2x", &mut ctx).unwrap()
     );
 }
+
+#[test]
+fn bug_javascript_meme() {
+    let mut ctx = BTreeMap::new();
+    assert_eq!(Primitive::Bool(true), compute("3<2<1", &mut ctx).unwrap()); // FIXME
+                                                                            // python returns false
+                                                                            // which is correct
+                                                                            // *mathematically*
+    assert_eq!(Primitive::Bool(false), compute("3>2>1<3", &mut ctx).unwrap());
+}

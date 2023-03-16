@@ -2,9 +2,10 @@ use std::{collections::BTreeMap, path::PathBuf};
 
 use anyhow::Context;
 use nom::error::ErrorKind;
+use regex::Regex;
 
 use crate::{
-    adana_script::RefPrimitive,
+    adana_script::{print_ast, RefPrimitive},
     db::{DbOp, SCRIPT_CACHE_KEY},
     prelude::colors::*,
     reserved_keywords::{check_reserved_keyword, CACHE_COMMAND_DOC},
@@ -176,14 +177,28 @@ pub fn process_command(
                     }
                 }
             }
-            CacheCommand::Describe => {
-                if let Some(values) = list_values(db, current_cache) {
+            CacheCommand::Describe(regex) => {
+                fn print_fn(
+                    values: Vec<(String, String)>,
+                    pred: impl Fn(&str) -> bool,
+                ) {
                     for (key, value) in values {
-                        println!(
-                            "{}\n{}",
-                            Red.bold().underline().paint(key),
-                            LightCyan.italic().paint(value)
-                        );
+                        if pred(&key) {
+                            println!(
+                                "{}\n{}",
+                                Red.bold().underline().paint(key),
+                                LightCyan.italic().paint(value)
+                            );
+                        }
+                    }
+                }
+
+                if let Some(values) = list_values(db, current_cache) {
+                    if let Some(regex) = regex {
+                        let re = Regex::new(regex)?;
+                        print_fn(values, |s| re.is_match(s));
+                    } else {
+                        print_fn(values, |_| true);
                     }
                 }
             }
@@ -293,6 +308,9 @@ pub fn process_command(
                         Green.paint("Script context restored from cache.")
                     );
                 }
+            }
+            CacheCommand::PrintAst(script) => {
+                print_ast(script)?;
             }
         },
         Err(e) => match e {

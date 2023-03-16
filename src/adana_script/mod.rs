@@ -7,11 +7,16 @@ mod primitive;
 use std::collections::BTreeMap;
 
 pub use compute::compute;
+use nu_ansi_term::Color;
 pub use primitive::Primitive;
 pub use primitive::RefPrimitive;
 
 use serde::{Deserialize, Serialize};
+use slab_tree::Tree;
 use strum::EnumCount;
+
+use crate::adana_script::ast::to_ast;
+use crate::adana_script::parser::parse_instructions;
 
 use self::constants::TO_STRING;
 use self::constants::{
@@ -209,7 +214,7 @@ pub enum Operator {
 }
 
 #[derive(Debug)]
-pub(super) enum TreeNodeValue {
+pub enum TreeNodeValue {
     Break,
     EarlyReturn(Option<Value>),
     Drop(Vec<Value>),
@@ -281,5 +286,38 @@ impl Operator {
     }
 }
 
+pub fn print_ast(script: &str) -> anyhow::Result<()> {
+    let (rest, instructions) = parse_instructions(script).map_err(|e| {
+        anyhow::Error::msg(format!(
+            "{} could not parse instructions. {e}",
+            Color::Red.paint("PRINT AST ERROR:")
+        ))
+    })?;
+
+    anyhow::ensure!(
+        rest.trim().is_empty(),
+        format!(
+            "{} rest is not empty! {instructions:?} => {rest}",
+            Color::Red.paint("PRINT AST ERROR:")
+        )
+    );
+
+    let mut dummy_ctx = BTreeMap::new();
+    for instruction in instructions {
+        let mut tree: Tree<TreeNodeValue> = Tree::new();
+
+        println!("==================INSTRUCTION================");
+        println!("{instruction:?}");
+        to_ast(&mut dummy_ctx, instruction, &mut tree, &None)?;
+
+        let mut tree_fmt = String::new();
+        tree.write_formatted(&mut tree_fmt)?;
+        println!("===================AST TREE==================");
+        print!("{tree_fmt}");
+    }
+    Ok(())
+}
+
+// keep this
 #[cfg(test)]
 mod tests;

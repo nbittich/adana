@@ -50,7 +50,7 @@ fn filter_op(
     }
 }
 
-pub(super) fn to_ast(
+pub fn to_ast(
     ctx: &mut BTreeMap<String, RefPrimitive>,
     value: Value,
     tree: &mut Tree<TreeNodeValue>,
@@ -120,22 +120,25 @@ pub(super) fn to_ast(
                 }
             }
 
-            let op_pos = None
-                .or_else(filter_op(Operator::Or, &operations))
-                .or_else(filter_op(Operator::And, &operations))
-                .or_else(filter_op(Operator::GreaterOrEqual, &operations))
-                .or_else(filter_op(Operator::LessOrEqual, &operations))
-                .or_else(filter_op(Operator::Greater, &operations))
-                .or_else(filter_op(Operator::Less, &operations))
-                .or_else(filter_op(Operator::Equal, &operations))
-                .or_else(filter_op(Operator::NotEqual, &operations))
-                .or_else(filter_op(Operator::Add, &operations))
-                .or_else(filter_op(Operator::Subtr, &operations))
-                .or_else(filter_op(Operator::Mult, &operations))
-                .or_else(filter_op(Operator::Mod, &operations))
-                .or_else(filter_op(Operator::Div, &operations))
-                .or_else(filter_op(Operator::Pow, &operations))
-                .or_else(filter_op(Operator::Not, &operations));
+            let get_next_op_pos = |operations: &Vec<Value>| {
+                None.or_else(filter_op(Operator::Or, operations))
+                    .or_else(filter_op(Operator::And, operations))
+                    .or_else(filter_op(Operator::GreaterOrEqual, operations))
+                    .or_else(filter_op(Operator::LessOrEqual, operations))
+                    .or_else(filter_op(Operator::Greater, operations))
+                    .or_else(filter_op(Operator::Less, operations))
+                    .or_else(filter_op(Operator::Equal, operations))
+                    .or_else(filter_op(Operator::NotEqual, operations))
+                    .or_else(filter_op(Operator::Add, operations))
+                    .or_else(filter_op(Operator::Subtr, operations))
+                    .or_else(filter_op(Operator::Mult, operations))
+                    .or_else(filter_op(Operator::Mod, operations))
+                    .or_else(filter_op(Operator::Div, operations))
+                    .or_else(filter_op(Operator::Pow, operations))
+                    .or_else(filter_op(Operator::Not, operations))
+            };
+
+            let op_pos = get_next_op_pos(&operations);
 
             if let Some(op_pos) = op_pos {
                 let mut left: Vec<Value> =
@@ -145,7 +148,18 @@ pub(super) fn to_ast(
 
                 // handle negation
                 if operation == Value::Operation(Operator::Subtr)
-                    && matches!(left.last(), Some(Value::Operation(_)))
+                    && matches!(
+                        left.last(),
+                        Some(
+                            Value::Operation(Operator::Subtr)
+                                | Value::Operation(Operator::Mult)
+                                | Value::Operation(Operator::Pow)
+                                | Value::Operation(Operator::Add) // FIXME too tired to think about
+                                                                  // it. Is it needed?
+                                | Value::Operation(Operator::Mod)
+                                | Value::Operation(Operator::Div)
+                        )
+                    )
                 {
                     let right_first = match operations.first() {
                         Some(Value::Decimal(d)) => Some(Value::Decimal(-d)),
@@ -156,7 +170,8 @@ pub(super) fn to_ast(
                         _ => None,
                     };
                     if let Some(first) = right_first {
-                        operations[0] = first;
+                        operations[0] = first; // override one of the negate operator by the
+                                               // negated value
                         left.append(&mut operations);
                         return to_ast(
                             ctx,
@@ -169,8 +184,8 @@ pub(super) fn to_ast(
 
                 if cfg!(test) {
                     println!("Left => {left:?}");
-                    println!("Right => {operation:?}");
                     println!("Op => {operation:?}");
+                    println!("Right => {operations:?}");
                     println!();
                 }
 
@@ -179,14 +194,21 @@ pub(super) fn to_ast(
                 to_ast(ctx, Value::BlockParen(left), tree, &curr_node_id)?;
                 to_ast(
                     ctx,
-                    Value::BlockParen(operations),
+                    if operations.len() == 1 {
+                        operations.remove(0)
+                    } else {
+                        Value::BlockParen(operations)
+                    },
                     tree,
                     &curr_node_id,
                 )?;
 
                 Ok(curr_node_id)
             } else {
-                Err(anyhow::Error::msg("AST ERROR: invalid expression!"))
+                Err(anyhow::Error::msg(format!(
+                    "{} invalid expression!",
+                    nu_ansi_term::Color::Red.paint("AST ERROR:")
+                )))
             }
         }
 
@@ -320,7 +342,7 @@ pub(super) fn to_ast(
         Value::VariableExpr { name, expr } => {
             anyhow::ensure!(
                 tree.root().is_none(),
-                "invalid variable assignment "
+                "invalid variable assignment, tree root is not none"
             );
             let variable_assign_node = if let Value::Variable(n) = *name {
                 Ok(TreeNodeValue::VariableAssign(Some(n)))
