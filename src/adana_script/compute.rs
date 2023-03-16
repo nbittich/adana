@@ -105,16 +105,6 @@ fn compute_recur(
                 let right = compute_recur(node.last_child(), ctx)?;
                 Ok(left.div(&right))
             }
-            TreeNodeValue::Ops(Operator::Equal) => {
-                if node.children().count() == 1 {
-                    return Err(Error::msg(
-                        "only one value, no '==' comparison possible",
-                    ));
-                }
-                let left = compute_recur(node.first_child(), ctx)?;
-                let right = compute_recur(node.last_child(), ctx)?;
-                Ok(left.is_equal(&right))
-            }
             TreeNodeValue::Ops(Operator::And) => {
                 if node.children().count() == 1 {
                     return Err(Error::msg(
@@ -150,6 +140,16 @@ fn compute_recur(
                 let left = compute_recur(node.first_child(), ctx)?;
                 let right = compute_recur(node.last_child(), ctx)?;
                 Ok(left.or(&right))
+            }
+            TreeNodeValue::Ops(Operator::Equal) => {
+                if node.children().count() == 1 {
+                    return Err(Error::msg(
+                        "only one value, no '==' comparison possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx)?;
+                let right = compute_recur(node.last_child(), ctx)?;
+                Ok(left.is_equal(&right))
             }
             TreeNodeValue::Ops(Operator::NotEqual) => {
                 if node.children().count() == 1 {

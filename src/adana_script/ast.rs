@@ -120,22 +120,42 @@ pub(super) fn to_ast(
                 }
             }
 
-            let op_pos = None
-                .or_else(filter_op(Operator::Or, &operations))
-                .or_else(filter_op(Operator::And, &operations))
-                .or_else(filter_op(Operator::GreaterOrEqual, &operations))
-                .or_else(filter_op(Operator::LessOrEqual, &operations))
-                .or_else(filter_op(Operator::Greater, &operations))
-                .or_else(filter_op(Operator::Less, &operations))
-                .or_else(filter_op(Operator::Equal, &operations))
-                .or_else(filter_op(Operator::NotEqual, &operations))
-                .or_else(filter_op(Operator::Add, &operations))
-                .or_else(filter_op(Operator::Subtr, &operations))
-                .or_else(filter_op(Operator::Mult, &operations))
-                .or_else(filter_op(Operator::Mod, &operations))
-                .or_else(filter_op(Operator::Div, &operations))
-                .or_else(filter_op(Operator::Pow, &operations))
-                .or_else(filter_op(Operator::Not, &operations));
+            let get_next_op_pos = |operations: &Vec<Value>| {
+                None.or_else(filter_op(Operator::Or, operations))
+                    .or_else(filter_op(Operator::And, operations))
+                    .or_else(filter_op(Operator::GreaterOrEqual, operations))
+                    .or_else(filter_op(Operator::LessOrEqual, operations))
+                    .or_else(filter_op(Operator::Greater, operations))
+                    .or_else(filter_op(Operator::Less, operations))
+                    .or_else(filter_op(Operator::Equal, operations))
+                    .or_else(filter_op(Operator::NotEqual, operations))
+                    .or_else(filter_op(Operator::Add, operations))
+                    .or_else(filter_op(Operator::Subtr, operations))
+                    .or_else(filter_op(Operator::Mult, operations))
+                    .or_else(filter_op(Operator::Mod, operations))
+                    .or_else(filter_op(Operator::Div, operations))
+                    .or_else(filter_op(Operator::Pow, operations))
+                    .or_else(filter_op(Operator::Not, operations))
+            };
+
+            // handl special case operator <,>,<=,>=,==, !=
+            let _match_cmp_op = |o: Option<&Value>| {
+                if let Some(o) = o {
+                    matches!(
+                        o,
+                        Value::Operation(Operator::Less)
+                            | Value::Operation(Operator::LessOrEqual)
+                            | Value::Operation(Operator::Greater)
+                            | Value::Operation(Operator::GreaterOrEqual)
+                            | Value::Operation(Operator::Equal)
+                            | Value::Operation(Operator::NotEqual)
+                    )
+                } else {
+                    false
+                }
+            };
+
+            let op_pos = get_next_op_pos(&operations);
 
             if let Some(op_pos) = op_pos {
                 let mut left: Vec<Value> =
@@ -169,8 +189,8 @@ pub(super) fn to_ast(
 
                 if cfg!(test) {
                     println!("Left => {left:?}");
-                    println!("Right => {operation:?}");
                     println!("Op => {operation:?}");
+                    println!("Right => {operations:?}");
                     println!();
                 }
 
@@ -179,7 +199,11 @@ pub(super) fn to_ast(
                 to_ast(ctx, Value::BlockParen(left), tree, &curr_node_id)?;
                 to_ast(
                     ctx,
-                    Value::BlockParen(operations),
+                    if operations.len() == 1 {
+                        operations.remove(0)
+                    } else {
+                        Value::BlockParen(operations)
+                    },
                     tree,
                     &curr_node_id,
                 )?;

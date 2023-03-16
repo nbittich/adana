@@ -44,7 +44,7 @@ pub use constants::*;
 #[derive(Debug, EnumCount)]
 pub enum CacheCommand<'a> {
     Put { aliases: Vec<&'a str>, value: &'a str },
-    Describe,
+    Describe(Option<&'a str>),
     ListCache,
     CurrentCache,
     Backup,

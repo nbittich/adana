@@ -141,9 +141,15 @@ fn cd_command(command: &str) -> Res<CacheCommand> {
 }
 
 fn list_command(command: &str) -> Res<CacheCommand> {
-    extract_no_args(
-        |s| alt((tag_no_case(DESCRIBE), tag_no_case(DESCRIBE_ALT)))(s),
-        |_| CacheCommand::Describe,
+    map(
+        preceded(
+            |s| alt((tag_no_case(DESCRIBE), tag_no_case(DESCRIBE_ALT)))(s),
+            cut(verify(rest, |s: &str| {
+                s.is_empty() || s.starts_with(' ') || s == "\n"
+            }))
+            .and_then(opt(extract_command)),
+        ),
+        CacheCommand::Describe,
     )(command)
 }
 
