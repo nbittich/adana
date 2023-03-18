@@ -54,15 +54,19 @@ My favorite dish 😋
 
 ## Installation
 
-1. Docker
+1. Static binary
+   - Download the latest statically linked binary available in `static_binaries` 
+   (only tested with Linux)
+   -  make the binary executable : `chmod a+x adana-<version>`
+2. Docker
    - From the docker hub:
      - `docker run -it nbittich/adana # latest from master`
-     - `docker run -it nbittich/adana:0.13.18 # latest release`
+     - `docker run -it nbittich/adana:0.13.23 # latest release`
    - Manually:
      - clone the repo
      - build the docker image: `docker build -t adana .`
      - `docker run -it adana`
-2. Cargo
+3. Cargo
    - From crate.io:
      - `cargo install adana`
      - `adana`
