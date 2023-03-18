@@ -9,7 +9,7 @@ use rustyline::{
     Cmd, CompletionType, Config, EditMode, Editor, KeyEvent, Movement,
 };
 use rustyline_derive::*;
-use std::path::{Path, PathBuf};
+use std::path::{Path, PathBuf, MAIN_SEPARATOR};
 use std::process::Command;
 
 use crate::adana_script::constants::PI;
@@ -38,6 +38,7 @@ pub fn read_line(
 ) -> Result<String, rustyline::error::ReadlineError> {
     use nu_ansi_term::Color;
     let bold_white = Color::White.bold();
+    let mut character_count = curr_cache.len();
     let mut line = format!(
         "{}{}",
         bold_white.paint("["),
@@ -45,38 +46,81 @@ pub fn read_line(
     );
 
     // show current dir & replace home dir by ~
-    if let Ok(path) = std::env::current_dir() {
+    let path = if let Ok(path) = std::env::current_dir() {
         let path = path.to_string_lossy().to_string();
         let home = dirs::home_dir()
             .unwrap_or(PathBuf::new())
             .to_string_lossy()
             .to_string();
         let path = path.replace(&home, "~");
-        line += &format!("::{}", Color::LightBlue.paint(path));
-    }
+        character_count += path.len();
+        Some(path)
+    } else {
+        None
+    };
 
     // show current git branch
-    let git_cmd = Command::new("git")
-        .args(["rev-parse", "--abbrev-ref", "HEAD"])
-        .output();
-    match git_cmd {
-        Ok(out) => {
-            let branch = String::from_utf8_lossy(&out.stdout);
-            let branch = branch.trim();
-            if !branch.is_empty() {
-                let branch = format!("({branch})");
-                line += &format!("{}", Color::LightMagenta.paint(branch));
+    let branch = {
+        let git_cmd = Command::new("git")
+            .args(["rev-parse", "--abbrev-ref", "HEAD"])
+            .output();
+        match git_cmd {
+            Ok(out) => {
+                let branch = String::from_utf8_lossy(&out.stdout);
+                let branch = branch.trim();
+                if !branch.is_empty() {
+                    let branch = format!("({branch})");
+                    character_count += branch.len();
+                    Some(branch)
+                } else {
+                    None
+                }
             }
-        }
-        Err(e) => {
-            debug!(
+            Err(e) => {
+                debug!(
                 "Could not determine git current branch. Is git installed? {e}"
             );
+                None
+            }
+        }
+    };
+    if let Some((w, _)) = rl.dimensions() {
+        let path = if let Some(path) = &path { path } else { "" };
+        let branch = if let Some(branch) = &branch { branch } else { "" };
+        let real_w = w / 2;
+        if real_w > character_count {
+            line += &format!(
+                "{}{}",
+                Color::LightBlue.paint(path),
+                Color::LightMagenta.paint(branch)
+            );
+        } else {
+            let shorter_path = {
+                // we try to keep only the last part of the path
+                if let Some(path) = path.split(MAIN_SEPARATOR).last() {
+                    path
+                } else {
+                    ""
+                }
+            };
+
+            if real_w > curr_cache.len() + branch.len() + shorter_path.len() {
+                line += &format!(
+                    "~{}{}",
+                    Color::LightBlue.paint(shorter_path),
+                    Color::LightMagenta.paint(branch)
+                );
+            } else if real_w > curr_cache.len() + branch.len() {
+                line += &format!("{}", Color::LightMagenta.paint(branch));
+            } else if real_w > curr_cache.len() + path.len() {
+                line += &format!("{}", Color::LightBlue.paint(path));
+            } else if real_w > curr_cache.len() + shorter_path.len() {
+                line += &format!("~/{}", Color::LightBlue.paint(shorter_path),);
+            }
         }
     }
 
     line += &format!("{} ", bold_white.paint("]"));
-
     rl.readline(&line)
 }
 

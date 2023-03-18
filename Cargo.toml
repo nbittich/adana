@@ -1,13 +1,13 @@
 [package]
 name = "adana"
-version = "0.13.22"
+version = "0.13.23"
 edition = "2021"
 authors = ["Nordine Bittich"]
 license = "MIT"
 description = "namespaces aliases for command lines & basic scripting language"
 homepage = "https://github.com/nbittich/adana"
 readme = "README.md"
-exclude = ["vscode/","dist/", ".vscode", ".history", ".git", ".github"]
+exclude = ["vscode/","dist/", ".vscode", ".history", ".git", ".github", "static_binaries/"]
 
 [dependencies]
 anyhow = "1.0.70"
@@ -23,11 +23,14 @@ serde_json = "1.0.94"
 slab_tree = "0.3.2"
 strum = { version = "0.24.1", features = ["derive"] }
 ctrlc = "3.2.5"
-regex = "1.7.1"
 [dependencies.env_logger]
 default-features = false
 version = "0.10.0"
-
+[dependencies.regex]
+version = "1.7.1"
+default-features = false
+# regex currently requires the standard library, you must re-enable it.
+features = ["std"]
 
 [profile.release]
 opt-level = 'z'  # Optimize for size.
