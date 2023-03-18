@@ -55,7 +55,6 @@ pub fn read_line(
         let path = path.replace(&home, "~");
         character_count += path.len();
         Some(path)
-        //line += &format!("::{}", Color::LightBlue.paint(path));
     } else {
         None
     };
@@ -73,7 +72,6 @@ pub fn read_line(
                     let branch = format!("({branch})");
                     character_count += branch.len();
                     Some(branch)
-                    // line += &format!("{}", Color::LightMagenta.paint(branch));
                 } else {
                     None
                 }
@@ -96,26 +94,29 @@ pub fn read_line(
                 Color::LightBlue.paint(path),
                 Color::LightMagenta.paint(branch)
             );
-        } else if real_w > curr_cache.len() + branch.len() {
-            let path = {
+        } else {
+            let shorter_path = {
                 // we try to keep only the last part of the path
                 if let Some(path) = path.split(MAIN_SEPARATOR).last() {
-                    if real_w > curr_cache.len() + branch.len() + path.len() {
-                        path
-                    } else {
-                        ""
-                    }
+                    path
                 } else {
                     ""
                 }
             };
-            line += &format!(
-                "~{}{}",
-                Color::LightBlue.paint(path),
-                Color::LightMagenta.paint(branch)
-            );
-        } else if real_w > curr_cache.len() + path.len() {
-            line += &format!("{}", Color::LightBlue.paint(path));
+
+            if real_w > curr_cache.len() + branch.len() + shorter_path.len() {
+                line += &format!(
+                    "~{}{}",
+                    Color::LightBlue.paint(shorter_path),
+                    Color::LightMagenta.paint(branch)
+                );
+            } else if real_w > curr_cache.len() + branch.len() {
+                line += &format!("{}", Color::LightMagenta.paint(branch));
+            } else if real_w > curr_cache.len() + path.len() {
+                line += &format!("{}", Color::LightBlue.paint(path));
+            } else if real_w > curr_cache.len() + shorter_path.len() {
+                line += &format!("~/{}", Color::LightBlue.paint(shorter_path),);
+            }
         }
     }
 
