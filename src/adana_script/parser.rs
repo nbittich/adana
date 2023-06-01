@@ -348,7 +348,7 @@ pub(super) fn parse_struct(s: &str) -> Res<Value> {
         map(
             delimited(
                 tag_no_space("{"),
-                many1(preceded(
+                many0(preceded(
                     opt(comments),
                     terminated(pair_key_value, opt(tag_no_space(","))),
                 )),

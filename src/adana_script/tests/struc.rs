@@ -259,3 +259,15 @@ fn test_struct_access_key5() {
     let r = compute(expr, &mut ctx).unwrap();
     assert_eq!(r, Primitive::String("nordine".into()));
 }
+
+#[test]
+fn test_struct_empty() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        s = struct {}
+        s.x = "nordine"
+        s.x
+       "#;
+    let r = compute(expr, &mut ctx).unwrap();
+    assert_eq!(r, Primitive::String("nordine".into()));
+}
