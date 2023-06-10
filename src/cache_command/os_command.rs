@@ -53,30 +53,51 @@ fn extract_program(s: &str) -> Res<&str> {
 pub fn exec_command<'a>(
     command: &'a str,
     extra_args: &'a Option<&'a str>,
+    bash_command: bool,
 ) -> Res<'a, ()> {
-    let (remaining, envs) = extract_envs(command)?;
-    let (remaining, program) = extract_program(remaining)?;
+    let handle = {
+        if bash_command {
+            Command::new("bash")
+                .args([
+                    "-c",
+                    &format!(
+                        "{command} {}",
+                        if let Some(extra_args) = extra_args {
+                            extra_args
+                        } else {
+                            ""
+                        }
+                    ),
+                ])
+                .stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
+                .spawn()
+        } else {
+            let (remaining, envs) = extract_envs(command)?;
+            let (remaining, program) = extract_program(remaining)?;
 
-    let (_, mut args) = extract_args(remaining)?;
+            let (_, mut args) = extract_args(remaining)?;
 
-    if let Some(extra_args) = extra_args {
-        let (_, mut extra_args) = extract_args(extra_args)?;
-        args.append(&mut extra_args);
-    }
+            if let Some(extra_args) = extra_args {
+                let (_, mut extra_args) = extract_args(extra_args)?;
+                args.append(&mut extra_args);
+            }
 
-    let handle = Command::new(program)
-        .envs(envs)
-        .args(&args)
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .spawn();
+            Command::new(program)
+                .envs(envs)
+                .args(&args)
+                .stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
+                .spawn()
+        }
+    };
 
     match handle.and_then(|mut h| h.wait()) {
         Ok(status) => {
             debug!("{status}");
         }
         Err(e) => {
-            eprintln!("{program} failed to start with args {args:?}. err: {e}")
+            eprintln!("{command} failed to start. err: {e}")
         }
     }
 
@@ -89,7 +110,7 @@ mod test {
 
     #[test]
     fn test_exec_command() {
-        exec_command("echo 'hello world'", &None).unwrap();
+        exec_command("echo 'hello world'", &None, false).unwrap();
         println!("bye")
     }
 }

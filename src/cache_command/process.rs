@@ -108,10 +108,12 @@ pub fn process_command(
             }
             CacheCommand::Exec { key, args } => {
                 if let Some(value) = get_value(db, current_cache, key) {
-                    let _ = exec_command(&value, &args)
+                    let _ = exec_command(&value, &args, false)
                         .map_err(|e| anyhow::Error::msg(e.to_string()))?;
                 } else if !key.trim().is_empty() {
-                    return Err(anyhow::Error::msg(format!("{key} not found")));
+                    exec_command(key, &args, true)
+                        .map_err(|e| anyhow::Error::msg(e.to_string()))?;
+                    //return Err(anyhow::Error::msg(format!("{key} not found")));
                 }
             }
             CacheCommand::Using(key) => {
