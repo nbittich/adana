@@ -22,6 +22,7 @@ pub fn process_command(
     db: &mut impl DbOp<String, String>,
     script_context: &mut BTreeMap<String, RefPrimitive>,
     current_cache: &mut String,
+    previous_dir: &mut PathBuf,
     line: &str,
 ) -> anyhow::Result<()> {
     match parse_command(line) {
@@ -230,20 +231,28 @@ pub fn process_command(
                     );
                 }
             }
-            CacheCommand::Cd { path, has_tilde } => {
-                let path_buf = path
-                    .and_then(|p| {
-                        if has_tilde {
-                            dirs::home_dir().map(|hd| hd.join(p))
-                        } else {
-                            Some(PathBuf::from(p))
+            CacheCommand::Cd(cdt) => {
+                let path_buf = {
+                    match cdt {
+                        super::ChangeDirectoryType::HomeDirectory(path) => {
+                             path.and_then(|p| {
+                                dirs::home_dir().map(|hd| hd.join(p))
+                            })
+                            .or_else(dirs::home_dir)
+                            .context(
+                              "could not change directory. path {path:?} not found!",
+                            )?
                         }
-                    })
-                    .or_else(dirs::home_dir)
-                    .context(
-                        "could not change directory. path {path:?} not found!",
-                    )?;
+                        super::ChangeDirectoryType::Path(path) => {
+                            PathBuf::from(path)
+                        }
+                        super::ChangeDirectoryType::Previous => {
+                            previous_dir.clone()
+                        },
+                    }
+                };
                 if path_buf.exists() {
+                    *previous_dir = std::env::current_dir()?;
                     std::env::set_current_dir(path_buf.as_path())?;
                 } else {
                     return Err(anyhow::Error::msg(format!(

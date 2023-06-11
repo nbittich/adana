@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-use super::{constants::*, CacheCommand};
+use super::{constants::*, CacheCommand, ChangeDirectoryType};
 
 fn add_command(command: &str) -> Res<CacheCommand> {
     map(
@@ -131,32 +131,49 @@ fn cd_command(command: &str) -> Res<CacheCommand> {
     map(
         preceded(
             tag_no_case(CD),
-            opt(preceded(
-                multispace1,
-                pair(
-                    map(
-                        opt(preceded(
-                            multispace0,
-                            terminated(tag("~"), opt(tag("/"))),
-                        )),
-                        |h| h.is_some(),
+            alt((
+                map(
+                    verify(rest.map(|r: &str| r.trim()), |s: &str| {
+                        s.is_empty()
+                    }),
+                    |_| ChangeDirectoryType::HomeDirectory(None),
+                ),
+                map(preceded(multispace1, tag("-")), |_| {
+                    ChangeDirectoryType::Previous
+                }),
+                map(
+                    preceded(
+                        multispace1,
+                        pair(
+                            map(
+                                opt(preceded(
+                                    multispace0,
+                                    terminated(tag("~"), opt(tag("/"))),
+                                )),
+                                |h| h.is_some(),
+                            ),
+                            opt(preceded(
+                                multispace0,
+                                verify(
+                                    rest.map(|r: &str| r.trim()),
+                                    |s: &str| !s.is_empty(),
+                                ),
+                            )),
+                        ),
                     ),
-                    opt(preceded(
-                        multispace0,
-                        verify(rest.map(|r: &str| r.trim()), |s: &str| {
-                            !s.is_empty()
-                        }),
-                    )),
+                    |(has_tilde, path)| {
+                        if has_tilde {
+                            ChangeDirectoryType::HomeDirectory(path)
+                        } else if let Some(path) = path {
+                            ChangeDirectoryType::Path(path)
+                        } else {
+                            ChangeDirectoryType::HomeDirectory(None)
+                        }
+                    },
                 ),
             )),
         ),
-        |op| {
-            if let Some((has_tilde, path)) = op {
-                CacheCommand::Cd { has_tilde, path }
-            } else {
-                CacheCommand::Cd { has_tilde: false, path: None }
-            }
-        },
+        CacheCommand::Cd,
     )(command)
 }
 

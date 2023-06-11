@@ -88,14 +88,16 @@ fn start_app(
     };
     let mut rl = editor::build_editor(history_path);
     let mut script_context = BTreeMap::new();
+    let mut previous_dir = std::env::current_dir()?;
+
     if let Some(dc) = default_cache {
         process_command(
             db,
             &mut script_context,
             &mut current_cache,
+            &mut previous_dir,
             &format!("use {dc}"),
-        )
-        .unwrap();
+        )?;
     }
     loop {
         let readline = editor::read_line(&mut rl, &current_cache);
@@ -121,6 +123,7 @@ fn start_app(
                             db,
                             &mut script_context,
                             &mut current_cache,
+                            &mut previous_dir,
                             &line,
                         ) {
                             Ok(_) => (),

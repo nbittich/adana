@@ -57,7 +57,7 @@ pub enum CacheCommand<'a> {
     Del(&'a str),
     Get(&'a str),
     Exec { key: &'a str, args: Option<&'a str> },
-    Cd { has_tilde: bool, path: Option<&'a str> },
+    Cd(ChangeDirectoryType<'a>),
     Using(&'a str),
     Dump(Option<&'a str>),
     Clear,
@@ -66,6 +66,12 @@ pub enum CacheCommand<'a> {
     LoadScriptContext(Option<&'a str>),
     PrintAst(&'a str),
     Help,
+}
+#[derive(Debug)]
+pub enum ChangeDirectoryType<'a> {
+    HomeDirectory(Option<&'a str>),
+    Path(&'a str),
+    Previous,
 }
 
 impl CacheCommand<'_> {
