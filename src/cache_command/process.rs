@@ -252,7 +252,10 @@ pub fn process_command(
                     }
                 };
                 if path_buf.exists() {
-                    *previous_dir = std::env::current_dir()?;
+                    let current_dir = std::env::current_dir()?;
+                    if current_dir != path_buf {
+                        *previous_dir = current_dir;
+                    }
                     std::env::set_current_dir(path_buf.as_path())?;
                 } else {
                     return Err(anyhow::Error::msg(format!(
