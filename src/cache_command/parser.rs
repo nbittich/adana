@@ -131,7 +131,7 @@ fn cd_command(command: &str) -> Res<CacheCommand> {
     map(
         preceded(
             tag_no_case(CD),
-            preceded(
+            opt(preceded(
                 multispace1,
                 pair(
                     map(
@@ -148,9 +148,15 @@ fn cd_command(command: &str) -> Res<CacheCommand> {
                         }),
                     )),
                 ),
-            ),
+            )),
         ),
-        |(has_tilde, path)| CacheCommand::Cd { has_tilde, path },
+        |op| {
+            if let Some((has_tilde, path)) = op {
+                CacheCommand::Cd { has_tilde, path }
+            } else {
+                CacheCommand::Cd { has_tilde: false, path: None }
+            }
+        },
     )(command)
 }
 

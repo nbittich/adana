@@ -245,10 +245,6 @@ pub fn process_command(
                     )?;
                 if path_buf.exists() {
                     std::env::set_current_dir(path_buf.as_path())?;
-                    // println!(
-                    //     ">> working directory {}",
-                    //     LightMagenta.paint(path_buf.to_string_lossy())
-                    // );
                 } else {
                     return Err(anyhow::Error::msg(format!(
                         "path {} doesn't exist",
