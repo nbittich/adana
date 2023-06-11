@@ -131,12 +131,26 @@ fn cd_command(command: &str) -> Res<CacheCommand> {
     map(
         preceded(
             tag_no_case(CD),
-            opt(preceded(
+            preceded(
                 multispace1,
-                verify(rest.map(|r: &str| r.trim()), |s: &str| !s.is_empty()),
-            )),
+                pair(
+                    map(
+                        opt(preceded(
+                            multispace0,
+                            terminated(tag("~"), opt(tag("/"))),
+                        )),
+                        |h| h.is_some(),
+                    ),
+                    opt(preceded(
+                        multispace0,
+                        verify(rest.map(|r: &str| r.trim()), |s: &str| {
+                            !s.is_empty()
+                        }),
+                    )),
+                ),
+            ),
         ),
-        CacheCommand::Cd,
+        |(has_tilde, path)| CacheCommand::Cd { has_tilde, path },
     )(command)
 }
 

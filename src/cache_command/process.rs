@@ -230,9 +230,17 @@ pub fn process_command(
                     );
                 }
             }
-            CacheCommand::Cd(path) => {
-                let path_buf =
-                    path.map(PathBuf::from).or_else(dirs::home_dir).context(
+            CacheCommand::Cd { path, has_tilde } => {
+                let path_buf = path
+                    .and_then(|p| {
+                        if has_tilde {
+                            dirs::home_dir().map(|hd| hd.join(p))
+                        } else {
+                            Some(PathBuf::from(p))
+                        }
+                    })
+                    .or_else(dirs::home_dir)
+                    .context(
                         "could not change directory. path {path:?} not found!",
                     )?;
                 if path_buf.exists() {
