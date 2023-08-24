@@ -1,4 +1,4 @@
-FROM rust:1.71-bullseye as builder
+FROM nbittich/rust:1.72.0 as builder
 
 WORKDIR /app
 

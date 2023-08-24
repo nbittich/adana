@@ -364,8 +364,12 @@ fn compute_recur(
                         Ok(v.index_at(&index))
                     }
                     (Value::Array(array), index) => {
-                        let Primitive::Int(index) = compute_lazy(index.clone(), ctx)? else {
-                           return Err(anyhow::format_err!("COMPUTE: illegal array access! {index:?}"));
+                        let Primitive::Int(index) =
+                            compute_lazy(index.clone(), ctx)?
+                        else {
+                            return Err(anyhow::format_err!(
+                                "COMPUTE: illegal array access! {index:?}"
+                            ));
                         };
 
                         let index = index as usize;
