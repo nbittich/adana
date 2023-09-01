@@ -1,8 +1,8 @@
 mod ast;
 mod compute;
-
 mod parser;
 mod primitive;
+mod string_parser;
 
 use std::collections::BTreeMap;
 

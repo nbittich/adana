@@ -801,7 +801,7 @@ pub fn compute(
 ) -> anyhow::Result<Primitive> {
     let (rest, instructions) = parse_instructions(s).map_err(|e| {
         anyhow::Error::msg(format!(
-            "{} could not parse instructions. {e}",
+            "{} could not parse instructions. \n{e:?} => {e}",
             Red.paint("PARSER ERROR:")
         ))
     })?;

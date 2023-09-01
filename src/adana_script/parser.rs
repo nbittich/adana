@@ -1,3 +1,5 @@
+use nom::error::{Error, ErrorKind};
+
 use crate::{
     prelude::{
         all_consuming, alt, delimited, double, many0, many1, map, map_parser,
@@ -12,6 +14,7 @@ use super::{
     constants::{
         BREAK, DROP, ELSE, FOR, IF, IN, MULTILINE, NULL, RETURN, STRUCT, WHILE,
     },
+    string_parser::parse_escaped_string,
     BuiltInFunctionType, MathConstants, Operator, Value,
 };
 
@@ -69,12 +72,21 @@ fn parse_bool(s: &str) -> Res<Value> {
 fn parse_fstring(s: &str) -> Res<Value> {
     const DELIMITER_F_STRING: &str = r#"""""#;
     let delimiter = |x| tag(DELIMITER_F_STRING)(x);
-    let take_unless = |x| take_until(DELIMITER_F_STRING)(x);
-    let (rest, content) =
-        preceded(delimiter, terminated(take_unless, delimiter))(s)?;
+    let (rest, content) = preceded(
+        delimiter,
+        terminated(
+            map(take_until(DELIMITER_F_STRING), |s: &str| {
+                s.replace("\\n", "\n")
+                    .replace("\\t", "\t")
+                    .replace("\\r", "\r")
+                    .replace("\\\\", "\\")
+            }),
+            delimiter,
+        ),
+    )(s)?;
     let mut parameters = vec![];
 
-    let mut param_rest = content;
+    let mut param_rest = content.as_ref();
 
     while let Ok((pr, param_str)) = preceded(
         take_until("${"),
@@ -86,30 +98,26 @@ fn parse_fstring(s: &str) -> Res<Value> {
     )(param_rest)
     {
         param_rest = pr;
-        let (_, param_value) = parse_expression(param_str)?;
-        parameters.push((format!("${{{param_str}}}"), param_value));
+        match parse_expression(param_str) {
+            Ok((_, param_value)) => {
+                parameters.push((format!("${{{param_str}}}"), param_value));
+            }
+            Err(e) => {
+                eprintln!("{e}");
+                let err = nom::error::make_error::<&str, Error<&str>>(
+                    "could not parse f string.",
+                    ErrorKind::IsNot,
+                );
+                return Err(nom::Err::Error(err));
+            }
+        }
     }
 
-    Ok((
-        rest,
-        Value::FString(
-            content
-                .replace("\\n", "\n")
-                .replace("\\t", "\t")
-                .replace("\\r", "\r")
-                .replace("\\\\", "\\"),
-            parameters,
-        ),
-    ))
+    Ok((rest, Value::FString(content, parameters)))
 }
 fn parse_string(s: &str) -> Res<Value> {
-    map(delimited(tag("\""), take_until("\""), tag("\"")), |s: &str| {
-        Value::String(
-            s.replace("\\n", "\n")
-                .replace("\\t", "\t")
-                .replace("\\r", "\r")
-                .replace("\\\\", "\\"),
-        )
+    map(delimited(tag("\""), parse_escaped_string, tag("\"")), |s| {
+        Value::String(s.into_owned())
     })(s)
 }
 

@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use crate::adana_script::{compute, Primitive};
 
 #[test]
-fn test_string_block() {
+fn test_string_block2() {
     let expr = r#"
         s = """For strings, you can use string blocks:
             I hope you are well.
@@ -23,7 +23,18 @@ fn test_string_block() {
         ctx["s"].read().unwrap().clone()
     );
 }
-
+#[test]
+fn test_string_escape() {
+    let expr = r#"
+        s = "\"gipitou engine, gipitou\""
+        "#;
+    let mut ctx = BTreeMap::new();
+    let _ = compute(expr, &mut ctx).unwrap();
+    assert_eq!(
+        Primitive::String(r#""gipitou engine, gipitou""#.to_string()),
+        ctx["s"].read().unwrap().clone()
+    );
+}
 #[test]
 fn test_string_block_with_parameters() {
     let expr = r#"
