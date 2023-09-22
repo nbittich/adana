@@ -27,9 +27,9 @@ dependencies = [
 
 [[package]]
 name = "adana-script-core"
-version = "0.13.35"
+version = "0.13.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50b57814e0056e7a9ec8debf356f04a72ef779c14190491697d6f6fcff180be1"
+checksum = "2e72e54f36994db91607a6809768eb01183541d2ce9965abdfa011297d716420"
 dependencies = [
  "anyhow",
  "serde",
