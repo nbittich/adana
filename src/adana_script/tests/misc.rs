@@ -631,3 +631,18 @@ fn bug_javascript_meme() {
                                                                             // *mathematically*
     assert_eq!(Primitive::Bool(false), compute("3>2>1<3", &mut ctx).unwrap());
 }
+
+#[test]
+fn recur_early_return() {
+    let mut ctx = BTreeMap::new();
+    let script = r#"
+    fact = (n) => {
+      if(n>=1) {
+        return n * fact(n-1)
+      } 
+      return 1
+    }
+    fact(6)
+    "#;
+    assert_eq!(Primitive::Int(720i128), compute(script, &mut ctx).unwrap());
+}

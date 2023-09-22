@@ -683,7 +683,7 @@ fn parse_break(s: &str) -> Res<Value> {
     map(tag_no_space(BREAK), |_| Value::Break)(s)
 }
 fn parse_early_return(s: &str) -> Res<Value> {
-    map(preceded(tag_no_space(RETURN), opt(parse_value)), |v| {
+    map(preceded(tag_no_space(RETURN), opt(parse_expression)), |v| {
         Value::EarlyReturn(Box::new(v))
     })(s)
 }

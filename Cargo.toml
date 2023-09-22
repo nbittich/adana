@@ -28,15 +28,15 @@ nu-ansi-term = "0.49.0"
 rustyline = "12.0.0"
 rustyline-derive = "0.9.0"
 serde = { version = "1.0.188", features = ['serde_derive', 'rc'] }
-serde_json = "1.0.105"
+serde_json = "1.0.107"
 slab_tree = "0.3.2"
 strum = { version = "0.25.0", features = ["derive"] }
-ctrlc = "3.4.0"
+ctrlc = "3.4.1"
 [dependencies.env_logger]
 default-features = false
 version = "0.10.0"
 [dependencies.regex]
-version = "1.9.4"
+version = "1.9.5"
 default-features = false
 # regex currently requires the standard library, you must re-enable it.
 features = ["std"]
