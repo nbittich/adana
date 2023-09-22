@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "adana"
-version = "0.13.34"
+version = "0.13.35"
 dependencies = [
  "anyhow",
  "bincode",
