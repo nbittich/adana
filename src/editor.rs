@@ -12,7 +12,7 @@ use rustyline_derive::*;
 use std::path::{Path, PathBuf, MAIN_SEPARATOR};
 use std::process::Command;
 
-use crate::adana_script::constants::PI;
+use adana_script_core::constants::PI;
 
 fn get_default_history_path() -> Option<Box<Path>> {
     let mut home_dir = dirs::home_dir()?;

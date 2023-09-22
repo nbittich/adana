@@ -2,8 +2,9 @@ use std::collections::BTreeMap;
 
 use serial_test::serial;
 
-use crate::adana_script::{compute, Primitive, Value};
+use crate::adana_script::compute;
 
+use adana_script_core::{primitive::Primitive, Value};
 #[test]
 #[serial]
 fn test_simple_struc() {
@@ -40,15 +41,15 @@ fn test_simple_struc_with_more_stuff_in_it() {
                 "z".to_string(),
                 Primitive::Function {
                     parameters: vec![],
-                    exprs: vec![Value::BlockParen(
-                        vec![Value::BuiltInFunction {
-                        fn_type:
-                            crate::adana_script::BuiltInFunctionType::Println,
-                        expr: Box::new(Value::BlockParen(vec![Value::String(
-                            "hello".to_string()
-                        )]))
-                    }]
-                    )]
+                    exprs: vec![Value::BlockParen(vec![
+                        Value::BuiltInFunction {
+                            fn_type:
+                                adana_script_core::BuiltInFunctionType::Println,
+                            expr: Box::new(Value::BlockParen(vec![
+                                Value::String("hello".to_string())
+                            ]))
+                        }
+                    ])]
                 }
             )
         ]))

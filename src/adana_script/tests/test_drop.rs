@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 
-use crate::adana_script::{compute, BuiltInFunctionType, Primitive, Value};
+use adana_script_core::{primitive::Primitive, BuiltInFunctionType, Value};
+
+use crate::adana_script::compute;
 
 #[test]
 fn test_drop_arr_access() {

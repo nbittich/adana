@@ -1,11 +1,9 @@
 use std::collections::BTreeMap;
 
-use crate::adana_script::{
-    parser::parse_instructions as parse_var_expr, Operator::*, Value,
-};
+use crate::adana_script::parser::parse_instructions as parse_var_expr;
 
-use crate::adana_script::{compute, Primitive};
-
+use crate::adana_script::compute;
+use adana_script_core::{primitive::Primitive, Operator::*, Value};
 #[test]
 #[should_panic(expected = "invalid expression!")]
 fn test_expr_invalid() {

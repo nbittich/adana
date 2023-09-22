@@ -1,7 +1,8 @@
 use std::collections::BTreeMap;
 
-use crate::adana_script::{compute, Operator, Primitive, Value};
+use crate::adana_script::compute;
 
+use adana_script_core::{primitive::Primitive, Operator, Value};
 #[test]
 fn test_anon_func_call() {
     let mut ctx = BTreeMap::new();

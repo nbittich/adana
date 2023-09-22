@@ -1,8 +1,6 @@
-use crate::{
-    adana_script::{constants::*, Operator},
-    cache_command::CacheCommand,
-};
+use crate::cache_command::CacheCommand;
 
+use adana_script_core::{constants::*, Operator};
 pub const CACHE_COMMAND_DOC: &[(&[&str], &str)] = CacheCommand::doc();
 
 pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[

@@ -6,6 +6,7 @@ version = 3
 name = "adana"
 version = "0.13.35"
 dependencies = [
+ "adana-script-core",
  "anyhow",
  "bincode",
  "ctrlc",
@@ -21,6 +22,18 @@ dependencies = [
  "serde_json",
  "serial_test",
  "slab_tree",
+ "strum",
+]
+
+[[package]]
+name = "adana-script-core"
+version = "0.13.35"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50b57814e0056e7a9ec8debf356f04a72ef779c14190491697d6f6fcff180be1"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_derive",
  "strum",
 ]
 

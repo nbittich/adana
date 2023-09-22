@@ -11,8 +11,8 @@ use std::{
 
 use crate::{adana_script::parser::parse_instructions, prelude::BTreeMap};
 
-use super::{
-    ast::to_ast,
+use super::ast::to_ast;
+use adana_script_core::{
     primitive::{
         Abs, Add, And, Array, Cos, Div, Logarithm, Mul, Neg, Not, Or, Pow,
         Primitive, RefPrimitive, Rem, Sin, Sqrt, Sub, Tan, ToBool, ToNumber,
@@ -227,87 +227,106 @@ fn compute_recur(
             TreeNodeValue::BuiltInFunction(fn_type) => {
                 let v = compute_recur(node.first_child(), ctx)?;
                 match fn_type {
-                    super::BuiltInFunctionType::Sqrt => Ok(v.sqrt()),
-                    super::BuiltInFunctionType::Abs => Ok(v.abs()),
-                    super::BuiltInFunctionType::Log => Ok(v.log()),
-                    super::BuiltInFunctionType::Ln => Ok(v.ln()),
-                    super::BuiltInFunctionType::Sin => Ok(v.sin()),
-                    super::BuiltInFunctionType::Cos => Ok(v.cos()),
-                    super::BuiltInFunctionType::Eval => {
+                    adana_script_core::BuiltInFunctionType::Sqrt => {
+                        Ok(v.sqrt())
+                    }
+                    adana_script_core::BuiltInFunctionType::Abs => Ok(v.abs()),
+                    adana_script_core::BuiltInFunctionType::Log => Ok(v.log()),
+                    adana_script_core::BuiltInFunctionType::Ln => Ok(v.ln()),
+                    adana_script_core::BuiltInFunctionType::Sin => Ok(v.sin()),
+                    adana_script_core::BuiltInFunctionType::Cos => Ok(v.cos()),
+                    adana_script_core::BuiltInFunctionType::Eval => {
                         if let Primitive::String(script) = v {
                             compute(&script, ctx)
                         } else {
                             Ok(Primitive::Error(format!("invalid script {v}")))
                         }
                     }
-                    super::BuiltInFunctionType::Tan => Ok(v.tan()),
-                    super::BuiltInFunctionType::ToInt => Ok(v.to_int()),
-                    super::BuiltInFunctionType::ToDouble => Ok(v.to_double()),
-                    super::BuiltInFunctionType::ToBool => Ok(v.to_bool()),
-                    super::BuiltInFunctionType::ToString => {
+                    adana_script_core::BuiltInFunctionType::Tan => Ok(v.tan()),
+                    adana_script_core::BuiltInFunctionType::ToInt => {
+                        Ok(v.to_int())
+                    }
+                    adana_script_core::BuiltInFunctionType::ToDouble => {
+                        Ok(v.to_double())
+                    }
+                    adana_script_core::BuiltInFunctionType::ToBool => {
+                        Ok(v.to_bool())
+                    }
+                    adana_script_core::BuiltInFunctionType::ToString => {
                         Ok(Primitive::String(v.to_string()))
                     }
-                    super::BuiltInFunctionType::Length => Ok(v.len()),
-                    super::BuiltInFunctionType::Println => {
+                    adana_script_core::BuiltInFunctionType::Length => {
+                        Ok(v.len())
+                    }
+                    adana_script_core::BuiltInFunctionType::Println => {
                         println!("{v}");
                         Ok(Primitive::Unit)
                     }
-                    super::BuiltInFunctionType::Print => {
+                    adana_script_core::BuiltInFunctionType::Print => {
                         print!("{v}");
                         Ok(Primitive::Unit)
                     }
-                    super::BuiltInFunctionType::Include => match v {
-                        Primitive::String(file_path) => {
-                            let curr_path = std::env::current_dir()
-                                .context("no current dir! wasn't expected")?;
-                            let temp_path = Path::new(&file_path);
-                            if temp_path.is_absolute() || temp_path.exists() {
-                                let parent = temp_path
-                                    .parent()
-                                    .context("parent doesn't exist")?;
+                    adana_script_core::BuiltInFunctionType::Include => {
+                        match v {
+                            Primitive::String(file_path) => {
+                                let curr_path = std::env::current_dir()
+                                    .context(
+                                        "no current dir! wasn't expected",
+                                    )?;
+                                let temp_path = Path::new(&file_path);
+                                if temp_path.is_absolute() || temp_path.exists()
+                                {
+                                    let parent = temp_path
+                                        .parent()
+                                        .context("parent doesn't exist")?;
 
-                                std::env::set_current_dir(PathBuf::from(
-                                    &parent,
-                                ))?;
-                            }
+                                    std::env::set_current_dir(PathBuf::from(
+                                        &parent,
+                                    ))?;
+                                }
 
-                            let res = temp_path
-                                .file_name()
-                                .context("file name not found")
-                                .and_then(|p| {
-                                    read_to_string(p)
-                                        .map_err(anyhow::Error::new)
-                                })
-                                .and_then(move |file| compute(&file, ctx));
-                            std::env::set_current_dir(curr_path)?; // todo this might be quiet fragile
-                            res
-                        }
-                        _ => Ok(Primitive::Error(
-                            "wrong include call".to_string(),
-                        )),
-                    },
-                    super::BuiltInFunctionType::ReadLines => match v {
-                        Primitive::String(file_path) => {
-                            if !PathBuf::from(file_path.as_str()).exists() {
-                                Ok(Primitive::Error(format!(
-                                    "file {file_path} not found"
-                                )))
-                            } else {
-                                let file = File::open(file_path)?;
-                                let reader = BufReader::new(file);
-                                Ok(Primitive::Array(
-                                    reader
-                                        .lines()
-                                        .map(|s| s.map(Primitive::String))
-                                        .collect::<Result<Vec<_>, _>>()?,
-                                ))
+                                let res = temp_path
+                                    .file_name()
+                                    .context("file name not found")
+                                    .and_then(|p| {
+                                        read_to_string(p)
+                                            .map_err(anyhow::Error::new)
+                                    })
+                                    .and_then(move |file| compute(&file, ctx));
+                                std::env::set_current_dir(curr_path)?; // todo this might be quiet fragile
+                                res
                             }
+                            _ => Ok(Primitive::Error(
+                                "wrong include call".to_string(),
+                            )),
                         }
-                        _ => Ok(Primitive::Error(
-                            "wrong read lines call".to_string(),
-                        )),
-                    },
-                    super::BuiltInFunctionType::TypeOf => Ok(v.type_of()),
+                    }
+                    adana_script_core::BuiltInFunctionType::ReadLines => {
+                        match v {
+                            Primitive::String(file_path) => {
+                                if !PathBuf::from(file_path.as_str()).exists() {
+                                    Ok(Primitive::Error(format!(
+                                        "file {file_path} not found"
+                                    )))
+                                } else {
+                                    let file = File::open(file_path)?;
+                                    let reader = BufReader::new(file);
+                                    Ok(Primitive::Array(
+                                        reader
+                                            .lines()
+                                            .map(|s| s.map(Primitive::String))
+                                            .collect::<Result<Vec<_>, _>>()?,
+                                    ))
+                                }
+                            }
+                            _ => Ok(Primitive::Error(
+                                "wrong read lines call".to_string(),
+                            )),
+                        }
+                    }
+                    adana_script_core::BuiltInFunctionType::TypeOf => {
+                        Ok(v.type_of())
+                    }
                 }
             }
             TreeNodeValue::IfExpr(v) => {

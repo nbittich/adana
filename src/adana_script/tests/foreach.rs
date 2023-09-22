@@ -1,7 +1,8 @@
 use std::collections::BTreeMap;
 
-use crate::adana_script::{compute, Primitive};
+use crate::adana_script::compute;
 
+use adana_script_core::primitive::Primitive;
 #[test]
 fn simple_foreach() {
     let expr = r#"

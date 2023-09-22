@@ -2,15 +2,11 @@ use std::collections::BTreeMap;
 
 use serial_test::serial;
 
-use crate::adana_script::{
-    compute,
-    primitive::{
-        Array as Arr,
-        Primitive::{Array, Bool, Double, Int, String as Str},
-    },
-    Primitive,
+use crate::adana_script::compute;
+use adana_script_core::primitive::{
+    Array as Arr,
+    Primitive::{self, Array, Bool, Double, Int, String as Str},
 };
-
 #[test]
 #[serial]
 fn test_simple_array() {

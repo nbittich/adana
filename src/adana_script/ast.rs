@@ -2,14 +2,11 @@ use std::borrow::Borrow;
 
 use slab_tree::{NodeId, Tree};
 
-use crate::{
-    adana_script::primitive::ToNumber,
-    prelude::{BTreeMap, Context},
-};
+use crate::prelude::{BTreeMap, Context};
 
-use super::{
-    primitive::{Neg, RefPrimitive},
-    MathConstants, Operator, Primitive, TreeNodeValue, Value,
+use adana_script_core::{
+    primitive::{Neg, Primitive, RefPrimitive, ToNumber},
+    MathConstants, Operator, TreeNodeValue, Value,
 };
 
 fn variable_from_ctx(

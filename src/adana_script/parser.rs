@@ -10,13 +10,11 @@ use crate::{
     reserved_keywords::check_reserved_keyword,
 };
 
-use super::{
-    constants::{
-        BREAK, DROP, ELSE, FOR, IF, IN, MULTILINE, NULL, RETURN, STRUCT, WHILE,
-    },
-    string_parser::parse_escaped_string,
-    BuiltInFunctionType, MathConstants, Operator, Value,
+use super::string_parser::parse_escaped_string;
+use adana_script_core::constants::{
+    BREAK, DROP, ELSE, FOR, IF, IN, MULTILINE, NULL, RETURN, STRUCT, WHILE,
 };
+use adana_script_core::{BuiltInFunctionType, MathConstants, Operator, Value};
 
 pub(super) fn comments(s: &str) -> Res<Vec<&str>> {
     terminated(

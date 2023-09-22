@@ -6,7 +6,7 @@ mod editor;
 mod prelude;
 mod reserved_keywords;
 
-use adana_script::Primitive;
+use adana_script_core::primitive::Primitive;
 use args::*;
 use db::DbOp;
 use log::debug;

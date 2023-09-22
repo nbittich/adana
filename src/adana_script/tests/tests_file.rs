@@ -1,8 +1,9 @@
 use std::collections::BTreeMap;
 
+use adana_script_core::primitive::Primitive;
 use serial_test::serial;
 
-use crate::adana_script::{compute, Primitive};
+use crate::adana_script::compute;
 
 #[test]
 #[serial]

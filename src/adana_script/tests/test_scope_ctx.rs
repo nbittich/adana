@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 
-use crate::adana_script::{compute, Primitive};
+use adana_script_core::primitive::Primitive;
+
+use crate::adana_script::compute;
 
 #[test]
 fn test_if_scope_simple() {
