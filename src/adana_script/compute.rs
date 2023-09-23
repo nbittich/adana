@@ -321,7 +321,6 @@ fn compute_recur(
                                     parent
                                 };
 
-                                
                                 unsafe {
                                     let lib = NativeLibrary::new(
                                         file_path.as_path(),
@@ -714,7 +713,20 @@ fn compute_recur(
                         if cfg!(test) {
                             dbg!(&parameters);
                         }
-                        unsafe { lib.call_function(key.as_str(), parameters) }
+
+                        let mut cloned_ctx = ctx.clone();
+                        let slb = shared_lib.as_ref().to_path_buf();
+                        let fun = move |v, extra_ctx| {
+                            cloned_ctx.extend(extra_ctx);
+                            compute_lazy(v, &mut cloned_ctx, &slb)
+                        };
+                        unsafe {
+                            lib.call_function(
+                                key.as_str(),
+                                parameters,
+                                Box::new(fun),
+                            )
+                        }
                         //Ok(function(vec![Primitive::String("s".into())]))
                     } else {
                         Ok(Primitive::Error(format!(

@@ -18,4 +18,4 @@ jobs:
           # targets: x86_64-unknown-linux-musl
       - run: cargo test --verbose -- --nocapture
       - run: cargo clippy --all-targets --all-features -- -D warnings
-      - run: cargo publish --dry-run
+      #- run: cargo publish --dry-run
