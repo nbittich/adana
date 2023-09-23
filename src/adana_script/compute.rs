@@ -722,7 +722,6 @@ fn compute_recur(
                         let slb = shared_lib.as_ref().to_path_buf();
                         let fun = move |v, extra_ctx| {
                             cloned_ctx.extend(extra_ctx);
-                            println!("goes in");
                             compute_lazy(v, &mut cloned_ctx, &slb)
                         };
                         unsafe {
