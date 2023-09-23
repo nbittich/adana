@@ -12,7 +12,7 @@ fn test_anon_func_call() {
         }(2, 3)
     "#;
 
-    let res = compute(s, &mut ctx).unwrap();
+    let res = compute(s, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(5), res);
     let s = r#"
         z = (a,b) => {
@@ -22,7 +22,7 @@ fn test_anon_func_call() {
         z(2,3)
     "#;
 
-    let res = compute(s, &mut ctx).unwrap();
+    let res = compute(s, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(14), res);
 
     assert_eq!(
@@ -56,7 +56,7 @@ fn test_anon_func_call() {
         }(a, b)
     "#;
 
-    let res = compute(s, &mut ctx).unwrap();
+    let res = compute(s, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(5), res);
 
     let s = r#"
@@ -73,7 +73,7 @@ fn test_anon_func_call() {
         }(a, b, c)
     "#;
 
-    let res = compute(s, &mut ctx).unwrap();
+    let res = compute(s, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(600), res);
 }
 
@@ -88,7 +88,7 @@ fn test_basic_map() {
     "#;
     let mut ctx = BTreeMap::new();
 
-    let res = compute(script, &mut ctx).unwrap();
+    let res = compute(script, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(34), res);
     let script = r#"
         include("file_tests/test_fn.adana")
@@ -98,7 +98,7 @@ fn test_basic_map() {
     "#;
     let mut ctx = BTreeMap::new();
 
-    let res = compute(script, &mut ctx).unwrap();
+    let res = compute(script, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Null, res); // todo change that with null or smth
 }
 
@@ -114,7 +114,7 @@ fn test_override_map() {
     "#;
     let mut ctx = BTreeMap::new();
 
-    let res = compute(script, &mut ctx).unwrap();
+    let res = compute(script, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(35), res);
 
     assert_eq!(
@@ -139,7 +139,7 @@ fn test_drop() {
     "#;
     let mut ctx = BTreeMap::new();
 
-    let res = compute(script, &mut ctx).unwrap();
+    let res = compute(script, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Unit, res);
 
     assert_eq!(*ctx["z"].read().unwrap(), Primitive::Int(35,));
@@ -155,7 +155,7 @@ fn test_inline_fn() {
         null
     "#;
     let mut ctx = BTreeMap::new();
-    let res = compute(script, &mut ctx).unwrap();
+    let res = compute(script, &mut ctx, "N/A").unwrap();
 
     assert_eq!(Primitive::Null, res);
 
@@ -171,10 +171,10 @@ fn test_inline_fn() {
     let script = "hello = (name) => { \"hello \" + name}";
 
     let mut ctx = BTreeMap::new();
-    let _ = compute(script, &mut ctx).unwrap();
+    let _ = compute(script, &mut ctx, "N/A").unwrap();
 
     let script = "hello_me = hello(\"nordine\")";
-    let res = compute(script, &mut ctx).unwrap();
+    let res = compute(script, &mut ctx, "N/A").unwrap();
 
     assert_eq!(Primitive::String("hello nordine".into()), res);
     assert_eq!(
@@ -183,7 +183,7 @@ fn test_inline_fn() {
     );
 
     let script = "hello_world = hello(\"world\")";
-    let res = compute(script, &mut ctx).unwrap();
+    let res = compute(script, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::String("hello world".into()), res);
 
     assert_eq!(
@@ -200,7 +200,7 @@ fn test_recursive() {
         fact6 = fact(6)
     "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(s, &mut ctx).unwrap();
+    let r = compute(s, &mut ctx, "N/A").unwrap();
 
     assert_eq!(Primitive::Int(720), r);
 }
@@ -223,7 +223,7 @@ fn test_fn_param() {
 
     "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(s, &mut ctx).unwrap();
+    let r = compute(s, &mut ctx, "N/A").unwrap();
     assert_eq!(
         Primitive::Array(vec![
             Primitive::Int(2),
@@ -242,7 +242,7 @@ fn test_if_else_file() {
     res = split("kekeke=lekeke=meme=me", "=")
 "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(file_path, &mut ctx).unwrap();
+    let r = compute(file_path, &mut ctx, "N/A").unwrap();
 
     assert_eq!(
         r,
@@ -258,7 +258,7 @@ fn test_if_else_file() {
     res = split("kekeke=akalekeke=meme=me", "=")
 "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(file_path, &mut ctx).unwrap();
+    let r = compute(file_path, &mut ctx, "N/A").unwrap();
 
     assert_eq!(r, Primitive::Array(vec![Primitive::String("aka".into()),]));
 
@@ -267,7 +267,7 @@ fn test_if_else_file() {
     res = split("kekeke=akalekeke=meme=me", "")
 "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(file_path, &mut ctx).unwrap();
+    let r = compute(file_path, &mut ctx, "N/A").unwrap();
 
     assert_eq!(r, Primitive::Null,);
 
@@ -276,7 +276,7 @@ fn test_if_else_file() {
     res = split("", "k")
 "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(file_path, &mut ctx).unwrap();
+    let r = compute(file_path, &mut ctx, "N/A").unwrap();
 
     assert_eq!(r, Primitive::Null,);
 
@@ -285,7 +285,7 @@ fn test_if_else_file() {
     res = split(null, "k")
 "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(file_path, &mut ctx).unwrap();
+    let r = compute(file_path, &mut ctx, "N/A").unwrap();
 
     assert_eq!(r, Primitive::Null,);
 
@@ -294,7 +294,7 @@ fn test_if_else_file() {
     res = split("sksksksk", null)
 "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(file_path, &mut ctx).unwrap();
+    let r = compute(file_path, &mut ctx, "N/A").unwrap();
 
     assert_eq!(r, Primitive::Null,);
 }
@@ -310,7 +310,7 @@ fn test_array_access_fn_call() {
              s[5]("nordine2")
 
         "#;
-    let r = compute(expr, &mut ctx).unwrap();
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::String("hello nordine2".into()));
     assert_eq!(*ctx["z"].read().unwrap(), Primitive::Int(6));
     assert_eq!(

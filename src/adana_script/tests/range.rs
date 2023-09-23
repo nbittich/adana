@@ -12,7 +12,7 @@ fn simple_foreach_range() {
          }
        "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }
@@ -22,7 +22,7 @@ fn simple_range() {
             arr = 1..5
          "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         Primitive::Array(vec![
             Primitive::Int(1),
@@ -41,7 +41,7 @@ fn simple_range_in_array() {
             arr2 = [ 9, 1, 3, true, 1..=5 ]
          "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         Primitive::Array(vec![
             Primitive::Int(9),
@@ -83,7 +83,7 @@ fn simple_range_in_function() {
             arr2 = y()
          "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         Primitive::Array(vec![
             Primitive::Int(1),
@@ -116,7 +116,7 @@ fn simple_range_struct() {
             }#end
          "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         Primitive::Struct(BTreeMap::from([
             (
@@ -154,7 +154,7 @@ fn simple_foreach_range_both_end() {
          }
        "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(15), ctx["total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }

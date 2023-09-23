@@ -14,7 +14,7 @@ fn test_simple_array() {
         include("file_tests/test_simple_array.adana")
     "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(file_path, &mut ctx).unwrap();
+    let _ = compute(file_path, &mut ctx, "N/A").unwrap();
     assert_eq!(ctx.len(), 4);
     let ctx: BTreeMap<String, Primitive> = ctx
         .iter()
@@ -69,7 +69,7 @@ fn test_file_array() {
     include("file_tests/test_array.adana")
     "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(file_path, &mut ctx).unwrap();
+    let _ = compute(file_path, &mut ctx, "N/A").unwrap();
     assert_eq!(ctx["arrlen"].read().unwrap().clone(), Int(18));
 
     let arr = Array(vec![
@@ -126,7 +126,7 @@ fn test_file_array() {
     ]);
     assert_eq!(ctx["list"].read().unwrap().clone(), fancy_list);
 
-    let res = compute("arr[2]", &mut ctx).unwrap();
+    let res = compute("arr[2]", &mut ctx, "N/A").unwrap();
 
     assert_eq!(Str("bababa".to_string()), res)
 }
@@ -138,7 +138,7 @@ fn test_string_array() {
         include("file_tests/test_string_arr.adana")
     "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(file_path, &mut ctx).unwrap();
+    let _ = compute(file_path, &mut ctx, "N/A").unwrap();
     let ctx: BTreeMap<String, Primitive> = ctx
         .iter()
         .map(|(k, v)| (k.to_string(), v.read().unwrap().clone()))
@@ -162,7 +162,7 @@ fn test_array_expr_access() {
            x = [1, 2, 3][0]
         "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(expr, &mut ctx).unwrap();
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(ctx["x"].read().unwrap().clone(), Primitive::Int(1));
     assert_eq!(r, Primitive::Int(1));
 }
@@ -174,7 +174,7 @@ fn test_array_expr_access_not_assigned() {
            [1, 2, 3][1]
         "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(expr, &mut ctx).unwrap();
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::Int(2));
 }
 #[test]
@@ -188,7 +188,7 @@ fn test_array_access_expr() {
         arr_str = sort(arr_str)
     "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
 
     assert_eq!(
         ctx["arr_ints"].read().unwrap().clone(),

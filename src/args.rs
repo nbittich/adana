@@ -5,6 +5,7 @@ pub enum Argument {
     DbPath(String),
     NoFallbackInMemory,
     HistoryPath(String),
+    SharedLibPath(String),
     DefaultCache(String),
 }
 
@@ -52,6 +53,17 @@ pub fn parse_args(
                         .iter()
                         .any(|a| matches!(a, Argument::HistoryPath(_))),
                     "history path should be specified only once!"
+                );
+                let path = args.next().context("history path missing!!")?;
+                arguments.push(Argument::HistoryPath(path));
+            }
+
+            "--sharedlibpath" | "-slp" => {
+                anyhow::ensure!(
+                    !arguments
+                        .iter()
+                        .any(|a| matches!(a, Argument::SharedLibPath(_))),
+                    "shared lib path should be specified only once!"
                 );
                 let path = args.next().context("history path missing!!")?;
                 arguments.push(Argument::HistoryPath(path));

@@ -12,7 +12,7 @@ fn test_simple_file() {
     include("file_tests/test1.adana")
     "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(file_path, &mut ctx).unwrap();
+    let r = compute(file_path, &mut ctx, "N/A").unwrap();
 
     let ctx: BTreeMap<String, Primitive> = ctx
         .iter()
@@ -37,7 +37,7 @@ fn test_if_statement() {
     include("file_tests/test2.adana")
     "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(file_path, &mut ctx).unwrap();
+    let r = compute(file_path, &mut ctx, "N/A").unwrap();
 
     let ctx: BTreeMap<String, Primitive> = ctx
         .iter()
@@ -79,7 +79,7 @@ fn test_while_statement() {
 
     for n in 0..=10 {
         ctx.insert("n".to_string(), Primitive::Int(n).ref_prim());
-        let r = compute(file_path, &mut ctx).unwrap();
+        let r = compute(file_path, &mut ctx, "N/A").unwrap();
         let fibonacci = fib(n);
         assert_eq!(Primitive::Int(fibonacci), ctx["c"].read().unwrap().clone());
         assert_eq!(Primitive::Int(fibonacci), r);
@@ -101,7 +101,7 @@ fn test_nested_file() {
     include("file_tests/test_nested.adana")
     "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(file_path, &mut ctx).unwrap();
+    let r = compute(file_path, &mut ctx, "N/A").unwrap();
 
     let ctx: BTreeMap<String, Primitive> = ctx
         .iter()
@@ -127,7 +127,7 @@ fn test_fizz_buzz() {
     include("file_tests/test_fizzbuzz.adana")
     "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(file_path, &mut ctx);
+    let _ = compute(file_path, &mut ctx, "N/A");
 
     assert_eq!(
         Primitive::String("100 = Buzz".to_string()),
@@ -142,7 +142,7 @@ fn test_includes() {
     let file_path = r#"
     include("file_tests/includes/reverse.adana")
 "#;
-    let _ = compute(file_path, &mut ctx).unwrap();
+    let _ = compute(file_path, &mut ctx, "N/A").unwrap();
 
     let ctx: BTreeMap<String, Primitive> = ctx
         .iter()
@@ -185,7 +185,7 @@ fn test_multiline_file() {
     include("file_tests/test_multiline.adana")
 "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(file_path, &mut ctx);
+    let _ = compute(file_path, &mut ctx, "N/A");
 
     let ctx: BTreeMap<String, Primitive> = ctx
         .iter()
@@ -215,16 +215,16 @@ fn test_if_else_file() {
 "#;
     let mut ctx = BTreeMap::new();
     ctx.insert("count".to_string(), Primitive::Int(102).ref_prim());
-    let _ = compute(file_path, &mut ctx);
+    let _ = compute(file_path, &mut ctx, "N/A");
 
     assert_eq!(ctx["count"].read().unwrap().clone(), Primitive::Int(101));
-    let _ = compute(file_path, &mut ctx);
+    let _ = compute(file_path, &mut ctx, "N/A");
     assert_eq!(ctx["count"].read().unwrap().clone(), Primitive::Int(51));
     let file_path = r#"
     include("file_tests/test_fizzbuzz_else.adana")
 "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(file_path, &mut ctx);
+    let _ = compute(file_path, &mut ctx, "N/A");
 
     assert_eq!(
         Primitive::String("100 = Buzz".to_string()),

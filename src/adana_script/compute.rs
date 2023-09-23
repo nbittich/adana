@@ -9,7 +9,10 @@ use std::{
     sync::Arc,
 };
 
-use crate::{adana_script::parser::parse_instructions, prelude::BTreeMap};
+use crate::{
+    adana_script::parser::parse_instructions,
+    prelude::{get_path_to_shared_libraries, BTreeMap},
+};
 
 use super::ast::to_ast;
 use adana_script_core::{
@@ -24,6 +27,7 @@ use adana_script_core::{
 fn compute_recur(
     node: Option<NodeRef<TreeNodeValue>>,
     ctx: &mut BTreeMap<String, RefPrimitive>,
+    shared_lib: impl AsRef<Path> + Copy,
 ) -> anyhow::Result<Primitive> {
     if let Some(node) = node {
         match node.data() {
@@ -33,23 +37,23 @@ fn compute_recur(
                         "only one value allowed, no '!' possible",
                     ));
                 }
-                let left = compute_recur(node.first_child(), ctx)?;
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
                 Ok(left.not())
             }
             TreeNodeValue::Ops(Operator::Add) => {
                 if node.children().count() == 1 {
-                    return compute_recur(node.first_child(), ctx);
+                    return compute_recur(node.first_child(), ctx, shared_lib);
                 }
-                let left = compute_recur(node.first_child(), ctx)?;
-                let right = compute_recur(node.last_child(), ctx)?;
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.add(&right))
             }
             TreeNodeValue::Ops(Operator::Mult) => {
                 if node.children().count() == 1 {
-                    return compute_recur(node.first_child(), ctx);
+                    return compute_recur(node.first_child(), ctx, shared_lib);
                 }
-                let left = compute_recur(node.first_child(), ctx)?;
-                let right = compute_recur(node.last_child(), ctx)?;
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.mul(&right))
             }
             TreeNodeValue::VariableRef(name) => {
@@ -69,26 +73,31 @@ fn compute_recur(
             }
             TreeNodeValue::Ops(Operator::Mod) => {
                 if node.children().count() == 1 {
-                    return compute_recur(node.first_child(), ctx);
+                    return compute_recur(node.first_child(), ctx, shared_lib);
                 }
-                let left = compute_recur(node.first_child(), ctx)?;
-                let right = compute_recur(node.last_child(), ctx)?;
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.rem(&right))
             }
             TreeNodeValue::Ops(Operator::Subtr) => {
                 if node.children().count() == 1 {
-                    return Ok(compute_recur(node.first_child(), ctx)?.neg());
+                    return Ok(compute_recur(
+                        node.first_child(),
+                        ctx,
+                        shared_lib,
+                    )?
+                    .neg());
                 }
-                let left = compute_recur(node.first_child(), ctx)?;
-                let right = compute_recur(node.last_child(), ctx)?;
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.sub(&right))
             }
             TreeNodeValue::Ops(Operator::Pow) => {
                 if node.children().count() == 1 {
-                    return compute_recur(node.first_child(), ctx);
+                    return compute_recur(node.first_child(), ctx, shared_lib);
                 }
-                let left = compute_recur(node.first_child(), ctx)?;
-                let right = compute_recur(node.last_child(), ctx)?;
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.pow(&right))
             }
             TreeNodeValue::Ops(Operator::Pow2) => {
@@ -99,10 +108,10 @@ fn compute_recur(
             }
             TreeNodeValue::Ops(Operator::Div) => {
                 if node.children().count() == 1 {
-                    return compute_recur(node.first_child(), ctx);
+                    return compute_recur(node.first_child(), ctx, shared_lib);
                 }
-                let left = compute_recur(node.first_child(), ctx)?;
-                let right = compute_recur(node.last_child(), ctx)?;
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.div(&right))
             }
             TreeNodeValue::Ops(Operator::And) => {
@@ -111,8 +120,8 @@ fn compute_recur(
                         "only one value, no '&&' comparison possible",
                     ));
                 }
-                let left = compute_recur(node.first_child(), ctx)?;
-                let right = compute_recur(node.last_child(), ctx)?;
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.and(&right))
             }
             TreeNodeValue::VariableUnused => {
@@ -121,7 +130,8 @@ fn compute_recur(
             TreeNodeValue::FString(p, parameters) => {
                 let mut s = String::from(p);
                 for (key, param) in parameters {
-                    let primitive = compute_lazy(param.clone(), ctx)?;
+                    let primitive =
+                        compute_lazy(param.clone(), ctx, shared_lib)?;
                     if let err @ Primitive::Error(_) = primitive {
                         return Ok(err);
                     }
@@ -137,8 +147,8 @@ fn compute_recur(
                         "only one value, no '||' comparison possible",
                     ));
                 }
-                let left = compute_recur(node.first_child(), ctx)?;
-                let right = compute_recur(node.last_child(), ctx)?;
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.or(&right))
             }
             TreeNodeValue::Ops(Operator::Equal) => {
@@ -147,8 +157,8 @@ fn compute_recur(
                         "only one value, no '==' comparison possible",
                     ));
                 }
-                let left = compute_recur(node.first_child(), ctx)?;
-                let right = compute_recur(node.last_child(), ctx)?;
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.is_equal(&right))
             }
             TreeNodeValue::Ops(Operator::NotEqual) => {
@@ -157,8 +167,8 @@ fn compute_recur(
                         "only one value, no '!=' comparison possible",
                     ));
                 }
-                let left = compute_recur(node.first_child(), ctx)?;
-                let right = compute_recur(node.last_child(), ctx)?;
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.is_equal(&right).not())
             }
             TreeNodeValue::Ops(Operator::Less) => {
@@ -167,8 +177,8 @@ fn compute_recur(
                         "only one value, no '<' comparison possible",
                     ));
                 }
-                let left = compute_recur(node.first_child(), ctx)?;
-                let right = compute_recur(node.last_child(), ctx)?;
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.is_less_than(&right))
             }
             TreeNodeValue::Ops(Operator::Greater) => {
@@ -177,8 +187,8 @@ fn compute_recur(
                         "only one value, no '>' comparison possible",
                     ));
                 }
-                let left = compute_recur(node.first_child(), ctx)?;
-                let right = compute_recur(node.last_child(), ctx)?;
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.is_greater_than(&right))
             }
             TreeNodeValue::Ops(Operator::GreaterOrEqual) => {
@@ -187,8 +197,8 @@ fn compute_recur(
                         "only one value, no '>=' comparison possible",
                     ));
                 }
-                let left = compute_recur(node.first_child(), ctx)?;
-                let right = compute_recur(node.last_child(), ctx)?;
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.is_greater_or_equal(&right))
             }
             TreeNodeValue::Ops(Operator::LessOrEqual) => {
@@ -197,13 +207,13 @@ fn compute_recur(
                         "only one value, no '<=' comparison possible",
                     ));
                 }
-                let left = compute_recur(node.first_child(), ctx)?;
-                let right = compute_recur(node.last_child(), ctx)?;
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.is_less_or_equal(&right))
             }
             TreeNodeValue::Primitive(p) => Ok(p.clone()),
             TreeNodeValue::VariableAssign(name) => {
-                let v = compute_recur(node.first_child(), ctx)?;
+                let v = compute_recur(node.first_child(), ctx, shared_lib)?;
                 if !matches!(v, Primitive::Error(_)) {
                     if let Some(name) = name {
                         let old = ctx
@@ -225,7 +235,7 @@ fn compute_recur(
                 Ok(v)
             }
             TreeNodeValue::BuiltInFunction(fn_type) => {
-                let v = compute_recur(node.first_child(), ctx)?;
+                let v = compute_recur(node.first_child(), ctx, shared_lib)?;
                 match fn_type {
                     adana_script_core::BuiltInFunctionType::Sqrt => {
                         Ok(v.sqrt())
@@ -237,7 +247,7 @@ fn compute_recur(
                     adana_script_core::BuiltInFunctionType::Cos => Ok(v.cos()),
                     adana_script_core::BuiltInFunctionType::Eval => {
                         if let Primitive::String(script) = v {
-                            compute(&script, ctx)
+                            compute(&script, ctx, shared_lib)
                         } else {
                             Ok(Primitive::Error(format!("invalid script {v}")))
                         }
@@ -266,6 +276,55 @@ fn compute_recur(
                         print!("{v}");
                         Ok(Primitive::Unit)
                     }
+                    adana_script_core::BuiltInFunctionType::Require => {
+                        match v {
+                            Primitive::String(file_path) => {
+                                let curr_path = std::env::current_dir()
+                                    .context(
+                                        "no current dir! wasn't expected",
+                                    )?;
+                                let temp_path = Path::new(&file_path);
+                                if temp_path.is_absolute() || temp_path.exists()
+                                {
+                                    let parent = temp_path
+                                        .parent()
+                                        .map(|p| p.to_path_buf())
+                                        .or_else(||Some(shared_lib.as_ref().to_path_buf()))
+                                        .context("parent or shared lib doesn't exist")?;
+
+                                    std::env::set_current_dir(PathBuf::from(
+                                        &parent,
+                                    ))?;
+                                }
+                                if temp_path
+                                    .extension()
+                                    .and_then(|e| e.to_str())
+                                    != Some("so")
+                                {
+                                    return Ok(Primitive::Error(
+                                        "not a shared object!".into(),
+                                    ));
+                                }
+
+                                let res = temp_path
+                                    .file_name()
+                                    .context("file name not found")
+                                    .and_then(|p| {
+                                        read_to_string(p)
+                                            .map_err(anyhow::Error::new)
+                                    })
+                                    .and_then(move |file| {
+                                        // compute(&file, ctx, shared_lib)
+                                        todo!()
+                                    });
+                                std::env::set_current_dir(curr_path)?; // todo this might be quiet fragile
+                                res
+                            }
+                            _ => Ok(Primitive::Error(
+                                "wrong include call".to_string(),
+                            )),
+                        }
+                    }
                     adana_script_core::BuiltInFunctionType::Include => {
                         match v {
                             Primitive::String(file_path) => {
@@ -292,7 +351,9 @@ fn compute_recur(
                                         read_to_string(p)
                                             .map_err(anyhow::Error::new)
                                     })
-                                    .and_then(move |file| compute(&file, ctx));
+                                    .and_then(move |file| {
+                                        compute(&file, ctx, shared_lib)
+                                    });
                                 std::env::set_current_dir(curr_path)?; // todo this might be quiet fragile
                                 res
                             }
@@ -331,20 +392,33 @@ fn compute_recur(
             }
             TreeNodeValue::IfExpr(v) => {
                 let mut scoped_ctx = ctx.clone();
-                compute_instructions(vec![v.clone()], &mut scoped_ctx)
+                compute_instructions(
+                    vec![v.clone()],
+                    &mut scoped_ctx,
+                    shared_lib,
+                )
             }
             TreeNodeValue::WhileExpr(v) => {
                 let mut scoped_ctx = ctx.clone();
-                compute_instructions(vec![v.clone()], &mut scoped_ctx)
+                compute_instructions(
+                    vec![v.clone()],
+                    &mut scoped_ctx,
+                    shared_lib,
+                )
             }
             TreeNodeValue::Foreach(v) => {
                 let mut scoped_ctx = ctx.clone();
-                compute_instructions(vec![v.clone()], &mut scoped_ctx)
+                compute_instructions(
+                    vec![v.clone()],
+                    &mut scoped_ctx,
+                    shared_lib,
+                )
             }
             TreeNodeValue::Array(arr) => {
                 let mut primitives = vec![];
                 for v in arr {
-                    let primitive = compute_instructions(vec![v.clone()], ctx)?;
+                    let primitive =
+                        compute_instructions(vec![v.clone()], ctx, shared_lib)?;
                     match primitive {
                         v @ Primitive::Error(_) => return Ok(v),
                         Primitive::Unit => {
@@ -365,7 +439,8 @@ fn compute_recur(
                 };
                 match (array, index) {
                     (Value::Variable(v), index) => {
-                        let index = compute_lazy(index.clone(), ctx)?;
+                        let index =
+                            compute_lazy(index.clone(), ctx, shared_lib)?;
                         let array = ctx
                             .get(v)
                             .context("array not found in context")?
@@ -379,12 +454,13 @@ fn compute_recur(
                     }
                     (Value::String(v), index) => {
                         let v = Primitive::String(v.clone());
-                        let index = compute_lazy(index.clone(), ctx)?;
+                        let index =
+                            compute_lazy(index.clone(), ctx, shared_lib)?;
                         Ok(v.index_at(&index))
                     }
                     (Value::Array(array), index) => {
                         let Primitive::Int(index) =
-                            compute_lazy(index.clone(), ctx)?
+                            compute_lazy(index.clone(), ctx, shared_lib)?
                         else {
                             return Err(anyhow::format_err!(
                                 "COMPUTE: illegal array access! {index:?}"
@@ -394,8 +470,11 @@ fn compute_recur(
                         let index = index as usize;
                         let value = array.get(index).context(error_message())?;
                         if index < array.len() {
-                            let primitive =
-                                compute_instructions(vec![value.clone()], ctx)?;
+                            let primitive = compute_instructions(
+                                vec![value.clone()],
+                                ctx,
+                                shared_lib,
+                            )?;
                             return Ok(primitive);
                         }
                         Err(anyhow::Error::msg(error_message()))
@@ -405,8 +484,9 @@ fn compute_recur(
                         | v @ Value::StructAccess { struc: _, key: _ },
                         index,
                     ) => {
-                        let v = compute_lazy(v.clone(), ctx)?;
-                        let index = compute_lazy(index.clone(), ctx)?;
+                        let v = compute_lazy(v.clone(), ctx, shared_lib)?;
+                        let index =
+                            compute_lazy(index.clone(), ctx, shared_lib)?;
                         match v {
                             p @ Primitive::Array(_) => Ok(p.index_at(&index)),
 
@@ -420,8 +500,11 @@ fn compute_recur(
                 let mut primitives = BTreeMap::new();
                 for (k, v) in struc {
                     if !k.starts_with('_') {
-                        let primitive =
-                            compute_instructions(vec![v.clone()], ctx)?;
+                        let primitive = compute_instructions(
+                            vec![v.clone()],
+                            ctx,
+                            shared_lib,
+                        )?;
                         match primitive {
                             v @ Primitive::Error(_) => return Ok(v),
                             Primitive::Unit => {
@@ -457,7 +540,7 @@ fn compute_recur(
                     s @ Value::ArrayAccess { arr: _, index: _ },
                     key @ Primitive::String(_),
                 ) => {
-                    let prim_s = compute_lazy(s.clone(), ctx)?;
+                    let prim_s = compute_lazy(s.clone(), ctx, shared_lib)?;
                     Ok(prim_s.index_at(key))
                 }
                 _ => Ok(Primitive::Error(format!(
@@ -465,8 +548,8 @@ fn compute_recur(
                 ))),
             },
             TreeNodeValue::VariableArrayAssign { name, index } => {
-                let index = compute_lazy(index.clone(), ctx)?;
-                let mut v = compute_recur(node.first_child(), ctx)?;
+                let index = compute_lazy(index.clone(), ctx, shared_lib)?;
+                let mut v = compute_recur(node.first_child(), ctx, shared_lib)?;
                 let mut array = ctx
                     .get_mut(name)
                     .context("array not found in context")?
@@ -502,8 +585,11 @@ fn compute_recur(
                 function,
             }) => {
                 if let Value::BlockParen(param_values) = parameters.borrow() {
-                    let mut function =
-                        compute_instructions(vec![*function.clone()], ctx)?;
+                    let mut function = compute_instructions(
+                        vec![*function.clone()],
+                        ctx,
+                        shared_lib,
+                    )?;
 
                     // FIXME clone again
                     if let Primitive::Ref(r) = function {
@@ -544,8 +630,11 @@ fn compute_recur(
                                 if let Value::Variable(variable_from_fn_def) =
                                     param
                                 {
-                                    let variable_from_fn_call =
-                                        compute_lazy(value.clone(), ctx)?;
+                                    let variable_from_fn_call = compute_lazy(
+                                        value.clone(),
+                                        ctx,
+                                        shared_lib,
+                                    )?;
                                     scope_ctx.insert(
                                         variable_from_fn_def.clone(),
                                         variable_from_fn_call.ref_prim(),
@@ -567,7 +656,11 @@ fn compute_recur(
                         //         "something wrong: {e:?}"
                         //     ))
                         // })??;
-                        let res = compute_instructions(exprs, &mut scope_ctx)?;
+                        let res = compute_instructions(
+                            exprs,
+                            &mut scope_ctx,
+                            shared_lib,
+                        )?;
 
                         if let Primitive::EarlyReturn(v) = res {
                             return Ok(*v);
@@ -638,7 +731,8 @@ fn compute_recur(
             }
             TreeNodeValue::EarlyReturn(v) => {
                 if let Some(v) = v {
-                    let p = compute_instructions(vec![v.clone()], ctx)?;
+                    let p =
+                        compute_instructions(vec![v.clone()], ctx, shared_lib)?;
                     Ok(Primitive::EarlyReturn(Box::new(p)))
                 } else {
                     Ok(Primitive::EarlyReturn(Box::new(Primitive::Null)))
@@ -653,6 +747,7 @@ fn compute_recur(
 fn value_to_tree(
     value: Value,
     ctx: &mut BTreeMap<String, RefPrimitive>,
+    shared_lib: impl AsRef<Path> + Copy,
 ) -> anyhow::Result<Tree<TreeNodeValue>> {
     let mut tree: Tree<TreeNodeValue> = Tree::new();
     to_ast(ctx, value, &mut tree, &None)?;
@@ -672,23 +767,25 @@ fn value_to_tree(
 fn compute_lazy(
     instruction: Value,
     ctx: &mut BTreeMap<String, RefPrimitive>,
+    shared_lib: impl AsRef<Path> + Copy,
 ) -> anyhow::Result<Primitive> {
-    let tree = value_to_tree(instruction, ctx)?;
+    let tree = value_to_tree(instruction, ctx, shared_lib)?;
 
     let root = tree.root();
 
-    compute_recur(root, ctx)
+    compute_recur(root, ctx, shared_lib)
 }
 fn compute_instructions(
     instructions: Vec<Value>,
     ctx: &mut BTreeMap<String, RefPrimitive>,
+    shared_lib: impl AsRef<Path> + Copy,
 ) -> anyhow::Result<Primitive> {
     let mut result = Primitive::Unit;
 
     for instruction in instructions {
         match instruction {
             v @ Value::EarlyReturn(_) => {
-                let res = compute_lazy(v, ctx)?;
+                let res = compute_lazy(v, ctx, shared_lib)?;
                 if let Primitive::EarlyReturn(r) = res {
                     return Ok(*r);
                 } else {
@@ -696,7 +793,7 @@ fn compute_instructions(
                 }
             }
             Value::IfExpr { cond, exprs, else_expr } => {
-                let cond = compute_lazy(*cond, ctx)?;
+                let cond = compute_lazy(*cond, ctx, shared_lib)?;
                 if matches!(cond, Primitive::Error(_)) {
                     return Ok(cond);
                 }
@@ -707,6 +804,7 @@ fn compute_instructions(
                         match compute_lazy(
                             instruction.clone(),
                             &mut scoped_ctx,
+                            shared_lib,
                         )? {
                             v @ Primitive::EarlyReturn(_)
                             | v @ Primitive::Error(_) => return Ok(v),
@@ -720,6 +818,7 @@ fn compute_instructions(
                         match compute_lazy(
                             instruction.clone(),
                             &mut scoped_ctx,
+                            shared_lib,
                         )? {
                             v @ Primitive::EarlyReturn(_)
                             | v @ Primitive::Error(_) => return Ok(v),
@@ -732,13 +831,14 @@ fn compute_instructions(
                 let mut scoped_ctx = ctx.clone();
 
                 'while_loop: while matches!(
-                    compute_lazy(*cond.clone(), &mut scoped_ctx)?,
+                    compute_lazy(*cond.clone(), &mut scoped_ctx, shared_lib)?,
                     Primitive::Bool(true)
                 ) {
                     for instruction in &exprs {
                         match compute_lazy(
                             instruction.clone(),
                             &mut scoped_ctx,
+                            shared_lib,
                         )? {
                             Primitive::NoReturn => break 'while_loop,
                             v @ Primitive::EarlyReturn(_)
@@ -749,7 +849,7 @@ fn compute_instructions(
                 }
             }
             Value::ForeachExpr { var, index_var, iterator, exprs } => {
-                let iterator = compute_lazy(*iterator, ctx)?;
+                let iterator = compute_lazy(*iterator, ctx, shared_lib)?;
 
                 let mut scoped_ctx = ctx.clone();
                 let arr = match iterator {
@@ -790,6 +890,7 @@ fn compute_instructions(
                         match compute_lazy(
                             instruction.clone(),
                             &mut scoped_ctx,
+                            shared_lib,
                         )? {
                             Primitive::NoReturn => break 'foreach_loop,
                             v @ Primitive::EarlyReturn(_)
@@ -800,7 +901,7 @@ fn compute_instructions(
                 }
             }
             _ => {
-                result = compute_lazy(instruction, ctx)?;
+                result = compute_lazy(instruction, ctx, shared_lib)?;
             }
         }
         if let Primitive::EarlyReturn(p) = result {
@@ -817,6 +918,7 @@ fn compute_instructions(
 pub fn compute(
     s: &str,
     ctx: &mut BTreeMap<String, RefPrimitive>,
+    shared_lib: impl AsRef<Path> + Copy,
 ) -> anyhow::Result<Primitive> {
     let (rest, instructions) = parse_instructions(s).map_err(|e| {
         anyhow::Error::msg(format!(
@@ -838,5 +940,5 @@ pub fn compute(
         )
     );
 
-    compute_instructions(instructions, ctx)
+    compute_instructions(instructions, ctx, shared_lib)
 }

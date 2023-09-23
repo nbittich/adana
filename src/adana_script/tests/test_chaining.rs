@@ -13,7 +13,7 @@ fn complex_struct_array() {
 
         "#;
     let mut ctx = BTreeMap::new();
-    let res = compute(expr, &mut ctx).unwrap();
+    let res = compute(expr, &mut ctx, "N/A").unwrap();
 
     assert_eq!(
         ctx["x"].read().unwrap().clone(),
@@ -32,7 +32,7 @@ fn complex_struct_array_struct() {
 
         "#;
     let mut ctx = BTreeMap::new();
-    let res = compute(expr, &mut ctx).unwrap();
+    let res = compute(expr, &mut ctx, "N/A").unwrap();
 
     assert_eq!(
         ctx["x"].read().unwrap().clone(),
@@ -58,7 +58,7 @@ fn complex_struct_struct_struct() {
 
         "#;
     let mut ctx = BTreeMap::new();
-    let res = compute(expr, &mut ctx).unwrap();
+    let res = compute(expr, &mut ctx, "N/A").unwrap();
 
     assert_eq!(
         ctx["x"].read().unwrap().clone(),
@@ -84,7 +84,7 @@ fn complex_struct_struct_struct_fn() {
 
         "#;
     let mut ctx = BTreeMap::new();
-    let res = compute(expr, &mut ctx).unwrap();
+    let res = compute(expr, &mut ctx, "N/A").unwrap();
 
     assert_eq!(
         ctx["x"].read().unwrap().clone(),
@@ -110,7 +110,7 @@ fn complex_struct_struct_struct_fn2() {
 
         "#;
     let mut ctx = BTreeMap::new();
-    let res = compute(expr, &mut ctx).unwrap();
+    let res = compute(expr, &mut ctx, "N/A").unwrap();
 
     assert_eq!(
         ctx["x"].read().unwrap().clone(),
@@ -126,7 +126,7 @@ fn simple_array_two_depth() {
              x = (z[2] + z[3][1] + z[3][2]) # FIXME requires parenthesises
         "#;
     let mut ctx = BTreeMap::new();
-    let res = compute(expr, &mut ctx).unwrap();
+    let res = compute(expr, &mut ctx, "N/A").unwrap();
 
     assert_eq!(
         ctx["x"].read().unwrap().clone(),

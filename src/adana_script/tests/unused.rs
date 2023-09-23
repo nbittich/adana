@@ -10,7 +10,7 @@ fn test_simple_unused_array() {
             _ = [1,2,3,4]
         "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(expr, &mut ctx).unwrap();
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
 
     assert!(ctx.is_empty());
     assert_eq!(
@@ -29,7 +29,7 @@ fn test_simple_unused_range() {
             _ = 1..=4
         "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(expr, &mut ctx).unwrap();
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
 
     assert!(ctx.is_empty());
     assert_eq!(
@@ -49,7 +49,7 @@ fn test_simple_unused_fn_call_range() {
             _ = (n) => { 1..=n }(4)
         "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(expr, &mut ctx).unwrap();
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
 
     assert!(ctx.is_empty());
     assert_eq!(
@@ -69,7 +69,7 @@ fn test_simple_unused_fn_parameter() {
             _ = (_) => { 1..=4 }(4)
         "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(expr, &mut ctx).unwrap();
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
 
     assert!(ctx.is_empty());
     assert_eq!(
@@ -88,7 +88,7 @@ fn test_simple_unused_fn_multiple_parameters() {
             _ = (_,n) => { 1..=n }("hello",4)
         "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(expr, &mut ctx).unwrap();
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
 
     assert!(ctx.is_empty());
     assert_eq!(
@@ -107,7 +107,7 @@ fn test_simple_unused_fn_multiple_parameters2() {
             _ = (n,_) => { 1..=n }(4,"hello")
         "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(expr, &mut ctx).unwrap();
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
 
     assert!(ctx.is_empty());
     assert_eq!(
@@ -132,7 +132,7 @@ fn test_simple_unused_struct() {
             } # more comments
         "#;
     let mut ctx = BTreeMap::new();
-    let r = compute(expr, &mut ctx).unwrap();
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
 
     assert!(ctx.is_empty());
     assert_eq!(
@@ -159,7 +159,7 @@ fn test_simple_unused_foreach() {
 
         "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
 
     assert_eq!(ctx.len(), 1);
     assert_eq!(
@@ -183,7 +183,7 @@ fn test_simple_unused_foreach_index() {
 
         "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
 
     assert_eq!(ctx.len(), 1);
     assert_eq!(

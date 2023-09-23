@@ -24,6 +24,7 @@ pub use log::*;
 pub use std::hash::Hash;
 
 pub use std::io::stdout;
+use std::path::Path;
 pub use std::process::{Command, Stdio};
 pub use std::time::Duration;
 
@@ -48,3 +49,12 @@ pub mod colors {
     pub use nu_ansi_term::Style;
 }
 pub use serde::{Deserialize, Serialize};
+
+pub const SHARED_LIB_DIR: &str = ".libs";
+
+pub fn get_path_to_shared_libraries() -> Option<PathBuf> {
+    dirs::data_dir().or_else(dirs::home_dir).map(|mut pb| {
+        pb.push(PathBuf::from(SHARED_LIB_DIR));
+        pb
+    })
+}
