@@ -71,9 +71,9 @@ fn main() -> anyhow::Result<()> {
 
     let path_to_shared_lib: PathBuf = args
         .iter()
-        .find_map(|a| {
+        .map(|a| {
             if let Argument::SharedLibPath(slp) = a {
-                Some(PathBuf::from(&slp))
+                PathBuf::from(&slp)
             } else {
                 let path_so = get_path_to_shared_libraries()
                     .context("couldn't determine shared library path")
@@ -83,9 +83,10 @@ fn main() -> anyhow::Result<()> {
                         .context("could not create directory for shared lib")
                         .unwrap();
                 }
-                Some(path_so)
+                path_so
             }
         })
+        .next()
         .context("shared lib could not be built")?;
 
     println!();

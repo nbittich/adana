@@ -321,13 +321,13 @@ fn compute_recur(
                                     parent
                                 };
 
-                                let res = unsafe {
+                                
+                                unsafe {
                                     let lib = NativeLibrary::new(
                                         file_path.as_path(),
                                     )?;
                                     Ok(Primitive::NativeLibrary(Rc::new(lib)))
-                                };
-                                res
+                                }
                             }
                             _ => Ok(Primitive::Error(
                                 "wrong include call".to_string(),
