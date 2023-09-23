@@ -9,10 +9,7 @@ use std::{
     sync::Arc,
 };
 
-use crate::{
-    adana_script::parser::parse_instructions,
-    prelude::{get_path_to_shared_libraries, BTreeMap},
-};
+use crate::{adana_script::parser::parse_instructions, prelude::BTreeMap};
 
 use super::ast::to_ast;
 use adana_script_core::{
@@ -284,6 +281,15 @@ fn compute_recur(
                                         "no current dir! wasn't expected",
                                     )?;
                                 let temp_path = Path::new(&file_path);
+                                if temp_path
+                                    .extension()
+                                    .and_then(|e| e.to_str())
+                                    != Some("so")
+                                {
+                                    return Ok(Primitive::Error(
+                                        "not a shared object!".into(),
+                                    ));
+                                }
                                 if temp_path.is_absolute() || temp_path.exists()
                                 {
                                     let parent = temp_path
@@ -296,26 +302,22 @@ fn compute_recur(
                                         &parent,
                                     ))?;
                                 }
-                                if temp_path
-                                    .extension()
-                                    .and_then(|e| e.to_str())
-                                    != Some("so")
-                                {
-                                    return Ok(Primitive::Error(
-                                        "not a shared object!".into(),
-                                    ));
-                                }
 
                                 let res = temp_path
                                     .file_name()
                                     .context("file name not found")
-                                    .and_then(|p| {
-                                        read_to_string(p)
-                                            .map_err(anyhow::Error::new)
-                                    })
-                                    .and_then(move |file| {
-                                        // compute(&file, ctx, shared_lib)
-                                        todo!()
+                                    .and_then(move |file| unsafe {
+                                        let lib =
+                                            libloading::Library::new(file)
+                                                .context(
+                                                    "could not load lib",
+                                                )?;
+                                        let plugin: libloading::Symbol<
+                                            unsafe extern "C" fn() -> Primitive,
+                                        > = lib
+                                            .get(adana_script_core::constants::NATIVE_LIB)
+                                            .context("plugin wasn't found")?;
+                                        Ok(plugin())
                                     });
                                 std::env::set_current_dir(curr_path)?; // todo this might be quiet fragile
                                 res
@@ -747,7 +749,6 @@ fn compute_recur(
 fn value_to_tree(
     value: Value,
     ctx: &mut BTreeMap<String, RefPrimitive>,
-    shared_lib: impl AsRef<Path> + Copy,
 ) -> anyhow::Result<Tree<TreeNodeValue>> {
     let mut tree: Tree<TreeNodeValue> = Tree::new();
     to_ast(ctx, value, &mut tree, &None)?;
@@ -769,7 +770,7 @@ fn compute_lazy(
     ctx: &mut BTreeMap<String, RefPrimitive>,
     shared_lib: impl AsRef<Path> + Copy,
 ) -> anyhow::Result<Primitive> {
-    let tree = value_to_tree(instruction, ctx, shared_lib)?;
+    let tree = value_to_tree(instruction, ctx)?;
 
     let root = tree.root();
 

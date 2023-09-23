@@ -12,7 +12,7 @@ COPY ./Cargo.toml ./Cargo.lock ./
 
 COPY .cargo/config .cargo/config
 
-ENV RUSTFLAGS='-C link-arg=-s'
+# ENV RUSTFLAGS='-C link-arg=-s'
 
 RUN cargo build --release 
 
@@ -20,16 +20,16 @@ RUN rm -rf ./src
 
 COPY ./src/ ./src
 
-RUN rm ./target/x86_64-unknown-linux-musl/release/deps/adana*
+RUN rm ./target/release/deps/adana*
 
 RUN cargo build --release 
 
-FROM alpine
+FROM ubuntu:22.10
 
 ENV RUST_LOG=info
 
 VOLUME /root/.local/share
 
-COPY --from=builder  /app/adana/target/x86_64-unknown-linux-musl/release/adana .
+COPY --from=builder  /app/adana/target/release/adana .
 
 ENTRYPOINT [ "/adana" ]

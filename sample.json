@@ -40,9 +40,7 @@
     "name": "misc",
     "values": {
       "bash": "bash",
-      "buildmusl": "bash build_musl.sh",
       "cloc": "cloc",
-      "distls": "ls -alh ./dist/musl",
       "drc": "docker-compose",
       "ls": "ls",
       "nu": "nu",
@@ -85,4 +83,5 @@
       "tree": "cargo tree",
       "vim": "nvim"
     }
-  }]
+  }
+]

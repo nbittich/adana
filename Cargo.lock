@@ -29,7 +29,7 @@ dependencies = [
 [[package]]
 name = "adana-script-core"
 version = "0.13.36"
-source = "git+https://github.com/nbittich/adana-script-core.git#f50627eddfee442808820ced4efc6b9752b2828b"
+source = "git+https://github.com/nbittich/adana-script-core.git#8325f08efa47b21c9503eab08e84fc77fc776de2"
 dependencies = [
  "anyhow",
  "serde",

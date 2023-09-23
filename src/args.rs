@@ -55,7 +55,7 @@ pub fn parse_args(
                     "history path should be specified only once!"
                 );
                 let path = args.next().context("history path missing!!")?;
-                arguments.push(Argument::HistoryPath(path));
+                arguments.push(Argument::SharedLibPath(path));
             }
 
             "--sharedlibpath" | "-slp" => {

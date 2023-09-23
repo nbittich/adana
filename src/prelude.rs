@@ -24,7 +24,6 @@ pub use log::*;
 pub use std::hash::Hash;
 
 pub use std::io::stdout;
-use std::path::Path;
 pub use std::process::{Command, Stdio};
 pub use std::time::Duration;
 
