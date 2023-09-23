@@ -1,9 +1,9 @@
 ## Todo
 
 - check abi_stable crate
+- make a std library
 - stabilize, more tests
 - better error
-- make a std library
 - update readme
 - less cloning
 
