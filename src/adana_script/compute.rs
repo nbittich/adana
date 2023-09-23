@@ -530,6 +530,9 @@ fn compute_recur(
             }
             TreeNodeValue::StructAccess { struc, key } => match (struc, key) {
                 (Value::Variable(v), key @ Primitive::String(k)) => {
+                    if cfg!(test) {
+                        dbg!(&ctx);
+                    }
                     let struc = ctx
                         .get(v)
                         .context("struct not found in context")?
@@ -631,6 +634,7 @@ fn compute_recur(
                             if matches!(
                                 *maybe_fn,
                                 Primitive::Function { parameters: _, exprs: _ }
+                                    | Primitive::NativeLibrary(_)
                             ) {
                                 scope_ctx.insert(k.to_string(), p.clone());
                             }
@@ -718,6 +722,7 @@ fn compute_recur(
                         let slb = shared_lib.as_ref().to_path_buf();
                         let fun = move |v, extra_ctx| {
                             cloned_ctx.extend(extra_ctx);
+                            println!("goes in");
                             compute_lazy(v, &mut cloned_ctx, &slb)
                         };
                         unsafe {
