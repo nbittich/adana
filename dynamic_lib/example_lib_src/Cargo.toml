@@ -11,3 +11,10 @@ crate-type = ["dylib"]
 [dependencies]
 adana-script-core = { git = "https://github.com/nbittich/adana-script-core.git" }
 anyhow = "1.0.75"
+
+[profile.release]
+opt-level = 'z'   # Optimize for size.
+lto = true        # Link Time Optimization (LTO)
+codegen-units = 1 # Set this to 1 to allow for maximum size reduction optimizations:
+panic = 'abort'   # removes the need for this extra unwinding code.
+strip = "symbols"

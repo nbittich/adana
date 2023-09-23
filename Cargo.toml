@@ -1,5 +1,7 @@
 [package]
 name = "adana"
+rust-version = "1.72"
+
 version = "0.13.35"
 edition = "2021"
 authors = ["Nordine Bittich"]

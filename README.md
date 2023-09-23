@@ -14,6 +14,7 @@ Scripting programming language, repl and namespaced aliases for commands.
    - [Operators and constants](#operators-and-constants)
    - [Variable definition](#variable-definition)
    - [Memory Management](#memory-management)
+   - [Plugins](#plugins)
    - [Loops](#loops)
    - [Ranges](#ranges)
    - [Conditions](#conditions)
@@ -285,6 +286,40 @@ x = 99
 y = &x
 x = 100 # now y == 100
 
+```
+
+<hr>
+
+### Plugins
+
+It is possible to write and load plugins in rust dyanmically.
+Because Rust doesn't have a stable ABI yet, the plugin must be built with the same version that
+was used to build adana.
+
+The rust version is specified when running the repl.
+
+To load a dynamic library, you can either specify a relative path, or an
+absolute path. In case of a relative path, it should be relative to the
+shared lib path (by default: `$HOME/.local/share/.libs_adana`).
+
+You can override this by providing a path when starting the repl (e.g: `adana --slp /tmp`).
+
+If the path is a directory, it will try to build it using `cargo`, so you
+need to have rust installed on your machine.
+
+If it is an `.so` file, it will automatically load it.
+
+An example of plugin can be found in this repo (`dynamic_lib/example_lib_src`).
+
+For example:
+
+- Copy the SO file in tmp: `cp dynamic_lib/libplugin_example.so /tmp/`
+- Run and override the lib path: `adana -slp /tmp`
+- Execute the following:
+
+```python
+     lib = require("libplugin_example.so")
+     text = lib.hello("Nordine", "la", "forme?")
 ```
 
 <hr>
@@ -748,5 +783,5 @@ adana --dbpath /tmp/mydb.db --historypath /tmp/myhistory.txt --nofb
 
 ```
 # specify shared lib path
-adana --slp /tmp/shared
+adana -slp /tmp/shared
 ```

@@ -51,7 +51,12 @@ fn try_from_path(
             .stdout(Stdio::null())
             .stderr(Stdio::inherit())
             .spawn()?;
+
         let status_code = handle.wait()?;
+
+        std::env::set_current_dir(curr_path)
+            .map_err(|e| anyhow!("could not change dir: {e}"))?;
+
         if !status_code.success() {
             return Err(anyhow!("could not build library"));
         }
@@ -68,12 +73,11 @@ fn try_from_path(
             }
         }
     }
+
     if file_path.extension().and_then(|e| e.to_str()) != Some("so") {
         return Err(anyhow!("not a shared object!"));
     }
-    std::env::set_current_dir(curr_path)
-        .map_err(|e| anyhow!("could not change dir: {e}"))?;
-
+    println!("loading {file_path:?}");
     unsafe { NativeLibrary::new(file_path.as_path()) }
 }
 #[cfg(test)]

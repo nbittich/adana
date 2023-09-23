@@ -24,6 +24,7 @@ use crate::{
 };
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+const RUST_VERSION: &str = std::env!("CARGO_PKG_RUST_VERSION");
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
 fn main() -> anyhow::Result<()> {
@@ -35,7 +36,7 @@ fn main() -> anyhow::Result<()> {
     let args = parse_args(std::env::args())?;
 
     clear_terminal();
-    println!("{PKG_NAME} v{VERSION}");
+    println!("{PKG_NAME} v{VERSION} (rust version: {RUST_VERSION})");
 
     let config = if args.is_empty() {
         Config::default()
@@ -71,26 +72,29 @@ fn main() -> anyhow::Result<()> {
 
     let path_to_shared_lib: PathBuf = args
         .iter()
-        .map(|a| {
+        .find_map(|a| {
             if let Argument::SharedLibPath(slp) = a {
-                PathBuf::from(&slp)
+                Some(PathBuf::from(&slp))
             } else {
-                let path_so = get_path_to_shared_libraries()
-                    .context("couldn't determine shared library path")
-                    .unwrap();
-                if !path_so.exists() {
-                    std::fs::create_dir_all(path_so.as_path())
-                        .context("could not create directory for shared lib")
-                        .unwrap();
-                }
-                path_so
+                None
             }
         })
-        .next()
-        .context("shared lib could not be built")?;
+        .or_else(|| {
+            let path_so = get_path_to_shared_libraries()
+                .context("couldn't determine shared library path")
+                .unwrap();
+            if !path_so.exists() {
+                std::fs::create_dir_all(path_so.as_path())
+                    .context("could not create directory for shared lib")
+                    .unwrap();
+            }
+            Some(path_so)
+        })
+        .context("ERR: shared lib path could not be built")?;
+
+    println!("shared lib path: {path_to_shared_lib:?}");
 
     println!();
-
     match Db::open(config) {
         Ok(Db::InMemory(mut db)) => {
             start_app(&mut db, history_path, &path_to_shared_lib, default_cache)
@@ -144,6 +148,7 @@ fn start_app(
                     Ok(Primitive::Unit) => {}
                     Ok(calc) => println!("{calc}"),
                     Err(calc_err) => {
+                        eprintln!("Error: {calc_err:?}");
                         match process_command(
                             db,
                             &mut script_context,
@@ -153,7 +158,6 @@ fn start_app(
                         ) {
                             Ok(_) => (),
                             Err(err) => {
-                                eprintln!("{calc_err}");
                                 eprintln!("Err: {err}");
                             }
                         }

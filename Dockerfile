@@ -24,7 +24,7 @@ RUN rm ./target/release/deps/adana*
 
 RUN cargo build --release 
 
-FROM ubuntu:22.10
+FROM rust:1.72.1-bullseye
 
 ENV RUST_LOG=info
 
