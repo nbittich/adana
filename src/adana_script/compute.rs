@@ -12,12 +12,12 @@ use std::{
 
 use crate::{adana_script::parser::parse_instructions, prelude::BTreeMap};
 
-use super::ast::to_ast;
+use super::{ast::to_ast, require_dynamic_lib::require_dynamic_lib};
 use adana_script_core::{
     primitive::{
-        Abs, Add, And, Array, Cos, Div, Logarithm, Mul, NativeLibrary, Neg,
-        Not, Or, Pow, Primitive, RefPrimitive, Rem, Sin, Sqrt, Sub, Tan,
-        ToBool, ToNumber, TypeOf,
+        Abs, Add, And, Array, Cos, Div, Logarithm, Mul, Neg, Not, Or, Pow,
+        Primitive, RefPrimitive, Rem, Sin, Sqrt, Sub, Tan, ToBool, ToNumber,
+        TypeOf,
     },
     Operator, TreeNodeValue, Value,
 };
@@ -277,56 +277,13 @@ fn compute_recur(
                     adana_script_core::BuiltInFunctionType::Require => {
                         match v {
                             Primitive::String(file_path) => {
-                                let curr_path = std::env::current_dir()
-                                    .context(
-                                        "no current dir! wasn't expected",
-                                    )?;
-                                if cfg!(test) {
-                                    dbg!(&curr_path);
-                                }
-                                let temp_path = Path::new(&file_path);
-                                if temp_path
-                                    .extension()
-                                    .and_then(|e| e.to_str())
-                                    != Some("so")
-                                {
-                                    return Ok(Primitive::Error(
-                                        "not a shared object!".into(),
-                                    ));
-                                }
-                                if cfg!(test) {
-                                    dbg!(&temp_path);
-                                }
-
-                                let file_path = {
-                                    let mut parent = temp_path
-                                    .parent()
-                                    .filter(|p| p.is_dir())
-                                    .map(|p| p.to_path_buf())
-                                    .or_else(|| {
-                                        Some(shared_lib.as_ref().to_path_buf())
-                                    })
-                                    .and_then(|p| p.canonicalize().ok())
-                                    .context(
-                                        "parent or shared lib doesn't exist",
-                                    )?;
-                                    if cfg!(test) {
-                                        dbg!(&parent);
-                                    }
-                                    parent.push(
-                                        temp_path
-                                            .file_name()
-                                            .context("file name not found")?,
-                                    );
-                                    parent
-                                };
-
-                                unsafe {
-                                    let lib = NativeLibrary::new(
-                                        file_path.as_path(),
-                                    )?;
-                                    Ok(Primitive::NativeLibrary(Rc::new(lib)))
-                                }
+                                let native_lib = require_dynamic_lib(
+                                    file_path.as_str(),
+                                    shared_lib,
+                                )?;
+                                Ok(Primitive::NativeLibrary(Rc::new(
+                                    native_lib,
+                                )))
                             }
                             _ => Ok(Primitive::Error(
                                 "wrong include call".to_string(),
