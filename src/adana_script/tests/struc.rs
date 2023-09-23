@@ -10,7 +10,7 @@ use adana_script_core::{primitive::Primitive, Value};
 fn test_simple_struc() {
     let mut ctx = BTreeMap::new();
     let expr = "x = struct {x: 8}";
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(ctx.len(), 1);
     assert_eq!(
         ctx["x"].read().unwrap().clone(),
@@ -30,7 +30,7 @@ fn test_simple_struc_with_more_stuff_in_it() {
                 y: "hello;",
                 z: ()=> {println("hello")}
            }"#;
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(ctx.len(), 1);
     assert_eq!(
         ctx["x"].read().unwrap().clone(),
@@ -73,7 +73,7 @@ fn test_struct_eq() {
         }
         x == y
     "#;
-    let res = compute(expr, &mut ctx).unwrap();
+    let res = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Bool(true), res);
 
     let expr = r#"
@@ -88,7 +88,7 @@ fn test_struct_eq() {
         }
         x == y
     "#;
-    let res = compute(expr, &mut ctx).unwrap();
+    let res = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Bool(false), res);
 }
 
@@ -103,7 +103,7 @@ fn test_struct_access() {
                  }
         person.age
         "#;
-    let res = compute(expr, &mut ctx).unwrap();
+    let res = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(res, Primitive::Int(20));
 }
 
@@ -119,7 +119,7 @@ fn test_struct_variable_assign() {
         person.age = 34
         person.age
         "#;
-    let res = compute(expr, &mut ctx).unwrap();
+    let res = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(res, Primitive::Int(34));
 }
 #[test]
@@ -159,7 +159,7 @@ fn test_struct_complex_ish() {
         test5 = person_service.boom(person)
         test6 = person_service["boom"](person)
         "#;
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         ctx["test1"].read().unwrap().clone(),
         Primitive::String("hi hello".to_string())
@@ -198,7 +198,7 @@ fn test_struct_access_key() {
         s["name"]
 
        "#;
-    let r = compute(expr, &mut ctx).unwrap();
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::String("nordine".into()));
 }
 #[test]
@@ -212,7 +212,7 @@ fn test_struct_access_key2() {
         }["name"]
 
        "#;
-    let r = compute(expr, &mut ctx).unwrap();
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::String("nordine".into()));
 }
 
@@ -227,7 +227,7 @@ fn test_struct_access_key3() {
         }.name
 
        "#;
-    let r = compute(expr, &mut ctx).unwrap();
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::String("nordine".into()));
 }
 
@@ -242,7 +242,7 @@ fn test_struct_access_key4() {
         }.name()
 
        "#;
-    let r = compute(expr, &mut ctx).unwrap();
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::String("nordine".into()));
 }
 
@@ -257,7 +257,7 @@ fn test_struct_access_key5() {
         }["name"]()
 
        "#;
-    let r = compute(expr, &mut ctx).unwrap();
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::String("nordine".into()));
 }
 
@@ -269,6 +269,6 @@ fn test_struct_empty() {
         s.x = "nordine"
         s.x
        "#;
-    let r = compute(expr, &mut ctx).unwrap();
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::String("nordine".into()));
 }

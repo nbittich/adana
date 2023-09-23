@@ -14,7 +14,7 @@ fn test_if_scope_simple() {
                 z = 8
             }
         "#;
-    let _ = compute(program, &mut ctx).unwrap();
+    let _ = compute(program, &mut ctx, "N/A").unwrap();
     assert!(!ctx.contains_key("z"));
     assert_eq!(Primitive::Int(4), ctx["x"].read().unwrap().clone());
 }
@@ -32,7 +32,7 @@ fn test_if_else_scope_simple() {
                 x = x +1
             }
         "#;
-    let _ = compute(program, &mut ctx).unwrap();
+    let _ = compute(program, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(5), ctx["x"].read().unwrap().clone());
     assert!(!ctx.contains_key("z"));
     assert!(!ctx.contains_key("b"));
@@ -60,7 +60,7 @@ fn test_if_scope_complex() {
                 z = 8
             }
         "#;
-    let _ = compute(program, &mut ctx).unwrap();
+    let _ = compute(program, &mut ctx, "N/A").unwrap();
     assert!(!ctx.contains_key("z"));
     assert!(!ctx.contains_key("l"));
     assert!(!ctx.contains_key("h"));
@@ -99,7 +99,7 @@ fn test_if_else_scope_complex() {
                 z = 8
             }
         "#;
-    let _ = compute(program, &mut ctx).unwrap();
+    let _ = compute(program, &mut ctx, "N/A").unwrap();
     assert!(!ctx.contains_key("z"));
     assert!(!ctx.contains_key("l"));
     assert!(!ctx.contains_key("h"));
@@ -119,7 +119,7 @@ fn test_while_scope_simple() {
                 z = 8
             }
         "#;
-    let _ = compute(program, &mut ctx).unwrap();
+    let _ = compute(program, &mut ctx, "N/A").unwrap();
     assert!(!ctx.contains_key("z"));
     assert_eq!(Primitive::Int(4), ctx["x"].read().unwrap().clone());
 }
@@ -144,7 +144,7 @@ fn test_while_scope_complex() {
                 
             }
         "#;
-    let _ = compute(program, &mut ctx).unwrap();
+    let _ = compute(program, &mut ctx, "N/A").unwrap();
     assert!(!ctx.contains_key("z"));
     assert!(!ctx.contains_key("p"));
     assert!(!ctx.contains_key("d"));

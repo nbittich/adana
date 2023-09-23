@@ -7,11 +7,12 @@ mod prelude;
 mod reserved_keywords;
 
 use adana_script_core::primitive::Primitive;
+use anyhow::Context;
 use args::*;
 use db::DbOp;
 use log::debug;
 use rustyline::error::ReadlineError;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use prelude::{colors::LightBlue, colors::Style, BTreeMap};
 
@@ -19,20 +20,23 @@ use crate::{
     adana_script::compute,
     cache_command::{clear_terminal, get_default_cache, process_command},
     db::{Config, Db},
+    prelude::get_path_to_shared_libraries,
 };
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+const RUST_VERSION: &str = std::env!("CARGO_PKG_RUST_VERSION");
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
 fn main() -> anyhow::Result<()> {
     env_logger::init();
+
     ctrlc::set_handler(|| {
         debug!("catch CTRL-C! DO NOT REMOVE this. receive ctrl+c signal 2")
     })?;
     let args = parse_args(std::env::args())?;
 
     clear_terminal();
-    println!("{PKG_NAME} v{VERSION}");
+    println!("{PKG_NAME} v{VERSION} (rust version: {RUST_VERSION})");
 
     let config = if args.is_empty() {
         Config::default()
@@ -65,14 +69,38 @@ fn main() -> anyhow::Result<()> {
             None
         }
     });
-    println!();
 
+    let path_to_shared_lib: PathBuf = args
+        .iter()
+        .find_map(|a| {
+            if let Argument::SharedLibPath(slp) = a {
+                Some(PathBuf::from(&slp))
+            } else {
+                None
+            }
+        })
+        .or_else(|| {
+            let path_so = get_path_to_shared_libraries()
+                .context("couldn't determine shared library path")
+                .unwrap();
+            if !path_so.exists() {
+                std::fs::create_dir_all(path_so.as_path())
+                    .context("could not create directory for shared lib")
+                    .unwrap();
+            }
+            Some(path_so)
+        })
+        .context("ERR: shared lib path could not be built")?;
+
+    println!("shared lib path: {path_to_shared_lib:?}");
+
+    println!();
     match Db::open(config) {
         Ok(Db::InMemory(mut db)) => {
-            start_app(&mut db, history_path, default_cache)
+            start_app(&mut db, history_path, &path_to_shared_lib, default_cache)
         }
         Ok(Db::FileBased(mut db)) => {
-            start_app(&mut db, history_path, default_cache)
+            start_app(&mut db, history_path, &path_to_shared_lib, default_cache)
         }
         Err(e) => Err(e),
     }
@@ -81,6 +109,7 @@ fn main() -> anyhow::Result<()> {
 fn start_app(
     db: &mut impl DbOp<String, String>,
     history_path: Option<impl AsRef<Path> + Copy>,
+    shared_lib_path: impl AsRef<Path> + Copy,
     default_cache: Option<String>,
 ) -> anyhow::Result<()> {
     let mut current_cache = {
@@ -109,7 +138,7 @@ fn start_app(
                 }
 
                 let script_res = {
-                    match compute(&line, &mut script_context) {
+                    match compute(&line, &mut script_context, shared_lib_path) {
                         Ok(Primitive::Error(e)) => Err(anyhow::Error::msg(e)),
                         Ok(calc) => Ok(calc),
                         e @ Err(_) => e,
@@ -119,6 +148,7 @@ fn start_app(
                     Ok(Primitive::Unit) => {}
                     Ok(calc) => println!("{calc}"),
                     Err(calc_err) => {
+                        eprintln!("Error: {calc_err:?}");
                         match process_command(
                             db,
                             &mut script_context,
@@ -128,7 +158,6 @@ fn start_app(
                         ) {
                             Ok(_) => (),
                             Err(err) => {
-                                eprintln!("{calc_err}");
                                 eprintln!("Err: {err}");
                             }
                         }

@@ -36,6 +36,7 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     INCLUDE,
     WHILE,
     ELSE,
+    REQUIRE,
     MULTILINE,
     STRUCT,
     Operator::Add.as_str(),

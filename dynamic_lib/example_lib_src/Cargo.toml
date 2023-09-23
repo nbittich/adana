@@ -1,0 +1,20 @@
+[package]
+name = "plugin_example"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["dylib"]
+
+[dependencies]
+adana-script-core = "0.14.0"
+anyhow = "1.0.75"
+
+[profile.release]
+opt-level = 'z'   # Optimize for size.
+lto = true        # Link Time Optimization (LTO)
+codegen-units = 1 # Set this to 1 to allow for maximum size reduction optimizations:
+panic = 'abort'   # removes the need for this extra unwinding code.
+strip = "symbols"

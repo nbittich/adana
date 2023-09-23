@@ -12,7 +12,7 @@ fn test_string_block2() {
             there, nothing will stop you"""
         "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         Primitive::String(
             r#"For strings, you can use string blocks:
@@ -30,7 +30,7 @@ fn test_string_escape() {
         s = "\"gipitou engine, gipitou\""
         "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         Primitive::String(r#""gipitou engine, gipitou""#.to_string()),
         ctx["s"].read().unwrap().clone()
@@ -45,7 +45,7 @@ fn test_string_block_with_parameters() {
         s = """Hello ${name}! You are ${age} years old."""
         "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         Primitive::String(
             r#"Hello nordine! You are 34 years old."#.to_string()
@@ -72,7 +72,7 @@ fn test_string_block_with_parameters_struct() {
         s = """Hello ${person.name}! You are ${person.age} years old. ${person.wasup(person.age)}"""
         "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         Primitive::String(
             r#"Hello nordine! You are 34 years old. you are old!"#.to_string()
@@ -112,7 +112,7 @@ fn test_string_block_complete() {
         
         "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         Primitive::String(
             r#"Hello nordine! You are 34 years old. you are old!"#.to_string()
@@ -161,7 +161,7 @@ fn parse_multi_values() {
 
         "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         Primitive::String(
             r#"Hello nordine! You are 34 years old.
@@ -206,7 +206,7 @@ fn parse_f_strings_fn() {
 
         "#;
     let mut ctx = BTreeMap::new();
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         Primitive::String(
             r#"Hello nordine! You are 34 years old.

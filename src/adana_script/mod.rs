@@ -1,8 +1,8 @@
 mod ast;
 mod compute;
 mod parser;
+mod require_dynamic_lib;
 mod string_parser;
-
 use std::collections::BTreeMap;
 
 use adana_script_core::TreeNodeValue;

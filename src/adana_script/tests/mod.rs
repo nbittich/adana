@@ -1,4 +1,5 @@
 mod builtin;
+mod dynload;
 mod examples;
 mod foreach;
 mod funct;

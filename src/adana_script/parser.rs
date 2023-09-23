@@ -212,7 +212,13 @@ fn parse_fn_call(s: &str) -> Res<Value> {
                         parse_fn,
                         map(
                             many1(preceded(multispace0, parse_value)),
-                            Value::Expression,
+                            |mut v| {
+                                if v.len() == 1 {
+                                    v.remove(0)
+                                } else {
+                                    Value::Expression(v)
+                                }
+                            },
                         ),
                     )),
                 ),
@@ -323,6 +329,7 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
         parse_builtin(BuiltInFunctionType::Print),
         parse_builtin(BuiltInFunctionType::Length),
         parse_builtin(BuiltInFunctionType::Include),
+        parse_builtin(BuiltInFunctionType::Require),
         parse_builtin(BuiltInFunctionType::ReadLines),
     ))(s)
 }

@@ -12,7 +12,7 @@ fn test_simple() {
         "#;
     let mut ctx = BTreeMap::new();
 
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         ctx["x"].read().unwrap().clone(),
         ctx["y"].read().unwrap().clone()
@@ -29,7 +29,7 @@ fn test_simple_modify() {
         "#;
     let mut ctx = BTreeMap::new();
 
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         ctx["x"].read().unwrap().clone(),
         ctx["y"].read().unwrap().clone()
@@ -49,7 +49,7 @@ fn test_simple_struct_ref() {
         "#;
     let mut ctx = BTreeMap::new();
 
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         ctx["x"].read().unwrap().clone(),
         ctx["y"].read().unwrap().clone()
@@ -69,7 +69,7 @@ fn test_simple_array_ref() {
         "#;
     let mut ctx = BTreeMap::new();
 
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         ctx["x"].read().unwrap().clone(),
         ctx["y"].read().unwrap().clone()
@@ -93,7 +93,7 @@ fn test_forin_range_ref() {
         "#;
     let mut ctx = BTreeMap::new();
 
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         ctx["x"].read().unwrap().clone(),
         ctx["y"].read().unwrap().clone()
@@ -115,7 +115,7 @@ fn test_forin_range_ref2() {
         "#;
     let mut ctx = BTreeMap::new();
 
-    let _ = compute(expr, &mut ctx).unwrap();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         ctx["x"].read().unwrap().clone(),
         ctx["y"].read().unwrap().clone()

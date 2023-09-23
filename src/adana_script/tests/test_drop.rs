@@ -12,7 +12,7 @@ fn test_drop_arr_access() {
     "#;
     let mut ctx = BTreeMap::new();
 
-    let _ = compute(exp, &mut ctx).unwrap();
+    let _ = compute(exp, &mut ctx, "N/A").unwrap();
     assert_eq!(
         ctx["arr"].read().unwrap().clone(),
         Primitive::Array(vec![
@@ -30,7 +30,7 @@ fn test_drop_string() {
     "#;
     let mut ctx = BTreeMap::new();
 
-    let _ = compute(exp, &mut ctx).unwrap();
+    let _ = compute(exp, &mut ctx, "N/A").unwrap();
     assert_eq!(
         ctx["arr"].read().unwrap().clone(),
         Primitive::String("ello".to_string())
@@ -48,7 +48,7 @@ fn test_drop_struct_access() {
     "#;
     let mut ctx = BTreeMap::new();
 
-    let _ = compute(exp, &mut ctx).unwrap();
+    let _ = compute(exp, &mut ctx, "N/A").unwrap();
     assert_eq!(
         ctx["s"].read().unwrap().clone(),
         Primitive::Struct(BTreeMap::from([
@@ -85,7 +85,7 @@ fn test_drop_struct_access_alt() {
     "#;
     let mut ctx = BTreeMap::new();
 
-    let _ = compute(exp, &mut ctx).unwrap();
+    let _ = compute(exp, &mut ctx, "N/A").unwrap();
     assert_eq!(
         ctx["s"].read().unwrap().clone(),
         Primitive::Struct(BTreeMap::from([
