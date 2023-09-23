@@ -292,7 +292,7 @@ x = 100 # now y == 100
 
 ### Plugins
 
-It is possible to write and load plugins in rust dyanmically.
+It is possible to load plugins written in rust dyanmically.
 Because Rust doesn't have a stable ABI yet, the plugin must be built with the same version that
 was used to build adana.
 
