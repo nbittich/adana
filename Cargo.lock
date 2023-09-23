@@ -29,9 +29,10 @@ dependencies = [
 [[package]]
 name = "adana-script-core"
 version = "0.13.36"
-source = "git+https://github.com/nbittich/adana-script-core.git#8325f08efa47b21c9503eab08e84fc77fc776de2"
+source = "git+https://github.com/nbittich/adana-script-core.git#9e04d187c54f7d4075e70e59ea2b331067e843ca"
 dependencies = [
  "anyhow",
+ "libloading",
  "serde",
  "serde_derive",
  "strum",

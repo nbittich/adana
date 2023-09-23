@@ -212,7 +212,13 @@ fn parse_fn_call(s: &str) -> Res<Value> {
                         parse_fn,
                         map(
                             many1(preceded(multispace0, parse_value)),
-                            Value::Expression,
+                            |mut v| {
+                                if v.len() == 1 {
+                                    v.remove(0)
+                                } else {
+                                    Value::Expression(v)
+                                }
+                            },
                         ),
                     )),
                 ),

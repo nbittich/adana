@@ -1,26 +1,25 @@
+use std::collections::BTreeMap;
+
 use adana_script_core::primitive::Primitive;
+use serial_test::serial;
+
+use crate::adana_script::compute;
 
 #[test]
-fn load_plugin_test() {
-    unsafe {
-        let lib = libloading::Library::new("/home/nbittich/toyprograms/plugin_example/target/release/libplugin_example.so").unwrap();
-        let plugin: libloading::Symbol<unsafe extern "C" fn() -> Primitive> =
-            lib.get(b"plugin").unwrap();
-        let struc = plugin();
+#[serial]
+fn load_dynamic_lib_test() {
+    let file_path = r#"
+     lib = require("libplugin_example.so")
+     text = lib.hello("Nordine", "la", "forme?")
+    "#;
+    let mut ctx = BTreeMap::new();
+    let res = compute(file_path, &mut ctx, "dynamic_lib").unwrap();
 
-        if let Primitive::Struct(s) = struc {
-            if let Some(Primitive::NativeFunction { function }) =
-                s.get("say_hello")
-            {
-                assert_eq!(
-                    Primitive::String("Hello Nordine".into()),
-                    function(vec![Primitive::String("Nordine".into())])
-                );
-            } else {
-                dbg!(s);
-            }
-        } else {
-            panic!("not a struc");
-        }
-    }
+    assert_eq!(
+        Primitive::String("Hello Nordine la forme?".to_string()),
+        ctx["text"].read().unwrap().clone()
+    );
+
+    dbg!(ctx);
+    println!("{res:?}");
 }

@@ -465,9 +465,9 @@ fn test_array_fn_access() {
                 ]))
             },
             Value::FunctionCall {
-                parameters: Box::new(Value::BlockParen(vec![
-                    Value::Expression(vec![Value::Integer(5)])
-                ])),
+                parameters: Box::new(Value::BlockParen(vec![Value::Integer(
+                    5
+                )])),
                 function: Box::new(Value::ArrayAccess {
                     arr: Box::new(Value::Variable("n".into())),
                     index: Box::new(Value::Integer(2))

@@ -6,6 +6,7 @@ use std::{
     fs::{read_to_string, File},
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
+    rc::Rc,
     sync::Arc,
 };
 
@@ -14,9 +15,9 @@ use crate::{adana_script::parser::parse_instructions, prelude::BTreeMap};
 use super::ast::to_ast;
 use adana_script_core::{
     primitive::{
-        Abs, Add, And, Array, Cos, Div, Logarithm, Mul, Neg, Not, Or, Pow,
-        Primitive, RefPrimitive, Rem, Sin, Sqrt, Sub, Tan, ToBool, ToNumber,
-        TypeOf,
+        Abs, Add, And, Array, Cos, Div, Logarithm, Mul, NativeLibrary, Neg,
+        Not, Or, Pow, Primitive, RefPrimitive, Rem, Sin, Sqrt, Sub, Tan,
+        ToBool, ToNumber, TypeOf,
     },
     Operator, TreeNodeValue, Value,
 };
@@ -280,6 +281,9 @@ fn compute_recur(
                                     .context(
                                         "no current dir! wasn't expected",
                                     )?;
+                                if cfg!(test) {
+                                    dbg!(&curr_path);
+                                }
                                 let temp_path = Path::new(&file_path);
                                 if temp_path
                                     .extension()
@@ -290,36 +294,39 @@ fn compute_recur(
                                         "not a shared object!".into(),
                                     ));
                                 }
-                                if temp_path.is_absolute() || temp_path.exists()
-                                {
-                                    let parent = temp_path
-                                        .parent()
-                                        .map(|p| p.to_path_buf())
-                                        .or_else(||Some(shared_lib.as_ref().to_path_buf()))
-                                        .context("parent or shared lib doesn't exist")?;
-
-                                    std::env::set_current_dir(PathBuf::from(
-                                        &parent,
-                                    ))?;
+                                if cfg!(test) {
+                                    dbg!(&temp_path);
                                 }
 
-                                let res = temp_path
-                                    .file_name()
-                                    .context("file name not found")
-                                    .and_then(move |file| unsafe {
-                                        let lib =
-                                            libloading::Library::new(file)
-                                                .context(
-                                                    "could not load lib",
-                                                )?;
-                                        let plugin: libloading::Symbol<
-                                            unsafe extern "C" fn() -> Primitive,
-                                        > = lib
-                                            .get(adana_script_core::constants::NATIVE_LIB)
-                                            .context("plugin wasn't found")?;
-                                        Ok(plugin())
-                                    });
-                                std::env::set_current_dir(curr_path)?; // todo this might be quiet fragile
+                                let file_path = {
+                                    let mut parent = temp_path
+                                    .parent()
+                                    .filter(|p| p.is_dir())
+                                    .map(|p| p.to_path_buf())
+                                    .or_else(|| {
+                                        Some(shared_lib.as_ref().to_path_buf())
+                                    })
+                                    .and_then(|p| p.canonicalize().ok())
+                                    .context(
+                                        "parent or shared lib doesn't exist",
+                                    )?;
+                                    if cfg!(test) {
+                                        dbg!(&parent);
+                                    }
+                                    parent.push(
+                                        temp_path
+                                            .file_name()
+                                            .context("file name not found")?,
+                                    );
+                                    parent
+                                };
+
+                                let res = unsafe {
+                                    let lib = NativeLibrary::new(
+                                        file_path.as_path(),
+                                    )?;
+                                    Ok(Primitive::NativeLibrary(Rc::new(lib)))
+                                };
                                 res
                             }
                             _ => Ok(Primitive::Error(
@@ -523,7 +530,7 @@ fn compute_recur(
                 Ok(Primitive::Struct(primitives))
             }
             TreeNodeValue::StructAccess { struc, key } => match (struc, key) {
-                (Value::Variable(v), key @ Primitive::String(_)) => {
+                (Value::Variable(v), key @ Primitive::String(k)) => {
                     let struc = ctx
                         .get(v)
                         .context("struct not found in context")?
@@ -531,7 +538,11 @@ fn compute_recur(
                         .map_err(|e| {
                             anyhow::format_err!("could not acquire lock {e}")
                         })?;
-                    Ok(struc.index_at(key))
+                    if let Primitive::NativeLibrary(lib) = struc.as_ref_ok()? {
+                        Ok(Primitive::NativeFunction(k.clone(), lib.clone()))
+                    } else {
+                        Ok(struc.index_at(key))
+                    }
                 }
                 (s @ Value::Struct(_), key @ Primitive::String(_))
                 | (
@@ -584,7 +595,7 @@ fn compute_recur(
             }
             TreeNodeValue::FunctionCall(Value::FunctionCall {
                 parameters,
-                function,
+                ref function,
             }) => {
                 if let Value::BlockParen(param_values) = parameters.borrow() {
                     let mut function = compute_instructions(
@@ -668,6 +679,43 @@ fn compute_recur(
                             return Ok(*v);
                         }
                         Ok(res)
+                    } else if let Primitive::NativeLibrary(lib) = function {
+                        if cfg!(test) {
+                            dbg!(&lib);
+                        }
+                        let mut parameters = vec![];
+                        for (_i, param) in param_values.iter().enumerate() {
+                            if let Value::Variable(_) = param {
+                                let variable_from_fn_call = compute_lazy(
+                                    param.clone(),
+                                    ctx,
+                                    shared_lib,
+                                )?;
+                                parameters.push(variable_from_fn_call);
+                            }
+                        }
+                        if cfg!(test) {
+                            dbg!(&parameters);
+                        }
+                        Ok(Primitive::Error("debug".into()))
+                        //Ok(function(vec![Primitive::String("s".into())]))
+                    } else if let Primitive::NativeFunction(key, lib) = function
+                    {
+                        if cfg!(test) {
+                            dbg!(&key, &lib);
+                        }
+                        let mut parameters = vec![];
+
+                        for (_i, param) in param_values.iter().enumerate() {
+                            let variable_from_fn_call =
+                                compute_lazy(param.clone(), ctx, shared_lib)?;
+                            parameters.push(variable_from_fn_call);
+                        }
+                        if cfg!(test) {
+                            dbg!(&parameters);
+                        }
+                        unsafe { lib.call_function(key.as_str(), parameters) }
+                        //Ok(function(vec![Primitive::String("s".into())]))
                     } else {
                         Ok(Primitive::Error(format!(
                             " not a function: {function}"
