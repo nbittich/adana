@@ -18,6 +18,7 @@ exclude = [
   ".git",
   ".github",
   "static_binaries/",
+  "dynamic_lib/",
 ]
 
 [dependencies]
