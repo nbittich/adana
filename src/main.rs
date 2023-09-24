@@ -148,7 +148,6 @@ fn start_app(
                     Ok(Primitive::Unit) => {}
                     Ok(calc) => println!("{calc}"),
                     Err(calc_err) => {
-                        eprintln!("Error: {calc_err:?}");
                         match process_command(
                             db,
                             &mut script_context,
@@ -158,6 +157,7 @@ fn start_app(
                         ) {
                             Ok(_) => (),
                             Err(err) => {
+                                eprintln!("Error: {calc_err:?}");
                                 eprintln!("Err: {err}");
                             }
                         }
