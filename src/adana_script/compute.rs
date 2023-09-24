@@ -81,7 +81,6 @@ fn compute_recur(
                     .get(name)
                     .cloned()
                     .context(format!("ref {name} not found in context!"))?;
-                let v = v;
                 let lock = v.read().map_err(|e| {
                     anyhow::format_err!("variable ref err: {e}")
                 })?;
