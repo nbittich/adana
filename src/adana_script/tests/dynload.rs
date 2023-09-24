@@ -82,3 +82,21 @@ fn build_from_adana_dynamic_lib_test() {
     dbg!(ctx);
     println!("{res:?}");
 }
+#[test]
+#[serial]
+fn require_direct_call_test() {
+    let mut ctx = BTreeMap::new();
+
+    let q = r#"
+    text = require("example_lib_src").hello("Nordine", "la", "forme?")
+    "#;
+    let res = compute(q, &mut ctx, "dynamic_lib").unwrap();
+
+    assert_eq!(
+        Primitive::String("Hello Nordine la forme?".to_string()),
+        ctx["text"].read().unwrap().clone()
+    );
+
+    dbg!(ctx);
+    println!("{res:?}");
+}

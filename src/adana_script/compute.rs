@@ -19,9 +19,31 @@ use adana_script_core::{
         Primitive, RefPrimitive, Rem, Sin, Sqrt, Sub, Tan, ToBool, ToNumber,
         TypeOf,
     },
-    Operator, TreeNodeValue, Value,
+    BuiltInFunctionType, Operator, TreeNodeValue, Value,
 };
 
+/// copy existing functions in a new ctx
+fn scoped_ctx(
+    ctx: &mut BTreeMap<String, RefPrimitive>,
+) -> anyhow::Result<BTreeMap<String, RefPrimitive>> {
+    let mut scope_ctx = BTreeMap::new();
+
+    // copy also the function definition to the scoped ctx
+    for (k, p) in ctx.iter() {
+        let maybe_fn = p
+            .read()
+            .map_err(|e| anyhow::format_err!("could not acquire lock {e}"))?;
+        if matches!(
+            *maybe_fn,
+            Primitive::Function { parameters: _, exprs: _ }
+                | Primitive::NativeLibrary(_)
+        ) {
+            scope_ctx.insert(k.to_string(), p.clone());
+        }
+    }
+
+    Ok(scope_ctx)
+}
 fn compute_recur(
     node: Option<NodeRef<TreeNodeValue>>,
     ctx: &mut BTreeMap<String, RefPrimitive>,
@@ -503,6 +525,24 @@ fn compute_recur(
                         Ok(struc.index_at(key))
                     }
                 }
+                (
+                    v @ Value::BuiltInFunction {
+                        fn_type: BuiltInFunctionType::Require,
+                        ..
+                    },
+                    key @ Primitive::String(k),
+                ) => {
+                    let native_lib = compute_lazy(v.clone(), ctx, shared_lib)?;
+                    if let Primitive::NativeLibrary(lib) =
+                        native_lib.as_ref_ok()?
+                    {
+                        Ok(Primitive::NativeFunction(k.clone(), lib.clone()))
+                    } else {
+                        Err(anyhow::format_err!(
+                            "could not parse built in fn {key} => {native_lib:?}"
+                        ))
+                    }
+                }
                 (s @ Value::Struct(_), key @ Primitive::String(_))
                 | (
                     s @ Value::StructAccess { struc: _, key: _ },
@@ -579,24 +619,7 @@ fn compute_recur(
                         exprs,
                     } = function
                     {
-                        let mut scope_ctx = BTreeMap::new();
-
-                        // copy also the function definition to the scoped ctx
-                        for (k, p) in ctx.iter() {
-                            let maybe_fn = p.read().map_err(|e| {
-                                anyhow::format_err!(
-                                    "could not acquire lock {e}"
-                                )
-                            })?;
-                            if matches!(
-                                *maybe_fn,
-                                Primitive::Function { parameters: _, exprs: _ }
-                                    | Primitive::NativeLibrary(_)
-                            ) {
-                                scope_ctx.insert(k.to_string(), p.clone());
-                            }
-                        }
-
+                        let mut scope_ctx = scoped_ctx(ctx)?;
                         for (i, param) in function_parameters.iter().enumerate()
                         {
                             if let Some(value) = param_values.get(i) {
@@ -619,7 +642,6 @@ fn compute_recur(
                                 )));
                             }
                         }
-
                         // TODO remove this and replace Arc<Mutex<T>> by Arc<T>
                         // call function in a specific os thread with its own stack
                         // This was relative to a small stack allocated by musl
@@ -675,11 +697,12 @@ fn compute_recur(
                             dbg!(&parameters);
                         }
 
-                        let mut cloned_ctx = ctx.clone();
+                        let mut scope_ctx = scoped_ctx(ctx)?;
+
                         let slb = shared_lib.as_ref().to_path_buf();
                         let fun = move |v, extra_ctx| {
-                            cloned_ctx.extend(extra_ctx);
-                            compute_lazy(v, &mut cloned_ctx, &slb)
+                            scope_ctx.extend(extra_ctx);
+                            compute_lazy(v, &mut scope_ctx, &slb)
                         };
                         unsafe {
                             lib.call_function(

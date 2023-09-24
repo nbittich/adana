@@ -467,6 +467,7 @@ fn parse_struct_access(s: &str) -> Res<Value> {
             pair(alt((parse_struct, parse_variable)), parse_key_dots),
             pair(parse_array_access, parse_key_brackets),
             pair(parse_array_access, parse_key_dots),
+            pair(parse_builtin_fn, parse_key_dots),
         )),
         |(s, key)| Value::StructAccess {
             struc: Box::new(s),

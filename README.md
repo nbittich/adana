@@ -298,11 +298,11 @@ was used to build adana.
 
 The rust version is specified when running the repl.
 
-To load a dynamic library, you can either specify a relative path, or an
+To load a library dynamically, you can either specify a relative path, or an
 absolute path. In case of a relative path, it should be relative to the
 shared lib path (by default: `$HOME/.local/share/.libs_adana`).
 
-You can override this by providing a path when starting the repl (e.g: `adana --slp /tmp`).
+You can override this by providing a path when starting the repl (e.g: `adana -slp /tmp`).
 
 If the path is a directory, it will try to build it using `cargo`, so you
 need to have rust installed on your machine.
@@ -320,6 +320,12 @@ For example:
 ```python
      lib = require("libplugin_example.so")
      text = lib.hello("Nordine", "la", "forme?")
+```
+
+Or in one line:
+
+```python
+   text = require("libplugin_example.so").hello("Nordine", "la", "forme?")
 ```
 
 <hr>
