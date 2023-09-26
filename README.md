@@ -335,7 +335,13 @@ Or in one line:
 
 A basic standard library exists [here](https://github.com/nbittich/adana-std).
 
-You can use it in this way: `fs = require("@std/fs")`
+You can use it in this way:
+
+```
+fs = require("@std/fs")
+fs.api_description() # description of the api
+
+```
 
 If it is not installed yet, you will see instructions on how to install it, e.g:
 
