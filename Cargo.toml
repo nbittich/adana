@@ -39,7 +39,6 @@ ctrlc = "3.4.1"
 #adana-script-core = { git = "https://github.com/nbittich/adana-script-core.git" }
 adana-script-core = "0.14.0"
 
-libloading = "0.8.0"
 [dependencies.env_logger]
 default-features = false
 version = "0.10.0"

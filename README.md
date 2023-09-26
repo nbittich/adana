@@ -15,6 +15,7 @@ Scripting programming language, repl and namespaced aliases for commands.
    - [Variable definition](#variable-definition)
    - [Memory Management](#memory-management)
    - [Plugins](#plugins)
+   - [Standard Library](#standard-library)
    - [Loops](#loops)
    - [Ranges](#ranges)
    - [Conditions](#conditions)
@@ -329,6 +330,24 @@ Or in one line:
 ```
 
 <hr>
+
+### Standard Library
+
+A basic standard library exists [here](https://github.com/nbittich/adana-std).
+
+You can use it in this way: `fs = require("@std/fs")`
+
+If it is not installed yet, you will see instructions on how to install it, e.g:
+
+```
+[rust~/toyprograms/adana(master)] fs = require("@std/fs")
+std lib doesn't exist: "/home/nbittich/.local/share/.libs_adana/adana-std/fs.so".
+
+Try to install it like so:
+    - wget -P /tmp https://github.com/nbittich/adana-std/releases/download/0.0.1/adana-std.tar.gz
+    - mkdir /home/nbittich/.local/share/.libs_adana/adana-std && tar xvzf /tmp/adana-std.tar.gz \
+            -C /home/nbittich/.local/share/.libs_adana/adana-std
+```
 
 ### Loops
 
@@ -648,7 +667,7 @@ fact(10)
 
 ### Include a script file
 
-You can dynamically load a script in the repl.
+You can dynamically load a script written in adana in the repl.
 Assuming you've cloned the repo and you use docker, here's an example of how to do it.
 
 Note that the extension can be anything.
@@ -690,6 +709,7 @@ Here is a list of built-in functions available:
 | print      | print without a newline                            | `print("hello")`                   |
 | println    | print with a newline                               | `println("hello")`                 |
 | include    | include a script                                   | `include("scripts/test_fn.adana")` |
+| require    | load a shared object                               | `require("my_lib.so")`             |
 | read_lines | read a file and returns an array<br> of each lines | `read_lines("scripts/name.txt")`   |
 | to_int     | cast to int                                        | `to_int("2")`<br>`to_int(2.2)`     |
 | to_double  | cast to double                                     | `to_double("2.2")`                 |

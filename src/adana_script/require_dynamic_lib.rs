@@ -1,3 +1,6 @@
+const STD_DOWNLOAD_URI: &str =
+    "https://github.com/nbittich/adana-std/releases/download/0.0.1/adana-std.tar.gz";
+
 use std::{
     path::Path,
     process::{Command, Stdio},
@@ -22,25 +25,52 @@ fn try_from_path(
     if cfg!(test) {
         dbg!(&curr_path);
     }
-    let temp_path = Path::new(&file_path);
-
-    if cfg!(test) {
-        dbg!(&temp_path);
-    }
 
     let mut file_path = {
-        let mut parent = temp_path
-            .parent()
-            .filter(|p| p.is_dir())
-            .map(|p| p.to_path_buf())
-            .or_else(|| Some(shared_lib.as_ref().to_path_buf()))
-            .and_then(|p| p.canonicalize().ok())
-            .context("parent or shared lib doesn't exist")?;
-        if cfg!(test) {
-            dbg!(&parent);
+        if file_path.starts_with("@std") {
+            let mut lib = file_path.replace("@std", "adana-std");
+            lib.push_str(".so");
+            let mut shared_lib_pb = shared_lib.as_ref().to_path_buf();
+            shared_lib_pb.push(lib);
+
+            if cfg!(test) {
+                dbg!(&shared_lib_pb);
+            }
+            if !shared_lib_pb.exists() {
+                let sl = shared_lib.as_ref().to_str().context("no path")?;
+                // try to download it
+                eprintln!(
+                    r#"std lib doesn't exist: {shared_lib_pb:?}.
+
+Try to install it like so:
+    - wget -P /tmp {STD_DOWNLOAD_URI}
+    - mkdir {sl}/adana-std && tar xvzf /tmp/adana-std.tar.gz -C {sl}/adana-std
+
+                "#
+                );
+                return Err(anyhow::anyhow!("std lib doesn't exist"));
+            }
+            shared_lib_pb
+        } else {
+            let temp_path = Path::new(&file_path);
+
+            if cfg!(test) {
+                dbg!(&temp_path);
+            }
+
+            let mut parent = temp_path
+                .parent()
+                .filter(|p| p.is_dir())
+                .map(|p| p.to_path_buf())
+                .or_else(|| Some(shared_lib.as_ref().to_path_buf()))
+                .and_then(|p| p.canonicalize().ok())
+                .context("parent or shared lib doesn't exist")?;
+            if cfg!(test) {
+                dbg!(&parent);
+            }
+            parent.push(temp_path.file_name().context("file name not found")?);
+            parent
         }
-        parent.push(temp_path.file_name().context("file name not found")?);
-        parent
     };
     if file_path.is_dir() && file_path.exists() {
         std::env::set_current_dir(&file_path)
