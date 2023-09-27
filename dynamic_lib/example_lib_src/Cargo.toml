@@ -9,7 +9,7 @@ edition = "2021"
 crate-type = ["dylib"]
 
 [dependencies]
-adana-script-core = "0.14.0"
+adana-script-core = "0.14.1"
 anyhow = "1.0.75"
 
 [profile.release]

@@ -3,10 +3,8 @@ use nu_ansi_term::Color::Red;
 use slab_tree::{NodeRef, Tree};
 use std::{
     borrow::Borrow,
-    fs::{read_to_string, File},
-    io::{BufRead, BufReader},
+    fs::read_to_string,
     path::{Path, PathBuf},
-    rc::Rc,
     sync::Arc,
 };
 
@@ -302,7 +300,7 @@ fn compute_recur(
                                     file_path.as_str(),
                                     shared_lib,
                                 )?;
-                                Ok(Primitive::NativeLibrary(Rc::new(
+                                Ok(Primitive::NativeLibrary(Arc::new(
                                     native_lib,
                                 )))
                             }
@@ -348,29 +346,29 @@ fn compute_recur(
                             )),
                         }
                     }
-                    adana_script_core::BuiltInFunctionType::ReadLines => {
-                        match v {
-                            Primitive::String(file_path) => {
-                                if !PathBuf::from(file_path.as_str()).exists() {
-                                    Ok(Primitive::Error(format!(
-                                        "file {file_path} not found"
-                                    )))
-                                } else {
-                                    let file = File::open(file_path)?;
-                                    let reader = BufReader::new(file);
-                                    Ok(Primitive::Array(
-                                        reader
-                                            .lines()
-                                            .map(|s| s.map(Primitive::String))
-                                            .collect::<Result<Vec<_>, _>>()?,
-                                    ))
-                                }
-                            }
-                            _ => Ok(Primitive::Error(
-                                "wrong read lines call".to_string(),
-                            )),
-                        }
-                    }
+                    // adana_script_core::BuiltInFunctionType::ReadLines => {
+                    //     match v {
+                    //         Primitive::String(file_path) => {
+                    //             if !PathBuf::from(file_path.as_str()).exists() {
+                    //                 Ok(Primitive::Error(format!(
+                    //                     "file {file_path} not found"
+                    //                 )))
+                    //             } else {
+                    //                 let file = File::open(file_path)?;
+                    //                 let reader = BufReader::new(file);
+                    //                 Ok(Primitive::Array(
+                    //                     reader
+                    //                         .lines()
+                    //                         .map(|s| s.map(Primitive::String))
+                    //                         .collect::<Result<Vec<_>, _>>()?,
+                    //                 ))
+                    //             }
+                    //         }
+                    //         _ => Ok(Primitive::Error(
+                    //             "wrong read lines call".to_string(),
+                    //         )),
+                    //     }
+                    // }
                     adana_script_core::BuiltInFunctionType::TypeOf => {
                         Ok(v.type_of())
                     }

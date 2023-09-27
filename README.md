@@ -702,28 +702,27 @@ You already have seen `length` to find the length of an array or string, `includ
 
 Here is a list of built-in functions available:
 
-| name       | description                                        | example                            |
-| ---------- | -------------------------------------------------- | ---------------------------------- |
-| sqrt       | square root                                        | `sqrt(2)`                          |
-| abs        | absolute value                                     | `abs(-2)`                          |
-| log        | logarithm                                          | `log(2)`                           |
-| ln         | natural logarithm                                  | `ln(2)`                            |
-| length     | length of an array or string                       | `length("azert")`                  |
-| sin        | sine of a number                                   | `sin(2)`                           |
-| cos        | cosine of a number                                 | `cos(2)`                           |
-| tan        | tangent of a number                                | `tan(2.2)`                         |
-| print      | print without a newline                            | `print("hello")`                   |
-| println    | print with a newline                               | `println("hello")`                 |
-| include    | include a script                                   | `include("scripts/test_fn.adana")` |
-| require    | load a shared object                               | `require("my_lib.so")`             |
-| read_lines | read a file and returns an array<br> of each lines | `read_lines("scripts/name.txt")`   |
-| to_int     | cast to int                                        | `to_int("2")`<br>`to_int(2.2)`     |
-| to_double  | cast to double                                     | `to_double("2.2")`                 |
-| to_bool    | cast to bool                                       | `to_bool("true")`                  |
-| to_string  | cast to string                                     | `to_string(true)`                  |
-| drop       | drop a variable from context                       | `drop("myvar")`<br>`drop(arr[0])`  |
-| eval       | Evaluate a string as code                          | `eval("sqrt(9)")`                  |
-| type_of    | Type of variable                                   | `type_of(true)`                    |
+| name      | description                  | example                            |
+| --------- | ---------------------------- | ---------------------------------- |
+| sqrt      | square root                  | `sqrt(2)`                          |
+| abs       | absolute value               | `abs(-2)`                          |
+| log       | logarithm                    | `log(2)`                           |
+| ln        | natural logarithm            | `ln(2)`                            |
+| length    | length of an array or string | `length("azert")`                  |
+| sin       | sine of a number             | `sin(2)`                           |
+| cos       | cosine of a number           | `cos(2)`                           |
+| tan       | tangent of a number          | `tan(2.2)`                         |
+| print     | print without a newline      | `print("hello")`                   |
+| println   | print with a newline         | `println("hello")`                 |
+| include   | include a script             | `include("scripts/test_fn.adana")` |
+| require   | load a shared object         | `require("my_lib.so")`             |
+| to_int    | cast to int                  | `to_int("2")`<br>`to_int(2.2)`     |
+| to_double | cast to double               | `to_double("2.2")`                 |
+| to_bool   | cast to bool                 | `to_bool("true")`                  |
+| to_string | cast to string               | `to_string(true)`                  |
+| drop      | drop a variable from context | `drop("myvar")`<br>`drop(arr[0])`  |
+| eval      | Evaluate a string as code    | `eval("sqrt(9)")`                  |
+| type_of   | Type of variable             | `type_of(true)`                    |
 
 <hr>
 

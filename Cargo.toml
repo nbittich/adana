@@ -37,7 +37,7 @@ strum = { version = "0.25.0", features = ["derive"] }
 ctrlc = "3.4.1"
 
 #adana-script-core = { git = "https://github.com/nbittich/adana-script-core.git" }
-adana-script-core = "0.14.0"
+adana-script-core = "0.14.1"
 
 [dependencies.env_logger]
 default-features = false

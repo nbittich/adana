@@ -330,7 +330,7 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
         parse_builtin(BuiltInFunctionType::Length),
         parse_builtin(BuiltInFunctionType::Include),
         parse_builtin(BuiltInFunctionType::Require),
-        parse_builtin(BuiltInFunctionType::ReadLines),
+        // parse_builtin(BuiltInFunctionType::ReadLines),
     ))(s)
 }
 
