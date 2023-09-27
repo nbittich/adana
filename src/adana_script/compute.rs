@@ -434,8 +434,18 @@ fn compute_recur(
                                     "could not acquire lock {e}"
                                 ))
                             })?;
-                        Ok(array.index_at(&index))
+                        if let Primitive::NativeLibrary(lib) =
+                            array.as_ref_ok()?
+                        {
+                            Ok(Primitive::NativeFunction(
+                                index.to_string(),
+                                lib.clone(),
+                            ))
+                        } else {
+                            Ok(array.index_at(&index))
+                        }
                     }
+
                     (Value::String(v), index) => {
                         let v = Primitive::String(v.clone());
                         let index =

@@ -1,5 +1,5 @@
 const STD_DOWNLOAD_URI: &str =
-    "https://github.com/nbittich/adana-std/releases/download/0.0.1/adana-std.tar.gz";
+    "https://github.com/nbittich/adana-std/releases/download/0.0.2/adana-std.tar.gz";
 
 use std::{
     path::Path,
@@ -43,8 +43,8 @@ fn try_from_path(
                     r#"std lib doesn't exist: {shared_lib_pb:?}.
 
 Try to install it like so:
-    - wget -P /tmp {STD_DOWNLOAD_URI}
-    - mkdir {sl}/adana-std && tar xvzf /tmp/adana-std.tar.gz -C {sl}/adana-std
+    - rm -f /tmp/adana-std.tar.gz && wget -P /tmp {STD_DOWNLOAD_URI}
+    - rm -rf {sl}/adana-std && mkdir {sl}/adana-std && tar xvzf /tmp/adana-std.tar.gz -C {sl}/adana-std
 
                 "#
                 );

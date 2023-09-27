@@ -470,6 +470,11 @@ pub fn to_ast(
                 tree,
                 curr_node_id,
             ),
+            (v, variable @ Value::String(_)) => append_to_current_and_return(
+                TreeNodeValue::ArrayAccess { index: variable, array: v },
+                tree,
+                curr_node_id,
+            ),
             (v, variable @ Value::BlockParen(_)) => {
                 append_to_current_and_return(
                     TreeNodeValue::ArrayAccess { index: variable, array: v },
