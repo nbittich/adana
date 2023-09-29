@@ -2,6 +2,7 @@ use anyhow::Context;
 
 pub enum Argument {
     InMemory,
+    ScriptPath(String),
     DbPath(String),
     NoFallbackInMemory,
     HistoryPath(String),
@@ -15,6 +16,16 @@ pub fn parse_args(
     let mut arguments = vec![];
     while let Some(arg) = args.next() {
         match arg.as_str() {
+            "--scriptpath" | "-sp" => {
+                anyhow::ensure!(
+                    !arguments
+                        .iter()
+                        .any(|a| matches!(a, Argument::ScriptPath(_))),
+                    "script path should be specified only once!"
+                );
+                let path = args.next().context("script path missing!!")?;
+                arguments.push(Argument::ScriptPath(path));
+            }
             "--inmemory" | "-im" => {
                 anyhow::ensure!(
                     !arguments.iter().any(|a| matches!(a, Argument::InMemory)),

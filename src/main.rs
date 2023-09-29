@@ -92,6 +92,54 @@ fn main() -> anyhow::Result<()> {
         })
         .context("ERR: shared lib path could not be built")?;
 
+    let script_path = args.iter().find_map(|a| {
+        if let Argument::ScriptPath(path) = a {
+            Some(path)
+        } else {
+            None
+        }
+    });
+    if let Some(script_path) = script_path {
+        let pb = PathBuf::from(&script_path);
+        if !pb.exists() {
+            return Err(anyhow::anyhow!(
+                "script path {script_path} doesn't exist"
+            ));
+        }
+        if !pb.is_file() {
+            return Err(anyhow::anyhow!(
+                "script path {script_path} is not a file"
+            ));
+        }
+        if pb.extension().and_then(|e| e.to_str()).unwrap_or("") != "adana" {
+            return Err(anyhow::anyhow!(
+                "wrong extension {script_path}. extension must end with .adana"
+            ));
+        }
+        let canon = pb.canonicalize()?;
+
+        let parent = &canon
+            .parent()
+            .context("no parent directory found for {script_path}")?;
+        std::env::set_current_dir(parent)?;
+        let mut script_context = BTreeMap::new();
+        let script = std::fs::read_to_string(canon)?;
+
+        let script_res = {
+            match compute(&script, &mut script_context, &path_to_shared_lib) {
+                Ok(Primitive::Error(e)) => Err(anyhow::Error::msg(e)),
+                Ok(calc) => Ok(calc),
+                e @ Err(_) => e,
+            }
+        };
+        match script_res {
+            Ok(Primitive::Unit) => {}
+            Ok(calc) => println!("{calc}"),
+            Err(calc_err) => eprintln!("Error: {calc_err:?}"),
+        }
+        return Ok(());
+    }
+
     println!("shared lib path: {path_to_shared_lib:?}");
 
     println!();

@@ -1,7 +1,6 @@
 ## Todo
 
 - check abi_stable crate
-- make a std library
 - stabilize, more tests
 - better error
 - update readme
@@ -11,6 +10,8 @@
 
 ## Done
 
+- <s>allow to execute a script file without going to the repl</s>
+- <s>make a std library</s>
 - <s>Foreach</s>
 - <s>Context scope</s>
 - <s>break should not be a primitive</s>

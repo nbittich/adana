@@ -797,6 +797,14 @@ RUST_LOG=adana=debug adana
 
 ### Arguments
 
+#### TODO NOT EXHAUSTIVE
+
+#### Run a script without entering in the repl
+
+```
+adana -sp /path/to/script.adana
+```
+
 ```
 # open an in memory db
 
