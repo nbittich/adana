@@ -654,3 +654,26 @@ fn test_parse_string_escaped() {
     assert_eq!("", r);
     assert_eq!(v, vec![Value::String("u\nno".into())]);
 }
+#[test]
+fn test_bug_fn_hello_a() {
+    let expr = r#"fun = (a) => {b = "hello" + a }"#;
+    let (r, v) = parse_instructions(expr).unwrap();
+    assert_eq!("", r);
+    assert_eq!(
+        v,
+        vec![VariableExpr {
+            name: Box::new(Variable("fun".into(),)),
+            expr: Box::new(Function {
+                parameters: Box::new(BlockParen(vec![Variable("a".into()),],)),
+                exprs: vec![VariableExpr {
+                    name: Box::new(Variable("b".into())),
+                    expr: Box::new(Expression(vec![
+                        Value::String("hello".into(),),
+                        Operation(Operator::Add,),
+                        Variable("a".into(),),
+                    ],)),
+                },],
+            },)
+        },]
+    )
+}

@@ -718,7 +718,6 @@ fn compute_recur(
                                 Box::new(fun),
                             )
                         }
-                        //Ok(function(vec![Primitive::String("s".into())]))
                     } else {
                         Ok(Primitive::Error(format!(
                             " not a function: {function}"

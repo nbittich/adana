@@ -184,6 +184,18 @@ fn parse_fn(s: &str) -> Res<Value> {
             ),
         )(p)
     };
+    let parse_single_instr = |p| {
+        map(
+            map_parser(
+                preceded(
+                    tag_no_space("{"),
+                    terminated(take_until("}"), tag_no_space("}")),
+                ),
+                parse_simple_instruction,
+            ),
+            |v| vec![v],
+        )(p)
+    };
     map(
         separated_pair(
             map_parser(take_until("=>"), parse_paren(parser)),
@@ -191,6 +203,7 @@ fn parse_fn(s: &str) -> Res<Value> {
             alt((
                 parse_expr,
                 parse_block(parse_instructions),
+                parse_single_instr,
                 map_parser(take_until("\n"), parse_expr),
             )),
         ),
@@ -656,7 +669,10 @@ fn parse_multiline(s: &str) -> Res<&str> {
     alt((
         preceded(
             tag_no_space(MULTILINE),
-            delimited(tag_no_space("{"), take_until("}"), tag_no_space("}")),
+            preceded(
+                tag_no_space("{"),
+                terminated(take_until("}"), tag_no_space("}")),
+            ),
         ),
         alt((take_until("\n"), rest)),
     ))(s)
