@@ -350,7 +350,7 @@ If it is not installed yet, you will see instructions on how to install it, e.g:
 std lib doesn't exist: "/home/nbittich/.local/share/.libs_adana/adana-std/fs.so".
 
 Try to install it like so:
-    - wget -P /tmp https://github.com/nbittich/adana-std/releases/download/0.0.2/adana-std.tar.gz
+    - wget -P /tmp https://github.com/nbittich/adana-std/releases/download/0.0.3/adana-std.tar.gz
     - mkdir /home/nbittich/.local/share/.libs_adana/adana-std && tar xvzf /tmp/adana-std.tar.gz \
             -C /home/nbittich/.local/share/.libs_adana/adana-std
 ```
