@@ -159,6 +159,7 @@ pub fn to_ast(
                                 Value::Operation(Operator::Subtr)
                                 | Value::Operation(Operator::Mult)
                                 | Value::Operation(Operator::Pow)
+                                | Value::Operation(Operator::BitwiseNot)
                                 | Value::Operation(Operator::Add) // FIXME too tired to think about
                                                                   // it. Is it needed?
                                 | Value::Operation(Operator::Mod)
