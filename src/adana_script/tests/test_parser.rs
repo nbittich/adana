@@ -4,7 +4,7 @@ use crate::adana_script::parser::parse_instructions;
 use adana_script_core::{
     BuiltInFunctionType, Operator,
     Value::{
-        self, BlockParen, Expression, Function, Integer, Operation, Variable,
+        self, BlockParen, Expression, Function, Operation, Variable,
         VariableExpr, WhileExpr, U8,
     },
 };

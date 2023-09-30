@@ -170,7 +170,7 @@ fn simple_foreach_return() {
 }
 #[test]
 fn simple_foreach_two_depth1() {
-    use crate::Primitive::Int;
+    
     let expr = r#"
          x_arr = [5,10,15,20,25]
          y_arr = [0,1,0,0,1]
