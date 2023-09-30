@@ -14,7 +14,7 @@ fn simple_foreach() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(10), ctx["total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }
 
@@ -32,7 +32,7 @@ fn simple_foreach_string() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(43), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(43), ctx["total"].read().unwrap().clone());
     assert_eq!(
         Array(vec![
             String("n".to_string()),
@@ -169,7 +169,7 @@ fn simple_foreach_return() {
     assert!(ctx.get("word").is_none());
 }
 #[test]
-fn simple_foreach_two_depth() {
+fn simple_foreach_two_depth1() {
     use crate::Primitive::Int;
     let expr = r#"
          x_arr = [5,10,15,20,25]
@@ -188,44 +188,44 @@ fn simple_foreach_two_depth() {
     assert_eq!(
         Primitive::Array(vec![
             Primitive::Array(vec![
-                Primitive::Int(5),
-                Int(0),
-                Int(1),
-                Int(0),
-                Int(0),
-                Int(1)
+                Primitive::U8(5),
+                Primitive::U8(0),
+                Primitive::U8(1),
+                Primitive::U8(0),
+                Primitive::U8(0),
+                Primitive::U8(1)
             ]),
             Primitive::Array(vec![
-                Int(10),
-                Int(0),
-                Int(1),
-                Int(0),
-                Int(0),
-                Int(1)
+                Primitive::U8(10),
+                Primitive::U8(0),
+                Primitive::U8(1),
+                Primitive::U8(0),
+                Primitive::U8(0),
+                Primitive::U8(1)
             ]),
             Primitive::Array(vec![
-                Int(15),
-                Int(0),
-                Int(1),
-                Int(0),
-                Int(0),
-                Int(1)
+                Primitive::U8(15),
+                Primitive::U8(0),
+                Primitive::U8(1),
+                Primitive::U8(0),
+                Primitive::U8(0),
+                Primitive::U8(1)
             ]),
             Primitive::Array(vec![
-                Int(20),
-                Int(0),
-                Int(1),
-                Int(0),
-                Int(0),
-                Int(1)
+                Primitive::U8(20),
+                Primitive::U8(0),
+                Primitive::U8(1),
+                Primitive::U8(0),
+                Primitive::U8(0),
+                Primitive::U8(1)
             ]),
             Primitive::Array(vec![
-                Int(25),
-                Int(0),
-                Int(1),
-                Int(0),
-                Int(0),
-                Int(1)
+                Primitive::U8(25),
+                Primitive::U8(0),
+                Primitive::U8(1),
+                Primitive::U8(0),
+                Primitive::U8(0),
+                Primitive::U8(1)
             ]),
         ]),
         ctx["matrix"].read().unwrap().clone()
@@ -234,7 +234,7 @@ fn simple_foreach_two_depth() {
 }
 
 #[test]
-fn simple_foreach_with_idx() {
+fn simple_foreach_with_idx1() {
     let expr = r#"
          arr = [1,2,3,4]
          total = 0
@@ -246,7 +246,7 @@ fn simple_foreach_with_idx() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(10), ctx["total"].read().unwrap().clone());
     assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }
@@ -263,7 +263,7 @@ fn simple_foreach_with_idx_from_fn() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(10), ctx["total"].read().unwrap().clone());
     assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }
@@ -282,7 +282,7 @@ fn simple_foreach_with_idx_from_struct() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(10), ctx["total"].read().unwrap().clone());
     assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }
@@ -298,7 +298,7 @@ fn simple_foreach_with_paren() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(10), ctx["total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }
 
@@ -315,7 +315,7 @@ fn simple_foreach_with_idx_with_paren() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(10), ctx["total"].read().unwrap().clone());
     assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }
@@ -335,7 +335,7 @@ fn simple_foreach_with_idx_from_struct_with_paren() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(10), ctx["total"].read().unwrap().clone());
     assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }
@@ -351,7 +351,7 @@ fn test_handle_error() {
 
     let mut ctx = BTreeMap::new();
     let r = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Error("not an iterable Int(1)".into()), r);
+    assert_eq!(Primitive::Error("not an iterable U8(1)".into()), r);
 }
 
 #[test]

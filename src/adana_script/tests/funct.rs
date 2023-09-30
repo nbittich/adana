@@ -13,7 +13,7 @@ fn test_anon_func_call() {
     "#;
 
     let res = compute(s, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(5), res);
+    assert_eq!(Primitive::U8(5), res);
     let s = r#"
         z = (a,b) => {
             c= 4
@@ -23,7 +23,7 @@ fn test_anon_func_call() {
     "#;
 
     let res = compute(s, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(14), res);
+    assert_eq!(Primitive::U8(14), res);
 
     assert_eq!(
         *ctx["z"].read().unwrap(),
@@ -35,7 +35,7 @@ fn test_anon_func_call() {
             exprs: vec![
                 Value::VariableExpr {
                     name: Box::new(Value::Variable("c".to_string(),)),
-                    expr: Box::new(Value::Integer(4,),),
+                    expr: Box::new(Value::U8(4,),),
                 },
                 Value::Expression(vec![
                     Value::Variable("a".to_string(),),
@@ -57,7 +57,7 @@ fn test_anon_func_call() {
     "#;
 
     let res = compute(s, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(5), res);
+    assert_eq!(Primitive::U8(5), res);
 
     let s = r#"
         a = 2
@@ -89,7 +89,7 @@ fn test_basic_map() {
     let mut ctx = BTreeMap::new();
 
     let res = compute(script, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(34), res);
+    assert_eq!(Primitive::U8(34), res);
     let script = r#"
         include("file_tests/test_fn.adana")
         m = map()
@@ -115,13 +115,13 @@ fn test_override_map() {
     let mut ctx = BTreeMap::new();
 
     let res = compute(script, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(35), res);
+    assert_eq!(Primitive::U8(35), res);
 
     assert_eq!(
         *ctx["m"].read().unwrap(),
         Primitive::Array(vec![Primitive::Array(vec![
             Primitive::String("nordine".to_string(),),
-            Primitive::Int(35,),
+            Primitive::U8(35,),
         ],),],)
     );
 }
@@ -142,7 +142,7 @@ fn test_drop() {
     let res = compute(script, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Unit, res);
 
-    assert_eq!(*ctx["z"].read().unwrap(), Primitive::Int(35,));
+    assert_eq!(*ctx["z"].read().unwrap(), Primitive::U8(35,));
     assert!(!ctx.contains_key("m"));
 }
 
@@ -226,9 +226,9 @@ fn test_fn_param() {
     let r = compute(s, &mut ctx, "N/A").unwrap();
     assert_eq!(
         Primitive::Array(vec![
-            Primitive::Int(2),
-            Primitive::Int(3),
-            Primitive::Int(4),
+            Primitive::U8(2),
+            Primitive::U8(3),
+            Primitive::U8(4),
         ]),
         r
     );
@@ -312,7 +312,7 @@ fn test_array_access_fn_call() {
         "#;
     let r = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::String("hello nordine2".into()));
-    assert_eq!(*ctx["z"].read().unwrap(), Primitive::Int(6));
+    assert_eq!(*ctx["z"].read().unwrap(), Primitive::U8(6));
     assert_eq!(
         *ctx["y"].read().unwrap(),
         Primitive::String("hello nordine".into())

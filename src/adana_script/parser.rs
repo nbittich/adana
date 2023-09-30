@@ -5,7 +5,7 @@ use crate::{
         all_consuming, alt, delimited, double, many0, many1, map, map_parser,
         multispace0, one_of, opt, pair, peek, preceded, recognize_float, rest,
         separated_list0, separated_list1, separated_pair, tag, take_until,
-        take_while1, terminated, tuple, verify, Res, I128,
+        take_while1, terminated, tuple, verify, Res, I128, I8, U8,
     },
     reserved_keywords::check_reserved_keyword,
 };
@@ -31,6 +31,8 @@ fn parse_number(s: &str) -> Res<Value> {
     map_parser(
         recognize_float,
         alt((
+            map(all_consuming(U8), Value::U8),
+            map(all_consuming(I8), Value::I8),
             map(all_consuming(I128), Value::Integer),
             map(all_consuming(double), Value::Decimal),
         )),

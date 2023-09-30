@@ -60,13 +60,13 @@ fn test_variable() {
         vec![Value::Expression(vec![
             Value::Variable("x".to_string(),),
             Value::Operation(Mult,),
-            Value::Integer(5,),
+            Value::U8(5,),
             Value::Operation(Add,),
-            Value::Integer(9,),
+            Value::U8(9,),
             Value::Operation(Mult,),
             Value::Variable("y".to_string(),),
             Value::Operation(Div,),
-            Value::Integer(8,),
+            Value::U8(8,),
         ],)],
     );
 }
@@ -81,13 +81,13 @@ fn test_variable_expr() {
             expr: Box::new(Value::Expression(vec![
                 Value::Variable("x".to_string(),),
                 Value::Operation(Mult,),
-                Value::Integer(5,),
+                Value::U8(5,),
                 Value::Operation(Add,),
-                Value::Integer(9,),
+                Value::U8(9,),
                 Value::Operation(Mult,),
                 Value::Variable("y".to_string(),),
                 Value::Operation(Div,),
-                Value::Integer(8,),
+                Value::U8(8,),
             ]))
         },]
     );
@@ -103,13 +103,13 @@ fn test_variable_expr_2() {
             expr: Box::new(Value::Expression(vec![
                 Value::Variable("x_3".to_string(),),
                 Value::Operation(Mult,),
-                Value::Integer(5,),
+                Value::U8(5,),
                 Value::Operation(Add,),
-                Value::Integer(9,),
+                Value::U8(9,),
                 Value::Operation(Mult,),
                 Value::Variable("y_1_2".to_string(),),
                 Value::Operation(Div,),
-                Value::Integer(8,),
+                Value::U8(8,),
             ]))
         },]
     );
@@ -118,7 +118,7 @@ fn test_variable_expr_2() {
 #[test]
 fn test_modulo() {
     let mut ctx = BTreeMap::new();
-    assert_eq!(Primitive::Int(1), compute("3%2", &mut ctx, "N/A").unwrap());
+    assert_eq!(Primitive::U8(1), compute("3%2", &mut ctx, "N/A").unwrap());
     assert_eq!(
         Primitive::Double(1.),
         compute("3%2.", &mut ctx, "N/A").unwrap()
@@ -173,11 +173,11 @@ fn test_compute() {
             Primitive::Double(37736.587719298244),
             compute("f = 1988*19-(((((((9*2))))+2*4)-3))/6.-1^2*1000/(7-4*(3/9.-(9+3/2.-4)))", &mut ctx, "N/A").unwrap()
         );
-    assert_eq!(Primitive::Int(0), compute("0", &mut ctx, "N/A").unwrap());
-    assert_eq!(Primitive::Int(9), compute("9", &mut ctx, "N/A").unwrap());
-    assert_eq!(Primitive::Int(-9), compute("-9", &mut ctx, "N/A").unwrap());
+    assert_eq!(Primitive::U8(0), compute("0", &mut ctx, "N/A").unwrap());
+    assert_eq!(Primitive::U8(9), compute("9", &mut ctx, "N/A").unwrap());
+    assert_eq!(Primitive::I8(-9), compute("-9", &mut ctx, "N/A").unwrap());
     assert_eq!(
-        Primitive::Int(6 / 2 * (2 + 1)),
+        Primitive::U8(6 / 2 * (2 + 1)),
         compute("6/2*(2+1)", &mut ctx, "N/A").unwrap()
     );
     assert_eq!(
@@ -186,14 +186,14 @@ fn test_compute() {
     );
     // todo maybe should panic in these cases
     assert_eq!(
-        Primitive::Int(2 * 4),
+        Primitive::U8(2 * 4),
         compute("2* * *4", &mut ctx, "N/A").unwrap()
     );
     assert_eq!(
-        Primitive::Int(2 * 4),
+        Primitive::U8(2 * 4),
         compute("2* ** *4", &mut ctx, "N/A").unwrap()
     );
-    assert_eq!(Primitive::Int(4), compute("*4", &mut ctx, "N/A").unwrap());
+    assert_eq!(Primitive::U8(4), compute("*4", &mut ctx, "N/A").unwrap());
 
     // compute with variables
     assert_eq!(
@@ -217,14 +217,14 @@ fn test_compute() {
 fn test_negate() {
     let mut ctx = BTreeMap::new();
     assert_eq!(
-        Primitive::Int(-5 / -1),
+        Primitive::I8(-5 / -1),
         compute("-5/-1", &mut ctx, "N/A").unwrap()
     );
     assert_eq!(
-        Primitive::Int(5 / -1),
+        Primitive::I8(5 / -1),
         compute("5/-1", &mut ctx, "N/A").unwrap()
     );
-    assert_eq!(Primitive::Int(5), compute("--5", &mut ctx, "N/A").unwrap());
+    assert_eq!(Primitive::I8(5), compute("--5", &mut ctx, "N/A").unwrap());
 }
 #[test]
 fn test_pow() {
@@ -286,9 +286,9 @@ fn test_fn_sqrt() {
 #[test]
 fn test_fn_abs() {
     let mut ctx = BTreeMap::new();
-    assert_eq!(Primitive::Int(5), compute("abs(5)", &mut ctx, "N/A").unwrap());
+    assert_eq!(Primitive::U8(5), compute("abs(5)", &mut ctx, "N/A").unwrap());
     assert_eq!(
-        Primitive::Int(25),
+        Primitive::I8(25),
         compute("abs(-5*5)", &mut ctx, "N/A").unwrap()
     );
     assert_eq!(
@@ -647,11 +647,8 @@ fn test_op_pow_sugar() {
 #[test]
 fn test_implicit_multiply() {
     let mut ctx = BTreeMap::new();
-    assert_eq!(
-        Primitive::Int(2),
-        compute(r#"x = 2"#, &mut ctx, "N/A").unwrap()
-    );
-    assert_eq!(Primitive::Int(4), compute(r#"2x"#, &mut ctx, "N/A").unwrap());
+    assert_eq!(Primitive::U8(2), compute(r#"x = 2"#, &mut ctx, "N/A").unwrap());
+    assert_eq!(Primitive::U8(4), compute(r#"2x"#, &mut ctx, "N/A").unwrap());
     assert_eq!(
         Primitive::Double(1.),
         compute(r#"0.5x"#, &mut ctx, "N/A").unwrap()

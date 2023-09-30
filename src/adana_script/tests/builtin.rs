@@ -6,9 +6,14 @@ use adana_script_core::primitive::Primitive;
 fn test_builtin_to_int() {
     let mut ctx = BTreeMap::new();
     let res = compute("to_int(2)", &mut ctx, "N/A").unwrap();
-    assert_eq!(res, Primitive::Int(2));
+    assert_eq!(res, Primitive::U8(2));
+
+    let res = compute("to_int(256)", &mut ctx, "N/A").unwrap();
+    assert_eq!(res, Primitive::Int(256));
+
     let res = compute(r#"to_int("2")"#, &mut ctx, "N/A").unwrap();
     assert_eq!(res, Primitive::Int(2));
+
     ctx.insert(
         "a".to_string(),
         Primitive::String("123".to_string()).ref_prim(),

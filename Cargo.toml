@@ -36,8 +36,8 @@ slab_tree = "0.3.2"
 strum = { version = "0.25.0", features = ["derive"] }
 ctrlc = "3.4.1"
 
-#adana-script-core = { git = "https://github.com/nbittich/adana-script-core.git" }
-adana-script-core = "0.14.2"
+adana-script-core = { git = "https://github.com/nbittich/adana-script-core.git", branch = "feature/bitwise-and-new-ints" }
+#adana-script-core = "0.14.2"
 
 [dependencies.env_logger]
 default-features = false

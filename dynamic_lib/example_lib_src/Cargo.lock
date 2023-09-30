@@ -4,9 +4,8 @@ version = 3
 
 [[package]]
 name = "adana-script-core"
-version = "0.14.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67c04fcdd5b5c568011e9f148e9cc45a35db86e63d5c7d632b1eb82790e6edcf"
+version = "0.14.2"
+source = "git+https://github.com/nbittich/adana-script-core.git?branch=feature/bitwise-and-new-ints#2315c4f7e6ab5ee3f20dc8e4dafbd349c75ea5ab"
 dependencies = [
  "anyhow",
  "libloading",

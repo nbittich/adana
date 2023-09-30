@@ -5,8 +5,8 @@ pub use nom::{
         take_while1,
     },
     character::complete::{
-        alpha1, alphanumeric1, i128 as I128, line_ending, multispace0,
-        multispace1, none_of, one_of, space1,
+        alpha1, alphanumeric1, i128 as I128, i8 as I8, line_ending,
+        multispace0, multispace1, none_of, one_of, space1, u8 as U8,
     },
     combinator::{
         all_consuming, consumed, cut, eof, fail, map, map_parser, map_res, opt,

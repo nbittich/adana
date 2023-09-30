@@ -764,10 +764,13 @@ fn compute_recur(
                                          .ok_or_else(||anyhow::format_err!("ctx doesn't contains array {s}"))?;
                                     let mut array = array.write()
                                         .map_err(|e| anyhow::format_err!("DROP ARRAY : could not acquire lock {e}"))?;
-                                    let Value::Integer(index) = *index.clone() else {
-                                        return Ok(PrimErr("index not an int!".to_string()))
-                                    };
-                                   array.remove(&Int(index))?;
+                                    match index.borrow() {
+                                        Value::Integer(i) => { array.remove(&Int(*i))},
+                                        Value::U8(i) => { array.remove(&Primitive::U8(*i))},
+                                        Value::I8(i) => { array.remove(&Primitive::I8(*i))},
+                                        e => return Ok(PrimErr(format!("index not an int! {e:?}")))
+
+                                    }?;
                                 }
                                 _ => return Ok(PrimErr(format!("only primitive within the ctx can be dropped {arr:?}")))
                             }

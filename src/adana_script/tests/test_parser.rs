@@ -5,7 +5,7 @@ use adana_script_core::{
     BuiltInFunctionType, Operator,
     Value::{
         self, BlockParen, Expression, Function, Integer, Operation, Variable,
-        VariableExpr, WhileExpr,
+        VariableExpr, WhileExpr, U8,
     },
 };
 
@@ -44,7 +44,7 @@ fn test_parse_fn() {
                 ),],)),
                 exprs: vec![Value::VariableExpr {
                     name: Box::new(Value::Variable("x".to_string(),)),
-                    expr: Box::new(Value::Integer(0,)),
+                    expr: Box::new(Value::U8(0,)),
                 },],
             }),
         },]
@@ -67,7 +67,7 @@ fn test_parse_fn() {
             ],)),
             exprs: vec![Value::VariableExpr {
                 name: Box::new(Value::Variable("x".to_string(),)),
-                expr: Box::new(Value::Integer(0,)),
+                expr: Box::new(Value::U8(0,)),
             },],
         },]
     );
@@ -91,7 +91,7 @@ fn test_parse_fn() {
             exprs: vec![
                 Value::VariableExpr {
                     name: Box::new(Value::Variable("x".to_string(),)),
-                    expr: Box::new(Value::Integer(0,),),
+                    expr: Box::new(Value::U8(0,),),
                 },
                 Value::BuiltInFunction {
                     fn_type: BuiltInFunctionType::Println,
@@ -138,13 +138,13 @@ fn test_parse_break() {
                 exprs: vec![
                     VariableExpr {
                         name: Box::new(Variable("count".to_string(),)),
-                        expr: Box::new(Integer(0))
+                        expr: Box::new(Value::U8(0))
                     },
                     VariableExpr {
                         name: Box::new(Variable("res".to_string(),)),
                         expr: Box::new(Expression(vec![
                             Operation(Operator::Subtr,),
-                            Integer(1,),
+                            Value::U8(1,),
                         ],),)
                     },
                     WhileExpr {
@@ -174,7 +174,7 @@ fn test_parse_break() {
                                         arr: Box::new(Variable(
                                             "k".to_string(),
                                         )),
-                                        index: Box::new(Integer(0,)),
+                                        index: Box::new(U8(0,)),
                                     },
                                     Operation(Operator::Equal,),
                                     Variable("key".to_string(),),
@@ -197,7 +197,7 @@ fn test_parse_break() {
                                     expr: Box::new(Expression(vec![
                                         Variable("count".to_string(),),
                                         Operation(Operator::Add,),
-                                        Integer(1,),
+                                        Value::U8(1,),
                                     ],)),
                                 },],),
                             },
@@ -218,14 +218,14 @@ fn test_paren_bug_2023() {
     assert_eq!(
         instructions,
         vec![Value::BlockParen(vec![
-            Value::Integer(4,),
+            Value::U8(4,),
             Value::Operation(Operator::Mult,),
-            Value::Integer(3,),
+            Value::U8(3,),
             Value::Operation(Operator::Mult,),
             Value::BlockParen(vec![
-                Value::Integer(2,),
+                Value::U8(2,),
                 Value::Operation(Operator::Add,),
-                Value::Integer(2,),
+                Value::U8(2,),
             ],),
         ],),]
     );
@@ -237,7 +237,7 @@ fn test_struct1() {
     let (res, struc) = parse_instructions(expr).unwrap();
     assert_eq!("", res);
     assert_eq!(
-        vec![Value::Struct(BTreeMap::from([("x".into(), Value::Integer(99))]))],
+        vec![Value::Struct(BTreeMap::from([("x".into(), Value::U8(99))]))],
         struc
     );
 }
@@ -251,8 +251,8 @@ fn test_struct_array() {
         vec![Value::VariableExpr {
             name: Box::new(Value::Variable("x".into(),)),
             expr: Box::new(Value::Array(vec![
-                Value::Integer(1,),
-                Value::Integer(2,),
+                Value::U8(1,),
+                Value::U8(2,),
                 Value::Struct(BTreeMap::from([(
                     "x".to_string(),
                     Value::Function {
@@ -289,8 +289,8 @@ fn test_struct_array2() {
         vec![Value::VariableExpr {
             name: Box::new(Value::Variable("x".into(),)),
             expr: Box::new(Value::Array(vec![
-                Value::Integer(1,),
-                Value::Integer(2,),
+                Value::U8(1,),
+                Value::U8(2,),
                 Value::Struct(BTreeMap::from([(
                     "x".to_string(),
                     Value::Function {
@@ -348,7 +348,7 @@ fn test_struct2() {
         vec![Value::VariableExpr {
             name: Box::new(Value::Variable("my".to_string(),)),
             expr: Box::new(Value::Struct(BTreeMap::from([
-                ("a".into(), Value::Integer(7,)),
+                ("a".into(), Value::U8(7,)),
                 (
                     "aa".into(),
                     Value::Function {
@@ -371,9 +371,9 @@ fn test_struct2() {
                 (
                     "c".into(),
                     Value::Array(vec![
-                        Value::Integer(1,),
-                        Value::Integer(2,),
-                        Value::Integer(3,),
+                        Value::U8(1,),
+                        Value::U8(2,),
+                        Value::U8(3,),
                     ],)
                 ),
                 ("d".into(), Value::Decimal(1.0,)),
@@ -382,19 +382,17 @@ fn test_struct2() {
                     "i".into(),
                     Value::Function {
                         parameters: Box::new(Value::BlockParen(vec![],)),
-                        exprs: vec![Value::BlockParen(vec![
-                            Value::Integer(1,),
-                        ],),],
+                        exprs: vec![Value::BlockParen(vec![Value::U8(1,),],),],
                     }
                 ),
                 (
                     "j".into(),
                     Value::Expression(vec![
-                        Value::Integer(4,),
+                        Value::U8(4,),
                         Value::Operation(Operator::Mult,),
-                        Value::Integer(2,),
+                        Value::U8(2,),
                         Value::Operation(Operator::Add,),
-                        Value::Integer(1,),
+                        Value::U8(1,),
                         Value::Operation(Operator::Mult,),
                         Value::BuiltInFunction {
                             fn_type: BuiltInFunctionType::Sqrt,
@@ -407,9 +405,9 @@ fn test_struct2() {
                 (
                     "mm".into(),
                     Value::BlockParen(vec![
-                        Value::Integer(2,),
+                        Value::U8(2,),
                         Value::Operation(Operator::Mult,),
-                        Value::Integer(2,),
+                        Value::U8(2,),
                     ],)
                 ),
                 (
@@ -459,18 +457,16 @@ fn test_array_fn_access() {
             Value::VariableExpr {
                 name: Box::new(Value::Variable("n".into())),
                 expr: Box::new(Value::Array(vec![
-                    Value::Integer(1),
-                    Value::Integer(2),
+                    Value::U8(1),
+                    Value::U8(2),
                     Value::Variable("x".into())
                 ]))
             },
             Value::FunctionCall {
-                parameters: Box::new(Value::BlockParen(vec![Value::Integer(
-                    5
-                )])),
+                parameters: Box::new(Value::BlockParen(vec![Value::U8(5)])),
                 function: Box::new(Value::ArrayAccess {
                     arr: Box::new(Value::Variable("n".into())),
-                    index: Box::new(Value::Integer(2))
+                    index: Box::new(Value::U8(2))
                 })
             }
         ]
@@ -495,7 +491,7 @@ fn test_inline_fn1() {
             Value::VariableExpr {
                 name: Box::new(Value::Variable("s".into())),
                 expr: Box::new(Value::Array(vec![
-                    Value::Integer(1),
+                    Value::U8(1),
                     Value::Function {
                         parameters: Box::new(Value::BlockParen(vec![
                             Value::Variable("i".into())
@@ -509,7 +505,7 @@ fn test_inline_fn1() {
                             }
                         ])]
                     },
-                    Value::Integer(2)
+                    Value::U8(2)
                 ]))
             },
             Value::VariableExpr {
@@ -517,9 +513,9 @@ fn test_inline_fn1() {
                 expr: Box::new(Value::Function {
                     parameters: Box::new(BlockParen(vec![],)),
                     exprs: vec![Value::BlockParen(vec![
-                        Value::Integer(1,),
+                        Value::U8(1,),
                         Value::Operation(Operator::Add,),
-                        Value::Integer(2,),
+                        Value::U8(2,),
                     ],),],
                 }),
             },
@@ -553,7 +549,7 @@ fn test_comments_end_arr() {
             parameters: Box::new(Value::BlockParen(vec![],)),
             function: Box::new(Value::ArrayAccess {
                 arr: Box::new(Value::Variable("x".to_string(),)),
-                index: Box::new(Value::Integer(1,)),
+                index: Box::new(Value::U8(1,)),
             }),
         }]
     );
@@ -565,7 +561,7 @@ fn test_comments_end_arr() {
         vec![Value::VariableExpr {
             name: Box::new(Value::Variable("x".into())),
             expr: Box::new(Value::Array(vec![
-                Value::Integer(1,),
+                Value::U8(1,),
                 Value::Function {
                     parameters: Box::new(Value::BlockParen(vec![],)),
                     exprs: vec![Value::BlockParen(vec![
@@ -601,7 +597,7 @@ fn test_struct_access_1() {
                 name: Box::new(Value::Variable("person".to_string(),)),
                 expr: Box::new(Value::Struct(BTreeMap::from([
                     ("name".to_string(), Value::String("nordine".to_string(),)),
-                    ("age".to_string(), Value::Integer(34,),)
+                    ("age".to_string(), Value::U8(34,),)
                 ]),)),
             },
             Value::BuiltInFunction {
@@ -614,7 +610,7 @@ fn test_struct_access_1() {
             Value::VariableExpr {
                 name: Box::new(Value::Variable("x".to_string())),
                 expr: Box::new(Value::Array(vec![
-                    Value::Integer(9),
+                    Value::U8(9),
                     Value::StructAccess {
                         struc: Box::new(Value::Variable("person".to_string())),
                         key: "name".to_string()
@@ -636,12 +632,8 @@ fn test_parser_array_directly_access() {
         vec![VariableExpr {
             name: Box::new(Variable("x".into()),),
             expr: Box::new(ArrayAccess {
-                arr: Box::new(Array(vec![
-                    Integer(1,),
-                    Integer(2,),
-                    Integer(3,),
-                ],)),
-                index: Box::new(Integer(0,)),
+                arr: Box::new(Array(vec![U8(1,), U8(2,), U8(3,),],)),
+                index: Box::new(U8(0,)),
             }),
         }]
     )

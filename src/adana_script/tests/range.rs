@@ -13,7 +13,7 @@ fn simple_foreach_range() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(10), ctx["total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }
 #[test]
@@ -44,9 +44,9 @@ fn simple_range_in_array() {
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(
         Primitive::Array(vec![
-            Primitive::Int(9),
-            Primitive::Int(1),
-            Primitive::Int(3),
+            Primitive::U8(9),
+            Primitive::U8(1),
+            Primitive::U8(3),
             Primitive::Bool(true),
             Primitive::Array(vec![
                 Primitive::Int(1),
@@ -59,9 +59,9 @@ fn simple_range_in_array() {
     );
     assert_eq!(
         Primitive::Array(vec![
-            Primitive::Int(9),
-            Primitive::Int(1),
-            Primitive::Int(3),
+            Primitive::U8(9),
+            Primitive::U8(1),
+            Primitive::U8(3),
             Primitive::Bool(true),
             Primitive::Array(vec![
                 Primitive::Int(1),
@@ -129,7 +129,7 @@ fn simple_range_struct() {
                 ])
             ),
             ("b".into(), Primitive::String("s".into())),
-            ("c".to_string(), Primitive::Int(4)),
+            ("c".to_string(), Primitive::U8(4)),
             (
                 "d".to_string(),
                 Primitive::Array(vec![
@@ -138,7 +138,7 @@ fn simple_range_struct() {
                     Primitive::Int(3),
                 ])
             ),
-            ("x".to_string(), Primitive::Int(2)),
+            ("x".to_string(), Primitive::U8(2)),
         ])),
         ctx["s"].read().unwrap().clone()
     );
@@ -155,6 +155,6 @@ fn simple_foreach_range_both_end() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(15), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(15), ctx["total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }

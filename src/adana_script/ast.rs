@@ -99,7 +99,7 @@ pub fn to_ast(
                     Value::ImplicitMultiply(v)
                         if matches!(
                             v.borrow(),
-                            &Value::Integer(_) | &Value::Decimal(_)
+                            &Value::Integer(_) | &Value::Decimal(_) | &Value::U8(_) | &Value::I8(_)
                         ) =>
                     {
                         operations.insert(pos,*v);
@@ -107,11 +107,11 @@ pub fn to_ast(
                     }
                     Value::Operation(Operator::Pow2) => {
                         operations.insert(pos,Value::Operation(Operator::Pow));
-                        operations.insert(pos+1,Value::Integer(2));
+                        operations.insert(pos+1,Value::U8(2));
                     }
                     Value::Operation(Operator::Pow3) => {
                         operations.insert(pos,Value::Operation(Operator::Pow));
-                        operations.insert(pos+1,Value::Integer(3));
+                        operations.insert(pos+1,Value::U8(3));
                     }
                     _ => unreachable!("AST ERROR: unreachable implicit parameter {operation:?}"),
                 }
@@ -161,6 +161,8 @@ pub fn to_ast(
                     let right_first = match operations.first() {
                         Some(Value::Decimal(d)) => Some(Value::Decimal(-d)),
                         Some(Value::Integer(d)) => Some(Value::Integer(-d)),
+                        Some(Value::U8(d)) => Some(Value::I8(-(*d as i8))),
+                        Some(Value::I8(d)) => Some(Value::I8(-d)),
                         Some(Value::Variable(d)) => {
                             Some(Value::VariableNegate(d.to_string()))
                         }
@@ -246,6 +248,16 @@ pub fn to_ast(
             tree,
             curr_node_id,
         ),
+        Value::U8(num) => append_to_current_and_return(
+            TreeNodeValue::Primitive(Primitive::U8(num)),
+            tree,
+            curr_node_id,
+        ),
+        Value::I8(num) => append_to_current_and_return(
+            TreeNodeValue::Primitive(Primitive::I8(num)),
+            tree,
+            curr_node_id,
+        ),
         Value::Bool(bool_v) => append_to_current_and_return(
             TreeNodeValue::Primitive(Primitive::Bool(bool_v)),
             tree,
@@ -276,6 +288,8 @@ pub fn to_ast(
                 }
 
                 Value::Integer(num) => Ok(num),
+                Value::U8(num) => Ok(num as i128),
+                Value::I8(num) => Ok(num as i128),
                 _ => {
                     return Err(anyhow::format_err!(
                         "range error: {start:?} is not an integer"
@@ -294,6 +308,8 @@ pub fn to_ast(
                         ))
                     }
                 }
+                Value::U8(num) => Ok(num as i128),
+                Value::I8(num) => Ok(num as i128),
                 Value::Integer(num) => Ok(num),
                 _ => {
                     return Err(anyhow::format_err!(
@@ -461,6 +477,16 @@ pub fn to_ast(
         ),
         Value::ArrayAccess { arr, index } => match (*arr, *index) {
             (v, index @ Value::Integer(_)) => append_to_current_and_return(
+                TreeNodeValue::ArrayAccess { index, array: v },
+                tree,
+                curr_node_id,
+            ),
+            (v, index @ Value::U8(_)) => append_to_current_and_return(
+                TreeNodeValue::ArrayAccess { index, array: v },
+                tree,
+                curr_node_id,
+            ),
+            (v, index @ Value::I8(_)) => append_to_current_and_return(
                 TreeNodeValue::ArrayAccess { index, array: v },
                 tree,
                 curr_node_id,
