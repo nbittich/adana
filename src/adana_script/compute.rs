@@ -13,9 +13,9 @@ use crate::{adana_script::parser::parse_instructions, prelude::BTreeMap};
 use super::{ast::to_ast, require_dynamic_lib::require_dynamic_lib};
 use adana_script_core::{
     primitive::{
-        Abs, Add, And, Array, BitShift, Cos, Div, Logarithm, Mul, Neg, Not, Or,
-        Pow, Primitive, RefPrimitive, Rem, Sin, Sqrt, Sub, Tan, ToBool,
-        ToNumber, TypeOf,
+        Abs, Add, And, Array, BitShift, Cos, DisplayBinary, DisplayHex, Div,
+        Logarithm, Mul, Neg, Not, Or, Pow, Primitive, RefPrimitive, Rem, Sin,
+        Sqrt, Sub, Tan, ToBool, ToNumber, TypeOf,
     },
     BuiltInFunctionType, Operator, TreeNodeValue, Value,
 };
@@ -330,6 +330,13 @@ fn compute_recur(
                     adana_script_core::BuiltInFunctionType::ToInt => {
                         Ok(v.to_int())
                     }
+                    adana_script_core::BuiltInFunctionType::ToHex => {
+                        Ok(v.to_hex())
+                    }
+                    adana_script_core::BuiltInFunctionType::ToBinary => {
+                        Ok(v.to_binary())
+                    }
+
                     adana_script_core::BuiltInFunctionType::ToDouble => {
                         Ok(v.to_double())
                     }

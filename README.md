@@ -725,6 +725,8 @@ Here is a list of built-in functions available:
 | include   | include a script             | `include("scripts/test_fn.adana")` |
 | require   | load a shared object         | `require("my_lib.so")`             |
 | to_int    | cast to int                  | `to_int("2")`<br>`to_int(2.2)`     |
+| to_hex    | format num to hex            | `to_hex(2)`<br>`to_hex(2.2)`       |
+| to_binary | format num to binary         | `to_binary(2)`                     |
 | to_double | cast to double               | `to_double("2.2")`                 |
 | to_bool   | cast to bool                 | `to_bool("true")`                  |
 | to_string | cast to string               | `to_string(true)`                  |
