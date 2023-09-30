@@ -607,6 +607,8 @@ fn parse_operation(s: &str) -> Res<Value> {
         parse_op(Operator::Subtr),
         parse_op(Operator::LessOrEqual),
         parse_op(Operator::GreaterOrEqual),
+        parse_op(Operator::BitwiseLShift),
+        parse_op(Operator::BitwiseRShift),
         parse_op(Operator::Less),
         parse_op(Operator::Greater),
         parse_op(Operator::Equal),
@@ -620,8 +622,6 @@ fn parse_operation(s: &str) -> Res<Value> {
             parse_op(Operator::BitwiseAnd),
             parse_op(Operator::BitwiseOr),
             parse_op(Operator::BitwiseXor),
-            parse_op(Operator::BitwiseLShift),
-            parse_op(Operator::BitwiseRShift),
         )),
     ))(s)
 }
