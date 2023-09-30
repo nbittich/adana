@@ -16,7 +16,7 @@ fn test_if_scope_simple() {
         "#;
     let _ = compute(program, &mut ctx, "N/A").unwrap();
     assert!(!ctx.contains_key("z"));
-    assert_eq!(Primitive::Int(4), ctx["x"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(4), ctx["x"].read().unwrap().clone());
 }
 
 #[test]
@@ -33,7 +33,7 @@ fn test_if_else_scope_simple() {
             }
         "#;
     let _ = compute(program, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(5), ctx["x"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(5), ctx["x"].read().unwrap().clone());
     assert!(!ctx.contains_key("z"));
     assert!(!ctx.contains_key("b"));
 }
@@ -65,8 +65,8 @@ fn test_if_scope_complex() {
     assert!(!ctx.contains_key("l"));
     assert!(!ctx.contains_key("h"));
     assert!(!ctx.contains_key("f"));
-    assert_eq!(Primitive::Int(8), ctx["x"].read().unwrap().clone());
-    assert_eq!(Primitive::Int(6), ctx["y"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(8), ctx["x"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(6), ctx["y"].read().unwrap().clone());
 }
 #[test]
 fn test_if_else_scope_complex() {
@@ -105,8 +105,8 @@ fn test_if_else_scope_complex() {
     assert!(!ctx.contains_key("h"));
     assert!(!ctx.contains_key("f"));
     assert!(!ctx.contains_key("t"));
-    assert_eq!(Primitive::Int(7), ctx["x"].read().unwrap().clone());
-    assert_eq!(Primitive::Int(4), ctx["y"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(7), ctx["x"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(4), ctx["y"].read().unwrap().clone());
 }
 
 #[test]
@@ -121,7 +121,7 @@ fn test_while_scope_simple() {
         "#;
     let _ = compute(program, &mut ctx, "N/A").unwrap();
     assert!(!ctx.contains_key("z"));
-    assert_eq!(Primitive::Int(4), ctx["x"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(4), ctx["x"].read().unwrap().clone());
 }
 #[test]
 fn test_while_scope_complex() {
@@ -149,5 +149,5 @@ fn test_while_scope_complex() {
     assert!(!ctx.contains_key("p"));
     assert!(!ctx.contains_key("d"));
     assert_eq!(Primitive::Int(-5), ctx["x"].read().unwrap().clone());
-    assert_eq!(Primitive::Int(8), ctx["g"].read().unwrap().clone());
+    assert_eq!(Primitive::U8(8), ctx["g"].read().unwrap().clone());
 }

@@ -16,10 +16,10 @@ fn test_simple_unused_array() {
     assert_eq!(
         r,
         Primitive::Array(vec![
-            Primitive::Int(1),
-            Primitive::Int(2),
-            Primitive::Int(3),
-            Primitive::Int(4),
+            Primitive::U8(1),
+            Primitive::U8(2),
+            Primitive::U8(3),
+            Primitive::U8(4),
         ])
     );
 }

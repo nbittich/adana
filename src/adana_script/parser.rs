@@ -445,7 +445,18 @@ fn parse_array_access(s: &str) -> Res<Value> {
                             index: Box::new(v),
                         };
                     }
-
+                    v @ Value::U8(_) => {
+                        array_access = Value::ArrayAccess {
+                            arr: Box::new(array_access),
+                            index: Box::new(v),
+                        };
+                    }
+                    v @ Value::I8(_) => {
+                        array_access = Value::ArrayAccess {
+                            arr: Box::new(array_access),
+                            index: Box::new(v),
+                        };
+                    }
                     Value::String(s) => {
                         array_access = Value::StructAccess {
                             struc: Box::new(array_access),
@@ -513,7 +524,19 @@ fn parse_struct_access(s: &str) -> Res<Value> {
                             index: Box::new(v),
                         };
                     }
+                    v @ Value::U8(_) => {
+                        struc_access = Value::ArrayAccess {
+                            arr: Box::new(struc_access),
+                            index: Box::new(v),
+                        };
+                    }
 
+                    v @ Value::I8(_) => {
+                        struc_access = Value::ArrayAccess {
+                            arr: Box::new(struc_access),
+                            index: Box::new(v),
+                        };
+                    }
                     Value::String(s) => {
                         struc_access = Value::StructAccess {
                             struc: Box::new(struc_access),

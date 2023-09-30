@@ -205,7 +205,7 @@ pub fn to_ast(
                 Ok(curr_node_id)
             } else {
                 Err(anyhow::Error::msg(format!(
-                    "{} invalid expression!",
+                    "{} invalid expression! {op_pos:?}",
                     nu_ansi_term::Color::Red.paint("AST ERROR:")
                 )))
             }
@@ -278,12 +278,13 @@ pub fn to_ast(
                 Value::Variable(name) | Value::VariableRef(name) => {
                     let primitive =
                         variable_from_ctx(name.as_str(), false, ctx)?;
-                    if let Primitive::Int(num) = primitive.to_int() {
-                        Ok(num)
-                    } else {
-                        Err(anyhow::format_err!(
+                    match primitive.to_int() {
+                        Primitive::Int(num) => Ok(num),
+                        Primitive::U8(num) => Ok(num as i128),
+                        Primitive::I8(num) => Ok(num as i128),
+                        _ => Err(anyhow::format_err!(
                             "range error: {primitive:?} is not an integer"
-                        ))
+                        )),
                     }
                 }
 
@@ -300,12 +301,13 @@ pub fn to_ast(
                 Value::Variable(name) | Value::VariableRef(name) => {
                     let primitive =
                         variable_from_ctx(name.as_str(), false, ctx)?;
-                    if let Primitive::Int(num) = primitive.to_int() {
-                        Ok(num)
-                    } else {
-                        Err(anyhow::format_err!(
+                    match primitive.to_int() {
+                        Primitive::Int(num) => Ok(num),
+                        Primitive::U8(num) => Ok(num as i128),
+                        Primitive::I8(num) => Ok(num as i128),
+                        _ => Err(anyhow::format_err!(
                             "range error: {primitive:?} is not an integer"
-                        ))
+                        )),
                     }
                 }
                 Value::U8(num) => Ok(num as i128),

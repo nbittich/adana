@@ -16,7 +16,7 @@ fn test_simple_struc() {
         ctx["x"].read().unwrap().clone(),
         Primitive::Struct(BTreeMap::from([(
             "x".to_string(),
-            Primitive::Int(8)
+            Primitive::U8(8)
         )]))
     );
 }
@@ -35,7 +35,7 @@ fn test_simple_struc_with_more_stuff_in_it() {
     assert_eq!(
         ctx["x"].read().unwrap().clone(),
         Primitive::Struct(BTreeMap::from([
-            ("x".to_string(), Primitive::Int(8)),
+            ("x".to_string(), Primitive::U8(8)),
             ("y".to_string(), Primitive::String("hello;".to_string())),
             (
                 "z".to_string(),
@@ -104,7 +104,7 @@ fn test_struct_access() {
         person.age
         "#;
     let res = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(res, Primitive::Int(20));
+    assert_eq!(res, Primitive::U8(20));
 }
 
 #[test]
@@ -120,7 +120,7 @@ fn test_struct_variable_assign() {
         person.age
         "#;
     let res = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(res, Primitive::Int(34));
+    assert_eq!(res, Primitive::U8(34));
 }
 #[test]
 #[serial]

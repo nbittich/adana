@@ -35,7 +35,7 @@ fn test_simple_modify() {
         ctx["y"].read().unwrap().clone()
     );
     assert!(matches!(ctx["y"].read().unwrap().clone(), Primitive::Ref(_)));
-    assert_eq!(ctx["y"].read().unwrap().clone(), Primitive::Int(100));
+    assert_eq!(ctx["y"].read().unwrap().clone(), Primitive::U8(100));
 }
 #[test]
 fn test_simple_struct_ref() {
@@ -81,7 +81,7 @@ fn test_simple_array_ref() {
     );
 }
 #[test]
-fn test_forin_range_ref() {
+fn test_forin_range_ref1() {
     let expr = r#"
            x = 100 
            y = &x
@@ -99,7 +99,7 @@ fn test_forin_range_ref() {
         ctx["y"].read().unwrap().clone()
     );
     assert!(matches!(ctx["y"].read().unwrap().clone(), Primitive::Ref(_)));
-    assert_eq!(ctx["p"].read().unwrap().clone(), Primitive::Int(100));
+    assert_eq!(ctx["p"].read().unwrap().clone(), Primitive::U8(100));
 }
 
 #[test]
@@ -121,5 +121,5 @@ fn test_forin_range_ref2() {
         ctx["y"].read().unwrap().clone()
     );
     assert!(matches!(ctx["y"].read().unwrap().clone(), Primitive::Ref(_)));
-    assert_eq!(ctx["p"].read().unwrap().clone(), Primitive::Int(100));
+    assert_eq!(ctx["p"].read().unwrap().clone(), Primitive::U8(100));
 }

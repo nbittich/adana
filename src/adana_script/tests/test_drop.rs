@@ -16,9 +16,9 @@ fn test_drop_arr_access() {
     assert_eq!(
         ctx["arr"].read().unwrap().clone(),
         Primitive::Array(vec![
-            Primitive::Int(1),
-            Primitive::Int(2),
-            Primitive::Int(4),
+            Primitive::U8(1),
+            Primitive::U8(2),
+            Primitive::U8(4),
         ])
     );
 }

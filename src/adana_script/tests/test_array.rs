@@ -5,7 +5,7 @@ use serial_test::serial;
 use crate::adana_script::compute;
 use adana_script_core::primitive::{
     Array as Arr,
-    Primitive::{self, Array, Bool, Double, Int, String as Str},
+    Primitive::{self, Array, Bool, Double, Int, String as Str, I8, U8},
 };
 #[test]
 #[serial]
@@ -26,7 +26,7 @@ fn test_simple_array() {
                 "x".to_string(),
                 Array(vec![
                     Str("hello".to_string()),
-                    Int(1),
+                    U8(1),
                     Str("World".to_string()),
                     Bool(true)
                 ])
@@ -35,23 +35,23 @@ fn test_simple_array() {
                 "y".to_string(),
                 Array(vec![
                     Str("hello".to_string()),
-                    Int(1),
+                    U8(1),
                     Str("World".to_string()),
                     Bool(true),
                     Str("hello".to_string()),
-                    Int(1),
+                    U8(1),
                     Str("World".to_string()),
                     Bool(true),
                     Str("hello".to_string()),
-                    Int(1),
+                    U8(1),
                     Str("World".to_string()),
                     Bool(true),
                     Str("hello".to_string()),
-                    Int(1),
+                    U8(1),
                     Str("World".to_string()),
                     Bool(true),
                     Str("hello".to_string()),
-                    Int(1),
+                    U8(1),
                     Str("World".to_string()),
                     Bool(true)
                 ])
@@ -77,45 +77,48 @@ fn test_file_array() {
         Bool(true),
         Str("bababa".to_string()),
         Str("zezezeze".to_string()),
-        Int(1),
+        Primitive::U8(1),
         Double(2.1),
         Double(3.0),
-        Int(69),
+        Primitive::U8(69),
         Int(420),
         Str("Yolo".to_string()),
         Bool(true),
         Str("bababa".to_string()),
         Str("zezezeze".to_string()),
-        Int(1),
+        Primitive::U8(1),
         Double(2.1),
         Double(3.0),
-        Int(69),
+        Primitive::U8(69),
         Int(420),
     ]);
 
     let mut copy = arr.clone();
-    copy.swap_mem(&mut Str("a".to_string()), &Int(9));
+    copy.swap_mem(&mut Str("a".to_string()), &Primitive::U8(9));
 
     assert_eq!(ctx["arr"].read().unwrap().clone(), arr);
     assert_eq!(ctx["copy"].read().unwrap().clone(), copy);
 
     let fancy_list = Array(vec![
-        Int(1),
+        Primitive::U8(1),
         Array(vec![
-            Int(2),
+            Primitive::U8(2),
             Array(vec![
-                Int(3),
+                Primitive::U8(3),
                 Array(vec![
-                    Int(4),
+                    Primitive::U8(4),
                     Array(vec![
-                        Int(5),
+                        Primitive::U8(5),
                         Array(vec![
-                            Int(6),
+                            Primitive::U8(6),
                             Array(vec![
-                                Int(7),
+                                Primitive::U8(7),
                                 Array(vec![
-                                    Int(8),
-                                    Array(vec![Int(9), Array(vec![])]),
+                                    Primitive::U8(8),
+                                    Array(vec![
+                                        Primitive::U8(9),
+                                        Array(vec![]),
+                                    ]),
                                 ]),
                             ]),
                         ]),
@@ -148,8 +151,8 @@ fn test_string_array() {
             ("v".to_string(), Str("nordine".to_string())),
             ("copy".to_string(), Str("eodrnin".to_string())),
             ("s".to_string(), Str("kekeke".to_string())),
-            ("count".to_string(), Int(7)),
-            ("i".to_string(), Int(6)),
+            ("count".to_string(), U8(7)),
+            ("i".to_string(), U8(6)),
         ]),
         &ctx
     );
@@ -163,8 +166,8 @@ fn test_array_expr_access() {
         "#;
     let mut ctx = BTreeMap::new();
     let r = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(ctx["x"].read().unwrap().clone(), Primitive::Int(1));
-    assert_eq!(r, Primitive::Int(1));
+    assert_eq!(ctx["x"].read().unwrap().clone(), Primitive::U8(1));
+    assert_eq!(r, Primitive::U8(1));
 }
 
 #[test]
@@ -175,7 +178,7 @@ fn test_array_expr_access_not_assigned() {
         "#;
     let mut ctx = BTreeMap::new();
     let r = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(r, Primitive::Int(2));
+    assert_eq!(r, Primitive::U8(2));
 }
 #[test]
 #[serial]
@@ -193,15 +196,15 @@ fn test_array_access_expr() {
     assert_eq!(
         ctx["arr_ints"].read().unwrap().clone(),
         Array(vec![
-            Int(-1),
-            Int(1),
-            Int(2),
-            Int(3),
-            Int(7),
-            Int(8),
-            Int(9),
-            Int(12),
-            Int(19),
+            I8(-1),
+            U8(1),
+            U8(2),
+            U8(3),
+            U8(7),
+            U8(8),
+            U8(9),
+            U8(12),
+            U8(19),
         ])
     );
 
