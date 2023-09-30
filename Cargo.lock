@@ -28,7 +28,7 @@ dependencies = [
 [[package]]
 name = "adana-script-core"
 version = "0.14.2"
-source = "git+https://github.com/nbittich/adana-script-core.git?branch=feature/bitwise-and-new-ints#855a7e0a0445afe96bed7d811f307f42ca1f2630"
+source = "git+https://github.com/nbittich/adana-script-core.git?branch=feature/bitwise-and-new-ints#f85844ed7efdaa42e0c58735039ca871b5ff5fe5"
 dependencies = [
  "anyhow",
  "libloading",

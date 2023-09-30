@@ -172,7 +172,7 @@ ${person.wasup(person.age)}"""
 
 ### Operators and constants
 
-There are 16 operators & 3 constants:
+There are 22 operators & 3 constants:
 
 | **operator** | **description**  |
 | ------------ | ---------------- |
@@ -190,6 +190,12 @@ There are 16 operators & 3 constants:
 | `>=`         | greater or equal |
 | `&&`         | and              |
 | `\|\|`       | or               |
+| `\|`         | bitwise or       |
+| `~`          | bitwise not      |
+| `@`          | bitwise and      |
+| `$`          | bitwise xor      |
+| `<<`         | bitwise lshift   |
+| `>>`         | bitwise rshift   |
 | `==`         | equal            |
 | `()`         | parenthesis      |
 | `π`          | PI number        |
@@ -482,7 +488,9 @@ Below, is a list of types and how you declare them. You can also define your str
 | -------- | ------------------------------------------------------------------------------------------------ |
 | null     | `null`                                                                                           |
 | bool     | `true` / `false`                                                                                 |
-| int      | `5`                                                                                              |
+| int      | `5000`                                                                                           |
+| u8       | `5`                                                                                              |
+| i8       | `-5`                                                                                             |
 | double   | `12.` / `12.2`                                                                                   |
 | string   | `"hello"`                                                                                        |
 | array    | `[1,2,"3", true]`                                                                                |
