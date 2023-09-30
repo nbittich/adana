@@ -56,6 +56,12 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     Operator::NotEqual.as_str(),
     Operator::And.as_str(),
     Operator::Or.as_str(),
+    Operator::BitwiseNot.as_str(),
+    Operator::BitwiseAnd.as_str(),
+    Operator::BitwiseOr.as_str(),
+    Operator::BitwiseXor.as_str(),
+    Operator::BitwiseLShift.as_str(),
+    Operator::BitwiseRShift.as_str(),
 ];
 
 pub fn check_reserved_keyword(aliases: &[&str]) -> bool {

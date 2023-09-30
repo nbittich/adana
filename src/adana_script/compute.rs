@@ -13,9 +13,9 @@ use crate::{adana_script::parser::parse_instructions, prelude::BTreeMap};
 use super::{ast::to_ast, require_dynamic_lib::require_dynamic_lib};
 use adana_script_core::{
     primitive::{
-        Abs, Add, And, Array, Cos, Div, Logarithm, Mul, Neg, Not, Or, Pow,
-        Primitive, RefPrimitive, Rem, Sin, Sqrt, Sub, Tan, ToBool, ToNumber,
-        TypeOf,
+        Abs, Add, And, Array, BitShift, Cos, Div, Logarithm, Mul, Neg, Not, Or,
+        Pow, Primitive, RefPrimitive, Rem, Sin, Sqrt, Sub, Tan, ToBool,
+        ToNumber, TypeOf,
     },
     BuiltInFunctionType, Operator, TreeNodeValue, Value,
 };
@@ -57,6 +57,15 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx, shared_lib)?;
                 Ok(left.not())
+            }
+            TreeNodeValue::Ops(Operator::BitwiseNot) => {
+                if node.children().count() != 1 {
+                    return Err(Error::msg(
+                        "only one value allowed, no '~' possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                Ok(left.bitwise_not())
             }
             TreeNodeValue::Ops(Operator::Add) => {
                 if node.children().count() == 1 {
@@ -141,6 +150,32 @@ fn compute_recur(
                 let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.and(&right))
             }
+            TreeNodeValue::Ops(Operator::BitwiseAnd) => {
+                if node.children().count() == 1 {
+                    return Err(Error::msg(
+                        "only one value, no 'AND' comparison possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
+                Ok(left.bitwise_and(&right))
+            }
+            TreeNodeValue::Ops(Operator::BitwiseLShift) => {
+                if node.children().count() == 1 {
+                    return Err(Error::msg("only one value for '<<' "));
+                }
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
+                Ok(left.left_shift(&right))
+            }
+            TreeNodeValue::Ops(Operator::BitwiseRShift) => {
+                if node.children().count() == 1 {
+                    return Err(Error::msg("only one value, for '>>'"));
+                }
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
+                Ok(left.right_shift(&right))
+            }
             TreeNodeValue::VariableUnused => {
                 Err(Error::msg("forbidden usage of VariableUnused"))
             }
@@ -167,6 +202,28 @@ fn compute_recur(
                 let left = compute_recur(node.first_child(), ctx, shared_lib)?;
                 let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.or(&right))
+            }
+
+            TreeNodeValue::Ops(Operator::BitwiseOr) => {
+                if node.children().count() == 1 {
+                    return Err(Error::msg(
+                        "only one value, no '|' comparison possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
+                Ok(left.bitwise_or(&right))
+            }
+
+            TreeNodeValue::Ops(Operator::BitwiseXor) => {
+                if node.children().count() == 1 {
+                    return Err(Error::msg(
+                        "only one value, no 'XOR' comparison possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
+                Ok(left.bitwise_xor(&right))
             }
             TreeNodeValue::Ops(Operator::Equal) => {
                 if node.children().count() == 1 {

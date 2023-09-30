@@ -120,12 +120,17 @@ pub fn to_ast(
             let get_next_op_pos = |operations: &Vec<Value>| {
                 None.or_else(filter_op(Operator::Or, operations))
                     .or_else(filter_op(Operator::And, operations))
+                    .or_else(filter_op(Operator::BitwiseOr, operations))
+                    .or_else(filter_op(Operator::BitwiseXor, operations))
+                    .or_else(filter_op(Operator::BitwiseAnd, operations))
                     .or_else(filter_op(Operator::GreaterOrEqual, operations))
                     .or_else(filter_op(Operator::LessOrEqual, operations))
                     .or_else(filter_op(Operator::Greater, operations))
                     .or_else(filter_op(Operator::Less, operations))
                     .or_else(filter_op(Operator::Equal, operations))
                     .or_else(filter_op(Operator::NotEqual, operations))
+                    .or_else(filter_op(Operator::BitwiseLShift, operations))
+                    .or_else(filter_op(Operator::BitwiseRShift, operations))
                     .or_else(filter_op(Operator::Add, operations))
                     .or_else(filter_op(Operator::Subtr, operations))
                     .or_else(filter_op(Operator::Mult, operations))
@@ -133,6 +138,7 @@ pub fn to_ast(
                     .or_else(filter_op(Operator::Div, operations))
                     .or_else(filter_op(Operator::Pow, operations))
                     .or_else(filter_op(Operator::Not, operations))
+                    .or_else(filter_op(Operator::BitwiseNot, operations))
             };
 
             let op_pos = get_next_op_pos(&operations);
@@ -145,27 +151,42 @@ pub fn to_ast(
 
                 // handle negation
                 if operation == Value::Operation(Operator::Subtr)
-                    && matches!(
-                        left.last(),
-                        Some(
-                            Value::Operation(Operator::Subtr)
+                   // || operation == Value::Operation(Operator::BitwiseNot) maybe needed
+                    // but maybe not
+                        && matches!(
+                            left.last(),
+                            Some(
+                                Value::Operation(Operator::Subtr)
                                 | Value::Operation(Operator::Mult)
                                 | Value::Operation(Operator::Pow)
                                 | Value::Operation(Operator::Add) // FIXME too tired to think about
                                                                   // it. Is it needed?
                                 | Value::Operation(Operator::Mod)
                                 | Value::Operation(Operator::Div)
+                            )
                         )
-                    )
                 {
-                    let right_first = match operations.first() {
-                        Some(Value::Decimal(d)) => Some(Value::Decimal(-d)),
-                        Some(Value::Integer(d)) => Some(Value::Integer(-d)),
-                        Some(Value::U8(d)) => Some(Value::I8(-(*d as i8))),
-                        Some(Value::I8(d)) => Some(Value::I8(-d)),
-                        Some(Value::Variable(d)) => {
-                            Some(Value::VariableNegate(d.to_string()))
-                        }
+                    let right_first = match (&operation, operations.first()) {
+                        (
+                            Value::Operation(Operator::Subtr),
+                            Some(Value::Decimal(d)),
+                        ) => Some(Value::Decimal(-d)),
+                        (
+                            Value::Operation(Operator::Subtr),
+                            Some(Value::Integer(d)),
+                        ) => Some(Value::Integer(-d)),
+                        (
+                            Value::Operation(Operator::Subtr),
+                            Some(Value::U8(d)),
+                        ) => Some(Value::I8(-(*d as i8))),
+                        (
+                            Value::Operation(Operator::Subtr),
+                            Some(Value::I8(d)),
+                        ) => Some(Value::I8(-d)),
+                        (
+                            Value::Operation(Operator::Subtr),
+                            Some(Value::Variable(d)),
+                        ) => Some(Value::VariableNegate(d.to_string())),
                         _ => None,
                     };
                     if let Some(first) = right_first {

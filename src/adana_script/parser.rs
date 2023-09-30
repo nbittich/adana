@@ -614,6 +614,15 @@ fn parse_operation(s: &str) -> Res<Value> {
         parse_op(Operator::Not),
         parse_op(Operator::And),
         parse_op(Operator::Or),
+        parse_op(Operator::Or),
+        alt((
+            parse_op(Operator::BitwiseNot),
+            parse_op(Operator::BitwiseAnd),
+            parse_op(Operator::BitwiseOr),
+            parse_op(Operator::BitwiseXor),
+            parse_op(Operator::BitwiseLShift),
+            parse_op(Operator::BitwiseRShift),
+        )),
     ))(s)
 }
 
