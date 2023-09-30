@@ -20,4 +20,6 @@ fn bitwise_or_test() {
     assert_eq!(r, Primitive::U8(127));
     let r = compute(r#"-1|1"#, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::I8(-1));
+    let r = compute(r#"-98|1"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::I8(-97));
 }
