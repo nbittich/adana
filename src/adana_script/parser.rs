@@ -1,4 +1,7 @@
-use nom::error::{Error, ErrorKind};
+use nom::{
+    combinator::recognize,
+    error::{Error, ErrorKind},
+};
 
 use crate::{
     prelude::{
@@ -26,17 +29,81 @@ pub(super) fn comments(s: &str) -> Res<Vec<&str>> {
 fn tag_no_space<'a>(t: &'a str) -> impl Fn(&'a str) -> Res<&'a str> {
     move |s: &str| delimited(multispace0, tag(t), multispace0)(s)
 }
+fn recognize_hexadecimal(input: &str) -> Res<&str> {
+    // <'a, E: ParseError<&'a str>>
+    preceded(
+        alt((tag("0x"), tag("0X"))),
+        recognize(many1(terminated(
+            one_of("0123456789abcdefABCDEF"),
+            many0(nom::character::complete::char('_')),
+        ))),
+    )(input)
+}
+fn recognize_binary(input: &str) -> Res<&str> {
+    preceded(
+        alt((tag("0b"), tag("0B"))),
+        recognize(many1(terminated(
+            one_of("01"),
+            many0(nom::character::complete::char('_')),
+        ))),
+    )(input)
+}
 
+fn parse_u8_binary(s: &str) -> Res<Value> {
+    let r = u8::from_str_radix(s, 2).map_err(|_e| {
+        nom::Err::Error(nom::error::make_error::<&str, Error<&str>>(
+            "could not parse radix",
+            ErrorKind::IsNot,
+        ))
+    })?;
+    Ok(("", Value::U8(r)))
+}
+
+fn parse_i128_binary(s: &str) -> Res<Value> {
+    let r = i128::from_str_radix(s, 2).map_err(|_e| {
+        nom::Err::Error(nom::error::make_error::<&str, Error<&str>>(
+            "could not parse radix",
+            ErrorKind::IsNot,
+        ))
+    })?;
+    Ok(("", Value::Integer(r)))
+}
+
+fn parse_u8_hex(s: &str) -> Res<Value> {
+    let r = u8::from_str_radix(s, 16).map_err(|_e| {
+        nom::Err::Error(nom::error::make_error::<&str, Error<&str>>(
+            "could not parse radix",
+            ErrorKind::IsNot,
+        ))
+    })?;
+    Ok(("", Value::U8(r)))
+}
+
+fn parse_i128_hex(s: &str) -> Res<Value> {
+    let r = i128::from_str_radix(s, 16).map_err(|_e| {
+        nom::Err::Error(nom::error::make_error::<&str, Error<&str>>(
+            "could not parse radix",
+            ErrorKind::IsNot,
+        ))
+    })?;
+    Ok(("", Value::Integer(r)))
+}
 fn parse_number(s: &str) -> Res<Value> {
-    map_parser(
-        recognize_float,
-        alt((
-            map(all_consuming(U8), Value::U8),
-            map(all_consuming(I8), Value::I8),
-            map(all_consuming(I128), Value::Integer),
-            map(all_consuming(double), Value::Decimal),
-        )),
-    )(s)
+    alt((
+        map_parser(recognize_binary, parse_u8_binary),
+        map_parser(recognize_binary, parse_i128_binary),
+        map_parser(recognize_hexadecimal, parse_u8_hex),
+        map_parser(recognize_hexadecimal, parse_i128_hex),
+        map_parser(
+            recognize_float,
+            alt((
+                map(all_consuming(U8), Value::U8),
+                map(all_consuming(I8), Value::I8),
+                map(all_consuming(I128), Value::Integer),
+                map(all_consuming(double), Value::Decimal),
+            )),
+        ),
+    ))(s)
 }
 
 fn parse_range(s: &str) -> Res<Value> {
