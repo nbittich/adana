@@ -1,2 +1,23 @@
+use std::collections::BTreeMap;
+
+use adana_script_core::primitive::Primitive;
+
+use crate::adana_script::compute;
+
 #[test]
-fn bitwise_or_test() {}
+fn bitwise_or_test() {
+    let mut ctx = BTreeMap::new();
+
+    let r = compute(r#"1|1"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::U8(1));
+    let r = compute(r#"1|0"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::U8(1));
+    let r = compute(r#"0|0"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::U8(0));
+    let r = compute(r#"127|135"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::U8(255));
+    let r = compute(r#"127|9"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::U8(127));
+    let r = compute(r#"-1|1"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::I8(-1));
+}
