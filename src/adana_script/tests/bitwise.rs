@@ -54,4 +54,8 @@ fn bitwise_not() {
 
     let r = compute(r#"~255"#, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::Int(-256));
+    let r = compute(r#"~127"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::Int(-128));
+    let r = compute(r#"~128"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::Int(-129));
 }
