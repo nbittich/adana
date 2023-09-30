@@ -47,3 +47,11 @@ fn bitwise_xor_test() {
     let r = compute(r#"-98$1"#, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::I8(-97));
 }
+
+#[test]
+fn bitwise_not() {
+    let mut ctx = BTreeMap::new();
+
+    let r = compute(r#"~255"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::Int(-256));
+}
