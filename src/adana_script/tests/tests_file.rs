@@ -20,14 +20,14 @@ fn test_simple_file() {
         .collect();
     assert_eq!(
         &BTreeMap::from([
-            ("a".to_string(), Primitive::U8(25)),
+            ("a".to_string(), Primitive::Int(25)),
             ("b".to_string(), Primitive::Bool(true)),
             ("c".to_string(), Primitive::Bool(true)),
-            ("d".to_string(), Primitive::U8(150)),
+            ("d".to_string(), Primitive::Int(150)),
         ]),
         &ctx
     );
-    assert_eq!(Primitive::U8(150), r);
+    assert_eq!(Primitive::Int(150), r);
 }
 
 #[test]
@@ -45,7 +45,7 @@ fn test_if_statement() {
         .collect();
     assert_eq!(
         &BTreeMap::from([
-            ("a".to_string(), Primitive::U8(25)),
+            ("a".to_string(), Primitive::Int(25)),
             ("b".to_string(), Primitive::U8(12)),
             ("c".to_string(), Primitive::U8(20)),
             ("x".to_string(), Primitive::U8(15)),
@@ -78,11 +78,11 @@ fn test_while_statement() {
     }
 
     for n in 0..=10 {
-        ctx.insert("n".to_string(), Primitive::U8(n as u8).ref_prim());
+        ctx.insert("n".to_string(), Primitive::Int(n as i128).ref_prim());
         let r = compute(file_path, &mut ctx, "N/A").unwrap();
-        let fibonacci = fib(n) as u8;
-        assert_eq!(Primitive::U8(fibonacci), ctx["c"].read().unwrap().clone());
-        assert_eq!(Primitive::U8(fibonacci), r);
+        let fibonacci = fib(n) as i128;
+        assert_eq!(Primitive::Int(fibonacci), ctx["c"].read().unwrap().clone());
+        assert_eq!(Primitive::Int(fibonacci), r);
         if fibonacci < 55 {
             assert_eq!(
                 Primitive::String(format!(
@@ -110,14 +110,14 @@ fn test_nested_file() {
     assert_eq!(
         &BTreeMap::from([
             ("a".to_string(), Primitive::U8(0)),
-            ("b".to_string(), Primitive::U8(240)),
+            ("b".to_string(), Primitive::Int(240)),
             ("x".to_string(), Primitive::U8(50)),
             ("s".to_string(), Primitive::String("mod 3".to_string())),
             ("z".to_string(), Primitive::String("mod 1".to_string())),
         ]),
         &ctx
     );
-    assert_eq!(Primitive::U8(240), r);
+    assert_eq!(Primitive::Int(240), r);
 }
 
 #[test]
@@ -152,7 +152,7 @@ fn test_includes() {
     assert_eq!(
         ctx,
         BTreeMap::from([
-            ("a".to_string(), Primitive::U8(144,)),
+            ("a".to_string(), Primitive::Int(144,)),
             (
                 "arr".to_string(),
                 Primitive::Array(vec![
@@ -169,9 +169,9 @@ fn test_includes() {
                     Primitive::U8(6,),
                 ],)
             ),
-            ("b".to_string(), Primitive::U8(233,)),
+            ("b".to_string(), Primitive::Int(233,)),
             ("bfr".to_string(), Primitive::U8(2,)),
-            ("c".to_string(), Primitive::U8(233,)),
+            ("c".to_string(), Primitive::Int(233,)),
             ("n".to_string(), Primitive::U8(1,)),
             ("x".to_string(), Primitive::U8(4,))
         ]),
@@ -191,7 +191,7 @@ fn test_multiline_file() {
         .iter()
         .map(|(k, v)| (k.to_string(), v.read().unwrap().clone()))
         .collect();
-    assert_eq!(Some(&Primitive::U8(77)), ctx.get("s"));
+    assert_eq!(Some(&Primitive::Int(77)), ctx.get("s"));
     assert_eq!(
         Some(&Primitive::String(
             "\n    multiline\n    sin v\n    text\n  ".to_string()
@@ -214,12 +214,12 @@ fn test_if_else_file1() {
     include("file_tests/test_if_else.adana")
 "#;
     let mut ctx = BTreeMap::new();
-    ctx.insert("count".to_string(), Primitive::U8(102).ref_prim());
+    ctx.insert("count".to_string(), Primitive::Int(102).ref_prim());
     let _ = compute(file_path, &mut ctx, "N/A");
 
-    assert_eq!(ctx["count"].read().unwrap().clone(), Primitive::U8(101));
+    assert_eq!(ctx["count"].read().unwrap().clone(), Primitive::Int(101));
     let _ = compute(file_path, &mut ctx, "N/A");
-    assert_eq!(ctx["count"].read().unwrap().clone(), Primitive::U8(51));
+    assert_eq!(ctx["count"].read().unwrap().clone(), Primitive::Int(51));
     let file_path = r#"
     include("file_tests/test_fizzbuzz_else.adana")
 "#;
@@ -230,5 +230,5 @@ fn test_if_else_file1() {
         Primitive::String("100 = Buzz".to_string()),
         ctx["text"].read().unwrap().clone()
     );
-    assert_eq!(Primitive::I8(101), ctx["count"].read().unwrap().clone());
+    assert_eq!(Primitive::Int(101), ctx["count"].read().unwrap().clone());
 }

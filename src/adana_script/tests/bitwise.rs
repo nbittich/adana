@@ -59,3 +59,10 @@ fn bitwise_not() {
     let r = compute(r#"~128"#, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::Int(-129));
 }
+#[test]
+fn test_complex_math_wise() {
+    let mut ctx = BTreeMap::new();
+
+    let r = compute(r#"30*9 @9 -5/~3"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::Int(10));
+}

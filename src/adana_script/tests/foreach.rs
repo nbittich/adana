@@ -32,7 +32,7 @@ fn simple_foreach_string() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::U8(43), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::Int(43), ctx["total"].read().unwrap().clone());
     assert_eq!(
         Array(vec![
             String("n".to_string()),

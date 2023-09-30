@@ -137,8 +137,8 @@ pub fn to_ast(
                     .or_else(filter_op(Operator::Mod, operations))
                     .or_else(filter_op(Operator::Div, operations))
                     .or_else(filter_op(Operator::Pow, operations))
-                    .or_else(filter_op(Operator::Not, operations))
                     .or_else(filter_op(Operator::BitwiseNot, operations))
+                    .or_else(filter_op(Operator::Not, operations))
             };
 
             let op_pos = get_next_op_pos(&operations);
@@ -160,6 +160,11 @@ pub fn to_ast(
                                 | Value::Operation(Operator::Mult)
                                 | Value::Operation(Operator::Pow)
                                 | Value::Operation(Operator::BitwiseNot)
+                                | Value::Operation(Operator::BitwiseAnd)
+                                | Value::Operation(Operator::BitwiseLShift)
+                                | Value::Operation(Operator::BitwiseRShift)
+                                | Value::Operation(Operator::BitwiseOr)
+                                | Value::Operation(Operator::BitwiseXor)
                                 | Value::Operation(Operator::Add) // FIXME too tired to think about
                                                                   // it. Is it needed?
                                 | Value::Operation(Operator::Mod)

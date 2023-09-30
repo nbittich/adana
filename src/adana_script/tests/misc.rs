@@ -179,7 +179,7 @@ fn test_compute() {
     assert_eq!(Primitive::Int(-255), compute("-255", &mut ctx, "N/A").unwrap());
     assert_eq!(Primitive::I8(-127), compute("-127", &mut ctx, "N/A").unwrap());
     assert_eq!(
-        Primitive::U8(6 / 2 * (2 + 1)),
+        Primitive::Int(6 / 2 * (2 + 1)),
         compute("6/2*(2+1)", &mut ctx, "N/A").unwrap()
     );
     assert_eq!(
@@ -188,11 +188,11 @@ fn test_compute() {
     );
     // todo maybe should panic in these cases
     assert_eq!(
-        Primitive::U8(2 * 4),
+        Primitive::Int(2 * 4),
         compute("2* * *4", &mut ctx, "N/A").unwrap()
     );
     assert_eq!(
-        Primitive::U8(2 * 4),
+        Primitive::Int(2 * 4),
         compute("2* ** *4", &mut ctx, "N/A").unwrap()
     );
     assert_eq!(Primitive::U8(4), compute("*4", &mut ctx, "N/A").unwrap());
@@ -219,11 +219,11 @@ fn test_compute() {
 fn test_negate() {
     let mut ctx = BTreeMap::new();
     assert_eq!(
-        Primitive::I8(-5 / -1),
+        Primitive::Int(-5 / -1),
         compute("-5/-1", &mut ctx, "N/A").unwrap()
     );
     assert_eq!(
-        Primitive::I8(5 / -1),
+        Primitive::Int(5 / -1),
         compute("5/-1", &mut ctx, "N/A").unwrap()
     );
     assert_eq!(Primitive::I8(5), compute("--5", &mut ctx, "N/A").unwrap());
@@ -290,7 +290,7 @@ fn test_fn_abs() {
     let mut ctx = BTreeMap::new();
     assert_eq!(Primitive::U8(5), compute("abs(5)", &mut ctx, "N/A").unwrap());
     assert_eq!(
-        Primitive::I8(25),
+        Primitive::Int(25),
         compute("abs(-5*5)", &mut ctx, "N/A").unwrap()
     );
     assert_eq!(
@@ -650,7 +650,7 @@ fn test_op_pow_sugar() {
 fn test_implicit_multiply() {
     let mut ctx = BTreeMap::new();
     assert_eq!(Primitive::U8(2), compute(r#"x = 2"#, &mut ctx, "N/A").unwrap());
-    assert_eq!(Primitive::U8(4), compute(r#"2x"#, &mut ctx, "N/A").unwrap());
+    assert_eq!(Primitive::Int(4), compute(r#"2x"#, &mut ctx, "N/A").unwrap());
     assert_eq!(
         Primitive::Double(1.),
         compute(r#"0.5x"#, &mut ctx, "N/A").unwrap()
