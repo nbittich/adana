@@ -179,11 +179,18 @@ pub fn to_ast(
                         (
                             Value::Operation(Operator::Subtr),
                             Some(Value::U8(d)),
-                        ) => Some(Value::I8(-(*d as i8))),
+                        ) => (*d as i8)
+                            .checked_neg()
+                            .map(Value::I8)
+                            .or_else(|| Some(Value::Integer(-(*d as i128)))),
+
                         (
                             Value::Operation(Operator::Subtr),
                             Some(Value::I8(d)),
-                        ) => Some(Value::I8(-d)),
+                        ) => d
+                            .checked_neg()
+                            .map(Value::I8)
+                            .or_else(|| Some(Value::Integer(-(*d as i128)))),
                         (
                             Value::Operation(Operator::Subtr),
                             Some(Value::Variable(d)),

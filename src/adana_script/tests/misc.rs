@@ -176,6 +176,8 @@ fn test_compute() {
     assert_eq!(Primitive::U8(0), compute("0", &mut ctx, "N/A").unwrap());
     assert_eq!(Primitive::U8(9), compute("9", &mut ctx, "N/A").unwrap());
     assert_eq!(Primitive::I8(-9), compute("-9", &mut ctx, "N/A").unwrap());
+    assert_eq!(Primitive::Int(-255), compute("-255", &mut ctx, "N/A").unwrap());
+    assert_eq!(Primitive::I8(-127), compute("-127", &mut ctx, "N/A").unwrap());
     assert_eq!(
         Primitive::U8(6 / 2 * (2 + 1)),
         compute("6/2*(2+1)", &mut ctx, "N/A").unwrap()

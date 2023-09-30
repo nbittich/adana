@@ -51,6 +51,27 @@ fn test_eval() {
 }
 
 #[test]
+fn test_to_hex() {
+    let mut ctx = BTreeMap::new();
+    let r = compute(r#"to_hex(255)"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("0xff".into()));
+    let r = compute(r#"to_hex(1)"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("0x1".into()));
+    let r = compute(r#"to_hex(1024)"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("0x400".into()));
+}
+
+#[test]
+fn test_to_binary() {
+    let mut ctx = BTreeMap::new();
+    let r = compute(r#"to_binary(255)"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("0b11111111".into()));
+    let r = compute(r#"to_binary(-127)"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("0b10000001".into()));
+    let r = compute(r#"to_binary(127)"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("0b1111111".into()));
+}
+#[test]
 fn test_type_of() {
     let mut ctx = BTreeMap::new();
     ctx.insert("x".to_string(), Primitive::Int(3).ref_prim());
