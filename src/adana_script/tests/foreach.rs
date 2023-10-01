@@ -14,7 +14,7 @@ fn simple_foreach() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::U8(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }
 
@@ -245,7 +245,7 @@ fn simple_foreach_with_idx1() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::U8(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
     assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }
@@ -262,7 +262,7 @@ fn simple_foreach_with_idx_from_fn() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::U8(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
     assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }
@@ -281,7 +281,7 @@ fn simple_foreach_with_idx_from_struct() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::U8(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
     assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }
@@ -297,7 +297,7 @@ fn simple_foreach_with_paren() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::U8(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }
 
@@ -314,7 +314,7 @@ fn simple_foreach_with_idx_with_paren() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::U8(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
     assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }
@@ -334,7 +334,7 @@ fn simple_foreach_with_idx_from_struct_with_paren() {
        "#;
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::U8(10), ctx["total"].read().unwrap().clone());
+    assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
     assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
     assert!(ctx.get("a").is_none());
 }

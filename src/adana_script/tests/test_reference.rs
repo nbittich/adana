@@ -99,7 +99,7 @@ fn test_forin_range_ref1() {
         ctx["y"].read().unwrap().clone()
     );
     assert!(matches!(ctx["y"].read().unwrap().clone(), Primitive::Ref(_)));
-    assert_eq!(ctx["p"].read().unwrap().clone(), Primitive::U8(100));
+    assert_eq!(ctx["p"].read().unwrap().clone(), Primitive::Int(100));
 }
 
 #[test]
@@ -121,5 +121,5 @@ fn test_forin_range_ref2() {
         ctx["y"].read().unwrap().clone()
     );
     assert!(matches!(ctx["y"].read().unwrap().clone(), Primitive::Ref(_)));
-    assert_eq!(ctx["p"].read().unwrap().clone(), Primitive::U8(100));
+    assert_eq!(ctx["p"].read().unwrap().clone(), Primitive::Int(100));
 }

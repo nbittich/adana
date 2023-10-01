@@ -59,7 +59,7 @@ fn test_example2() {
     let mut ctx = BTreeMap::new();
     let expr = include_str!("../../../examples/example2.adana");
     let res = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(res, Array(vec![Int(15), Int(1), U8(11), U8(22)]));
+    assert_eq!(res, Array(vec![Int(15), Int(1), Int(11), Int(22)]));
     assert_eq!(
         compute("fun([1])", &mut ctx, "N/A").unwrap(),
         Array(vec![U8(0)])

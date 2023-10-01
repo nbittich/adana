@@ -151,8 +151,8 @@ fn test_string_array() {
             ("v".to_string(), Str("nordine".to_string())),
             ("copy".to_string(), Str("eodrnin".to_string())),
             ("s".to_string(), Str("kekeke".to_string())),
-            ("count".to_string(), U8(7)),
-            ("i".to_string(), U8(6)),
+            ("count".to_string(), Int(7)),
+            ("i".to_string(), Int(6)),
         ]),
         &ctx
     );
