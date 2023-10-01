@@ -27,8 +27,9 @@ dependencies = [
 
 [[package]]
 name = "adana-script-core"
-version = "0.14.2"
-source = "git+https://github.com/nbittich/adana-script-core.git?branch=feature/bitwise-and-new-ints#72a19ce9b6c76dc0ac27bbbbdd44b46332baa708"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "48cb963f08f0acb3c4c5d9dcaa6b3963de537560e50d08c706efe22730b781ce"
 dependencies = [
  "anyhow",
  "libloading",

@@ -9,8 +9,8 @@ edition = "2021"
 crate-type = ["dylib"]
 
 [dependencies]
-#adana-script-core = "0.14.1"
-adana-script-core = { git = "https://github.com/nbittich/adana-script-core.git", branch = "feature/bitwise-and-new-ints" }
+adana-script-core = "0.15.0"
+#adana-script-core = { git = "https://github.com/nbittich/adana-script-core.git", branch = "feature/bitwise-and-new-ints" }
 
 anyhow = "1.0.75"
 
