@@ -26,7 +26,7 @@ anyhow = "1.0.75"
 bincode = "1.3.3"
 dirs = "5.0.1"                                                     # todo maybe replace by the home crate
 log = "0.4.20"
-nom = { version = "7.1.3" }
+nom = "7.1.3"
 nu-ansi-term = "0.49.0"
 rustyline = "12.0.0"
 rustyline-derive = "0.9.0"
@@ -36,8 +36,8 @@ slab_tree = "0.3.2"
 strum = { version = "0.25.0", features = ["derive"] }
 ctrlc = "3.4.1"
 
-#adana-script-core = { git = "https://github.com/nbittich/adana-script-core.git" }
-adana-script-core = "0.14.2"
+#adana-script-core = { git = "https://github.com/nbittich/adana-script-core.git", branch = "feature/bitwise-and-new-ints" }
+adana-script-core = "0.15.0"
 
 [dependencies.env_logger]
 default-features = false

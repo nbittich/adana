@@ -13,9 +13,9 @@ use crate::{adana_script::parser::parse_instructions, prelude::BTreeMap};
 use super::{ast::to_ast, require_dynamic_lib::require_dynamic_lib};
 use adana_script_core::{
     primitive::{
-        Abs, Add, And, Array, Cos, Div, Logarithm, Mul, Neg, Not, Or, Pow,
-        Primitive, RefPrimitive, Rem, Sin, Sqrt, Sub, Tan, ToBool, ToNumber,
-        TypeOf,
+        Abs, Add, And, Array, BitShift, Cos, DisplayBinary, DisplayHex, Div,
+        Logarithm, Mul, Neg, Not, Or, Pow, Primitive, RefPrimitive, Rem, Sin,
+        Sqrt, Sub, Tan, ToBool, ToNumber, TypeOf,
     },
     BuiltInFunctionType, Operator, TreeNodeValue, Value,
 };
@@ -57,6 +57,15 @@ fn compute_recur(
                 }
                 let left = compute_recur(node.first_child(), ctx, shared_lib)?;
                 Ok(left.not())
+            }
+            TreeNodeValue::Ops(Operator::BitwiseNot) => {
+                if node.children().count() != 1 {
+                    return Err(Error::msg(
+                        "only one value allowed, no '~' possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                Ok(left.bitwise_not())
             }
             TreeNodeValue::Ops(Operator::Add) => {
                 if node.children().count() == 1 {
@@ -141,6 +150,32 @@ fn compute_recur(
                 let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.and(&right))
             }
+            TreeNodeValue::Ops(Operator::BitwiseAnd) => {
+                if node.children().count() == 1 {
+                    return Err(Error::msg(
+                        "only one value, no 'AND' comparison possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
+                Ok(left.bitwise_and(&right))
+            }
+            TreeNodeValue::Ops(Operator::BitwiseLShift) => {
+                if node.children().count() == 1 {
+                    return Err(Error::msg("only one value for '<<' "));
+                }
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
+                Ok(left.left_shift(&right))
+            }
+            TreeNodeValue::Ops(Operator::BitwiseRShift) => {
+                if node.children().count() == 1 {
+                    return Err(Error::msg("only one value, for '>>'"));
+                }
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
+                Ok(left.right_shift(&right))
+            }
             TreeNodeValue::VariableUnused => {
                 Err(Error::msg("forbidden usage of VariableUnused"))
             }
@@ -167,6 +202,28 @@ fn compute_recur(
                 let left = compute_recur(node.first_child(), ctx, shared_lib)?;
                 let right = compute_recur(node.last_child(), ctx, shared_lib)?;
                 Ok(left.or(&right))
+            }
+
+            TreeNodeValue::Ops(Operator::BitwiseOr) => {
+                if node.children().count() == 1 {
+                    return Err(Error::msg(
+                        "only one value, no '|' comparison possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
+                Ok(left.bitwise_or(&right))
+            }
+
+            TreeNodeValue::Ops(Operator::BitwiseXor) => {
+                if node.children().count() == 1 {
+                    return Err(Error::msg(
+                        "only one value, no 'XOR' comparison possible",
+                    ));
+                }
+                let left = compute_recur(node.first_child(), ctx, shared_lib)?;
+                let right = compute_recur(node.last_child(), ctx, shared_lib)?;
+                Ok(left.bitwise_xor(&right))
             }
             TreeNodeValue::Ops(Operator::Equal) => {
                 if node.children().count() == 1 {
@@ -273,6 +330,13 @@ fn compute_recur(
                     adana_script_core::BuiltInFunctionType::ToInt => {
                         Ok(v.to_int())
                     }
+                    adana_script_core::BuiltInFunctionType::ToHex => {
+                        Ok(v.to_hex())
+                    }
+                    adana_script_core::BuiltInFunctionType::ToBinary => {
+                        Ok(v.to_binary())
+                    }
+
                     adana_script_core::BuiltInFunctionType::ToDouble => {
                         Ok(v.to_double())
                     }
@@ -453,13 +517,19 @@ fn compute_recur(
                         Ok(v.index_at(&index))
                     }
                     (Value::Array(array), index) => {
-                        let Primitive::Int(index) =
-                            compute_lazy(index.clone(), ctx, shared_lib)?
-                        else {
-                            return Err(anyhow::format_err!(
+                        let index =
+                            match compute_lazy(index.clone(), ctx, shared_lib)?
+                            {
+                                Primitive::Int(index) => index as usize,
+                                Primitive::U8(index) => index as usize,
+                                Primitive::I8(index) => index as usize,
+
+                                _ => {
+                                    return Err(anyhow::format_err!(
                                 "COMPUTE: illegal array access! {index:?}"
-                            ));
-                        };
+                            ))
+                                }
+                            };
 
                         let index = index as usize;
                         let value = array.get(index).context(error_message())?;
@@ -764,10 +834,13 @@ fn compute_recur(
                                          .ok_or_else(||anyhow::format_err!("ctx doesn't contains array {s}"))?;
                                     let mut array = array.write()
                                         .map_err(|e| anyhow::format_err!("DROP ARRAY : could not acquire lock {e}"))?;
-                                    let Value::Integer(index) = *index.clone() else {
-                                        return Ok(PrimErr("index not an int!".to_string()))
-                                    };
-                                   array.remove(&Int(index))?;
+                                    match index.borrow() {
+                                        Value::Integer(i) => { array.remove(&Int(*i))},
+                                        Value::U8(i) => { array.remove(&Primitive::U8(*i))},
+                                        Value::I8(i) => { array.remove(&Primitive::I8(*i))},
+                                        e => return Ok(PrimErr(format!("index not an int! {e:?}")))
+
+                                    }?;
                                 }
                                 _ => return Ok(PrimErr(format!("only primitive within the ctx can be dropped {arr:?}")))
                             }

@@ -6,9 +6,14 @@ use adana_script_core::primitive::Primitive;
 fn test_builtin_to_int() {
     let mut ctx = BTreeMap::new();
     let res = compute("to_int(2)", &mut ctx, "N/A").unwrap();
-    assert_eq!(res, Primitive::Int(2));
+    assert_eq!(res, Primitive::U8(2));
+
+    let res = compute("to_int(256)", &mut ctx, "N/A").unwrap();
+    assert_eq!(res, Primitive::Int(256));
+
     let res = compute(r#"to_int("2")"#, &mut ctx, "N/A").unwrap();
     assert_eq!(res, Primitive::Int(2));
+
     ctx.insert(
         "a".to_string(),
         Primitive::String("123".to_string()).ref_prim(),
@@ -45,6 +50,27 @@ fn test_eval() {
     assert_eq!(*ctx["z"].read().unwrap(), Primitive::Double(3.0));
 }
 
+#[test]
+fn test_to_hex() {
+    let mut ctx = BTreeMap::new();
+    let r = compute(r#"to_hex(255)"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("0xff".into()));
+    let r = compute(r#"to_hex(1)"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("0x1".into()));
+    let r = compute(r#"to_hex(1024)"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("0x400".into()));
+}
+
+#[test]
+fn test_to_binary() {
+    let mut ctx = BTreeMap::new();
+    let r = compute(r#"to_binary(255)"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("0b11111111".into()));
+    let r = compute(r#"to_binary(-127)"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("0b10000001".into()));
+    let r = compute(r#"to_binary(127)"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("0b1111111".into()));
+}
 #[test]
 fn test_type_of() {
     let mut ctx = BTreeMap::new();

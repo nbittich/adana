@@ -4,9 +4,9 @@ version = 3
 
 [[package]]
 name = "adana-script-core"
-version = "0.14.1"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67c04fcdd5b5c568011e9f148e9cc45a35db86e63d5c7d632b1eb82790e6edcf"
+checksum = "48cb963f08f0acb3c4c5d9dcaa6b3963de537560e50d08c706efe22730b781ce"
 dependencies = [
  "anyhow",
  "libloading",
@@ -35,9 +35,9 @@ checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
 name = "libloading"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d580318f95776505201b28cf98eb1fa5e4be3b689633ba6a3e6cd880ff22d8cb"
+checksum = "c571b676ddfc9a8c12f1f3d3085a7b163966a8fd8098a90640953ce5f6170161"
 dependencies = [
  "cfg-if",
  "windows-sys",

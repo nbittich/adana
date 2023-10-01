@@ -1,3 +1,4 @@
+mod bitwise;
 mod builtin;
 mod dynload;
 mod examples;

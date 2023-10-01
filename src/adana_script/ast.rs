@@ -99,7 +99,7 @@ pub fn to_ast(
                     Value::ImplicitMultiply(v)
                         if matches!(
                             v.borrow(),
-                            &Value::Integer(_) | &Value::Decimal(_)
+                            &Value::Integer(_) | &Value::Decimal(_) | &Value::U8(_) | &Value::I8(_)
                         ) =>
                     {
                         operations.insert(pos,*v);
@@ -107,11 +107,11 @@ pub fn to_ast(
                     }
                     Value::Operation(Operator::Pow2) => {
                         operations.insert(pos,Value::Operation(Operator::Pow));
-                        operations.insert(pos+1,Value::Integer(2));
+                        operations.insert(pos+1,Value::U8(2));
                     }
                     Value::Operation(Operator::Pow3) => {
                         operations.insert(pos,Value::Operation(Operator::Pow));
-                        operations.insert(pos+1,Value::Integer(3));
+                        operations.insert(pos+1,Value::U8(3));
                     }
                     _ => unreachable!("AST ERROR: unreachable implicit parameter {operation:?}"),
                 }
@@ -120,18 +120,24 @@ pub fn to_ast(
             let get_next_op_pos = |operations: &Vec<Value>| {
                 None.or_else(filter_op(Operator::Or, operations))
                     .or_else(filter_op(Operator::And, operations))
+                    .or_else(filter_op(Operator::BitwiseOr, operations))
+                    .or_else(filter_op(Operator::BitwiseXor, operations))
+                    .or_else(filter_op(Operator::BitwiseAnd, operations))
                     .or_else(filter_op(Operator::GreaterOrEqual, operations))
                     .or_else(filter_op(Operator::LessOrEqual, operations))
                     .or_else(filter_op(Operator::Greater, operations))
                     .or_else(filter_op(Operator::Less, operations))
                     .or_else(filter_op(Operator::Equal, operations))
                     .or_else(filter_op(Operator::NotEqual, operations))
+                    .or_else(filter_op(Operator::BitwiseLShift, operations))
+                    .or_else(filter_op(Operator::BitwiseRShift, operations))
                     .or_else(filter_op(Operator::Add, operations))
                     .or_else(filter_op(Operator::Subtr, operations))
                     .or_else(filter_op(Operator::Mult, operations))
                     .or_else(filter_op(Operator::Mod, operations))
                     .or_else(filter_op(Operator::Div, operations))
                     .or_else(filter_op(Operator::Pow, operations))
+                    .or_else(filter_op(Operator::BitwiseNot, operations))
                     .or_else(filter_op(Operator::Not, operations))
             };
 
@@ -145,25 +151,55 @@ pub fn to_ast(
 
                 // handle negation
                 if operation == Value::Operation(Operator::Subtr)
-                    && matches!(
-                        left.last(),
-                        Some(
-                            Value::Operation(Operator::Subtr)
+                   // || operation == Value::Operation(Operator::BitwiseNot) maybe needed
+                    // but maybe not
+                        && matches!(
+                            left.last(),
+                            Some(
+                                Value::Operation(Operator::Subtr)
                                 | Value::Operation(Operator::Mult)
                                 | Value::Operation(Operator::Pow)
+                                | Value::Operation(Operator::BitwiseNot)
+                                | Value::Operation(Operator::BitwiseAnd)
+                                | Value::Operation(Operator::BitwiseLShift)
+                                | Value::Operation(Operator::BitwiseRShift)
+                                | Value::Operation(Operator::BitwiseOr)
+                                | Value::Operation(Operator::BitwiseXor)
                                 | Value::Operation(Operator::Add) // FIXME too tired to think about
                                                                   // it. Is it needed?
                                 | Value::Operation(Operator::Mod)
                                 | Value::Operation(Operator::Div)
+                            )
                         )
-                    )
                 {
-                    let right_first = match operations.first() {
-                        Some(Value::Decimal(d)) => Some(Value::Decimal(-d)),
-                        Some(Value::Integer(d)) => Some(Value::Integer(-d)),
-                        Some(Value::Variable(d)) => {
-                            Some(Value::VariableNegate(d.to_string()))
-                        }
+                    let right_first = match (&operation, operations.first()) {
+                        (
+                            Value::Operation(Operator::Subtr),
+                            Some(Value::Decimal(d)),
+                        ) => Some(Value::Decimal(-d)),
+                        (
+                            Value::Operation(Operator::Subtr),
+                            Some(Value::Integer(d)),
+                        ) => Some(Value::Integer(-d)),
+                        (
+                            Value::Operation(Operator::Subtr),
+                            Some(Value::U8(d)),
+                        ) => (*d as i8)
+                            .checked_neg()
+                            .map(Value::I8)
+                            .or_else(|| Some(Value::Integer(-(*d as i128)))),
+
+                        (
+                            Value::Operation(Operator::Subtr),
+                            Some(Value::I8(d)),
+                        ) => d
+                            .checked_neg()
+                            .map(Value::I8)
+                            .or_else(|| Some(Value::Integer(-(*d as i128)))),
+                        (
+                            Value::Operation(Operator::Subtr),
+                            Some(Value::Variable(d)),
+                        ) => Some(Value::VariableNegate(d.to_string())),
                         _ => None,
                     };
                     if let Some(first) = right_first {
@@ -203,7 +239,7 @@ pub fn to_ast(
                 Ok(curr_node_id)
             } else {
                 Err(anyhow::Error::msg(format!(
-                    "{} invalid expression!",
+                    "{} invalid expression! {op_pos:?}",
                     nu_ansi_term::Color::Red.paint("AST ERROR:")
                 )))
             }
@@ -246,6 +282,16 @@ pub fn to_ast(
             tree,
             curr_node_id,
         ),
+        Value::U8(num) => append_to_current_and_return(
+            TreeNodeValue::Primitive(Primitive::U8(num)),
+            tree,
+            curr_node_id,
+        ),
+        Value::I8(num) => append_to_current_and_return(
+            TreeNodeValue::Primitive(Primitive::I8(num)),
+            tree,
+            curr_node_id,
+        ),
         Value::Bool(bool_v) => append_to_current_and_return(
             TreeNodeValue::Primitive(Primitive::Bool(bool_v)),
             tree,
@@ -266,16 +312,19 @@ pub fn to_ast(
                 Value::Variable(name) | Value::VariableRef(name) => {
                     let primitive =
                         variable_from_ctx(name.as_str(), false, ctx)?;
-                    if let Primitive::Int(num) = primitive.to_int() {
-                        Ok(num)
-                    } else {
-                        Err(anyhow::format_err!(
+                    match primitive.to_int() {
+                        Primitive::Int(num) => Ok(num),
+                        Primitive::U8(num) => Ok(num as i128),
+                        Primitive::I8(num) => Ok(num as i128),
+                        _ => Err(anyhow::format_err!(
                             "range error: {primitive:?} is not an integer"
-                        ))
+                        )),
                     }
                 }
 
                 Value::Integer(num) => Ok(num),
+                Value::U8(num) => Ok(num as i128),
+                Value::I8(num) => Ok(num as i128),
                 _ => {
                     return Err(anyhow::format_err!(
                         "range error: {start:?} is not an integer"
@@ -286,14 +335,17 @@ pub fn to_ast(
                 Value::Variable(name) | Value::VariableRef(name) => {
                     let primitive =
                         variable_from_ctx(name.as_str(), false, ctx)?;
-                    if let Primitive::Int(num) = primitive.to_int() {
-                        Ok(num)
-                    } else {
-                        Err(anyhow::format_err!(
+                    match primitive.to_int() {
+                        Primitive::Int(num) => Ok(num),
+                        Primitive::U8(num) => Ok(num as i128),
+                        Primitive::I8(num) => Ok(num as i128),
+                        _ => Err(anyhow::format_err!(
                             "range error: {primitive:?} is not an integer"
-                        ))
+                        )),
                     }
                 }
+                Value::U8(num) => Ok(num as i128),
+                Value::I8(num) => Ok(num as i128),
                 Value::Integer(num) => Ok(num),
                 _ => {
                     return Err(anyhow::format_err!(
@@ -461,6 +513,16 @@ pub fn to_ast(
         ),
         Value::ArrayAccess { arr, index } => match (*arr, *index) {
             (v, index @ Value::Integer(_)) => append_to_current_and_return(
+                TreeNodeValue::ArrayAccess { index, array: v },
+                tree,
+                curr_node_id,
+            ),
+            (v, index @ Value::U8(_)) => append_to_current_and_return(
+                TreeNodeValue::ArrayAccess { index, array: v },
+                tree,
+                curr_node_id,
+            ),
+            (v, index @ Value::I8(_)) => append_to_current_and_return(
                 TreeNodeValue::ArrayAccess { index, array: v },
                 tree,
                 curr_node_id,

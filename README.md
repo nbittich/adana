@@ -172,7 +172,7 @@ ${person.wasup(person.age)}"""
 
 ### Operators and constants
 
-There are 16 operators & 3 constants:
+There are 22 operators & 3 constants:
 
 | **operator** | **description**  |
 | ------------ | ---------------- |
@@ -190,6 +190,12 @@ There are 16 operators & 3 constants:
 | `>=`         | greater or equal |
 | `&&`         | and              |
 | `\|\|`       | or               |
+| `\|`         | bitwise or       |
+| `~`          | bitwise not      |
+| `@`          | bitwise and      |
+| `$`          | bitwise xor      |
+| `<<`         | bitwise lshift   |
+| `>>`         | bitwise rshift   |
 | `==`         | equal            |
 | `()`         | parenthesis      |
 | `π`          | PI number        |
@@ -482,7 +488,9 @@ Below, is a list of types and how you declare them. You can also define your str
 | -------- | ------------------------------------------------------------------------------------------------ |
 | null     | `null`                                                                                           |
 | bool     | `true` / `false`                                                                                 |
-| int      | `5`                                                                                              |
+| int      | `5000`                                                                                           |
+| u8       | `5`                                                                                              |
+| i8       | `-5`                                                                                             |
 | double   | `12.` / `12.2`                                                                                   |
 | string   | `"hello"`                                                                                        |
 | array    | `[1,2,"3", true]`                                                                                |
@@ -717,6 +725,8 @@ Here is a list of built-in functions available:
 | include   | include a script             | `include("scripts/test_fn.adana")` |
 | require   | load a shared object         | `require("my_lib.so")`             |
 | to_int    | cast to int                  | `to_int("2")`<br>`to_int(2.2)`     |
+| to_hex    | format num to hex            | `to_hex(2)`<br>`to_hex(2.2)`       |
+| to_binary | format num to binary         | `to_binary(2)`                     |
 | to_double | cast to double               | `to_double("2.2")`                 |
 | to_bool   | cast to bool                 | `to_bool("true")`                  |
 | to_string | cast to string               | `to_string(true)`                  |

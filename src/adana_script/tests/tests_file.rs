@@ -46,15 +46,15 @@ fn test_if_statement() {
     assert_eq!(
         &BTreeMap::from([
             ("a".to_string(), Primitive::Int(25)),
-            ("b".to_string(), Primitive::Int(12)),
-            ("c".to_string(), Primitive::Int(20)),
-            ("x".to_string(), Primitive::Int(15)),
-            ("r".to_string(), Primitive::Int(11)),
-            ("z".to_string(), Primitive::Int(18)),
+            ("b".to_string(), Primitive::U8(12)),
+            ("c".to_string(), Primitive::U8(20)),
+            ("x".to_string(), Primitive::U8(15)),
+            ("r".to_string(), Primitive::U8(11)),
+            ("z".to_string(), Primitive::U8(18)),
         ]),
         &ctx
     );
-    assert_eq!(Primitive::Int(20), r);
+    assert_eq!(Primitive::U8(20), r);
 }
 #[test]
 #[serial]
@@ -109,9 +109,9 @@ fn test_nested_file() {
         .collect();
     assert_eq!(
         &BTreeMap::from([
-            ("a".to_string(), Primitive::Int(0)),
+            ("a".to_string(), Primitive::U8(0)),
             ("b".to_string(), Primitive::Int(240)),
-            ("x".to_string(), Primitive::Int(50)),
+            ("x".to_string(), Primitive::U8(50)),
             ("s".to_string(), Primitive::String("mod 3".to_string())),
             ("z".to_string(), Primitive::String("mod 1".to_string())),
         ]),
@@ -156,24 +156,24 @@ fn test_includes() {
             (
                 "arr".to_string(),
                 Primitive::Array(vec![
-                    Primitive::Int(1,),
-                    Primitive::Int(2,),
-                    Primitive::Int(3,),
+                    Primitive::U8(1,),
+                    Primitive::U8(2,),
+                    Primitive::U8(3,),
                 ],)
             ),
             (
                 "arr2".to_string(),
                 Primitive::Array(vec![
-                    Primitive::Int(4,),
-                    Primitive::Int(5,),
-                    Primitive::Int(6,),
+                    Primitive::U8(4,),
+                    Primitive::U8(5,),
+                    Primitive::U8(6,),
                 ],)
             ),
             ("b".to_string(), Primitive::Int(233,)),
-            ("bfr".to_string(), Primitive::Int(2,)),
+            ("bfr".to_string(), Primitive::U8(2,)),
             ("c".to_string(), Primitive::Int(233,)),
-            ("n".to_string(), Primitive::Int(1,)),
-            ("x".to_string(), Primitive::Int(4,))
+            ("n".to_string(), Primitive::U8(1,)),
+            ("x".to_string(), Primitive::U8(4,))
         ]),
     );
 }
@@ -202,14 +202,14 @@ fn test_multiline_file() {
         Some(&Primitive::String("sincostanmultiline".to_string())),
         ctx.get("x")
     );
-    assert_eq!(Some(&Primitive::Int(1)), ctx.get("xy"));
-    assert_eq!(Some(&Primitive::Int(2)), ctx.get("ze"));
-    assert_eq!(Some(&Primitive::Int(3)), ctx.get("de"));
+    assert_eq!(Some(&Primitive::U8(1)), ctx.get("xy"));
+    assert_eq!(Some(&Primitive::U8(2)), ctx.get("ze"));
+    assert_eq!(Some(&Primitive::U8(3)), ctx.get("de"));
 }
 
 #[test]
 #[serial]
-fn test_if_else_file() {
+fn test_if_else_file1() {
     let file_path = r#"
     include("file_tests/test_if_else.adana")
 "#;

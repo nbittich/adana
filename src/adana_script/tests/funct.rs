@@ -35,7 +35,7 @@ fn test_anon_func_call() {
             exprs: vec![
                 Value::VariableExpr {
                     name: Box::new(Value::Variable("c".to_string(),)),
-                    expr: Box::new(Value::Integer(4,),),
+                    expr: Box::new(Value::U8(4,),),
                 },
                 Value::Expression(vec![
                     Value::Variable("a".to_string(),),
@@ -89,7 +89,7 @@ fn test_basic_map() {
     let mut ctx = BTreeMap::new();
 
     let res = compute(script, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(34), res);
+    assert_eq!(Primitive::U8(34), res);
     let script = r#"
         include("file_tests/test_fn.adana")
         m = map()
@@ -115,13 +115,13 @@ fn test_override_map() {
     let mut ctx = BTreeMap::new();
 
     let res = compute(script, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Int(35), res);
+    assert_eq!(Primitive::U8(35), res);
 
     assert_eq!(
         *ctx["m"].read().unwrap(),
         Primitive::Array(vec![Primitive::Array(vec![
             Primitive::String("nordine".to_string(),),
-            Primitive::Int(35,),
+            Primitive::U8(35,),
         ],),],)
     );
 }
@@ -142,7 +142,7 @@ fn test_drop() {
     let res = compute(script, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Unit, res);
 
-    assert_eq!(*ctx["z"].read().unwrap(), Primitive::Int(35,));
+    assert_eq!(*ctx["z"].read().unwrap(), Primitive::U8(35,));
     assert!(!ctx.contains_key("m"));
 }
 

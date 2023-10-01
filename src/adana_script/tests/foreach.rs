@@ -169,8 +169,7 @@ fn simple_foreach_return() {
     assert!(ctx.get("word").is_none());
 }
 #[test]
-fn simple_foreach_two_depth() {
-    use crate::Primitive::Int;
+fn simple_foreach_two_depth1() {
     let expr = r#"
          x_arr = [5,10,15,20,25]
          y_arr = [0,1,0,0,1]
@@ -188,44 +187,44 @@ fn simple_foreach_two_depth() {
     assert_eq!(
         Primitive::Array(vec![
             Primitive::Array(vec![
-                Primitive::Int(5),
-                Int(0),
-                Int(1),
-                Int(0),
-                Int(0),
-                Int(1)
+                Primitive::U8(5),
+                Primitive::U8(0),
+                Primitive::U8(1),
+                Primitive::U8(0),
+                Primitive::U8(0),
+                Primitive::U8(1)
             ]),
             Primitive::Array(vec![
-                Int(10),
-                Int(0),
-                Int(1),
-                Int(0),
-                Int(0),
-                Int(1)
+                Primitive::U8(10),
+                Primitive::U8(0),
+                Primitive::U8(1),
+                Primitive::U8(0),
+                Primitive::U8(0),
+                Primitive::U8(1)
             ]),
             Primitive::Array(vec![
-                Int(15),
-                Int(0),
-                Int(1),
-                Int(0),
-                Int(0),
-                Int(1)
+                Primitive::U8(15),
+                Primitive::U8(0),
+                Primitive::U8(1),
+                Primitive::U8(0),
+                Primitive::U8(0),
+                Primitive::U8(1)
             ]),
             Primitive::Array(vec![
-                Int(20),
-                Int(0),
-                Int(1),
-                Int(0),
-                Int(0),
-                Int(1)
+                Primitive::U8(20),
+                Primitive::U8(0),
+                Primitive::U8(1),
+                Primitive::U8(0),
+                Primitive::U8(0),
+                Primitive::U8(1)
             ]),
             Primitive::Array(vec![
-                Int(25),
-                Int(0),
-                Int(1),
-                Int(0),
-                Int(0),
-                Int(1)
+                Primitive::U8(25),
+                Primitive::U8(0),
+                Primitive::U8(1),
+                Primitive::U8(0),
+                Primitive::U8(0),
+                Primitive::U8(1)
             ]),
         ]),
         ctx["matrix"].read().unwrap().clone()
@@ -234,7 +233,7 @@ fn simple_foreach_two_depth() {
 }
 
 #[test]
-fn simple_foreach_with_idx() {
+fn simple_foreach_with_idx1() {
     let expr = r#"
          arr = [1,2,3,4]
          total = 0
@@ -351,7 +350,7 @@ fn test_handle_error() {
 
     let mut ctx = BTreeMap::new();
     let r = compute(expr, &mut ctx, "N/A").unwrap();
-    assert_eq!(Primitive::Error("not an iterable Int(1)".into()), r);
+    assert_eq!(Primitive::Error("not an iterable U8(1)".into()), r);
 }
 
 #[test]
