@@ -77,7 +77,7 @@ fn bitwise_and() {
     let r = compute(r#"127@9"#, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::U8(127 & 9));
     let r = compute(r#"-1@1"#, &mut ctx, "N/A").unwrap();
-    assert_eq!(r, Primitive::Int(-1 & 1));
+    assert_eq!(r, Primitive::Int(1));
     let r = compute(r#"-98@1"#, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::Int(-98 & 1));
 }
@@ -93,7 +93,7 @@ fn test_left_shift() {
     let r = compute(r#"1<< 0"#, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::Int(1 << 0));
     let r = compute(r#"0 << 0"#, &mut ctx, "N/A").unwrap();
-    assert_eq!(r, Primitive::Int(0 << 0));
+    assert_eq!(r, Primitive::Int(0));
     // FIXME probably need to use a library for this
     // let r = compute(r#"127 <<135"#, &mut ctx, "N/A").unwrap();
     // assert_eq!(r, Primitive::Int((127u64 << 135u64) as i128));
@@ -114,9 +114,9 @@ fn test_right_shift() {
     let r = compute(r#"1 >>1"#, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::Int(1 >> 1));
     let r = compute(r#"1>> 0"#, &mut ctx, "N/A").unwrap();
-    assert_eq!(r, Primitive::Int(1 >> 0));
+    assert_eq!(r, Primitive::Int(1));
     let r = compute(r#"0 >> 0"#, &mut ctx, "N/A").unwrap();
-    assert_eq!(r, Primitive::Int(0 >> 0));
+    assert_eq!(r, Primitive::Int(0));
     // FIXME probably need to use a library for this
     // let r = compute(r#"127 >>135"#, &mut ctx, "N/A").unwrap();
     // assert_eq!(r, Primitive::Int((127u64 >> 135u64) as i128));
@@ -132,8 +132,8 @@ fn test_complex_math_wise() {
     let mut ctx = BTreeMap::new();
 
     let r = compute(r#"30*9 @9 -5/~3"#, &mut ctx, "N/A").unwrap();
-    assert_eq!(r, Primitive::Int((30 * 9 & 9 - 5 / !3) as i128));
+    assert_eq!(r, Primitive::Int(((30 * 9) & (9 - 5 / !3)) as i128));
 
     let r = compute(r#"30*9 @9 -5/~3 << 1"#, &mut ctx, "N/A").unwrap();
-    assert_eq!(r, Primitive::Int((30 * 9 & 9 - 5 / !3 << 1) as i128));
+    assert_eq!(r, Primitive::Int(((30 * 9) & (9 - 5 / !3) << 1) as i128));
 }
