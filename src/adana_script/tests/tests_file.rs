@@ -78,9 +78,9 @@ fn test_while_statement() {
     }
 
     for n in 0..=10 {
-        ctx.insert("n".to_string(), Primitive::Int(n as i128).ref_prim());
+        ctx.insert("n".to_string(), Primitive::Int(n).ref_prim());
         let r = compute(file_path, &mut ctx, "N/A").unwrap();
-        let fibonacci = fib(n) as i128;
+        let fibonacci = fib(n);
         assert_eq!(Primitive::Int(fibonacci), ctx["c"].read().unwrap().clone());
         assert_eq!(Primitive::Int(fibonacci), r);
         if fibonacci < 55 {
