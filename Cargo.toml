@@ -2,7 +2,7 @@
 name = "adana"
 rust-version = "1.72"
 
-version = "0.15.0"
+version = "0.15.1"
 edition = "2021"
 authors = ["Nordine Bittich"]
 license = "MIT"
