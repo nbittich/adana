@@ -41,7 +41,15 @@ fn del_command(command: &str) -> Res<CacheCommand> {
 fn get_command(command: &str) -> Res<CacheCommand> {
     map(extract_key(tag_no_case(GET)), CacheCommand::Get)(command)
 }
-
+fn clippy_command(command: &str) -> Res<CacheCommand> {
+    map(
+        alt((
+            extract_key(tag_no_case(CLIPPY)),
+            extract_key(tag_no_case(CLIPPY_ALT)),
+        )),
+        CacheCommand::Clip,
+    )(command)
+}
 fn alias_command(command: &str) -> Res<CacheCommand> {
     map(
         pair(extract_key(tag_no_case(ALIAS)), extract_command),
@@ -292,6 +300,7 @@ pub fn parse_command(command: &str) -> Res<CacheCommand> {
             cd_command,
             del_command,
             get_command,
+            clippy_command,
             alias_command,
             using_command,
             dump_command,
@@ -307,9 +316,9 @@ pub fn parse_command(command: &str) -> Res<CacheCommand> {
             restore_command,
             print_script_context_command,
             store_script_context_command,
-            load_script_context_command,
             // max 21 tuples, thus the next commands must be nested into a new alt
-            alt((print_ast_command, exec_command)),
+            // exec_command must be the last one
+            alt((load_script_context_command, print_ast_command, exec_command)),
         )),
     )(command)
 }

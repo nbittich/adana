@@ -108,6 +108,15 @@ pub fn process_command(
                     return Err(anyhow::Error::msg(format!("{key} not found")));
                 }
             }
+            CacheCommand::Clip(key) => {
+                if let Some(value) = get_value(db, current_cache, key) {
+                    let mut clipboard = arboard::Clipboard::new()?;
+                    clipboard.set_text(&value)?;
+                    println!("Copied.");
+                } else {
+                    return Err(anyhow::Error::msg(format!("{key} not found")));
+                }
+            }
             CacheCommand::Exec { key, args } => {
                 if let Some(value) = get_value(db, current_cache, key) {
                     let _ = exec_command(&value, &args, false)

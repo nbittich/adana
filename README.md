@@ -356,7 +356,7 @@ If it is not installed yet, you will see instructions on how to install it, e.g:
 std lib doesn't exist: "/home/nbittich/.local/share/.libs_adana/adana-std/fs.so".
 
 Try to install it like so:
-    - wget -P /tmp https://github.com/nbittich/adana-std/releases/download/0.0.3/adana-std.tar.gz
+    - wget -P /tmp https://github.com/nbittich/adana-std/releases/download/0.0.4/adana-std.tar.gz
     - mkdir /home/nbittich/.local/share/.libs_adana/adana-std && tar xvzf /tmp/adana-std.tar.gz \
             -C /home/nbittich/.local/share/.libs_adana/adana-std
 ```
@@ -763,30 +763,31 @@ There is no possible interaction with the scripting language yet.
 
 ### Available commands
 
-| name             | alt        | description                                                                                                                                                                                     |
-| ---------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| put              | N/A        | Put a new value to current namespace. can have multiple aliases with option '-a'. e.g `put -a drc -a drcomp docker-compose`                                                                     |
-| alias            | N/A        | Alias a key with another. e.g alias commit gc                                                                                                                                                   |
-| describe         | ds         | List values within the current namespace.                                                                                                                                                       |
-| listns           | lsns       | List available namespaces.                                                                                                                                                                      |
-| currentns        | currentns  | Print current namespace.                                                                                                                                                                        |
-| backup           | bckp       | Backup the database of namespaces to the current directory                                                                                                                                      |
-| flush            | flush      | Force flush database                                                                                                                                                                            |
-| restore          | N/A        | Restore the database from current directory                                                                                                                                                     |
-| deletens         | delns      | Delete namespace or clear current namespace values.                                                                                                                                             |
-| mergens          | merge      | Merge current with a given namespace                                                                                                                                                            |
-| delete           | del        | Remove value from namespace. Accept either a hashkey or an alias. e.g `del drc`                                                                                                                 |
-| get              |            | Get value from namespace. Accept either a hashkey or an alias. e.g `get drc`                                                                                                                    |
-| exec             |            | Run a value from the namespace as an OS command. Accept either a hashkey or an alias. It is completely optional, if you just write the alias, it will also works e.g `exec drc` or simply `drc` |
-| cd               |            | Navigate to a directory in the filesystem                                                                                                                                                       |
-| use              |            | Switch to another namespace. default ns is DEFAULT. e.g `use linux`                                                                                                                             |
-| dump             |            | Dump namespace(s) as json. Take an optional parameter, the namespace name. e.g `dump linux`                                                                                                     |
-| clear            | cls        | Clear the terminal.                                                                                                                                                                             |
-| print_script_ctx | script_ctx | Print script context                                                                                                                                                                            |
-| store_script_ctx |            | Store script context (optional name) e.g `store_script_ctx 12022023` or `store_script_ctx`                                                                                                      |
-| load_script_ctx  |            | Load script context (optional name) e.g `load_script_ctx 12022023` or `load_script_ctx`                                                                                                         |
-| ast              |            | print ast for script code e.g `ast 9*9`                                                                                                                                                         |
-| help             |            | Display help.                                                                                                                                                                                   |
+| name             | alt        | description                                                                                                                                                |
+| ---------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| put              | N/A        | Put a new value to current namespace. can have multiple aliases with option '-a'. e.g `put -a drc -a drcomp docker-compose`                                |
+| alias            | N/A        | Alias a key with another. e.g alias commit gc                                                                                                              |
+| describe         | ds         | List values within the current namespace.                                                                                                                  |
+| listns           | lsns       | List available namespaces.                                                                                                                                 |
+| currentns        | currentns  | Print current namespace.                                                                                                                                   |
+| backup           | bckp       | Backup the database of namespaces to the current directory                                                                                                 |
+| flush            | flush      | Force flush database                                                                                                                                       |
+| restore          | N/A        | Restore the database from current directory                                                                                                                |
+| deletens         | delns      | Delete namespace or clear current namespace values.                                                                                                        |
+| mergens          | merge      | Merge current with a given namespace                                                                                                                       |
+| delete           | del        | Remove value from namespace. e.g `del drc`                                                                                                                 |
+| get              |            | Get value from namespace. e.g `get drc`                                                                                                                    |
+| clip             | clippy     | Get value from namespace and copy it to clipboard. e.g `clip drc`                                                                                          |
+| exec             |            | Run a value from the namespace as an OS command. It is completely optional, if you just write the alias, it will also works e.g `exec drc` or simply `drc` |
+| cd               |            | Navigate to a directory in the filesystem                                                                                                                  |
+| use              |            | Switch to another namespace. default ns is DEFAULT. e.g `use linux`                                                                                        |
+| dump             |            | Dump namespace(s) as json. Take an optional parameter, the namespace name. e.g `dump linux`                                                                |
+| clear            | cls        | Clear the terminal.                                                                                                                                        |
+| print_script_ctx | script_ctx | Print script context                                                                                                                                       |
+| store_script_ctx |            | Store script context (optional name) e.g `store_script_ctx 12022023` or `store_script_ctx`                                                                 |
+| load_script_ctx  |            | Load script context (optional name) e.g `load_script_ctx 12022023` or `load_script_ctx`                                                                    |
+| ast              |            | print ast for script code e.g `ast 9*9`                                                                                                                    |
+| help             |            | Display help.                                                                                                                                              |
 
 ### Shortcuts
 

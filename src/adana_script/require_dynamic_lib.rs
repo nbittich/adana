@@ -1,5 +1,5 @@
 const STD_DOWNLOAD_URI: &str =
-    "https://github.com/nbittich/adana-std/releases/download/0.0.3/adana-std.tar.gz";
+    "https://github.com/nbittich/adana-std/releases/download/0.0.4/adana-std.tar.gz";
 
 use std::{
     path::Path,
