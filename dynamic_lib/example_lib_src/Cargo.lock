@@ -4,9 +4,9 @@ version = 3
 
 [[package]]
 name = "adana-script-core"
-version = "0.15.0"
+version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48cb963f08f0acb3c4c5d9dcaa6b3963de537560e50d08c706efe22730b781ce"
+checksum = "be4af3097a4b9683de773942390356318ccbd8c76150f5a03749ef6723d9a400"
 dependencies = [
  "anyhow",
  "libloading",

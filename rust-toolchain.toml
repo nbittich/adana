@@ -1,3 +1,3 @@
 [toolchain]
 channel = "stable"
-host = "1.72.1"
+host = "1.73"

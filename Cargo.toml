@@ -1,6 +1,6 @@
 [package]
 name = "adana"
-rust-version = "1.72"
+rust-version = "1.73"
 
 version = "0.15.2"
 edition = "2021"
@@ -37,7 +37,7 @@ strum = { version = "0.25.0", features = ["derive"] }
 ctrlc = "3.4.1"
 
 #adana-script-core = { git = "https://github.com/nbittich/adana-script-core.git", branch = "feature/bitwise-and-new-ints" }
-adana-script-core = "0.15.0"
+adana-script-core = "0.15.1"
 arboard = "3.2.1"
 
 [dependencies.env_logger]

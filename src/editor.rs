@@ -9,7 +9,7 @@ use rustyline::{
     Cmd, CompletionType, Config, EditMode, Editor, KeyEvent, Movement,
 };
 use rustyline_derive::*;
-use std::path::{Path, PathBuf, MAIN_SEPARATOR};
+use std::path::{Path, MAIN_SEPARATOR};
 use std::process::Command;
 
 use adana_script_core::constants::PI;
@@ -48,10 +48,8 @@ pub fn read_line(
     // show current dir & replace home dir by ~
     let path = if let Ok(path) = std::env::current_dir() {
         let path = path.to_string_lossy().to_string();
-        let home = dirs::home_dir()
-            .unwrap_or(PathBuf::new())
-            .to_string_lossy()
-            .to_string();
+        let home =
+            dirs::home_dir().unwrap_or_default().to_string_lossy().to_string();
         let path = path.replace(&home, "~");
         character_count += path.len();
         Some(path)

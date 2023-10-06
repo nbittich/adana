@@ -1,4 +1,4 @@
-FROM rust:1.72.1-bullseye as builder
+FROM rust:1.73-bookworm as builder
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ RUN rm ./target/release/deps/adana*
 
 RUN cargo build --release 
 
-FROM rust:1.72.1-bullseye
+FROM rust:1.73-slim-bookworm
 
 ENV RUST_LOG=info
 
