@@ -743,7 +743,7 @@ fn compute_recur(
                             dbg!(&lib);
                         }
                         let mut parameters = vec![];
-                        for (_i, param) in param_values.iter().enumerate() {
+                        for param in param_values.iter() {
                             if let Value::Variable(_) = param {
                                 let variable_from_fn_call = compute_lazy(
                                     param.clone(),
@@ -765,7 +765,7 @@ fn compute_recur(
                         }
                         let mut parameters = vec![];
 
-                        for (_i, param) in param_values.iter().enumerate() {
+                        for param in param_values.iter() {
                             let variable_from_fn_call =
                                 compute_lazy(param.clone(), ctx, shared_lib)?;
                             parameters.push(variable_from_fn_call);
