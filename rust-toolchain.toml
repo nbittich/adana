@@ -1,3 +1,2 @@
 [toolchain]
-channel = "stable"
-host = "1.75"
+channel = "1.75"
