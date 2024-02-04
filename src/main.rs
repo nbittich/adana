@@ -130,11 +130,8 @@ fn main() -> anyhow::Result<()> {
         std::env::set_current_dir(parent)?;
         let script = std::fs::read_to_string(canon)?;
         Some(Cow::Owned(script))
-    } else if let Some(direct_execution_script) = direct_execution_script.take()
-    {
-        Some(direct_execution_script)
     } else {
-        None
+        direct_execution_script.take()
     };
     if let Some(script) = script {
         let mut script_context = BTreeMap::new();

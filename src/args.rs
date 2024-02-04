@@ -35,12 +35,14 @@ pub fn parse_args(
                     "execute should be specified only once!"
                 );
                 let mut rest = String::new();
-                while let Some(a) = args.next() {
+
+                for a in &mut args {
                     rest.push(' ');
                     println!("{a}");
                     rest.push_str(&a);
                 }
                 arguments.push(Argument::Execute(rest));
+                break;
             }
             "--inmemory" | "-im" => {
                 anyhow::ensure!(
