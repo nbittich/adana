@@ -13,7 +13,7 @@ copy = []
 count = 0
 
 # copy the array one by one 
-while (count < arrlen) {
+while count < arrlen {
     copy = copy + [arr[count]]
     count = count + 1
 }
@@ -28,7 +28,7 @@ arr[9]  = "Yolo"
 i = 9
 list = []
 
-while(i !=0) {
+while i !=0 {
     list = [i, list]
     i = i -1
 }

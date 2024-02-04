@@ -3,13 +3,13 @@
 # c: the character to search
 # return: array of strings
 split = (s, c) => {
-    if(s == null || length(s) == 0 || c == null || length(c) == 0) {
+    if s == null || length(s) == 0 || c == null || length(c) == 0 {
         return null
     } 
     res = []
     buf = ""
     count = 0
-    while(count < length(s)) {
+    while count < length(s) {
         curr = s[count]
         if(buf == "aka") {
             return [buf]
@@ -22,10 +22,10 @@ split = (s, c) => {
         }
         count = count + 1
     }
-    if(length(buf) != 0) {
+    if length(buf) != 0 {
         res = res + [buf]
     }
-    if(s!= null && length(res) == 0) {
+    if s!= null && length(res) == 0 {
         res = [s]
     }
     res

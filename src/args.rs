@@ -2,6 +2,7 @@ use anyhow::Context;
 
 pub enum Argument {
     InMemory,
+    Execute(String),
     ScriptPath(String),
     DbPath(String),
     NoFallbackInMemory,
@@ -25,6 +26,21 @@ pub fn parse_args(
                 );
                 let path = args.next().context("script path missing!!")?;
                 arguments.push(Argument::ScriptPath(path));
+            }
+            "--execute" | "-e" => {
+                anyhow::ensure!(
+                    !arguments
+                        .iter()
+                        .any(|a| matches!(a, Argument::Execute(_))),
+                    "execute should be specified only once!"
+                );
+                let mut rest = String::new();
+                while let Some(a) = args.next() {
+                    rest.push(' ');
+                    println!("{a}");
+                    rest.push_str(&a);
+                }
+                arguments.push(Argument::Execute(rest));
             }
             "--inmemory" | "-im" => {
                 anyhow::ensure!(

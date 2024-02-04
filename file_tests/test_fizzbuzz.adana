@@ -3,7 +3,7 @@ text = ""
 while (count <= 100) {
     toprint = false
 
-    if(count % 3 == 0) {
+    if count % 3 == 0 {
       #fizz
         toprint = true
         text = multiline {
@@ -13,7 +13,7 @@ while (count <= 100) {
         }
     }
 
-    if(count % 5 == 0) {
+    if count % 5 == 0 {
       # buzz
        toprint = true
        text = multiline {
@@ -22,7 +22,7 @@ while (count <= 100) {
         }
     }
 
-    if(count % 3 == 0 && count % 5 == 0) {
+    if count % 3 == 0 && count % 5 == 0  {
       # Fizz Buzz
        toprint = true
        text = count + " = FizzBuzz"
@@ -30,7 +30,7 @@ while (count <= 100) {
     
     count = count + 1
 
-    if(toprint) {
+    if toprint {
       println(text)
     }
 

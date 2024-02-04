@@ -12,7 +12,10 @@ use args::*;
 use db::DbOp;
 use log::debug;
 use rustyline::error::ReadlineError;
-use std::path::{Path, PathBuf};
+use std::{
+    borrow::Cow,
+    path::{Path, PathBuf},
+};
 
 use prelude::{colors::LightBlue, colors::Style, BTreeMap};
 
@@ -30,13 +33,7 @@ const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 fn main() -> anyhow::Result<()> {
     env_logger::init();
 
-    ctrlc::set_handler(|| {
-        debug!("catch CTRL-C! DO NOT REMOVE this. receive ctrl+c signal 2")
-    })?;
     let args = parse_args(std::env::args())?;
-
-    clear_terminal();
-    println!("{PKG_NAME} v{VERSION} (rust version: {RUST_VERSION})");
 
     let config = if args.is_empty() {
         Config::default()
@@ -99,7 +96,16 @@ fn main() -> anyhow::Result<()> {
             None
         }
     });
-    if let Some(script_path) = script_path {
+
+    let mut direct_execution_script = args.iter().find_map(|a| {
+        if let Argument::Execute(script) = a {
+            Some(Cow::Borrowed(script))
+        } else {
+            None
+        }
+    });
+
+    let script = if let Some(script_path) = script_path {
         let pb = PathBuf::from(&script_path);
         if !pb.exists() {
             return Err(anyhow::anyhow!(
@@ -122,8 +128,16 @@ fn main() -> anyhow::Result<()> {
             .parent()
             .context("no parent directory found for {script_path}")?;
         std::env::set_current_dir(parent)?;
-        let mut script_context = BTreeMap::new();
         let script = std::fs::read_to_string(canon)?;
+        Some(Cow::Owned(script))
+    } else if let Some(direct_execution_script) = direct_execution_script.take()
+    {
+        Some(direct_execution_script)
+    } else {
+        None
+    };
+    if let Some(script) = script {
+        let mut script_context = BTreeMap::new();
 
         let script_res = {
             match compute(&script, &mut script_context, &path_to_shared_lib) {
@@ -140,6 +154,11 @@ fn main() -> anyhow::Result<()> {
         return Ok(());
     }
 
+    ctrlc::set_handler(|| {
+        debug!("catch CTRL-C! DO NOT REMOVE this. receive ctrl+c signal 2")
+    })?;
+    clear_terminal();
+    println!("{PKG_NAME} v{VERSION} (rust version: {RUST_VERSION})");
     println!("shared lib path: {path_to_shared_lib:?}");
 
     println!();
@@ -148,6 +167,7 @@ fn main() -> anyhow::Result<()> {
             start_app(&mut db, history_path, &path_to_shared_lib, default_cache)
         }
         Ok(Db::FileBased(mut db)) => {
+            println!("Db Path: {}", db.get_path().display());
             start_app(&mut db, history_path, &path_to_shared_lib, default_cache)
         }
         Err(e) => Err(e),

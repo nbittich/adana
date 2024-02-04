@@ -46,6 +46,9 @@ pub fn read_file(p: &PathBuf) -> anyhow::Result<BufReader<File>> {
 }
 
 impl FileLock {
+    pub fn get_path(&self) -> &PathBuf {
+        &self.inner_p
+    }
     pub fn open<P: AsRef<Path>>(path: P) -> Result<FileLock, FileLockError> {
         let _lock_p = path.as_ref().with_extension("lock");
         let inner_p = path.as_ref().to_path_buf();

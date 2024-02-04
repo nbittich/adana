@@ -640,6 +640,31 @@ fn test_parser_array_directly_access() {
 }
 
 #[test]
+fn test_parser_buggy_fn_call_op() {
+    use Value::*;
+    let expr = r#"
+        f= (x) => {x*2}
+        a = 39
+        b= 42
+        f(a) + f(b)
+
+    "#;
+    let (r, v) = parse_instructions(expr).unwrap();
+    assert_eq!("", r);
+    println!("{v:#?}");
+    // assert_eq!(
+    //     v,
+    //     vec![VariableExpr {
+    //         name: Box::new(Variable("x".into()),),
+    //         expr: Box::new(ArrayAccess {
+    //             arr: Box::new(Array(vec![U8(1,), U8(2,), U8(3,),],)),
+    //             index: Box::new(U8(0,)),
+    //         }),
+    //     }]
+    // )
+}
+
+#[test]
 fn test_parse_string_escaped() {
     let expr = r#""u\nno""#;
     let (r, v) = parse_instructions(expr).unwrap();

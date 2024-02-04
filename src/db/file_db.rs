@@ -197,6 +197,10 @@ where
     K: 'static + Key + DeserializeOwned + std::fmt::Debug,
     V: 'static + Value + DeserializeOwned + std::fmt::Debug,
 {
+    pub fn get_path(&self) -> &PathBuf {
+        self.__file_lock.get_path()
+    }
+
     fn __flush(
         inner_db: Arc<Mutex<InMemoryDb<K, V>>>,
         file_lock: &FileLock,

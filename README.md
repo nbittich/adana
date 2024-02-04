@@ -367,7 +367,7 @@ There are two loops, the while loop and the for-each loop.
 The while loop looks like the one in C, while the for-each loop is a little bit more
 modern.
 
-For-each loop doesn't require parenthesizes.
+For-each loop & while loop don't require parenthesizes.
 You can only iterate over structs, strings and arrays.
 
 ```C
@@ -377,6 +377,14 @@ while(count < 10) {
     println(count)
     count = count + 1
    }
+```
+
+```
+# also valid
+while count < 10 {
+    println(count)
+    count = count + 1
+}
 ```
 
 ```javascript
@@ -430,7 +438,7 @@ for (index,a in arr) {
 You can break if you match a certain condition within a while:
 
 ```C
-while(count < 10) {
+while count < 10 {
      println(count)
      count = count + 1
      if(count % 3 ==0) {
@@ -461,12 +469,12 @@ for i in 1..=10 {
 
 ### Conditions
 
-Same as C:
+Same as C but parenthesizes are optional:
 
 ```C
-if(age > 12) {
+if age > 12  {
     println("age > 12")
-} else if(age <9) {
+} else if age < 9 {
     println("age < 9")
 } else {
     println("dunno")
@@ -813,7 +821,11 @@ RUST_LOG=adana=debug adana
 #### Run a script without entering in the repl
 
 ```
+# using file
 adana -sp /path/to/script.adana
+
+# using code
+adana -e 1+1
 ```
 
 ```
