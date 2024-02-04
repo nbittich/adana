@@ -202,18 +202,7 @@ There are 22 operators & 3 constants:
 | `γ`          | EULER number     |
 | `τ`          | TAU number       |
 
-You can apply an operator before re-assigning a variable, like:
-
-```python
-x =2
-x+=1 # 3
-x-=2 # 1
-x*=4 # 4
-x%=3 # 1
-x/=0.5 # 2
-
-
-```
+Example:
 
 ```python
  5 + 5 # 10
@@ -229,6 +218,19 @@ x/=0.5 # 2
  5 * (5+ 1/ (3.1 ^2) * 9) ^3. # 1046.084549281999
  2² # 4
  2³ # 8
+
+```
+
+You can apply an operator before re-assigning a variable, like:
+
+```python
+x =2
+x+=1 # 3
+x-=2 # 1
+x*=4 # 4
+x%=3 # 1
+x/=0.5 # 2
+
 
 ```
 
