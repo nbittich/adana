@@ -25,7 +25,7 @@ pub fn print_ast(script: &str) -> anyhow::Result<()> {
     anyhow::ensure!(
         rest.trim().is_empty(),
         format!(
-            "{} rest is not empty! {instructions:?} => {rest}",
+            "{} rest is not empty! {instructions:#?} => {rest}",
             Color::Red.paint("PRINT AST ERROR:")
         )
     );
@@ -35,7 +35,7 @@ pub fn print_ast(script: &str) -> anyhow::Result<()> {
         let mut tree: Tree<TreeNodeValue> = Tree::new();
 
         println!("==================INSTRUCTION================");
-        println!("{instruction:?}");
+        println!("{instruction:#?}");
         to_ast(&mut dummy_ctx, instruction, &mut tree, &None)?;
 
         let mut tree_fmt = String::new();

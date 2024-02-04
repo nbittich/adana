@@ -746,3 +746,54 @@ fn recur_early_return() {
         compute(script, &mut ctx, "N/A").unwrap()
     );
 }
+
+#[test]
+fn test_if_no_parenthesis() {
+    let mut ctx = BTreeMap::from([
+        ("age".into(), Primitive::Int(35).ref_prim()),
+        ("gender".into(), Primitive::String("MALE".to_string()).ref_prim()),
+    ]);
+
+    let script = r#"
+    if age < 40 && gender == "MALE" {
+             "yes"
+    } else {
+             "no"
+    }
+    "#;
+    assert_eq!(
+        Primitive::String("yes".into()),
+        compute(script, &mut ctx, "N/A").unwrap()
+    );
+}
+
+#[test]
+fn test_while_no_parenthesis() {
+    let mut ctx = BTreeMap::from([
+        ("age".into(), Primitive::Int(35).ref_prim()),
+        ("gender".into(), Primitive::String("MALE".to_string()).ref_prim()),
+    ]);
+
+    let script = r#"
+        while age != 0 {
+             age = age -1   
+        }
+        age
+    "#;
+    assert_eq!(Primitive::Int(0), compute(script, &mut ctx, "N/A").unwrap());
+}
+
+#[test]
+fn test_buggy_fn_call() {
+    let mut ctx = BTreeMap::new();
+
+    let script = r#"
+        f= (x) => {x*2}
+        a = 39
+        b= 42
+         f(a) + f(b)
+        
+
+    "#;
+    assert_eq!(Primitive::Int(162), compute(script, &mut ctx, "N/A").unwrap());
+}

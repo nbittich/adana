@@ -29,6 +29,13 @@ pub(super) fn comments(s: &str) -> Res<Vec<&str>> {
 fn tag_no_space<'a>(t: &'a str) -> impl Fn(&'a str) -> Res<&'a str> {
     move |s: &str| delimited(multispace0, tag(t), multispace0)(s)
 }
+
+fn tag_no_space_opt<'a>(
+    t: &'a str,
+) -> impl Fn(&'a str) -> Res<Option<&'a str>> {
+    move |s: &str| opt(tag_no_space(t))(s)
+}
+
 fn recognize_hexadecimal(input: &str) -> Res<&str> {
     // <'a, E: ParseError<&'a str>>
     preceded(
@@ -227,18 +234,32 @@ fn parse_constant(s: &str) -> Res<Value> {
 
 fn parse_block_paren(s: &str) -> Res<Value> {
     let parser = |p| many1(parse_value)(p);
-    parse_paren(parser)(s)
+    parse_paren(parser, false)(s)
+}
+fn parse_block_paren_opt(s: &str) -> Res<Value> {
+    let parser = |p| many1(parse_value)(p);
+    parse_paren(parser, true)(s)
 }
 
-fn parse_paren<'a, F>(parser: F) -> impl Fn(&'a str) -> Res<Value>
+fn parse_paren<'a, F>(
+    parser: F,
+    paren_opt: bool,
+) -> impl Fn(&'a str) -> Res<Value>
 where
     F: Fn(&'a str) -> Res<Vec<Value>>,
 {
     move |s| {
-        preceded(
-            tag_no_space("("),
-            terminated(map(&parser, Value::BlockParen), tag_no_space(")")),
-        )(s)
+        let parser = map(&parser, Value::BlockParen);
+        if paren_opt {
+            preceded(
+                tag_no_space_opt("("),
+                terminated(parser, tag_no_space_opt(")")),
+            )(s)
+        } else {
+            preceded(tag_no_space("("), terminated(parser, tag_no_space(")")))(
+                s,
+            )
+        }
     }
 }
 
@@ -267,7 +288,7 @@ fn parse_fn(s: &str) -> Res<Value> {
     };
     map(
         separated_pair(
-            map_parser(take_until("=>"), parse_paren(parser)),
+            map_parser(take_until("=>"), parse_paren(parser, false)),
             tag("=>"),
             alt((
                 parse_expr,
@@ -377,7 +398,7 @@ fn parse_drop(s: &str) -> Res<Value> {
         )(p)
     };
 
-    map(preceded(tag_no_space(DROP), parse_paren(parser)), |variables| {
+    map(preceded(tag_no_space(DROP), parse_paren(parser, false)), |variables| {
         Value::Drop(Box::new(variables))
     })(s)
 }
@@ -733,13 +754,13 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
             },
         ),
         alt((
-            parse_fn_call,
-            parse_fn,
-            parse_struct_access,
-            parse_array_access,
-            parse_struct,
-            parse_fstring,
-            parse_array,
+            all_consuming(parse_fn_call),
+            all_consuming(parse_fn),
+            all_consuming(parse_struct_access),
+            all_consuming(parse_array_access),
+            all_consuming(parse_struct),
+            all_consuming(parse_fstring),
+            all_consuming(parse_array),
             parse_expression,
         )),
     ))(s)
@@ -750,7 +771,7 @@ fn parse_if_statement(s: &str) -> Res<Value> {
         preceded(
             tag_no_space(IF),
             tuple((
-                parse_block_paren,
+                parse_block_paren_opt,
                 parse_block(parse_instructions),
                 opt(preceded(
                     tag_no_space(ELSE),
@@ -789,7 +810,7 @@ fn parse_while_statement(s: &str) -> Res<Value> {
     map(
         preceded(
             tag_no_space(WHILE),
-            pair(parse_block_paren, parse_block(parse_instructions)),
+            pair(parse_block_paren_opt, parse_block(parse_instructions)),
         ),
         |(cond, exprs)| Value::WhileExpr { cond: Box::new(cond), exprs },
     )(s)

@@ -18,8 +18,6 @@ fn get_default_db_path() -> Option<Box<Path>> {
     }
     db_dir.push("adana.db");
 
-    println!("Db Path: {}", db_dir.to_string_lossy());
-
     Some(db_dir.into_boxed_path())
 }
 
@@ -43,10 +41,6 @@ impl Config {
                 path: path
                     .map(|p| {
                         let path: Box<Path> = p.as_ref().into();
-                        println!(
-                            "Db Path: {}",
-                            path.as_ref().to_string_lossy()
-                        );
                         path
                     })
                     .or_else(get_default_db_path),

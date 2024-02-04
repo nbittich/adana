@@ -1,7 +1,7 @@
 v = "eodrnin"
 count = 0
 # we can iterate over a string
-while(count < length(v)) {
+while count < length(v)  {
     println(v[count])
     count = count + 1
 }
@@ -19,7 +19,7 @@ i = 0
 
 s = ""
 
-while(i < length("kekeke")) {
+while i < length("kekeke")  {
     s = s + "kekeke"[i]
     i = i +1
 }

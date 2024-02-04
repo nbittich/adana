@@ -216,9 +216,9 @@ pub fn to_ast(
                 }
 
                 if cfg!(test) {
-                    println!("Left => {left:?}");
-                    println!("Op => {operation:?}");
-                    println!("Right => {operations:?}");
+                    println!("Left => {left:#?}");
+                    println!("Op => {operation:#?}");
+                    println!("Right => {operations:#?}");
                     println!();
                 }
 

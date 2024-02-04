@@ -640,6 +640,62 @@ fn test_parser_array_directly_access() {
 }
 
 #[test]
+fn test_parser_buggy_fn_call_op() {
+    use Value::*;
+    let expr = r#"
+        f= (x) => {x*2}
+        a = 39
+        b= 42
+        f(a) + f(b)
+
+    "#;
+    let (r, v) = parse_instructions(expr).unwrap();
+    assert_eq!("", r);
+    println!("{v:#?}");
+    assert_eq!(
+        v,
+        vec![
+            VariableExpr {
+                name: Box::new(Variable("f".to_string())),
+                expr: Box::new(Function {
+                    parameters: Box::new(BlockParen(vec![Variable(
+                        "x".to_string()
+                    )])),
+                    exprs: vec![BlockParen(vec![
+                        Variable("x".to_string()),
+                        Operation(Operator::Mult),
+                        U8(2)
+                    ])]
+                })
+            },
+            VariableExpr {
+                name: Box::new(Variable("a".to_string())),
+                expr: Box::new(U8(39))
+            },
+            VariableExpr {
+                name: Box::new(Variable("b".to_string())),
+                expr: Box::new(U8(42))
+            },
+            Expression(vec![
+                FunctionCall {
+                    parameters: Box::new(BlockParen(vec![Variable(
+                        "a".to_string()
+                    )])),
+                    function: Box::new(Variable("f".to_string()))
+                },
+                Operation(Operator::Add),
+                FunctionCall {
+                    parameters: Box::new(BlockParen(vec![Variable(
+                        "b".to_string()
+                    )])),
+                    function: Box::new(Variable("f".to_string()))
+                }
+            ])
+        ]
+    )
+}
+
+#[test]
 fn test_parse_string_escaped() {
     let expr = r#""u\nno""#;
     let (r, v) = parse_instructions(expr).unwrap();
