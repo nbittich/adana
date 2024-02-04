@@ -733,7 +733,14 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
     alt((
         map(
             separated_pair(
-                alt((parse_struct_access, parse_array_access, parse_variable)),
+                pair(
+                    alt((
+                        parse_struct_access,
+                        parse_array_access,
+                        parse_variable,
+                    )),
+                    opt(parse_operation),
+                ),
                 tag_no_space("="),
                 alt((
                     parse_fn_call,
@@ -748,9 +755,20 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                     parse_expression,
                 )),
             ),
-            |(name, expr)| Value::VariableExpr {
-                name: Box::new(name),
-                expr: Box::new(expr),
+            |((variable, mut operator), expr)| {
+                if let Some(operator) = operator.take() {
+                    Value::VariableExpr {
+                        name: Box::new(variable.clone()),
+                        expr: Box::new(Value::Expression(vec![
+                            variable, operator, expr,
+                        ])),
+                    }
+                } else {
+                    Value::VariableExpr {
+                        name: Box::new(variable),
+                        expr: Box::new(expr),
+                    }
+                }
             },
         ),
         alt((

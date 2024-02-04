@@ -5,6 +5,7 @@ mod examples;
 mod foreach;
 mod funct;
 mod misc;
+mod opassign;
 mod range;
 mod strings;
 mod struc;
