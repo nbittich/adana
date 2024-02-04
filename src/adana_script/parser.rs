@@ -754,13 +754,13 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
             },
         ),
         alt((
-            all_consuming(parse_fn_call), // NORDINE
-            parse_fn,
-            parse_struct_access,
+            all_consuming(parse_fn_call),
+            all_consuming(parse_fn),
+            all_consuming(parse_struct_access),
             all_consuming(parse_array_access),
-            parse_struct,
-            parse_fstring,
-            parse_array,
+            all_consuming(parse_struct),
+            all_consuming(parse_fstring),
+            all_consuming(parse_array),
             parse_expression,
         )),
     ))(s)
