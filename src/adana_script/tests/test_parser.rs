@@ -652,16 +652,47 @@ fn test_parser_buggy_fn_call_op() {
     let (r, v) = parse_instructions(expr).unwrap();
     assert_eq!("", r);
     println!("{v:#?}");
-    // assert_eq!(
-    //     v,
-    //     vec![VariableExpr {
-    //         name: Box::new(Variable("x".into()),),
-    //         expr: Box::new(ArrayAccess {
-    //             arr: Box::new(Array(vec![U8(1,), U8(2,), U8(3,),],)),
-    //             index: Box::new(U8(0,)),
-    //         }),
-    //     }]
-    // )
+    assert_eq!(
+        v,
+        vec![
+            VariableExpr {
+                name: Box::new(Variable("f".to_string())),
+                expr: Box::new(Function {
+                    parameters: Box::new(BlockParen(vec![Variable(
+                        "x".to_string()
+                    )])),
+                    exprs: vec![BlockParen(vec![
+                        Variable("x".to_string()),
+                        Operation(Operator::Mult),
+                        U8(2)
+                    ])]
+                })
+            },
+            VariableExpr {
+                name: Box::new(Variable("a".to_string())),
+                expr: Box::new(U8(39))
+            },
+            VariableExpr {
+                name: Box::new(Variable("b".to_string())),
+                expr: Box::new(U8(42))
+            },
+            Expression(vec![
+                FunctionCall {
+                    parameters: Box::new(BlockParen(vec![Variable(
+                        "a".to_string()
+                    )])),
+                    function: Box::new(Variable("f".to_string()))
+                },
+                Operation(Operator::Add),
+                FunctionCall {
+                    parameters: Box::new(BlockParen(vec![Variable(
+                        "b".to_string()
+                    )])),
+                    function: Box::new(Variable("f".to_string()))
+                }
+            ])
+        ]
+    )
 }
 
 #[test]
