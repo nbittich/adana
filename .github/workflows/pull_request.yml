@@ -15,7 +15,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          # targets: x86_64-unknown-linux-musl
+          targets: x86_64-unknown-linux-gnu
       - run: cargo test --verbose -- --nocapture
       - run: cargo clippy --all-targets --all-features -- -D warnings
       - run: cargo publish --dry-run
