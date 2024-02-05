@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::adana_script::compute;
+use crate::compute;
 use adana_script_core::primitive::Primitive;
 #[test]
 fn test_builtin_to_int() {
@@ -93,42 +93,42 @@ fn test_type_of() {
     );
     assert_eq!(
         Primitive::String("int".to_string()),
-        compute(r#"type_of(x)"#, &mut ctx, "N/A").unwrap()
+        compute(r#"type_of(x)"#, &mut ctx, "N/A",).unwrap()
     );
     assert_eq!(
         Primitive::String("double".to_string()),
-        compute(r#"type_of(y)"#, &mut ctx, "N/A").unwrap()
+        compute(r#"type_of(y)"#, &mut ctx, "N/A",).unwrap()
     );
     assert_eq!(
         Primitive::String("function".to_string()),
-        compute(r#"type_of(z)"#, &mut ctx, "N/A").unwrap()
+        compute(r#"type_of(z)"#, &mut ctx, "N/A",).unwrap()
     );
     assert_eq!(
         Primitive::String("error".to_string()),
-        compute(r#"type_of(a)"#, &mut ctx, "N/A").unwrap()
+        compute(r#"type_of(a)"#, &mut ctx, "N/A",).unwrap()
     );
     assert_eq!(
         Primitive::String("array".to_string()),
-        compute(r#"type_of(b)"#, &mut ctx, "N/A").unwrap()
+        compute(r#"type_of(b)"#, &mut ctx, "N/A",).unwrap()
     );
     assert_eq!(
         Primitive::String("bool".to_string()),
-        compute(r#"type_of(c)"#, &mut ctx, "N/A").unwrap()
+        compute(r#"type_of(c)"#, &mut ctx, "N/A",).unwrap()
     );
     assert_eq!(
         Primitive::String("string".to_string()),
-        compute(r#"type_of(d)"#, &mut ctx, "N/A").unwrap()
+        compute(r#"type_of(d)"#, &mut ctx, "N/A",).unwrap()
     );
     assert_eq!(
         Primitive::String("unit".to_string()),
-        compute(r#"type_of(e)"#, &mut ctx, "N/A").unwrap()
+        compute(r#"type_of(e)"#, &mut ctx, "N/A",).unwrap()
     );
     assert_eq!(
         Primitive::String("!".to_string()),
-        compute(r#"type_of(f)"#, &mut ctx, "N/A").unwrap()
+        compute(r#"type_of(f)"#, &mut ctx, "N/A",).unwrap()
     );
     assert_eq!(
         Primitive::String("int".to_string()),
-        compute(r#"type_of(g)"#, &mut ctx, "N/A").unwrap()
+        compute(r#"type_of(g)"#, &mut ctx, "N/A",).unwrap()
     );
 }

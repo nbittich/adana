@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::adana_script::compute;
+use crate::compute;
 
 use adana_script_core::primitive::Primitive;
 #[test]
@@ -20,7 +20,7 @@ fn simple_foreach() {
 
 #[test]
 fn simple_foreach_string() {
-    use crate::Primitive::{Array, String};
+    use Primitive::{Array, String};
     let expr = r#"
          arr = "Salut le monde j'espère que vous allez bien"
          total = 0

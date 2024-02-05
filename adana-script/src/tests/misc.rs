@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 
-use crate::adana_script::parser::parse_instructions as parse_var_expr;
+use crate::parser::parse_instructions as parse_var_expr;
 
-use crate::adana_script::compute;
+use crate::compute;
 use adana_script_core::{primitive::Primitive, Operator::*, Value};
 #[test]
 #[should_panic(expected = "invalid expression!")]
@@ -132,7 +132,7 @@ fn test_modulo() {
         compute(
             "2   * (9  *(5-(1 /2.) )  )² -1 / 5. * 8 - 4 %4",
             &mut ctx,
-            "N/A"
+            "N/A",
         )
         .unwrap()
     );
@@ -141,7 +141,7 @@ fn test_modulo() {
         compute(
             "    2* (9   *(5-(1  /2.)   ))² %2 -1 /5. * 8 - 4 %4",
             &mut ctx,
-            "N/A"
+            "N/A",
         )
         .unwrap()
     );
@@ -157,12 +157,12 @@ fn test_compute() {
     );
     assert_eq!(
         Primitive::Double(3274.9),
-        compute("y = 2* (9*(5-(1/2.)))² -1 / 5. * 8 - 4", &mut ctx, "N/A")
+        compute("y = 2* (9*(5-(1/2.)))² -1 / 5. * 8 - 4", &mut ctx, "N/A",)
             .unwrap()
     );
     assert_eq!(
         Primitive::Double(-670.9548307564088),
-        compute("z = 78/5.-4.5*(9+7^2.5)-12*4+1-8/3.*4-5", &mut ctx, "N/A")
+        compute("z = 78/5.-4.5*(9+7^2.5)-12*4+1-8/3.*4-5", &mut ctx, "N/A",)
             .unwrap()
     );
     assert_eq!(
@@ -311,7 +311,7 @@ fn test_fn_log() {
     );
     assert_eq!(
         Primitive::Double(7.906912331577292),
-        compute("log(abs(-2*(3/4.-12%5 +7^9) --6/12.*4))", &mut ctx, "N/A")
+        compute("log(abs(-2*(3/4.-12%5 +7^9) --6/12.*4))", &mut ctx, "N/A",)
             .unwrap()
     );
 }
@@ -329,7 +329,7 @@ fn test_fn_ln() {
     );
     assert_eq!(
         Primitive::Double(18.206338466300664),
-        compute("ln(abs(-2*(3/4.-12%5 +7^9) --6/12.*4))", &mut ctx, "N/A")
+        compute("ln(abs(-2*(3/4.-12%5 +7^9) --6/12.*4))", &mut ctx, "N/A",)
             .unwrap()
     );
 }
@@ -362,7 +362,7 @@ fn test_fn_cos() {
     );
     assert_eq!(
         Primitive::Double(-0.509464138414531),
-        compute("cos(abs(-2*(3/4.-12%5 +7^9) --6/12.*4))", &mut ctx, "N/A")
+        compute("cos(abs(-2*(3/4.-12%5 +7^9) --6/12.*4))", &mut ctx, "N/A",)
             .unwrap()
     );
 }
@@ -380,7 +380,7 @@ fn test_fn_tan() {
     );
     assert_eq!(
         Primitive::Double(-1.6890136606017243),
-        compute("tan(abs(-2*(3/4.-12%5 +7^9) --6/12.*4))", &mut ctx, "N/A")
+        compute("tan(abs(-2*(3/4.-12%5 +7^9) --6/12.*4))", &mut ctx, "N/A",)
             .unwrap()
     );
 }
@@ -390,7 +390,7 @@ fn test_extra() {
     let mut ctx = BTreeMap::new();
     assert_eq!(
         Primitive::Double(44721.45950030539),
-        compute("sqrt((2*10^9-5*abs(8/9.))) + abs(1/10.)", &mut ctx, "N/A")
+        compute("sqrt((2*10^9-5*abs(8/9.))) + abs(1/10.)", &mut ctx, "N/A",)
             .unwrap()
     );
 
@@ -406,7 +406,7 @@ fn test_extra() {
             }
             ",
             &mut ctx,
-            "N/A"
+            "N/A",
         )
         .unwrap()
     );
@@ -423,7 +423,7 @@ fn test_extra() {
 
             ",
             &mut ctx,
-            "N/A"
+            "N/A",
         )
         .unwrap()
     );
@@ -440,7 +440,7 @@ fn test_extra() {
 
             ",
             &mut ctx,
-            "N/A"
+            "N/A",
         )
         .unwrap()
     );

@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use adana_script_core::primitive::Primitive;
 
-use crate::adana_script::compute;
+use crate::compute;
 
 #[test]
 fn bitwise_or_test() {
@@ -95,7 +95,7 @@ fn test_left_shift() {
     let r = compute(r#"0 << 0"#, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::Int(0));
     // FIXME probably need to use a library for this
-    // let r = compute(r#"127 <<135"#, &mut ctx, "N/A").unwrap();
+    // let r = compute(r#"127 <<135"#, &mut ctx, "N/A", ).unwrap();
     // assert_eq!(r, Primitive::Int((127u64 << 135u64) as i128));
     let r = compute(r#"127<<9"#, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::Int(127 << 9));
@@ -118,7 +118,7 @@ fn test_right_shift() {
     let r = compute(r#"0 >> 0"#, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::Int(0));
     // FIXME probably need to use a library for this
-    // let r = compute(r#"127 >>135"#, &mut ctx, "N/A").unwrap();
+    // let r = compute(r#"127 >>135"#, &mut ctx, "N/A", ).unwrap();
     // assert_eq!(r, Primitive::Int((127u64 >> 135u64) as i128));
     let r = compute(r#"127>>9"#, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::Int(127 >> 9));

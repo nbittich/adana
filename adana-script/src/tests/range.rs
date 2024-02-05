@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::adana_script::compute;
+use crate::compute;
 use adana_script_core::primitive::Primitive;
 #[test]
 fn simple_foreach_range() {

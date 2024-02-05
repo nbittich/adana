@@ -1,5 +1,4 @@
 use anyhow::{Context, Error};
-use nu_ansi_term::Color::Red;
 use slab_tree::{NodeRef, Tree};
 use std::{
     borrow::Borrow,
@@ -8,7 +7,7 @@ use std::{
     sync::Arc,
 };
 
-use crate::{adana_script::parser::parse_instructions, prelude::BTreeMap};
+use crate::{parser::parse_instructions, prelude::BTreeMap};
 
 use super::{ast::to_ast, require_dynamic_lib::require_dynamic_lib};
 use adana_script_core::{
@@ -526,8 +525,8 @@ fn compute_recur(
 
                                 _ => {
                                     return Err(anyhow::format_err!(
-                                "COMPUTE: illegal array access! {index:?}"
-                            ))
+                                    "COMPUTE: illegal array access! {index:?}"
+                                ))
                                 }
                             };
 
@@ -955,7 +954,7 @@ fn compute_instructions(
                 let mut scoped_ctx = ctx.clone();
 
                 'while_loop: while matches!(
-                    compute_lazy(*cond.clone(), &mut scoped_ctx, shared_lib)?,
+                    compute_lazy(*cond.clone(), &mut scoped_ctx, shared_lib,)?,
                     Primitive::Bool(true)
                 ) {
                     for instruction in &exprs {
@@ -1046,8 +1045,7 @@ pub fn compute(
 ) -> anyhow::Result<Primitive> {
     let (rest, instructions) = parse_instructions(s).map_err(|e| {
         anyhow::Error::msg(format!(
-            "{} could not parse instructions. \n{e:?} => {e}",
-            Red.paint("PARSER ERROR:")
+            "PARSER ERROR: could not parse instructions. \n{e:?} => {e}",
         ))
     })?;
 
@@ -1058,10 +1056,7 @@ pub fn compute(
 
     anyhow::ensure!(
         rest.trim().is_empty(),
-        format!(
-            "{} rest is not empty! {instructions:?} => {rest}",
-            Red.paint("PARSING ERROR:")
-        )
+        format!("PARSING ERROR: rest is not empty! {instructions:?} => {rest}",)
     );
 
     compute_instructions(instructions, ctx, shared_lib)

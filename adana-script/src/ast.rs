@@ -239,8 +239,7 @@ pub fn to_ast(
                 Ok(curr_node_id)
             } else {
                 Err(anyhow::Error::msg(format!(
-                    "{} invalid expression! {op_pos:?}",
-                    nu_ansi_term::Color::Red.paint("AST ERROR:")
+                    "AST ERROR: invalid expression! {op_pos:?}",
                 )))
             }
         }
@@ -268,8 +267,7 @@ pub fn to_ast(
             curr_node_id,
         ),
         Value::ImplicitMultiply(value) => Err(anyhow::Error::msg(format!(
-            "{} invalid implicit multiplier, unreachable branch: {value:?}",
-            nu_ansi_term::Color::Red.paint("AST BUG:"),
+            "AST BUG: invalid implicit multiplier, unreachable branch: {value:?}",
         ))),
 
         Value::Decimal(num) => append_to_current_and_return(
@@ -432,8 +430,7 @@ pub fn to_ast(
                 // for assignment
                 // We need Primitive::Ref to make it happen
                 Err(anyhow::Error::msg(format!(
-                    "{} invalid variable expression {name:?} => {expr:?}",
-                    nu_ansi_term::Color::Red.paint("AST ERROR:"),
+                    "AST ERROR: invalid variable expression {name:?} => {expr:?}",
                 )))
             }?;
 

@@ -1,32 +1,30 @@
 mod ast;
 mod compute;
 mod parser;
+mod prelude;
 mod require_dynamic_lib;
 mod string_parser;
 use std::collections::BTreeMap;
 
 use adana_script_core::TreeNodeValue;
 pub use compute::compute;
-use nu_ansi_term::Color;
 
 use slab_tree::Tree;
 
-use crate::adana_script::ast::to_ast;
-use crate::adana_script::parser::parse_instructions;
+use crate::ast::to_ast;
+use crate::parser::parse_instructions;
 
 pub fn print_ast(script: &str) -> anyhow::Result<()> {
     let (rest, instructions) = parse_instructions(script).map_err(|e| {
         anyhow::Error::msg(format!(
-            "{} could not parse instructions. {e}",
-            Color::Red.paint("PRINT AST ERROR:")
+            "PRINT AST ERROR: could not parse instructions. {e}",
         ))
     })?;
 
     anyhow::ensure!(
         rest.trim().is_empty(),
         format!(
-            "{} rest is not empty! {instructions:#?} => {rest}",
-            Color::Red.paint("PRINT AST ERROR:")
+            "PRINT AST ERROR: rest is not empty! {instructions:#?} => {rest}",
         )
     );
 

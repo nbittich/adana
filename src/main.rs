@@ -1,4 +1,3 @@
-mod adana_script;
 mod args;
 mod cache_command;
 mod db;
@@ -17,14 +16,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use prelude::{colors::LightBlue, colors::Style, BTreeMap};
-
 use crate::{
-    adana_script::compute,
     cache_command::{clear_terminal, get_default_cache, process_command},
     db::{Config, Db},
     prelude::get_path_to_shared_libraries,
 };
+use adana_script::compute;
+use prelude::{colors::LightBlue, colors::Style, BTreeMap};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const RUST_VERSION: &str = std::env!("CARGO_PKG_RUST_VERSION");

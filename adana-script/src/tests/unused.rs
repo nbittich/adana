@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use adana_script_core::primitive::Primitive;
 
-use crate::adana_script::compute;
+use crate::compute;
 
 #[test]
 fn test_simple_unused_array() {

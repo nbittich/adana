@@ -4,20 +4,12 @@ pub use nom::{
         tag, tag_no_case, take_till1, take_until, take_until1, take_while,
         take_while1,
     },
-    character::complete::{
-        i128 as I128, i8 as I8, multispace0, multispace1, one_of, space1,
-        u8 as U8,
-    },
-    combinator::{
-        all_consuming, cut, map, map_parser, opt, peek, rest, verify,
-    },
-    multi::{many0, many1, separated_list0, separated_list1},
-    number::complete::{double, recognize_float},
-    sequence::{delimited, pair, preceded, separated_pair, terminated, tuple},
+    character::complete::{multispace0, multispace1, space1},
+    combinator::{cut, map, opt, rest, verify},
+    multi::{many0, separated_list0},
+    sequence::{delimited, pair, preceded, separated_pair, terminated},
     IResult, Parser,
 };
-
-pub use anyhow::Context;
 
 pub use log::*;
 pub use std::hash::Hash;

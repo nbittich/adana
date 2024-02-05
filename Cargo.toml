@@ -1,31 +1,35 @@
+[workspace]
+members = ["adana-script"]
 
-[package]
-name = "adana"
-rust-version = "1.75"
-
+[workspace.package]
 version = "0.16.4"
-edition = "2021"
 authors = ["Nordine Bittich"]
-license = "MIT"
 description = "namespaces aliases for command lines & basic scripting language"
 homepage = "https://github.com/nbittich/adana"
 repository = "https://github.com/nbittich/adana"
 readme = "README.md"
-exclude = [
-  "vscode/",
-  "dist/",
-  ".vscode",
-  ".history",
-  ".git",
-  ".github",
-  "static_binaries/",
-  "dynamic_lib/",
-]
+rust-version = "1.75"
+edition = "2021"
+license = "MIT"
 
-[dependencies]
+[package]
+name = "adana"
+rust-version = { workspace = true }
+
+version = { workspace = true }
+edition.workspace = true
+authors.workspace = true
+license = "MIT"
+description.workspace = true
+homepage.workspace = true
+repository.workspace = true
+readme = "README.md"
+exclude = ["vscode/", "dist/", ".vscode", ".history", ".git", ".github"]
+
+[workspace.dependencies]
 anyhow = "1.0.79"
 bincode = "1.3.3"
-dirs = "5.0.1"                                                     # todo maybe replace by the home crate
+dirs = "5.0.1"                                                               # todo maybe replace by the home crate
 log = "0.4.20"
 nom = "7.1.3"
 nu-ansi-term = "0.50.0"
@@ -36,19 +40,32 @@ serde_json = "1.0.113"
 slab_tree = "0.3.2"
 strum = { version = "0.26.1", features = ["derive"] }
 ctrlc = "3.4.2"
-
-#adana-script-core = { git = "https://github.com/nbittich/adana-script-core.git", branch = "feature/bitwise-and-new-ints" }
-adana-script-core = "0.16.1"
+env_logger = { version = "0.11.1", default-features = false }
 arboard = "3.3.0"
+regex = { version = "1.10.3", default-features = false, features = ["std"] }
+serial_test = "3.0.0"
+adana-script-core = "0.16.2"
 
-[dependencies.env_logger]
-default-features = false
-version = "0.11.1"
-[dependencies.regex]
-version = "1.10.3"
-default-features = false
-# regex currently requires the standard library, you must re-enable it.
-features = ["std"]
+
+# dependencies for the repl
+[dependencies]
+anyhow.workspace = true
+bincode.workspace = true
+dirs.workspace = true
+ctrlc.workspace = true
+strum.workspace = true
+arboard.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+rustyline.workspace = true
+rustyline-derive.workspace = true
+nu-ansi-term.workspace = true
+nom.workspace = true
+env_logger.workspace = true
+regex.workspace = true
+log.workspace = true
+adana-script-core.workspace = true
+adana-script = { path = "./adana-script" }
 
 [profile.release]
 opt-level = 'z'   # Optimize for size.
@@ -61,10 +78,6 @@ strip = "symbols"
 [profile.dist]
 inherits = "release"
 
-[dev-dependencies]
-# some test must be run sequentially. 
-# if library is broken, alternative is: cargo test -- --test-threads 1
-serial_test = "3.0.0"
 
 # Config for 'cargo dist'
 [workspace.metadata.dist]

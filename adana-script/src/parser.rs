@@ -3,19 +3,19 @@ use nom::{
     error::{Error, ErrorKind},
 };
 
-use crate::{
-    prelude::{
-        all_consuming, alt, delimited, double, many0, many1, map, map_parser,
-        multispace0, one_of, opt, pair, peek, preceded, recognize_float, rest,
-        separated_list0, separated_list1, separated_pair, tag, take_until,
-        take_while1, terminated, tuple, verify, Res, I128, I8, U8,
-    },
-    reserved_keywords::check_reserved_keyword,
+use crate::prelude::{
+    all_consuming, alt, delimited, double, many0, many1, map, map_parser,
+    multispace0, one_of, opt, pair, peek, preceded, recognize_float, rest,
+    separated_list0, separated_list1, separated_pair, tag, take_until,
+    take_while1, terminated, tuple, verify, Res, I128, I8, U8,
 };
 
 use super::string_parser::parse_escaped_string;
-use adana_script_core::constants::{
-    BREAK, DROP, ELSE, FOR, IF, IN, MULTILINE, NULL, RETURN, STRUCT, WHILE,
+use adana_script_core::{
+    constants::{
+        BREAK, DROP, ELSE, FOR, IF, IN, MULTILINE, NULL, RETURN, STRUCT, WHILE,
+    },
+    FORBIDDEN_VARIABLE_NAME,
 };
 use adana_script_core::{BuiltInFunctionType, MathConstants, Operator, Value};
 
@@ -212,7 +212,7 @@ fn parse_variable_str(s: &str) -> Res<&str> {
                 && s.chars().filter(|c| c == &'&').count() <= 1
         }),
         verify(all_consuming(allowed_values), |s: &str| {
-            !check_reserved_keyword(&[s])
+            !default_check_reserved_keywords(&[s])
         }),
     )(s)
 }
@@ -873,4 +873,9 @@ pub fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
         )),
         opt(comments),
     )(instructions)
+}
+fn default_check_reserved_keywords(aliases: &[&str]) -> bool {
+    FORBIDDEN_VARIABLE_NAME
+        .iter()
+        .any(|c| aliases.iter().any(|al| al.eq_ignore_ascii_case(c)))
 }

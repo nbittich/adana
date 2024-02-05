@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::adana_script::parser::parse_instructions;
+use crate::parser::parse_instructions;
 use adana_script_core::{
     BuiltInFunctionType, Operator,
     Value::{
