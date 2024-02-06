@@ -1,17 +1,10 @@
 mod utils;
-use adana_script_core::primitive::{Primitive, RefPrimitive};
-use serde::{Deserialize, Serialize};
+use adana_script_core::primitive::RefPrimitive;
 use std::collections::BTreeMap;
 use wasm_bindgen::prelude::*;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-
-#[derive(Serialize, Deserialize)]
-pub struct Out {
-    pub ctx: BTreeMap<String, RefPrimitive>,
-    pub result: Primitive,
-}
 
 #[wasm_bindgen]
 pub fn compute(script: &str, mem: &mut [u8]) -> Result<JsValue, JsError> {
@@ -28,17 +21,6 @@ pub fn compute(script: &str, mem: &mut [u8]) -> Result<JsValue, JsError> {
         .map_err(|e| e.to_string())
         .map_err(|e| JsError::new(&e))?;
 
-    let new_mem = bincode::serialize(&ctx)?;
-    if mem.len() < new_mem.len() {
-        Err(JsError::new(&format!(
-            "out of memory: {} < {}",
-            mem.len(),
-            new_mem.len()
-        )))
-    } else {
-        for (i, o) in new_mem.into_iter().enumerate() {
-            mem[i] = o;
-        }
-        Ok(serde_wasm_bindgen::to_value(&result)?)
-    }
+    bincode::serialize_into(mem, &ctx)?;
+    Ok(serde_wasm_bindgen::to_value(&result)?)
 }
