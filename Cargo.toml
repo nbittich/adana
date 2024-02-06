@@ -1,5 +1,12 @@
 [workspace]
-members = ["adana-cache-command", "adana-db", "adana-script"]
+members = [
+  "adana-cache-command",
+  "adana-db",
+  "adana-script",
+  "adana-script-core",
+  "adana-shell",
+]
+resolver = "2"
 
 [workspace.package]
 version = "0.16.4"
@@ -11,19 +18,6 @@ readme = "README.md"
 rust-version = "1.75"
 edition = "2021"
 license = "MIT"
-
-[package]
-name = "adana"
-rust-version = { workspace = true }
-
-version = { workspace = true }
-edition.workspace = true
-authors.workspace = true
-license = "MIT"
-description.workspace = true
-homepage.workspace = true
-repository.workspace = true
-readme = "README.md"
 exclude = ["vscode/", "dist/", ".vscode", ".history", ".git", ".github"]
 
 [workspace.dependencies]
@@ -32,6 +26,7 @@ bincode = "1.3.3"
 dirs = "5.0.1"                                                               # todo maybe replace by the home crate
 log = "0.4.20"
 nom = "7.1.3"
+libloading = "0.8.1"
 nu-ansi-term = "0.50.0"
 rustyline = "13.0.0"
 rustyline-derive = "0.10.0"
@@ -46,54 +41,7 @@ regex = { version = "1.10.3", default-features = false, features = ["std"] }
 serial_test = "3.0.0"
 
 # workspace specific libs
-adana-script-core = "0.16.2"
+adana-script-core = { path = "./adana-script-core" }
 adana-script = { path = "./adana-script" }
 adana-db = { path = "./adana-db" }
 adana-cache-command = { path = "./adana-cache-command" }
-
-# dependencies for the repl
-[dependencies]
-anyhow.workspace = true
-bincode.workspace = true
-dirs.workspace = true
-ctrlc.workspace = true
-strum.workspace = true
-arboard.workspace = true
-serde.workspace = true
-serde_json.workspace = true
-rustyline.workspace = true
-rustyline-derive.workspace = true
-nu-ansi-term.workspace = true
-nom.workspace = true
-env_logger.workspace = true
-regex.workspace = true
-log.workspace = true
-adana-script-core.workspace = true
-adana-cache-command.workspace = true
-adana-db.workspace = true
-adana-script.workspace = true
-
-[profile.release]
-opt-level = 'z'   # Optimize for size.
-lto = true        # Link Time Optimization (LTO)
-codegen-units = 1 # Set this to 1 to allow for maximum size reduction optimizations:
-panic = 'abort'   # removes the need for this extra unwinding code.
-strip = "symbols"
-
-# The profile that 'cargo dist' will build with
-[profile.dist]
-inherits = "release"
-
-
-# Config for 'cargo dist'
-[workspace.metadata.dist]
-# The preferred cargo-dist version to use in CI (Cargo.toml SemVer syntax)
-cargo-dist-version = "0.8.2"
-# CI backends to support
-ci = ["github"]
-# The installers to generate for each app
-installers = ["shell"]
-# Target platforms to build apps for (Rust target-triple syntax)
-targets = ["x86_64-unknown-linux-gnu"]
-# Publish jobs to run in CI
-pr-run-mode = "skip"
