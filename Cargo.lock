@@ -6,6 +6,7 @@ version = 3
 name = "adana"
 version = "0.16.4"
 dependencies = [
+ "adana-db",
  "adana-script",
  "adana-script-core",
  "anyhow",
@@ -23,6 +24,17 @@ dependencies = [
  "serde",
  "serde_json",
  "strum",
+]
+
+[[package]]
+name = "adana-db"
+version = "0.16.4"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "dirs",
+ "log",
+ "serde",
 ]
 
 [[package]]

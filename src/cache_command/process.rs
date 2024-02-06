@@ -1,10 +1,10 @@
 use std::{collections::BTreeMap, path::PathBuf};
 
 use crate::{
-    db::{DbOp, SCRIPT_CACHE_KEY},
     prelude::colors::*,
     reserved_keywords::{check_reserved_keyword, CACHE_COMMAND_DOC},
 };
+use adana_db::{DbOp, SCRIPT_CACHE_KEY};
 use adana_script::print_ast;
 use adana_script_core::primitive::RefPrimitive;
 use anyhow::Context;

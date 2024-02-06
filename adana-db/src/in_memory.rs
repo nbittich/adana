@@ -1,4 +1,6 @@
-use crate::prelude::*;
+use std::collections::BTreeMap;
+
+use serde::{Deserialize, Serialize};
 
 pub const DEFAULT_TREE: &str = "__adana_default";
 
@@ -192,9 +194,10 @@ impl<K: Key + Clone, V: Value + Clone> DbOp<K, V> for InMemoryDb<K, V> {
 #[cfg(test)]
 mod test {
 
-    use crate::db::in_memory::DEFAULT_TREE;
-    use crate::db::DbOp;
-    use crate::prelude::*;
+    use serde::Serialize;
+
+    use super::DEFAULT_TREE;
+    use crate::DbOp;
 
     use super::{InMemoryDb, Op};
 

@@ -12,16 +12,11 @@ pub use nom::{
 };
 
 pub use log::*;
-pub use std::hash::Hash;
 
 pub use std::process::{Command, Stdio};
 
 pub type Res<'a, T> = IResult<&'a str, T>;
 
-pub use std::sync::Arc;
-
-pub use std::ops::Deref;
-pub use std::sync::{Mutex, MutexGuard};
 pub use std::{collections::BTreeMap, fs::File, io::BufReader, path::PathBuf};
 
 pub mod colors {

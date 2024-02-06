@@ -1,28 +1,25 @@
 mod args;
 mod cache_command;
-mod db;
 mod editor;
 mod prelude;
 mod reserved_keywords;
 
+use crate::{
+    cache_command::{clear_terminal, get_default_cache, process_command},
+    prelude::get_path_to_shared_libraries,
+};
+use adana_db::{Config, Db, DbOp};
+use adana_script::compute;
 use adana_script_core::primitive::Primitive;
 use anyhow::Context;
 use args::*;
-use db::DbOp;
 use log::debug;
+use prelude::{colors::LightBlue, colors::Style, BTreeMap};
 use rustyline::error::ReadlineError;
 use std::{
     borrow::Cow,
     path::{Path, PathBuf},
 };
-
-use crate::{
-    cache_command::{clear_terminal, get_default_cache, process_command},
-    db::{Config, Db},
-    prelude::get_path_to_shared_libraries,
-};
-use adana_script::compute;
-use prelude::{colors::LightBlue, colors::Style, BTreeMap};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const RUST_VERSION: &str = std::env!("CARGO_PKG_RUST_VERSION");

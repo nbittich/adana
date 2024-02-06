@@ -1,7 +1,7 @@
 use std::path::Path;
 
-use crate::db::{Batch, DbOp, Op, Tree, DEFAULT_TREE, SCRIPT_CACHE_KEY};
 use crate::prelude::*;
+use adana_db::{Batch, DbOp, Op, Tree, DEFAULT_TREE, SCRIPT_CACHE_KEY};
 
 const DEFAULT_CACHE_KEY: &str = "$___DEF_CACHE_KEY_LOC___$";
 
@@ -58,7 +58,7 @@ pub fn insert_value(
         check_cache_name(namespace)?;
     }
     db.open_tree(namespace)?;
-    let mut batch = crate::db::Batch::default();
+    let mut batch = Batch::default();
     let keys = db.keys();
 
     let aliases: Vec<&str> = aliases

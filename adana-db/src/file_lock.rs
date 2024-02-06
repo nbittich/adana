@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::prelude::debug;
+use log::{debug, error};
 
 #[derive(Debug, Clone)]
 pub struct FileLock {
@@ -57,7 +57,7 @@ impl FileLock {
 
             if let Ok(pid) = pid {
                 if pid_exists(pid) {
-                    debug!("{pid} exist!");
+                    error!("{pid} exist!");
                     return Err(FileLockError::PidExist(pid));
                 }
             } else {

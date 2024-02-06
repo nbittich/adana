@@ -1,6 +1,10 @@
-use std::{fmt::Display, path::Path};
+use std::{
+    fmt::Display,
+    path::Path,
+    sync::{Arc, Mutex},
+};
 
-use crate::{db::FileDbConfig, prelude::*};
+use crate::FileDbConfig;
 use anyhow::Context;
 use log::debug;
 use serde::de::DeserializeOwned;
@@ -71,10 +75,7 @@ where
     V: 'static + Value + DeserializeOwned + std::fmt::Debug,
 {
     fn in_memory_fallback(e: impl Display) -> anyhow::Result<Db<K, V>> {
-        eprintln!(
-            "{} {e} \nAttempt to open a temporary db...\n",
-            colors::Red.paint("Warning!")
-        );
+        eprintln!("Warning! {e} \nAttempt to open a temporary db...\n",);
         Ok(Db::InMemory(Default::default()))
     }
     pub fn open(config: Config) -> anyhow::Result<Db<K, V>> {
@@ -90,8 +91,7 @@ where
             }
             Err(pid_exist @ FileLockError::PidExist(_)) => {
                 eprintln!(
-                    "{} {pid_exist} \nAttempt to open a temporary db...\n",
-                    colors::Red.paint("Warning!")
+                    "Warning! {pid_exist} \nAttempt to open a temporary db...\n",
                 );
                 let p = path.as_ref();
                 let pb = p.to_path_buf();
@@ -103,8 +103,7 @@ where
                             Ok(inner_db) => Ok(Db::InMemory(inner_db)),
                             Err(e) => {
                                 eprintln!(
-                                        "{} {e:?} \nAttempt to deserialize db, could be because it is the first time you use it\n",
-                                        colors::Red.paint("Warning!")
+                                        "Warning! {e:?} \nAttempt to deserialize db, could be because it is the first time you use it\n",
                                     );
                                 Self::in_memory_fallback(e)
                             }
@@ -126,8 +125,7 @@ where
                             Ok(inner_db) => Arc::new(Mutex::new(inner_db)),
                             Err(e) => {
                                 eprintln!(
-                                        "{} {e:?} \nAttempt to deserialize db, could be because it is the first time you use it\n",
-                                        colors::Red.paint("Warning!")
+                                        "Warning! {e:?} \nAttempt to deserialize db, could be because it is the first time you use it\n",
                                     );
                                 Arc::new(Mutex::new(Default::default()))
                             }
@@ -156,8 +154,11 @@ where
 #[cfg(test)]
 mod test {
 
-    use crate::db::{Config, Db, DbOp, Op};
-    use crate::prelude::*;
+    use std::fs::File;
+
+    use serde::Serialize;
+
+    use crate::{Config, Db, DbOp, Op};
 
     #[derive(Serialize, Debug, PartialEq)]
     struct MyString(String);

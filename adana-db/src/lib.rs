@@ -10,10 +10,11 @@ pub use database::*;
 pub use file_db::*;
 pub use file_lock::*;
 pub use in_memory::*;
-pub use tree::Tree;
-
-use crate::prelude::*;
+use serde::Serialize;
+use std::collections::BTreeMap;
 use std::fmt::Debug;
+use std::hash::Hash;
+pub use tree::Tree;
 
 pub trait Key:
     Hash + Eq + Send + Clone + Serialize + Debug + Sync + Ord
