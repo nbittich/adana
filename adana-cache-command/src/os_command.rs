@@ -1,6 +1,10 @@
-use std::ffi::OsString;
+use log::debug;
 
 use crate::prelude::*;
+use std::{
+    ffi::OsString,
+    process::{Command, Stdio},
+};
 fn extract_args(s: &str) -> Res<Vec<OsString>> {
     preceded(
         multispace0,

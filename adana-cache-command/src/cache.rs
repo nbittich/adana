@@ -1,7 +1,7 @@
-use std::path::Path;
+use std::{collections::BTreeMap, fs::File, io::BufReader, path::Path};
 
-use crate::prelude::*;
 use adana_db::{Batch, DbOp, Op, Tree, DEFAULT_TREE, SCRIPT_CACHE_KEY};
+use serde::{Deserialize, Serialize};
 
 const DEFAULT_CACHE_KEY: &str = "$___DEF_CACHE_KEY_LOC___$";
 
@@ -204,7 +204,10 @@ fn check_cache_name(cache_name: &str) -> Option<()> {
     if cache_name != DEFAULT_TREE && cache_name != SCRIPT_CACHE_KEY {
         Some(())
     } else {
-        println!("{} you cannot do this.", colors::Red.paint("Warning!"));
+        println!(
+            "{} you cannot do this.",
+            nu_ansi_term::Color::Red.paint("Warning!")
+        );
         None
     }
 }

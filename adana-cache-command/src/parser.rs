@@ -1,7 +1,7 @@
+use super::{constants::*, CacheCommand, ChangeDirectoryType};
 use crate::prelude::*;
 
-use super::{constants::*, CacheCommand, ChangeDirectoryType};
-
+pub type Res<'a, T> = IResult<&'a str, T>;
 fn add_command(command: &str) -> Res<CacheCommand> {
     map(
         pair(

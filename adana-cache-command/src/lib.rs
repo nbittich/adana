@@ -1,7 +1,9 @@
 mod cache;
 mod os_command;
 mod parser;
+mod prelude;
 mod process;
+mod reserved_keywords;
 pub use cache::get_default_cache;
 pub use process::process_command;
 use strum::EnumCount;

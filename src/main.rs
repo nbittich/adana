@@ -1,13 +1,9 @@
 mod args;
-mod cache_command;
 mod editor;
 mod prelude;
-mod reserved_keywords;
 
-use crate::{
-    cache_command::{clear_terminal, get_default_cache, process_command},
-    prelude::get_path_to_shared_libraries,
-};
+use crate::prelude::get_path_to_shared_libraries;
+use adana_cache_command::{clear_terminal, get_default_cache, process_command};
 use adana_db::{Config, Db, DbOp};
 use adana_script::compute;
 use adana_script_core::primitive::Primitive;

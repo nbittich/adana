@@ -1,4 +1,4 @@
-use crate::cache_command::CacheCommand;
+use crate::CacheCommand;
 
 use adana_script_core::FORBIDDEN_VARIABLE_NAME as SCRIPT_RESERVED_KEYWORDS;
 pub const CACHE_COMMAND_DOC: &[(&[&str], &str)] = CacheCommand::doc();

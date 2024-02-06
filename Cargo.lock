@@ -6,6 +6,7 @@ version = 3
 name = "adana"
 version = "0.16.4"
 dependencies = [
+ "adana-cache-command",
  "adana-db",
  "adana-script",
  "adana-script-core",
@@ -21,6 +22,26 @@ dependencies = [
  "regex",
  "rustyline",
  "rustyline-derive",
+ "serde",
+ "serde_json",
+ "strum",
+]
+
+[[package]]
+name = "adana-cache-command"
+version = "0.16.4"
+dependencies = [
+ "adana-db",
+ "adana-script",
+ "adana-script-core",
+ "anyhow",
+ "arboard",
+ "bincode",
+ "dirs",
+ "log",
+ "nom",
+ "nu-ansi-term",
+ "regex",
  "serde",
  "serde_json",
  "strum",

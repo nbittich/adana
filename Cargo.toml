@@ -1,5 +1,5 @@
 [workspace]
-members = ["adana-db", "adana-script"]
+members = ["adana-cache-command", "adana-db", "adana-script"]
 
 [workspace.package]
 version = "0.16.4"
@@ -44,8 +44,12 @@ env_logger = { version = "0.11.1", default-features = false }
 arboard = "3.3.0"
 regex = { version = "1.10.3", default-features = false, features = ["std"] }
 serial_test = "3.0.0"
-adana-script-core = "0.16.2"
 
+# workspace specific libs
+adana-script-core = "0.16.2"
+adana-script = { path = "./adana-script" }
+adana-db = { path = "./adana-db" }
+adana-cache-command = { path = "./adana-cache-command" }
 
 # dependencies for the repl
 [dependencies]
@@ -65,8 +69,9 @@ env_logger.workspace = true
 regex.workspace = true
 log.workspace = true
 adana-script-core.workspace = true
-adana-script = { path = "./adana-script" }
-adana-db = { path = "./adana-db" }
+adana-cache-command.workspace = true
+adana-db.workspace = true
+adana-script.workspace = true
 
 [profile.release]
 opt-level = 'z'   # Optimize for size.
