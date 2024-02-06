@@ -1,0 +1,23 @@
+[package]
+name = "adana-script"
+version = { workspace = true }
+edition = "2021"
+exclude = ["static_binaries/", "dynamic_lib/", "examples/", "file_tests/"]
+description.workspace = true
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+#adana-script-core = { git = "https://github.com/nbittich/adana-script-core.git", branch = "feature/bitwise-and-new-ints" }
+nom.workspace = true
+adana-script-core.workspace = true
+anyhow.workspace = true
+slab_tree.workspace = true
+
+[dev-dependencies]
+# some test must run sequentially. 
+# if library is broken, alternative is: cargo test -- --test-threads 1
+serial_test.workspace = true

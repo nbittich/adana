@@ -1,0 +1,26 @@
+[package]
+name = "adana"
+version.workspace = true
+authors.workspace = true
+description.workspace = true
+homepage.workspace = true
+repository.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+license.workspace = true
+exclude.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+dirs.workspace = true
+ctrlc.workspace = true
+rustyline.workspace = true
+rustyline-derive.workspace = true
+nu-ansi-term.workspace = true
+env_logger.workspace = true
+log.workspace = true
+adana-script-core.workspace = true
+adana-cache-command.workspace = true
+adana-db.workspace = true
+adana-script.workspace = true

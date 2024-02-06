@@ -16,7 +16,10 @@ jobs:
         with:
           toolchain: stable
           targets: x86_64-unknown-linux-gnu
+      - run: git checkout -B pr_check
       - run: rustup component add clippy
+      - run: cargo install cargo-release
       - run: cargo test --verbose -- --nocapture
       - run: cargo clippy --all-targets --all-features -- -D warnings
-      - run: cargo publish --dry-run
+      - run: cargo release  --no-publish  --no-tag --allow-branch pr_check  --no-push  --dependent-version  upgrade minor
+        #- run: cargo publish --dry-run
