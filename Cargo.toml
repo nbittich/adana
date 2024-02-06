@@ -4,6 +4,7 @@ members = [
   "adana-db",
   "adana-script",
   "adana-script-core",
+  "adana-script-wasm",
   "adana-shell",
 ]
 resolver = "2"
@@ -21,6 +22,9 @@ license = "MIT"
 exclude = ["vscode/", "dist/", ".vscode", ".history", ".git", ".github"]
 
 [workspace.dependencies]
+wasm-bindgen = { version = "0.2.91" }
+console_error_panic_hook = { version = "0.1.7" }
+
 anyhow = "1.0.79"
 bincode = "1.3.3"
 dirs = "5.0.1"                                                               # todo maybe replace by the home crate
@@ -39,7 +43,7 @@ env_logger = { version = "0.11.1", default-features = false }
 arboard = "3.3.0"
 regex = { version = "1.10.3", default-features = false, features = ["std"] }
 serial_test = "3.0.0"
-
+serde-wasm-bindgen = "0.6.3"
 # workspace specific libs
 adana-script-core = { version = "0.16.4", path = "./adana-script-core" }
 adana-script = { version = "0.16.4", path = "./adana-script" }
@@ -60,11 +64,8 @@ targets = ["x86_64-unknown-linux-gnu"]
 pr-run-mode = "plan"
 
 [profile.release]
-opt-level = 'z'   # Optimize for size.
-lto = true        # Link Time Optimization (LTO)
-codegen-units = 1 # Set this to 1 to allow for maximum size reduction optimizations:
-panic = 'abort'   # removes the need for this extra unwinding code.
-strip = "symbols"
+opt-level = 's'
+lto = true      # Link Time Optimization (LTO)
 
 # The profile that 'cargo dist' will build with
 [profile.dist]

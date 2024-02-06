@@ -6,7 +6,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 use serde::{Deserialize, Serialize};
 
@@ -16,6 +16,9 @@ const MAX_U32_AS_I128: i128 = u32::MAX as i128;
 
 #[derive(Debug)]
 pub struct NativeLibrary {
+    #[cfg(target_arch = "wasm32")]
+    lib: (),
+    #[cfg(not(target_arch = "wasm32"))]
     lib: libloading::Library,
     path: PathBuf,
 }
@@ -23,34 +26,55 @@ pub struct NativeLibrary {
 pub type NativeFunctionCallResult = anyhow::Result<Primitive>;
 pub type Compiler = dyn FnMut(Value, BTreeMap<String, RefPrimitive>) -> NativeFunctionCallResult
     + Send;
+
+#[cfg(not(target_arch = "wasm32"))]
 #[allow(improper_ctypes_definitions)]
 pub type NativeFunction<'lib> = libloading::Symbol<
     'lib,
     fn(Vec<Primitive>, Box<Compiler>) -> NativeFunctionCallResult,
 >;
+
+#[cfg(target_arch = "wasm32")]
+pub type NativeFunction = ();
+
 impl NativeLibrary {
     /// # Safety
     /// trust me bro
+    #[cfg(not(target_arch = "wasm32"))]
     pub unsafe fn new(path: &Path) -> anyhow::Result<NativeLibrary> {
         let lib = libloading::Library::new(path)
             .map_err(|e| anyhow::format_err!("could not load lib, {e}"))?;
         Ok(NativeLibrary { lib, path: path.to_path_buf() })
     }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn new(path: &Path) -> anyhow::Result<NativeLibrary> {
+        Err(anyhow::format_err!("cannot use lib loading in wasm context!"))
+    }
+
     pub fn get_path(&self) -> &Path {
         self.path.as_path()
     }
+
     /// # Safety
     /// trust me bro
-
+    #[cfg(not(target_arch = "wasm32"))]
     pub unsafe fn get_function(
         &self,
         key: &str,
     ) -> anyhow::Result<NativeFunction> {
-        self.lib.get(key.as_bytes()).context("{key} wasn't found")
+        let r = self.lib.get(key.as_bytes())?;
+        Ok(r)
     }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn get_function(&self, key: &str) -> anyhow::Result<NativeFunction> {
+        Err(anyhow::format_err!("cannot use lib loading in wasm context!"))
+    }
+
     /// # Safety
     /// trust me bro
-
+    #[cfg(not(target_arch = "wasm32"))]
     pub unsafe fn call_function(
         &self,
         key: &str,
@@ -59,6 +83,16 @@ impl NativeLibrary {
     ) -> anyhow::Result<Primitive> {
         let fun = self.get_function(key)?;
         fun(params, compiler)
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn call_function(
+        &self,
+        key: &str,
+        params: Vec<Primitive>,
+        compiler: Box<Compiler>,
+    ) -> anyhow::Result<Primitive> {
+        Err(anyhow::format_err!("cannot use lib loading in wasm context!"))
     }
 }
 
