@@ -47,6 +47,7 @@ wasm-bindgen = { version = "0.2.91" }
 console_error_panic_hook = { version = "0.1.7" }
 serde-wasm-bindgen = "0.6.3"
 wee_alloc = "0.4.5"
+wasm-bindgen-test = "0.3.41"
 
 # workspace specific libs
 adana-script-core = { version = "0.16.4", path = "./adana-script-core" }
