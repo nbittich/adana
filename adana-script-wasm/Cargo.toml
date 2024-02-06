@@ -16,6 +16,8 @@ exclude.workspace = true
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+default = ["wee_alloc"]
 
 [dependencies]
 wasm-bindgen = { workspace = true }
@@ -23,6 +25,5 @@ adana-script.workspace = true
 adana-script-core.workspace = true
 serde.workspace = true
 serde-wasm-bindgen.workspace = true
-[profile.release]
-lto = true
-opt-level = 's'
+# console_error_panic_hook = { workspace = true, optional = true }
+wee_alloc = { workspace = true, optional = true }

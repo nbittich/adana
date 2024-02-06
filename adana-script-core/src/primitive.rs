@@ -17,7 +17,7 @@ const MAX_U32_AS_I128: i128 = u32::MAX as i128;
 #[derive(Debug)]
 pub struct NativeLibrary {
     #[cfg(target_arch = "wasm32")]
-    lib: (),
+    _lib: (),
     #[cfg(not(target_arch = "wasm32"))]
     lib: libloading::Library,
     path: PathBuf,
@@ -48,7 +48,7 @@ impl NativeLibrary {
     }
 
     #[cfg(target_arch = "wasm32")]
-    pub fn new(path: &Path) -> anyhow::Result<NativeLibrary> {
+    pub fn new(_path: &Path) -> anyhow::Result<NativeLibrary> {
         Err(anyhow::format_err!("cannot use lib loading in wasm context!"))
     }
 
@@ -68,7 +68,7 @@ impl NativeLibrary {
     }
 
     #[cfg(target_arch = "wasm32")]
-    pub fn get_function(&self, key: &str) -> anyhow::Result<NativeFunction> {
+    pub fn get_function(&self, _key: &str) -> anyhow::Result<NativeFunction> {
         Err(anyhow::format_err!("cannot use lib loading in wasm context!"))
     }
 
@@ -88,9 +88,9 @@ impl NativeLibrary {
     #[cfg(target_arch = "wasm32")]
     pub fn call_function(
         &self,
-        key: &str,
-        params: Vec<Primitive>,
-        compiler: Box<Compiler>,
+        _key: &str,
+        _params: Vec<Primitive>,
+        _compiler: Box<Compiler>,
     ) -> anyhow::Result<Primitive> {
         Err(anyhow::format_err!("cannot use lib loading in wasm context!"))
     }

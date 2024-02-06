@@ -22,8 +22,6 @@ license = "MIT"
 exclude = ["vscode/", "dist/", ".vscode", ".history", ".git", ".github"]
 
 [workspace.dependencies]
-wasm-bindgen = { version = "0.2.91" }
-console_error_panic_hook = { version = "0.1.7" }
 
 anyhow = "1.0.79"
 bincode = "1.3.3"
@@ -43,7 +41,13 @@ env_logger = { version = "0.11.1", default-features = false }
 arboard = "3.3.0"
 regex = { version = "1.10.3", default-features = false, features = ["std"] }
 serial_test = "3.0.0"
+
+# wasm
+wasm-bindgen = { version = "0.2.91" }
+console_error_panic_hook = { version = "0.1.7" }
 serde-wasm-bindgen = "0.6.3"
+wee_alloc = "0.4.5"
+
 # workspace specific libs
 adana-script-core = { version = "0.16.4", path = "./adana-script-core" }
 adana-script = { version = "0.16.4", path = "./adana-script" }
