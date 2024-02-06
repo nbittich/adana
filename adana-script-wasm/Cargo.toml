@@ -27,6 +27,7 @@ serde.workspace = true
 serde-wasm-bindgen.workspace = true
 console_error_panic_hook = { workspace = true, optional = true }
 wee_alloc = { workspace = true, optional = true }
+bincode.workspace = true
 
 [dev-dependencies]
 wasm-bindgen-test.workspace = true

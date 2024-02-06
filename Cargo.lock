@@ -78,6 +78,7 @@ version = "0.16.4"
 dependencies = [
  "adana-script",
  "adana-script-core",
+ "bincode",
  "console_error_panic_hook",
  "serde",
  "serde-wasm-bindgen",

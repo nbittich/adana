@@ -22,6 +22,7 @@ jobs:
       - run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
       - run: cargo test --verbose -- --nocapture
       - run: wasm-pack test --headless --firefox ./adana-script-wasm
+      - run: wasm-pack test --headless --chrome ./adana-script-wasm
       - run: cargo clippy --all-targets --all-features -- -D warnings
       - run: cargo release  --no-publish  --no-tag --allow-branch pr_check  --no-push  --dependent-version  upgrade minor
         #- run: cargo publish --dry-run
