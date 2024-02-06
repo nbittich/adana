@@ -41,10 +41,10 @@ regex = { version = "1.10.3", default-features = false, features = ["std"] }
 serial_test = "3.0.0"
 
 # workspace specific libs
-adana-script-core = { path = "./adana-script-core" }
-adana-script = { path = "./adana-script" }
-adana-db = { path = "./adana-db" }
-adana-cache-command = { path = "./adana-cache-command" }
+adana-script-core = { version = "0.16.4", path = "./adana-script-core" }
+adana-script = { version = "0.16.4", path = "./adana-script" }
+adana-db = { version = "0.16.4", path = "./adana-db" }
+adana-cache-command = { version = "0.16.4", path = "./adana-cache-command" }
 
 [profile.release]
 opt-level = 'z'   # Optimize for size.

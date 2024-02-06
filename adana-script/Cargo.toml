@@ -8,6 +8,7 @@ authors.workspace = true
 homepage.workspace = true
 repository.workspace = true
 rust-version.workspace = true
+license.workspace = true
 
 [dependencies]
 #adana-script-core = { git = "https://github.com/nbittich/adana-script-core.git", branch = "feature/bitwise-and-new-ints" }
