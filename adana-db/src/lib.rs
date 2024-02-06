@@ -48,6 +48,9 @@ pub trait Op<K: Key, V: Value> {
     fn clear(&mut self);
     fn contains(&self, k: &K) -> Option<bool>;
     fn len(&self) -> Option<usize>;
+    fn is_empty(&self) -> bool {
+        self.len().filter(|&s| s > 0).is_none()
+    }
 }
 pub trait DbOp<K: Key, V: Value>: Op<K, V> {
     fn get_current_tree(&self) -> Option<String>;
