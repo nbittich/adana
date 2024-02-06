@@ -6,25 +6,11 @@ RUN cargo new adana
 
 WORKDIR /app/adana
 
-COPY rust-toolchain.toml .
-
-COPY ./Cargo.toml ./Cargo.lock ./
-
-COPY .cargo/config .cargo/config
-
-# ENV RUSTFLAGS='-C link-arg=-s'
+COPY . .
 
 RUN cargo build --release 
 
-RUN rm -rf ./src
-
-COPY ./src/ ./src
-
-RUN rm ./target/release/deps/adana*
-
-RUN cargo build --release 
-
-FROM rust:1.73-slim-bookworm
+FROM rust:1.75-slim-bookworm
 
 ENV RUST_LOG=info
 
