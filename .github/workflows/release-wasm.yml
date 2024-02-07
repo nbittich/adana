@@ -29,6 +29,7 @@ jobs:
           name: pkg
           path: adana-script-wasm/pkg
   publish:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Download pkg
