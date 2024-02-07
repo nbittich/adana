@@ -47,5 +47,5 @@ jobs:
       - name: Publish on NPM
         run: |
           cd pkg
-          npm ci
-          npm publish
+          npm install
+          npm publish --access public
