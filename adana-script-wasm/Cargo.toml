@@ -1,0 +1,33 @@
+[package]
+name = "adana-script-wasm"
+version.workspace = true
+authors.workspace = true
+description.workspace = true
+homepage.workspace = true
+repository.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+license.workspace = true
+exclude.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["wee_alloc", "console_error_panic_hook"]
+
+[dependencies]
+wasm-bindgen = { workspace = true }
+adana-script.workspace = true
+adana-script-core.workspace = true
+serde.workspace = true
+serde-wasm-bindgen.workspace = true
+console_error_panic_hook = { workspace = true, optional = true }
+wee_alloc = { workspace = true, optional = true }
+bincode.workspace = true
+
+[dev-dependencies]
+wasm-bindgen-test.workspace = true

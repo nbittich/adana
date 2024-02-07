@@ -1,13 +1,14 @@
+#[cfg(not(target_arch = "wasm32"))]
 const STD_DOWNLOAD_URI: &str =
     "https://github.com/nbittich/adana-std/releases/download/0.16.1/adana-std.tar.gz";
 
-use std::{
-    path::Path,
-    process::{Command, Stdio},
-};
+#[cfg(not(target_arch = "wasm32"))]
+use std::process::{Command, Stdio};
 
 use adana_script_core::primitive::NativeLibrary;
+#[cfg(not(target_arch = "wasm32"))]
 use anyhow::{anyhow, Context};
+use std::path::Path;
 
 pub fn require_dynamic_lib(
     path: &str,
@@ -16,6 +17,17 @@ pub fn require_dynamic_lib(
     try_from_path(path, shared_lib)
 }
 
+#[cfg(target_arch = "wasm32")]
+fn try_from_path(
+    _file_path: &str,
+    _shared_lib: impl AsRef<Path> + Copy,
+) -> anyhow::Result<NativeLibrary> {
+    return Err(anyhow::format_err!(
+        "Cannot load native library in wasm context!"
+    ));
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 fn try_from_path(
     file_path: &str,
     shared_lib: impl AsRef<Path> + Copy,

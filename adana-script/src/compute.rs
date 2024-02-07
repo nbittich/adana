@@ -759,33 +759,43 @@ fn compute_recur(
                         //Ok(function(vec![Primitive::String("s".into())]))
                     } else if let Primitive::NativeFunction(key, lib) = function
                     {
-                        if cfg!(test) {
-                            dbg!(&key, &lib);
-                        }
-                        let mut parameters = vec![];
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            if cfg!(test) {
+                                dbg!(&key, &lib);
+                            }
+                            let mut parameters = vec![];
 
-                        for param in param_values.iter() {
-                            let variable_from_fn_call =
-                                compute_lazy(param.clone(), ctx, shared_lib)?;
-                            parameters.push(variable_from_fn_call);
-                        }
-                        if cfg!(test) {
-                            dbg!(&parameters);
-                        }
+                            for param in param_values.iter() {
+                                let variable_from_fn_call = compute_lazy(
+                                    param.clone(),
+                                    ctx,
+                                    shared_lib,
+                                )?;
+                                parameters.push(variable_from_fn_call);
+                            }
+                            if cfg!(test) {
+                                dbg!(&parameters);
+                            }
 
-                        let mut scope_ctx = scoped_ctx(ctx)?;
+                            let mut scope_ctx = scoped_ctx(ctx)?;
 
-                        let slb = shared_lib.as_ref().to_path_buf();
-                        let fun = move |v, extra_ctx| {
-                            scope_ctx.extend(extra_ctx);
-                            compute_lazy(v, &mut scope_ctx, &slb)
-                        };
-                        unsafe {
-                            lib.call_function(
-                                key.as_str(),
-                                parameters,
-                                Box::new(fun),
-                            )
+                            let slb = shared_lib.as_ref().to_path_buf();
+                            let fun = move |v, extra_ctx| {
+                                scope_ctx.extend(extra_ctx);
+                                compute_lazy(v, &mut scope_ctx, &slb)
+                            };
+                            unsafe {
+                                lib.call_function(
+                                    key.as_str(),
+                                    parameters,
+                                    Box::new(fun),
+                                )
+                            }
+                        }
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            return Ok(Primitive::Error(format!("Loading native function {key} doesn't work in wasm context! {lib:?}")));
                         }
                     } else {
                         Ok(Primitive::Error(format!(
