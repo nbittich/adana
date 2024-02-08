@@ -10,6 +10,29 @@ use std::{
 use crate::{parser::parse_instructions, prelude::BTreeMap};
 
 use super::{ast::to_ast, require_dynamic_lib::require_dynamic_lib};
+
+#[cfg(target_arch = "wasm32")]
+fn write_to_wasm_out(
+    ctx: &mut BTreeMap<String, RefPrimitive>,
+    out: Primitive,
+) -> anyhow::Result<Primitive> {
+    use adana_script_core::constants::WASM_OUT;
+    use std::collections::btree_map::Entry;
+
+    let wasm_out = match ctx.entry(WASM_OUT.to_string()) {
+        Entry::Occupied(o) => o.into_mut(),
+        Entry::Vacant(v) => v.insert(Primitive::Array(vec![]).ref_prim()),
+    };
+    let new_arr = {
+        let arr = wasm_out
+            .read()
+            .map_err(|e| anyhow::format_err!("could not read rc arr: {e}"))?;
+        arr.add(&out)
+    };
+    *wasm_out = new_arr.ref_prim();
+    Ok(Primitive::Unit)
+}
+
 use adana_script_core::{
     primitive::{
         Abs, Add, And, Array, BitShift, Cos, DisplayBinary, DisplayHex, Div,
@@ -358,7 +381,10 @@ fn compute_recur(
                         }
                         #[cfg(target_arch = "wasm32")]
                         {
-                            Ok(Primitive::String(format!("{v}\n")))
+                            write_to_wasm_out(
+                                ctx,
+                                Primitive::String(format!("{v}\n")),
+                            )
                         }
                     }
                     adana_script_core::BuiltInFunctionType::Print => {
@@ -369,7 +395,10 @@ fn compute_recur(
                         }
                         #[cfg(target_arch = "wasm32")]
                         {
-                            Ok(Primitive::String(v.to_string()))
+                            write_to_wasm_out(
+                                ctx,
+                                Primitive::String(v.to_string()),
+                            )
                         }
                     }
                     adana_script_core::BuiltInFunctionType::Require => {
