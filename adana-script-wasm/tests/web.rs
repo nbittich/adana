@@ -4,12 +4,14 @@
 
 extern crate wasm_bindgen_test;
 
+use adana_script_core::constants::WASM_OUT;
 use adana_script_core::primitive::{Primitive, RefPrimitive};
 use adana_script_wasm::{compute_as_js_value, compute_as_string};
 use std::assert_eq;
 use std::collections::BTreeMap;
 use wasm_bindgen::JsValue;
 use wasm_bindgen_test::*;
+
 wasm_bindgen_test_configure!(run_in_browser);
 
 #[wasm_bindgen_test]
@@ -29,11 +31,19 @@ fn compute_as_js_value_test() {
 #[wasm_bindgen_test]
 fn compute_as_string_test() {
     let mut memory = vec![0; 64];
-    let res = compute_as_string(r#"println("hello")"#, &mut memory)
-        .map_err(JsValue::from)
-        .unwrap();
-    assert_eq!("hello\n".to_string(), res);
+    let res = compute_as_string(
+        r#"
+        println("hello")
+        println("world")
+    "#,
+        &mut memory,
+    )
+    .map_err(JsValue::from)
+    .unwrap();
+
+    assert_eq!("hello\nworld\n".to_string(), res);
     let ctx: BTreeMap<String, RefPrimitive> =
         bincode::deserialize(&memory).unwrap();
-    assert!(ctx.is_empty());
+    assert_eq!(1, ctx.len());
+    assert_eq!(Primitive::Array(vec![]), ctx[WASM_OUT].read().unwrap().clone());
 }
