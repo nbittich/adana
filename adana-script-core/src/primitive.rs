@@ -14,6 +14,21 @@ use super::{constants::NULL, Value};
 
 const MAX_U32_AS_I128: i128 = u32::MAX as i128;
 
+pub const TYPE_U8: &str = "u8";
+pub const TYPE_I8: &str = "i8";
+pub const TYPE_INT: &str = "int";
+pub const TYPE_BOOL: &str = "bool";
+pub const TYPE_NULL: &str = "null";
+pub const TYPE_DOUBLE: &str = "double";
+pub const TYPE_STRING: &str = "string";
+pub const TYPE_ARRAY: &str = "array";
+pub const TYPE_ERROR: &str = "error";
+pub const TYPE_NATIVE_LIB: &str = "nativeLibrary";
+pub const TYPE_FUNCTION: &str = "function";
+pub const TYPE_UNIT: &str = "unit";
+pub const TYPE_STRUCT: &str = "struct";
+pub const TYPE_NO_RETURN: &str = "!";
+
 #[derive(Debug)]
 pub struct NativeLibrary {
     #[cfg(target_arch = "wasm32")]
@@ -192,6 +207,7 @@ impl Primitive {
 
 pub trait TypeOf {
     fn type_of(&self) -> Self;
+    fn type_of_str(&self) -> &'static str;
 }
 pub trait BitShift {
     fn left_shift(&self, n: &Self) -> Self;
@@ -1711,33 +1727,35 @@ impl PartialOrd for Primitive {
 }
 
 impl TypeOf for Primitive {
-    fn type_of(&self) -> Self {
+    fn type_of_str(&self) -> &'static str {
         match self {
             Primitive::Ref(l) => {
                 let l =
                     l.read().expect("TYPE_OF ERROR: could not acquire lock!");
-                l.type_of()
+                l.type_of_str()
             }
-            Primitive::U8(_) => Primitive::String("u8".to_string()),
-            Primitive::I8(_) => Primitive::String("i8".to_string()),
-            Primitive::Int(_) => Primitive::String("int".to_string()),
-            Primitive::Bool(_) => Primitive::String("bool".to_string()),
-            Primitive::Null => Primitive::String("null".to_string()),
-            Primitive::Double(_) => Primitive::String("double".to_string()),
-            Primitive::String(_) => Primitive::String("string".to_string()),
-            Primitive::Array(_) => Primitive::String("array".to_string()),
-            Primitive::Error(_) => Primitive::String("error".to_string()),
-            Primitive::NativeLibrary(_) => {
-                Primitive::String("nativeLibrary".into())
-            }
+            Primitive::U8(_) => TYPE_U8,
+            Primitive::I8(_) => TYPE_I8,
+            Primitive::Int(_) => TYPE_INT,
+            Primitive::Bool(_) => TYPE_BOOL,
+            Primitive::Null => TYPE_NULL,
+            Primitive::Double(_) => TYPE_DOUBLE,
+            Primitive::String(_) => TYPE_STRING,
+            Primitive::Array(_) => TYPE_ARRAY,
+            Primitive::Error(_) => TYPE_ERROR,
+            Primitive::NativeLibrary(_) => TYPE_NATIVE_LIB,
             Primitive::Function { .. } | Primitive::NativeFunction(_, _) => {
-                Primitive::String("function".to_string())
+                TYPE_FUNCTION
             }
-            Primitive::Struct(_) => Primitive::String("struct".to_string()),
-            Primitive::Unit => Primitive::String("unit".to_string()),
-            Primitive::NoReturn => Primitive::String("!".to_string()),
-            Primitive::EarlyReturn(v) => v.type_of(),
+            Primitive::Struct(_) => TYPE_STRUCT,
+            Primitive::Unit => TYPE_UNIT,
+            Primitive::NoReturn => TYPE_NO_RETURN,
+            Primitive::EarlyReturn(v) => v.type_of_str(),
         }
+    }
+
+    fn type_of(&self) -> Self {
+        Primitive::String(self.type_of_str().to_string())
     }
 }
 

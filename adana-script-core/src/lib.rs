@@ -2,8 +2,10 @@ pub mod primitive;
 use std::collections::BTreeMap;
 
 use constants::{
-    BREAK, DROP, ELSE, EULER_NUMBER, FALSE, FOR, IF, IN, MULTILINE, NULL, PI,
-    REQUIRE, RETURN, STRUCT, TAU, TO_BINARY, TO_HEX, TRUE, WHILE,
+    BREAK, DROP, ELSE, EULER_NUMBER, FALSE, FOR, IF, IN, IS_ARRAY, IS_BOOL,
+    IS_DOUBLE, IS_ERROR, IS_FUNCTION, IS_I8, IS_INT, IS_STRUCT, IS_U8,
+    MAKE_ERROR, MULTILINE, NULL, PI, REQUIRE, RETURN, STRUCT, TAU, TO_BINARY,
+    TO_HEX, TRUE, WHILE,
 };
 use primitive::Primitive;
 use serde::{Deserialize, Serialize};
@@ -47,6 +49,16 @@ pub mod constants {
     pub const TO_BOOL: &str = "to_bool";
     pub const TO_DOUBLE: &str = "to_double";
     pub const TO_STRING: &str = "to_string";
+    pub const IS_ERROR: &str = "is_error";
+    pub const IS_U8: &str = "is_u8";
+    pub const IS_I8: &str = "is_i8";
+    pub const IS_INT: &str = "is_int";
+    pub const IS_DOUBLE: &str = "is_double";
+    pub const IS_BOOL: &str = "is_bool";
+    pub const IS_FUNCTION: &str = "is_function";
+    pub const IS_ARRAY: &str = "is_array";
+    pub const IS_STRUCT: &str = "is_struct";
+    pub const MAKE_ERROR: &str = "make_err";
     pub const ABS: &str = "abs";
     pub const LENGTH: &str = "length";
     pub const LOG: &str = "log";
@@ -188,6 +200,16 @@ pub enum BuiltInFunctionType {
     Length,
     Include,
     Require,
+    IsError,
+    IsU8,
+    IsI8,
+    IsStruct,
+    IsBool,
+    IsInt,
+    MakeError,
+    IsDouble,
+    IsFunction,
+    IsArray,
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Serialize, Deserialize)]
@@ -265,6 +287,16 @@ impl BuiltInFunctionType {
             BuiltInFunctionType::ToDouble => TO_DOUBLE,
             BuiltInFunctionType::ToBool => TO_BOOL,
             BuiltInFunctionType::ToString => TO_STRING,
+            BuiltInFunctionType::IsError => IS_ERROR,
+            BuiltInFunctionType::IsU8 => IS_U8,
+            BuiltInFunctionType::IsI8 => IS_I8,
+            BuiltInFunctionType::IsStruct => IS_STRUCT,
+            BuiltInFunctionType::IsBool => IS_BOOL,
+            BuiltInFunctionType::IsInt => IS_INT,
+            BuiltInFunctionType::IsDouble => IS_DOUBLE,
+            BuiltInFunctionType::IsFunction => IS_FUNCTION,
+            BuiltInFunctionType::IsArray => IS_ARRAY,
+            BuiltInFunctionType::MakeError => MAKE_ERROR,
         }
     }
 }
@@ -315,6 +347,16 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     TO_HEX,
     TO_BINARY,
     TO_STRING,
+    IS_FUNCTION,
+    IS_DOUBLE,
+    IS_INT,
+    IS_STRUCT,
+    IS_U8,
+    IS_ERROR,
+    IS_I8,
+    IS_BOOL,
+    IS_ARRAY,
+    MAKE_ERROR,
     EVAL,
     TO_BOOL,
     SQRT,
