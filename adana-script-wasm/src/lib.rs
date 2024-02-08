@@ -45,22 +45,25 @@ pub fn compute_as_string(
     let (ctx, result) = compute(script, mem)?;
 
     let result = {
-        let out = ctx.get(WASM_OUT).ok_or(JsError::new("no WASM_OUT"))?;
-        let mut out_rl = out.write()?;
+        if let Some(out) = ctx.get(WASM_OUT) {
+            let mut out_rl = out.write()?;
 
-        match &mut *out_rl {
-            Primitive::Array(ref mut a) if !a.is_empty() => {
-                let mut s = String::new();
-                for p in a.drain(0..) {
-                    s.push_str(&p.to_string());
-                }
-                if !matches!(result, Primitive::Unit) {
-                    s.push_str(&result.to_string());
-                }
+            match &mut *out_rl {
+                Primitive::Array(ref mut a) if !a.is_empty() => {
+                    let mut s = String::new();
+                    for p in a.drain(0..) {
+                        s.push_str(&p.to_string());
+                    }
+                    if !matches!(result, Primitive::Unit) {
+                        s.push_str(&result.to_string());
+                    }
 
-                Ok(s)
+                    Ok(s)
+                }
+                _ => Ok(result.to_string()),
             }
-            _ => Ok(result.to_string()),
+        } else {
+            Ok(result.to_string())
         }
     };
     bincode::serialize_into(mem, &ctx)?;
