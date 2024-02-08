@@ -349,12 +349,26 @@ fn compute_recur(
                         Ok(v.len())
                     }
                     adana_script_core::BuiltInFunctionType::Println => {
-                        println!("{v}");
-                        Ok(Primitive::Unit)
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            println!("{v}");
+                            Ok(Primitive::Unit)
+                        }
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            Ok(Primitive::String(format!("{v}\n")))
+                        }
                     }
                     adana_script_core::BuiltInFunctionType::Print => {
-                        print!("{v}");
-                        Ok(Primitive::Unit)
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            print!("{v}");
+                            Ok(Primitive::Unit)
+                        }
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            Ok(Primitive::String(v.to_string()))
+                        }
                     }
                     adana_script_core::BuiltInFunctionType::Require => {
                         match v {
