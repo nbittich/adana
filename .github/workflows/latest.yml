@@ -16,7 +16,10 @@ jobs:
         with:
           toolchain: stable
           #        targets: x86_64-unknown-linux-musl
+      - run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
       - run: cargo test --verbose -- --nocapture
+      - run: wasm-pack test --headless --firefox ./adana-script-wasm
+      - run: wasm-pack test --headless --chrome ./adana-script-wasm
   docker:
     needs: test
     runs-on: ubuntu-latest

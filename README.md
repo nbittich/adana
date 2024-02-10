@@ -530,6 +530,7 @@ Below, is a list of types and how you declare them. You can also define your str
 | array    | `[1,2,"3", true]`                                                                                |
 | function | `() => {"hello"}` <br> `(name) => {"hello" + name}` <br> `(n) => {`<br>&emsp; `"hello"`<br>`  }` |
 | struct   | `struct {x: 8, y: ()=> {println("hello!")}}`                                                     |
+| error    | `make_err("could not process...")`                                                               |
 
 <hr>
 
@@ -744,29 +745,39 @@ You already have seen `length` to find the length of an array or string, `includ
 
 Here is a list of built-in functions available:
 
-| name      | description                  | example                            |
-| --------- | ---------------------------- | ---------------------------------- |
-| sqrt      | square root                  | `sqrt(2)`                          |
-| abs       | absolute value               | `abs(-2)`                          |
-| log       | logarithm                    | `log(2)`                           |
-| ln        | natural logarithm            | `ln(2)`                            |
-| length    | length of an array or string | `length("azert")`                  |
-| sin       | sine of a number             | `sin(2)`                           |
-| cos       | cosine of a number           | `cos(2)`                           |
-| tan       | tangent of a number          | `tan(2.2)`                         |
-| print     | print without a newline      | `print("hello")`                   |
-| println   | print with a newline         | `println("hello")`                 |
-| include   | include a script             | `include("scripts/test_fn.adana")` |
-| require   | load a shared object         | `require("my_lib.so")`             |
-| to_int    | cast to int                  | `to_int("2")`<br>`to_int(2.2)`     |
-| to_hex    | format num to hex            | `to_hex(2)`<br>`to_hex(2.2)`       |
-| to_binary | format num to binary         | `to_binary(2)`                     |
-| to_double | cast to double               | `to_double("2.2")`                 |
-| to_bool   | cast to bool                 | `to_bool("true")`                  |
-| to_string | cast to string               | `to_string(true)`                  |
-| drop      | drop a variable from context | `drop("myvar")`<br>`drop(arr[0])`  |
-| eval      | Evaluate a string as code    | `eval("sqrt(9)")`                  |
-| type_of   | Type of variable             | `type_of(true)`                    |
+| name        | description                  | example                            |
+| ----------- | ---------------------------- | ---------------------------------- |
+| sqrt        | square root                  | `sqrt(2)`                          |
+| abs         | absolute value               | `abs(-2)`                          |
+| log         | logarithm                    | `log(2)`                           |
+| ln          | natural logarithm            | `ln(2)`                            |
+| length      | length of an array or string | `length("azert")`                  |
+| sin         | sine of a number             | `sin(2)`                           |
+| cos         | cosine of a number           | `cos(2)`                           |
+| tan         | tangent of a number          | `tan(2.2)`                         |
+| print       | print without a newline      | `print("hello")`                   |
+| println     | print with a newline         | `println("hello")`                 |
+| include     | include a script             | `include("scripts/test_fn.adana")` |
+| require     | load a shared object         | `require("my_lib.so")`             |
+| to_int      | cast to int                  | `to_int("2")`<br>`to_int(2.2)`     |
+| to_hex      | format num to hex            | `to_hex(2)`<br>`to_hex(2.2)`       |
+| to_binary   | format num to binary         | `to_binary(2)`                     |
+| to_double   | cast to double               | `to_double("2.2")`                 |
+| to_bool     | cast to bool                 | `to_bool("true")`                  |
+| to_string   | cast to string               | `to_string(true)`                  |
+| drop        | drop a variable from context | `drop("myvar")`<br>`drop(arr[0])`  |
+| eval        | Evaluate a string as code    | `eval("sqrt(9)")`                  |
+| type_of     | Type of variable             | `type_of(true)`                    |
+| is_u8       | Check if u8                  | `is_u8(0x1)`                       |
+| is_i8       | Check if i8                  | `is_i8(-1)`                        |
+| is_int      | Check if int                 | `is_int(512)`                      |
+| is_double   | Check if double              | `is_double(1.2)`                   |
+| is_function | Check if function            | `is_function(()=> {1})`            |
+| is_struct   | Check if struct              | `is_struct(struct {})`             |
+| is_bool     | Check if bool                | `is_bool(false)`                   |
+| is_array    | Check if array               | `is_bool([1,2])`                   |
+| is_error    | Check if error               | `is_error(err)`                    |
+| make_err    | Create an error              | `make_err("oops")`                 |
 
 <hr>
 

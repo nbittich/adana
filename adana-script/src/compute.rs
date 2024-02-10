@@ -10,11 +10,14 @@ use std::{
 use crate::{parser::parse_instructions, prelude::BTreeMap};
 
 use super::{ast::to_ast, require_dynamic_lib::require_dynamic_lib};
+
 use adana_script_core::{
     primitive::{
         Abs, Add, And, Array, BitShift, Cos, DisplayBinary, DisplayHex, Div,
         Logarithm, Mul, Neg, Not, Or, Pow, Primitive, RefPrimitive, Rem, Sin,
-        Sqrt, Sub, Tan, ToBool, ToNumber, TypeOf,
+        Sqrt, Sub, Tan, ToBool, ToNumber, TypeOf, TYPE_ARRAY, TYPE_BOOL,
+        TYPE_DOUBLE, TYPE_ERROR, TYPE_FUNCTION, TYPE_I8, TYPE_INT, TYPE_STRUCT,
+        TYPE_U8,
     },
     BuiltInFunctionType, Operator, TreeNodeValue, Value,
 };
@@ -349,12 +352,36 @@ fn compute_recur(
                         Ok(v.len())
                     }
                     adana_script_core::BuiltInFunctionType::Println => {
-                        println!("{v}");
-                        Ok(Primitive::Unit)
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            println!("{v}");
+                            Ok(Primitive::Unit)
+                        }
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            web_sys::console::log_1(
+                                &wasm_bindgen::JsValue::from_str(&format!(
+                                    "{v}\n"
+                                )),
+                            );
+                            Ok(Primitive::Unit)
+                        }
                     }
                     adana_script_core::BuiltInFunctionType::Print => {
-                        print!("{v}");
-                        Ok(Primitive::Unit)
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            print!("{v}");
+                            Ok(Primitive::Unit)
+                        }
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            web_sys::console::log_1(
+                                &wasm_bindgen::JsValue::from_str(&format!(
+                                    "{v}"
+                                )),
+                            );
+                            Ok(Primitive::Unit)
+                        }
                     }
                     adana_script_core::BuiltInFunctionType::Require => {
                         match v {
@@ -434,6 +461,36 @@ fn compute_recur(
                     // }
                     adana_script_core::BuiltInFunctionType::TypeOf => {
                         Ok(v.type_of())
+                    }
+                    adana_script_core::BuiltInFunctionType::IsError => {
+                        Ok(Primitive::Bool(v.type_of_str() == TYPE_ERROR))
+                    }
+                    adana_script_core::BuiltInFunctionType::IsU8 => {
+                        Ok(Primitive::Bool(v.type_of_str() == TYPE_U8))
+                    }
+                    adana_script_core::BuiltInFunctionType::IsI8 => {
+                        Ok(Primitive::Bool(v.type_of_str() == TYPE_I8))
+                    }
+                    adana_script_core::BuiltInFunctionType::IsStruct => {
+                        Ok(Primitive::Bool(v.type_of_str() == TYPE_STRUCT))
+                    }
+                    adana_script_core::BuiltInFunctionType::IsBool => {
+                        Ok(Primitive::Bool(v.type_of_str() == TYPE_BOOL))
+                    }
+                    adana_script_core::BuiltInFunctionType::IsInt => {
+                        Ok(Primitive::Bool(v.type_of_str() == TYPE_INT))
+                    }
+                    adana_script_core::BuiltInFunctionType::IsDouble => {
+                        Ok(Primitive::Bool(v.type_of_str() == TYPE_DOUBLE))
+                    }
+                    adana_script_core::BuiltInFunctionType::IsFunction => {
+                        Ok(Primitive::Bool(v.type_of_str() == TYPE_FUNCTION))
+                    }
+                    adana_script_core::BuiltInFunctionType::IsArray => {
+                        Ok(Primitive::Bool(v.type_of_str() == TYPE_ARRAY))
+                    }
+                    adana_script_core::BuiltInFunctionType::MakeError => {
+                        Ok(Primitive::Error(v.to_string()))
                     }
                 }
             }

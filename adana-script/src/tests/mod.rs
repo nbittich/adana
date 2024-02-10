@@ -4,6 +4,7 @@ mod dynload;
 mod examples;
 mod foreach;
 mod funct;
+mod is_type;
 mod misc;
 mod opassign;
 mod range;

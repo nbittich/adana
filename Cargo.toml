@@ -16,7 +16,7 @@ description = "namespaces aliases for command lines & basic scripting language"
 homepage = "https://github.com/nbittich/adana"
 repository = "https://github.com/nbittich/adana"
 readme = "README.md"
-rust-version = "1.75"
+rust-version = "1.76"
 edition = "2021"
 license = "MIT"
 exclude = ["vscode/", "dist/", ".vscode", ".history", ".git", ".github"]
@@ -48,6 +48,8 @@ console_error_panic_hook = { version = "0.1.7" }
 serde-wasm-bindgen = "0.6.3"
 wee_alloc = "0.4.5"
 wasm-bindgen-test = "0.3.41"
+web-sys = "0.3.68"
+
 # workspace specific libs
 adana-script-core = { version = "0.17.2", path = "./adana-script-core" }
 adana-script = { version = "0.17.2", path = "./adana-script" }

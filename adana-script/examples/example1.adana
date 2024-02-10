@@ -22,13 +22,13 @@ students = [student_1, student_2, student_3]
 
 sort = (students) => {
           sorted = false
-          while(!sorted) {
+          while !sorted  {
               sorted = true
               len = length(students)-1
               for i in 0..len {
                   left = students[i]
                   right = students[i+1]
-                  if(left.note > right.note) {
+                  if left.note > right.note  {
                        sorted = false
                        students[i] = right
                        students[i+1] = left

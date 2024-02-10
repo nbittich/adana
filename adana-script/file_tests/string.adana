@@ -11,12 +11,12 @@ split = (s, c) => {
     count = 0
     while count < length(s) {
         curr = s[count]
-        if(buf == "aka") {
+        if buf == "aka"  {
             return [buf]
         }
-        if(curr != c) {
+        if curr != c  {
             buf = buf + s[count]
-        }else{
+        } else {
             res = res + [buf]
             buf = ""
         }

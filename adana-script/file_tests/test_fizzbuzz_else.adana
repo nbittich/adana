@@ -2,7 +2,7 @@ count = -1
 
 text = ""
 while count <= 100 {
-    count = count + 1
+    count += 1
     if count % 3 == 0 && count % 5 == 0 {
       # Fizz Buzz
        text = count + " = FizzBuzz"

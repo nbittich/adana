@@ -1,0 +1,36 @@
+* {
+  --bs-body-bg: black;
+}
+
+.form-select {
+  --bs-border-radius: 0;
+}
+
+.btn {
+  --bs-btn-border-radius: 0;
+}
+
+.card {
+  border-radius: 0 !important;
+}
+
+.terminal {
+  resize: none;
+  border-radius: 0;
+  background-color: var(--bs-body-bg) !important;
+  outline: none !important;
+  caret-color: lime;
+  /* Color of the cursor */
+}
+
+textarea:focus {
+  user-select: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+@media (min-width: 720px) {
+  .terminal {
+    height: 82vh !important;
+  }
+}
