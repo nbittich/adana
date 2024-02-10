@@ -5,7 +5,7 @@ export const EXAMPLES = [
     script: `num = 100
 count = 0
 text = ""
- while count == 0 || count <= num {
+while count <= num {
     if count % 3 == 0 && count % 5 == 0 {
       # Fizz Buzz
        text = count + " = FizzBuzz"
