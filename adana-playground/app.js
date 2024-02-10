@@ -19,18 +19,6 @@ async function run() {
   const out = document.querySelector("#out");
   out.value = "";
 
-  function updateLineNumbers() {
-    var lines = text_area.value.split("\n").length;
-    line_numbers.innerHTML = "";
-    for (var i = 1; i <= lines; i++) {
-      line_numbers.innerHTML += i + "<br>";
-    }
-  }
-  var line_numbers = document.querySelector(".line-numbers");
-  updateLineNumbers();
-
-  text_area.addEventListener("input", updateLineNumbers);
-
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     const data = new FormData(e.target);
