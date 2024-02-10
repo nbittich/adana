@@ -2,6 +2,10 @@
   --bs-body-bg: black;
 }
 
+.form-select {
+  --bs-border-radius: 0;
+}
+
 .btn {
   --bs-btn-border-radius: 0;
 }
