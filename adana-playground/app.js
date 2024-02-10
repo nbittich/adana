@@ -1,11 +1,24 @@
-import init, { compute_as_string as compute } from "./pkg/adana_script_wasm.js";
 import { EXAMPLES } from "./examples.js";
 
+async function loadWasmContext() {
+  const module = await import("./pkg/adana_script_wasm.js");
+  await module.default();
+  return module.compute_as_string;
+}
+
+function toggleForm(form, toggle) {
+  const elements = form.elements;
+  for (let i = 0, len = elements.length; i < len; ++i) {
+    elements[i].readOnly = toggle;
+  }
+  const submitButton = form.querySelector('button[type="submit"]');
+  submitButton.disabled = toggle;
+}
 async function run() {
   const form = document.querySelector("form");
   form.classList.add("d-none");
 
-  await init();
+  let compute = await loadWasmContext();
 
   const memory = new WebAssembly.Memory({
     initial: 32, // 2mb
@@ -48,16 +61,27 @@ async function run() {
     }
   });
 
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    toggleForm(form, true);
     logs = [];
+    out.classList.remove("text-danger");
+
     const data = new FormData(e.target);
     for (let i = 0; i < ctx.length; i++) {
       ctx[i] = undefined;
     }
-    let res = compute(data.get("code") || "", ctx);
-    console.log(res); // NORDINE
-    out.value = logs.join("");
+    try {
+      let res = compute(data.get("code") || "", ctx);
+      // console.log(res);
+      out.value = logs.join("");
+      toggleForm(form, false);
+    } catch (e) {
+      out.classList.add("text-danger");
+      out.value = e.toString();
+      compute = await loadWasmContext();
+      toggleForm(form, false);
+    }
   });
   const issueLink = document.querySelector("#issueLink");
   issueLink.onclick = (e) => {
