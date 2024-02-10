@@ -1,7 +1,6 @@
 #![cfg(target_arch = "wasm32")]
 
 mod utils;
-use adana_script_core::constants::WASM_OUT;
 use adana_script_core::primitive::{Primitive, RefPrimitive};
 use std::collections::BTreeMap;
 use wasm_bindgen::prelude::*;
@@ -45,7 +44,7 @@ pub fn compute_as_string(
     let (ctx, result) = compute(script, mem)?;
 
     let result = {
-        if let Some(out) = ctx.get(WASM_OUT) {
+        if let Some(out) = ctx.get("") {
             let mut out_rl = out.write()?;
 
             match &mut *out_rl {

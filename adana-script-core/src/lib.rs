@@ -8,9 +8,6 @@ use constants::{
     TO_HEX, TRUE, WHILE,
 };
 
-#[cfg(target_arch = "wasm32")]
-use constants::WASM_OUT;
-
 use primitive::Primitive;
 use serde::{Deserialize, Serialize};
 use strum::EnumCount;
@@ -85,9 +82,6 @@ pub mod constants {
     pub const IN: &str = "in";
     pub const REQUIRE: &str = "require";
     pub const NATIVE_LIB: &[u8; 14] = b"__native_lib__";
-
-    #[cfg(target_arch = "wasm32")]
-    pub const WASM_OUT: &str = "_WASM_OUT_";
 }
 
 #[derive(Debug, EnumCount)]
@@ -385,8 +379,6 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     REQUIRE,
     MULTILINE,
     STRUCT,
-    #[cfg(target_arch = "wasm32")]
-    WASM_OUT,
     Operator::Add.as_str(),
     Operator::Subtr.as_str(),
     Operator::Div.as_str(),

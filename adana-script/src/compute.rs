@@ -11,28 +11,6 @@ use crate::{parser::parse_instructions, prelude::BTreeMap};
 
 use super::{ast::to_ast, require_dynamic_lib::require_dynamic_lib};
 
-#[cfg(target_arch = "wasm32")]
-fn write_to_wasm_out(
-    ctx: &mut BTreeMap<String, RefPrimitive>,
-    out: Primitive,
-) -> anyhow::Result<Primitive> {
-    use adana_script_core::constants::WASM_OUT;
-    use std::collections::btree_map::Entry;
-
-    let wasm_out = match ctx.entry(WASM_OUT.to_string()) {
-        Entry::Occupied(o) => o.into_mut(),
-        Entry::Vacant(v) => v.insert(Primitive::Array(vec![]).ref_prim()),
-    };
-    let new_arr = {
-        let arr = wasm_out
-            .read()
-            .map_err(|e| anyhow::format_err!("could not read rc arr: {e}"))?;
-        arr.add(&out)
-    };
-    *wasm_out = new_arr.ref_prim();
-    Ok(Primitive::Unit)
-}
-
 use adana_script_core::{
     primitive::{
         Abs, Add, And, Array, BitShift, Cos, DisplayBinary, DisplayHex, Div,
@@ -381,10 +359,12 @@ fn compute_recur(
                         }
                         #[cfg(target_arch = "wasm32")]
                         {
-                            write_to_wasm_out(
-                                ctx,
-                                Primitive::String(format!("{v}\n")),
-                            )
+                            web_sys::console::log_1(
+                                &wasm_bindgen::JsValue::from_str(&format!(
+                                    "{v}\n"
+                                )),
+                            );
+                            Ok(Primitive::Unit)
                         }
                     }
                     adana_script_core::BuiltInFunctionType::Print => {
@@ -395,10 +375,12 @@ fn compute_recur(
                         }
                         #[cfg(target_arch = "wasm32")]
                         {
-                            write_to_wasm_out(
-                                ctx,
-                                Primitive::String(v.to_string()),
-                            )
+                            web_sys::console::log_1(
+                                &wasm_bindgen::JsValue::from_str(&format!(
+                                    "{v}"
+                                )),
+                            );
+                            Ok(Primitive::Unit)
                         }
                     }
                     adana_script_core::BuiltInFunctionType::Require => {

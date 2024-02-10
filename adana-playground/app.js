@@ -19,12 +19,21 @@ async function run() {
   const out = document.querySelector("#out");
   out.value = "";
 
+  let logs = [];
+
+  console.log = function () {
+    for (const a of arguments) {
+      logs.push(a);
+    }
+  };
+
   form.addEventListener("submit", (e) => {
     e.preventDefault();
+    logs = [];
     const data = new FormData(e.target);
     let res = compute(data.get("code") || "", ctx);
     console.log(res); // NORDINE
-    out.value = res;
+    out.value = logs.join("");
   });
   const issueLink = document.querySelector("#issueLink");
   issueLink.onclick = (e) => {
