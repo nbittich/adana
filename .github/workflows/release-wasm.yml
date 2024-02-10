@@ -32,6 +32,8 @@ jobs:
           mkdir ghPages
           cp -r  ./adana-script-wasm/pkg ghPages
           cp ./adana-playground/app.js ghPages
+          cp ./adana-playground/style.css ghPages
+          cp ./adana-playground/favicon.ico ghPages
           cp ./adana-playground/examples.js ghPages
           cp ./adana-playground/index.html ghPages
 
