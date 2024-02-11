@@ -50,7 +50,7 @@ If you would like to contribute, your pull request would be welcome.
 
 My favorite dish 😋
 
-![image](https://user-images.githubusercontent.com/3816305/224366611-1b8963d9-e96f-4804-80a6-d245988d6e65.png)
+![image](https://github.com/nbittich/adana/assets/21688838/842c98ca-2c92-4452-93cc-7412685a7a3e)
 
 <hr>
 
