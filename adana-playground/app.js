@@ -3,7 +3,8 @@ import { EXAMPLES } from "./examples.js";
 async function loadWasmContext() {
   const module = await import("./pkg/adana_script_wasm.js");
   await module.default();
-  return module.compute_as_string;
+  // return module.compute_as_string; use that one instead to create the heap from javascript
+  return module.make_ctx_and_compute_as_string;
 }
 
 function toggleForm(form, toggle) {
@@ -20,13 +21,13 @@ async function run() {
 
   let compute = await loadWasmContext();
 
-  const memory = new WebAssembly.Memory({
-    initial: 32, // 2mb
-    maximum: 512, // 32mb
-    shared: true,
-  });
-
-  const ctx = new Uint8Array(memory.buffer);
+  // uncomment this to create the heap from javascript
+  // const memory = new WebAssembly.Memory({
+  //   initial: 32, // 2mb
+  //   maximum: 512, // 32mb
+  //   shared: true,
+  // });
+  //  const ctx = new Uint8Array(memory.buffer);
 
   form.classList.remove("d-none");
 
@@ -68,11 +69,13 @@ async function run() {
     out.classList.remove("text-danger");
 
     const data = new FormData(e.target);
-    for (let i = 0; i < ctx.length; i++) {
-      ctx[i] = undefined;
-    }
+    // uncomment this if you create memory from javascript
+    // for (let i = 0; i < ctx.length; i++) {
+    //   ctx[i] = undefined;
+    // }
     try {
-      let res = compute(data.get("code") || "", ctx);
+      // let res = compute(data.get("code") || "", ctx); // use this instead if you create memory from javascript
+      let res = compute(data.get("code") || "");
       // console.log(res);
       out.value = logs.join("");
       toggleForm(form, false);

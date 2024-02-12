@@ -21,7 +21,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 const RUST_VERSION: &str = std::env!("CARGO_PKG_RUST_VERSION");
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
-const SHARED_LIB_DIR: &str = ".libs_adana";
+const SHARED_LIB_DIR: &str = "adana/lib";
 
 fn get_path_to_shared_libraries() -> Option<PathBuf> {
     dirs::data_dir().or_else(dirs::home_dir).map(|mut pb| {
