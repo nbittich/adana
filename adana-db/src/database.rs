@@ -9,14 +9,16 @@ use anyhow::Context;
 use log::debug;
 use serde::de::DeserializeOwned;
 
+const ADANA_DB_DIR: &str = "adana/db";
+
 use super::{
     file_lock, FileDb, FileLock, FileLockError, InMemoryDb, Key, Value,
 };
 
 fn get_default_db_path() -> Option<Box<Path>> {
     let mut db_dir = dirs::data_dir().or_else(dirs::home_dir)?;
+    db_dir.push(ADANA_DB_DIR);
     debug!("db dir: {}", db_dir.as_path().to_string_lossy());
-    db_dir.push(".adanadb");
     if !db_dir.exists() {
         std::fs::create_dir_all(&db_dir).ok()?;
     }
