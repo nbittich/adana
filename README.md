@@ -59,7 +59,7 @@ My favorite dish 😋
 1. Docker
    - From the docker hub:
      - `docker run -it nbittich/adana # latest from master`
-     - `docker run -it nbittich/adana:0.17.4 # latest release`
+     - `docker run -it nbittich/adana:v0.17.4 # latest release`
    - Manually:
      - clone the repo
      - build the docker image: `docker build -t adana .`
