@@ -17,9 +17,6 @@ function toggleForm(form, toggle) {
 }
 async function run() {
   const form = document.querySelector("form");
-  form.classList.add("d-none");
-
-  let compute = await loadWasmContext();
 
   // uncomment this to create the heap from javascript
   // const memory = new WebAssembly.Memory({
@@ -29,8 +26,10 @@ async function run() {
   // });
   //  const ctx = new Uint8Array(memory.buffer);
 
-  form.classList.remove("d-none");
+  toggleForm(form, true);
+  let compute = await loadWasmContext();
 
+  toggleForm(form, false);
   const text_area = document.querySelector("#code");
   text_area.value = "";
   text_area.focus();
