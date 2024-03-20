@@ -9,15 +9,20 @@ use rustyline::{
     Cmd, CompletionType, Config, EditMode, Editor, KeyEvent, Movement,
 };
 use rustyline_derive::*;
-use std::path::{Path, MAIN_SEPARATOR};
+use std::path::{Path, PathBuf, MAIN_SEPARATOR};
 use std::process::Command;
 
 use adana_script_core::constants::PI;
 
+const HISTORY_PATH: &str = "adana/history.txt";
+
 fn get_default_history_path() -> Option<Box<Path>> {
-    let mut home_dir = dirs::home_dir()?;
-    home_dir.push(".adana.history.txt");
-    Some(home_dir.into_boxed_path())
+    let history_path =
+        dirs::data_dir().or_else(dirs::home_dir).map(|mut pb| {
+            pb.push(PathBuf::from(HISTORY_PATH));
+            pb
+        })?;
+    Some(history_path.into_boxed_path())
 }
 
 pub fn save_history(

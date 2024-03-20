@@ -107,7 +107,7 @@ impl<K: Key + Clone, V: Value + Clone> DbOp<K, V> for InMemoryDb<K, V> {
             .or_else(|| Some(self.default_tree.to_string()))
     }
 
-    /// return true if the three has to be opened
+    /// return true if the tree has to be opened
     fn open_tree(&mut self, tree_name: &str) -> Option<bool> {
         if let Some(current_tree) = &self.current_tree {
             if current_tree == tree_name {
