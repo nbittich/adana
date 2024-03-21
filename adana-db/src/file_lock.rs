@@ -122,6 +122,7 @@ impl FileLock {
         let _ = File::options()
             .write(true)
             .create(true)
+            .truncate(true)
             .open(&self.inner_p)
             .unwrap();
 

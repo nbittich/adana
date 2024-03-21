@@ -371,7 +371,7 @@ fn test_foreach_struct() {
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
 
     let result = ctx["result"].read().unwrap();
-    let _expected = vec![
+    let _expected = [
         Primitive::String(
             r#"Id: 0 Key: members Value: ["natalie", "roger", "fred"]"#.into(),
         ),
