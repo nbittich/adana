@@ -1,2 +1,5 @@
 max_width = 80
 use_small_heuristics = "max"
+# unstable 
+# see https://github.com/rust-lang/rustfmt/blob/master/Configurations.md#struct_field_align_threshold
+# struct_field_align_threshold = 20
