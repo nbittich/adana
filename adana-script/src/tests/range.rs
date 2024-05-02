@@ -14,7 +14,7 @@ fn simple_foreach_range() {
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
-    assert!(ctx.get("a").is_none());
+    assert!(!ctx.contains_key("a"));
 }
 #[test]
 fn simple_range() {
@@ -32,7 +32,7 @@ fn simple_range() {
         ]),
         ctx["arr"].read().unwrap().clone()
     );
-    assert!(ctx.get("a").is_none());
+    assert!(!ctx.contains_key("a"));
 }
 #[test]
 fn simple_range_in_array() {
@@ -156,5 +156,5 @@ fn simple_foreach_range_both_end() {
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(15), ctx["total"].read().unwrap().clone());
-    assert!(ctx.get("a").is_none());
+    assert!(!ctx.contains_key("a"));
 }

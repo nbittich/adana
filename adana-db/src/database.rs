@@ -158,8 +158,6 @@ mod test {
 
     use std::fs::File;
 
-    use serde::Serialize;
-
     use crate::{Config, Db, DbOp, Op};
 
     #[test]

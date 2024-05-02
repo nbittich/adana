@@ -15,7 +15,7 @@ fn simple_foreach() {
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
-    assert!(ctx.get("a").is_none());
+    assert!(!ctx.contains_key("a"));
 }
 
 #[test]
@@ -81,7 +81,7 @@ fn simple_foreach_string() {
         ]),
         ctx["reverted"].read().unwrap().clone()
     );
-    assert!(ctx.get("a").is_none());
+    assert!(!ctx.contains_key("a"));
 }
 #[test]
 fn simple_foreach_not_assigned() {
@@ -101,7 +101,7 @@ fn simple_foreach_not_assigned() {
         Primitive::String("Hello World How Are Ya ?".into()),
         ctx["message"].read().unwrap().clone()
     );
-    assert!(ctx.get("word").is_none());
+    assert!(!ctx.contains_key("word"));
 }
 
 #[test]
@@ -118,7 +118,7 @@ fn simple_foreach_string_not_assigned() {
         Primitive::String("Hello World How Are Ya ?".into()),
         ctx["message"].read().unwrap().clone()
     );
-    assert!(ctx.get("letter").is_none());
+    assert!(!ctx.contains_key("letter"));
 }
 
 #[test]
@@ -142,7 +142,7 @@ fn simple_foreach_break() {
         Primitive::String("Hello World How Are Ya".into()),
         ctx["message"].read().unwrap().clone()
     );
-    assert!(ctx.get("word").is_none());
+    assert!(!ctx.contains_key("word"));
 }
 
 #[test]
@@ -166,7 +166,7 @@ fn simple_foreach_return() {
         Primitive::String("Hello World How Are".into()),
         ctx["message"].read().unwrap().clone()
     );
-    assert!(ctx.get("word").is_none());
+    assert!(!ctx.contains_key("word"));
 }
 #[test]
 fn simple_foreach_two_depth1() {
@@ -229,7 +229,7 @@ fn simple_foreach_two_depth1() {
         ]),
         ctx["matrix"].read().unwrap().clone()
     );
-    assert!(ctx.get("depth").is_none());
+    assert!(!ctx.contains_key("depth"));
 }
 
 #[test]
@@ -247,7 +247,7 @@ fn simple_foreach_with_idx1() {
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
     assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
-    assert!(ctx.get("a").is_none());
+    assert!(!ctx.contains_key("a"));
 }
 #[test]
 fn simple_foreach_with_idx_from_fn() {
@@ -264,7 +264,7 @@ fn simple_foreach_with_idx_from_fn() {
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
     assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
-    assert!(ctx.get("a").is_none());
+    assert!(!ctx.contains_key("a"));
 }
 #[test]
 fn simple_foreach_with_idx_from_struct() {
@@ -283,7 +283,7 @@ fn simple_foreach_with_idx_from_struct() {
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
     assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
-    assert!(ctx.get("a").is_none());
+    assert!(!ctx.contains_key("a"));
 }
 
 #[test]
@@ -298,7 +298,7 @@ fn simple_foreach_with_paren() {
     let mut ctx = BTreeMap::new();
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
-    assert!(ctx.get("a").is_none());
+    assert!(!ctx.contains_key("a"));
 }
 
 #[test]
@@ -316,7 +316,7 @@ fn simple_foreach_with_idx_with_paren() {
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
     assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
-    assert!(ctx.get("a").is_none());
+    assert!(!ctx.contains_key("a"));
 }
 
 #[test]
@@ -336,7 +336,7 @@ fn simple_foreach_with_idx_from_struct_with_paren() {
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(Primitive::Int(10), ctx["total"].read().unwrap().clone());
     assert_eq!(Primitive::Int(6), ctx["idx_total"].read().unwrap().clone());
-    assert!(ctx.get("a").is_none());
+    assert!(!ctx.contains_key("a"));
 }
 
 #[test]

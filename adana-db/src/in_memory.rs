@@ -114,7 +114,7 @@ impl<K: Key + Clone, V: Value + Clone> DbOp<K, V> for InMemoryDb<K, V> {
                 return Some(false);
             }
         }
-        if self.trees.get(tree_name).is_none() {
+        if !self.trees.contains_key(tree_name) {
             self.trees.insert(tree_name.to_string(), Tree::default());
         }
 
