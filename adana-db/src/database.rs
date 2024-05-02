@@ -162,9 +162,6 @@ mod test {
 
     use crate::{Config, Db, DbOp, Op};
 
-    #[derive(Serialize, Debug, PartialEq)]
-    struct MyString(String);
-
     #[test]
     fn test_file_db_lock() {
         let _ = File::create("/tmp/adana.db"); // reset the file
