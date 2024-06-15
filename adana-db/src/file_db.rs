@@ -99,23 +99,13 @@ where
     }
 
     fn drop_tree(&mut self, tree_name: &str) -> bool {
-        if let Some(res) =
-            self.update(|mut guard| Some(guard.drop_tree(tree_name)))
-        {
-            res
-        } else {
-            false
-        }
+        self.update(|mut guard| Some(guard.drop_tree(tree_name)))
+            .unwrap_or_default()
     }
 
     fn clear_tree(&mut self, tree_name: &str) -> bool {
-        if let Some(res) =
-            self.update(|mut guard| Some(guard.clear_tree(tree_name)))
-        {
-            res
-        } else {
-            false
-        }
+        self.update(|mut guard| Some(guard.clear_tree(tree_name)))
+            .unwrap_or_default()
     }
 
     fn merge_trees(
