@@ -40,20 +40,11 @@ fn recognize_hexadecimal(input: &str) -> Res<&str> {
     // <'a, E: ParseError<&'a str>>
     preceded(
         alt((tag("0x"), tag("0X"))),
-        recognize(many1(terminated(
-            one_of("0123456789abcdefABCDEF"),
-            many0(nom::character::complete::char('_')),
-        ))),
+        recognize(many1(one_of("0123456789abcdefABCDEF"))),
     )(input)
 }
 fn recognize_binary(input: &str) -> Res<&str> {
-    preceded(
-        alt((tag("0b"), tag("0B"))),
-        recognize(many1(terminated(
-            one_of("01"),
-            many0(nom::character::complete::char('_')),
-        ))),
-    )(input)
+    preceded(alt((tag("0b"), tag("0B"))), recognize(many1(one_of("01"))))(input)
 }
 
 fn parse_u8_binary(s: &str) -> Res<Value> {
