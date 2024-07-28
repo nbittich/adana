@@ -159,7 +159,7 @@ pub fn process_command(
                 if merge(db, key, current_cache).is_some() {
                     println!(
                         "cache {} has been merged with cache {}.",
-                        Red.bold().paint(&current_cache.to_string()),
+                        Red.bold().paint(current_cache.to_string()),
                         Yellow.bold().paint(key)
                     );
                 } else {
