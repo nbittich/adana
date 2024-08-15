@@ -68,15 +68,16 @@ for i in 0..10 {
     key: "is_match",
     label: "Is match (regex)",
     script: `pattern = """(?i)a+(?-i)b+"""
-      text = "AaAaAbbBBBb"
-      is_match(text, pattern)`
+text = "AaAaAbbBBBb"
+println(is_match(text, pattern))
+`
   },
   {
     key: "match",
     label: "Match (regex)",
     script: `pattern = """(\w+): \$(\d+)"""
-      text = "Item1: $100, Item2: $200, Item3: $300"
-      match(text, pattern)`
+text = "Item1: $100, Item2: $200, Item3: $300"
+println(match(text, pattern))`
   },
   {
     key: "strings",
