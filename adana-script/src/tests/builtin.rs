@@ -71,6 +71,88 @@ fn test_to_binary() {
     let r = compute(r#"to_binary(127)"#, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::String("0b1111111".into()));
 }
+
+#[test]
+fn test_is_match() {
+    let mut ctx = BTreeMap::new();
+    let r = compute(
+        r#"
+      pattern = """(?i)a+(?-i)b+"""
+      text = "AaAaAbbBBBb"
+      is_match(text, pattern)
+ 
+    "#,
+        &mut ctx,
+        "N/A",
+    )
+    .unwrap();
+    assert_eq!(Primitive::Bool(true), r);
+    let mut ctx = BTreeMap::new();
+    let r = compute(
+        r#"
+      pattern = """(\w+): \$(\d+)"""
+      text = "Item1: $100, Item2: $200, Item3: $300"
+      is_match(text, pattern)
+ 
+    "#,
+        &mut ctx,
+        "N/A",
+    )
+    .unwrap();
+    assert_eq!(Primitive::Bool(true), r);
+}
+#[test]
+fn test_match() {
+    let mut ctx = BTreeMap::new();
+    let r = compute(
+        r#"
+      pattern = """(?i)a+(?-i)b+"""
+      text = "AaAaAbbBBBb"
+      match(text, pattern)
+ 
+    "#,
+        &mut ctx,
+        "N/A",
+    )
+    .unwrap();
+    assert_eq!(
+        Primitive::Array(vec![Primitive::String("AaAaAbb".to_string())]),
+        r
+    );
+    let mut ctx = BTreeMap::new();
+    let r = compute(
+        r#"
+      pattern = """(\w+): \$(\d+)"""
+      text = "Item1: $100, Item2: $200, Item3: $300"
+      match(text, pattern)
+ 
+    "#,
+        &mut ctx,
+        "N/A",
+    )
+    .unwrap();
+    assert_eq!(
+        Primitive::Array(vec![
+            Primitive::Array(vec![
+                Primitive::String("Item1: $100".to_string()),
+                Primitive::String("Item1".to_string()),
+                Primitive::String("100".to_string())
+            ]),
+            Primitive::Array(vec![
+                Primitive::String("Item2: $200".to_string()),
+                Primitive::String("Item2".to_string()),
+                Primitive::String("200".to_string())
+            ]),
+            Primitive::Array(vec![
+                Primitive::String("Item3: $300".to_string()),
+                Primitive::String("Item3".to_string()),
+                Primitive::String("300".to_string())
+            ])
+        ]),
+        r
+    );
+}
+
 #[test]
 fn test_type_of() {
     let mut ctx = BTreeMap::new();

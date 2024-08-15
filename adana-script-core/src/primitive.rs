@@ -204,6 +204,10 @@ impl Primitive {
         Ok(v)
     }
 }
+pub trait Match {
+    fn match_regex(&self, regex: &Primitive) -> Self;
+    fn is_match(&self, regex: &Primitive) -> Self;
+}
 
 pub trait TypeOf {
     fn type_of(&self) -> Self;
@@ -1722,6 +1726,83 @@ impl PartialOrd for Primitive {
             (Primitive::Error(_), _) => None,
             (Primitive::Unit, _) => None,
             (Primitive::Function { parameters: _, exprs: _ }, _) => None,
+        }
+    }
+}
+
+impl Match for Primitive {
+    fn match_regex(&self, regex: &Primitive) -> Self {
+        match self {
+            Primitive::Ref(l) => {
+                let l =
+                    l.read().expect("TYPE_OF ERROR: could not acquire lock!");
+                l.match_regex(regex)
+            }
+            v @ Primitive::String(s) => match regex {
+                Primitive::Ref(r) => {
+                    let r =
+                        r.read().expect("MATCH ERROR: could not acquire lock!");
+                    v.match_regex(&r)
+                }
+                Primitive::String(r) => match regex::Regex::new(r) {
+                    Ok(re) => {
+                        let mut captures = vec![];
+                        for cap in re.captures_iter(s) {
+                            let len = cap.len();
+                            let p = if len == 0 {
+                                Primitive::Null
+                            } else if len == 1 {
+                                cap.get(0)
+                                    .map(|c| {
+                                        Primitive::String(
+                                            c.as_str().to_string(),
+                                        )
+                                    })
+                                    .unwrap_or(Primitive::Null)
+                            } else {
+                                Primitive::Array(
+                                    cap.iter()
+                                        .flatten()
+                                        .map(|c| {
+                                            Primitive::String(
+                                                c.as_str().to_string(),
+                                            )
+                                        })
+                                        .collect::<Vec<_>>(),
+                                )
+                            };
+                            captures.push(p);
+                        }
+                        Primitive::Array(captures)
+                    }
+                    Err(e) => Primitive::Error(format!("regex error: {e}")),
+                },
+                r => Primitive::Error(format!("bad regex!  {r}")),
+            },
+            p => Primitive::Error(format!("illegal call to match!!  {p}")),
+        }
+    }
+
+    fn is_match(&self, regex: &Primitive) -> Self {
+        match self {
+            Primitive::Ref(l) => {
+                let l =
+                    l.read().expect("TYPE_OF ERROR: could not acquire lock!");
+                l.is_match(regex)
+            }
+            v @ Primitive::String(s) => match regex {
+                Primitive::Ref(r) => {
+                    let r =
+                        r.read().expect("MATCH ERROR: could not acquire lock!");
+                    v.is_match(&r)
+                }
+                Primitive::String(r) => match regex::Regex::new(r) {
+                    Ok(re) => Primitive::Bool(re.is_match(s)),
+                    Err(e) => Primitive::Error(format!("regex error: {e}")),
+                },
+                r => Primitive::Error(format!("bad regex!  {r}")),
+            },
+            p => Primitive::Error(format!("illegal call to is_match!!  {p}")),
         }
     }
 }

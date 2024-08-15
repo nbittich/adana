@@ -14,8 +14,8 @@ use super::{ast::to_ast, require_dynamic_lib::require_dynamic_lib};
 use adana_script_core::{
     primitive::{
         Abs, Add, And, Array, BitShift, Cos, DisplayBinary, DisplayHex, Div,
-        Logarithm, Mul, Neg, Not, Or, Pow, Primitive, RefPrimitive, Rem, Sin,
-        Sqrt, Sub, Tan, ToBool, ToNumber, TypeOf, TYPE_ARRAY, TYPE_BOOL,
+        Logarithm, Match, Mul, Neg, Not, Or, Pow, Primitive, RefPrimitive, Rem,
+        Sin, Sqrt, Sub, Tan, ToBool, ToNumber, TypeOf, TYPE_ARRAY, TYPE_BOOL,
         TYPE_DOUBLE, TYPE_ERROR, TYPE_FUNCTION, TYPE_I8, TYPE_INT, TYPE_STRUCT,
         TYPE_U8,
     },
@@ -461,6 +461,37 @@ fn compute_recur(
                     // }
                     adana_script_core::BuiltInFunctionType::TypeOf => {
                         Ok(v.type_of())
+                    }
+                    adana_script_core::BuiltInFunctionType::Match => match v {
+                        Primitive::Array(arr) => {
+                            let [s, r] = &arr[0..=1] else {
+                                return Ok(Primitive::Error(format!(
+                                    "Invalid argument len {}",
+                                    arr.len()
+                                )));
+                            };
+                            Ok(s.match_regex(r))
+                        }
+                        _ => Ok(Primitive::Error(
+                            "invalid call to builtin fn match".to_string(),
+                        )),
+                    },
+                    adana_script_core::BuiltInFunctionType::IsMatch => {
+                        match v {
+                            Primitive::Array(arr) => {
+                                let [s, r] = &arr[0..=1] else {
+                                    return Ok(Primitive::Error(format!(
+                                        "Invalid argument len {}",
+                                        arr.len()
+                                    )));
+                                };
+                                Ok(s.is_match(r))
+                            }
+                            _ => Ok(Primitive::Error(
+                                "invalid call to builtin fn is_match"
+                                    .to_string(),
+                            )),
+                        }
                     }
                     adana_script_core::BuiltInFunctionType::IsError => {
                         Ok(Primitive::Bool(v.type_of_str() == TYPE_ERROR))

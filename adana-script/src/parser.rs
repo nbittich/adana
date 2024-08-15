@@ -295,32 +295,28 @@ fn parse_fn(s: &str) -> Res<Value> {
     )(s)
 }
 
-fn parse_fn_call(s: &str) -> Res<Value> {
-    let parser = |p| {
-        preceded(
-            tag_no_space("("),
-            terminated(
-                separated_list0(
-                    tag_no_space(","),
-                    alt((
-                        parse_fn,
-                        map(
-                            many1(preceded(multispace0, parse_value)),
-                            |mut v| {
-                                if v.len() == 1 {
-                                    v.remove(0)
-                                } else {
-                                    Value::Expression(v)
-                                }
-                            },
-                        ),
-                    )),
-                ),
-                tag_no_space(")"),
+fn parse_fn_args(s: &str) -> Res<Vec<Value>> {
+    preceded(
+        tag_no_space("("),
+        terminated(
+            separated_list0(
+                tag_no_space(","),
+                alt((
+                    parse_fn,
+                    map(many1(preceded(multispace0, parse_value)), |mut v| {
+                        if v.len() == 1 {
+                            v.remove(0)
+                        } else {
+                            Value::Expression(v)
+                        }
+                    }),
+                )),
             ),
-        )(p)
-    };
-
+            tag_no_space(")"),
+        ),
+    )(s)
+}
+fn parse_fn_call(s: &str) -> Res<Value> {
     map(
         pair(
             alt((
@@ -329,7 +325,7 @@ fn parse_fn_call(s: &str) -> Res<Value> {
                 parse_array_access,
                 parse_variable,
             )),
-            map(parser, Value::BlockParen),
+            map(parse_fn_args, Value::BlockParen),
         ),
         |(function, parameters)| Value::FunctionCall {
             parameters: Box::new(parameters),
@@ -405,6 +401,19 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
             )(s)
         }
     }
+    fn parse_builtin_many_args<'a>(
+        fn_type: BuiltInFunctionType,
+    ) -> impl Fn(&'a str) -> Res<Value> {
+        move |s: &str| {
+            map(
+                preceded(tag_no_space(fn_type.as_str()), parse_fn_args),
+                |expr| Value::BuiltInFunction {
+                    fn_type,
+                    expr: Box::new(Value::Array(expr)),
+                },
+            )(s)
+        }
+    }
     alt((
         parse_builtin(BuiltInFunctionType::Eval),
         parse_builtin(BuiltInFunctionType::Println),
@@ -442,7 +451,10 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
             parse_builtin(BuiltInFunctionType::Sin),
             parse_builtin(BuiltInFunctionType::Cos),
         )),
-        // parse_builtin(BuiltInFunctionType::ReadLines),
+        alt((
+            parse_builtin_many_args(BuiltInFunctionType::IsMatch),
+            parse_builtin_many_args(BuiltInFunctionType::Match),
+        )), // parse_builtin(BuiltInFunctionType::ReadLines),
     ))(s)
 }
 

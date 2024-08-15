@@ -17,5 +17,12 @@ exclude.workspace = true
 anyhow.workspace = true
 serde.workspace = true
 strum.workspace = true
+regex = { workspace = true, features = [
+  "unicode",
+  "unicode-age",
+  "unicode-bool",
+  "unicode-case",
+  "unicode-perl",
+] }
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 libloading.workspace = true

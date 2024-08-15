@@ -3,9 +3,9 @@ use std::collections::BTreeMap;
 
 use constants::{
     BREAK, DROP, ELSE, EULER_NUMBER, FALSE, FOR, IF, IN, IS_ARRAY, IS_BOOL,
-    IS_DOUBLE, IS_ERROR, IS_FUNCTION, IS_I8, IS_INT, IS_STRUCT, IS_U8,
-    MAKE_ERROR, MULTILINE, NULL, PI, REQUIRE, RETURN, STRUCT, TAU, TO_BINARY,
-    TO_HEX, TRUE, WHILE,
+    IS_DOUBLE, IS_ERROR, IS_FUNCTION, IS_I8, IS_INT, IS_MATCH, IS_STRUCT,
+    IS_U8, MAKE_ERROR, MATCH, MULTILINE, NULL, PI, REQUIRE, RETURN, STRUCT,
+    TAU, TO_BINARY, TO_HEX, TRUE, WHILE,
 };
 
 use primitive::Primitive;
@@ -78,6 +78,8 @@ pub mod constants {
     pub const STRUCT: &str = "struct";
     pub const EVAL: &str = "eval";
     pub const TYPE_OF: &str = "type_of";
+    pub const IS_MATCH: &str = "is_match";
+    pub const MATCH: &str = "match";
     pub const FOR: &str = "for";
     pub const IN: &str = "in";
     pub const REQUIRE: &str = "require";
@@ -198,6 +200,8 @@ pub enum BuiltInFunctionType {
     Print,
     Eval,
     TypeOf,
+    Match,
+    IsMatch,
     Length,
     Include,
     Require,
@@ -277,6 +281,8 @@ impl BuiltInFunctionType {
             BuiltInFunctionType::Cos => COS,
             BuiltInFunctionType::Tan => TAN,
             BuiltInFunctionType::TypeOf => TYPE_OF,
+            BuiltInFunctionType::IsMatch => IS_MATCH,
+            BuiltInFunctionType::Match => MATCH,
             BuiltInFunctionType::Println => PRINT_LN,
             BuiltInFunctionType::Print => PRINT,
             BuiltInFunctionType::Eval => EVAL,
@@ -346,6 +352,8 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     TO_INT,
     TO_DOUBLE,
     TO_HEX,
+    IS_MATCH,
+    MATCH,
     TO_BINARY,
     TO_STRING,
     IS_FUNCTION,
