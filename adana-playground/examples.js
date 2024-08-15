@@ -75,7 +75,7 @@ println(is_match(text, pattern))
   {
     key: "match",
     label: "Match (regex)",
-    script: `pattern = """(\w+): \$(\d+)"""
+    script: `pattern = """(\\w+): \\$(\\d+)"""
 text = "Item1: $100, Item2: $200, Item3: $300"
 println(match(text, pattern))`
   },
