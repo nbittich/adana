@@ -59,7 +59,7 @@ My favorite dish 😋
 1. Docker
    - From the docker hub:
      - `docker run -it nbittich/adana # latest from master`
-     - `docker run -it nbittich/adana:v0.17.10 # latest release`
+     - `docker run -it nbittich/adana:v0.17.11 # latest release`
    - Manually:
      - clone the repo
      - build the docker image: `docker build -t adana .`
@@ -384,7 +384,7 @@ If it is not installed yet, you will see instructions on how to install it, e.g:
 std lib doesn't exist: "/home/nbittich/.local/share/adana/lib/adana-std/fs.so".
 
 Try to install it like so:
-    - wget -P /tmp https://github.com/nbittich/adana-std/releases/download/0.17.10/adana-std.tar.gz
+    - wget -P /tmp https://github.com/nbittich/adana-std/releases/download/0.17.11/adana-std.tar.gz
     - mkdir /home/nbittich/.local/share/adana/lib/adana-std && tar xvzf /tmp/adana-std.tar.gz \
             -C /home/nbittich/.local/share/adana/lib/adana-std
 ```
