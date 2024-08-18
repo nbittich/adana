@@ -73,6 +73,93 @@ fn test_to_binary() {
 }
 
 #[test]
+fn test_floor() {
+    let mut ctx = BTreeMap::new();
+    let r = compute(r#"floor(4.7)"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(Primitive::Double(4.), r);
+}
+
+#[test]
+fn test_ceil() {
+    let mut ctx = BTreeMap::new();
+    let r = compute(r#"ceil(4.7)"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(Primitive::Double(5.), r);
+}
+#[test]
+fn test_round() {
+    let mut ctx = BTreeMap::new();
+    let r = compute(r#"round(4.46790, 2)"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(Primitive::Double(4.47), r);
+    let r = compute(r#"round(4.46790, 3)"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(Primitive::Double(4.468), r);
+}
+#[test]
+fn test_to_lower() {
+    let mut ctx = BTreeMap::new();
+    let r = compute(r#"to_lower("HELLO")"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(Primitive::String("hello".into()), r);
+}
+#[test]
+fn test_to_upper() {
+    let mut ctx = BTreeMap::new();
+    let r = compute(r#"to_upper("hello")"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(Primitive::String("HELLO".into()), r);
+}
+#[test]
+fn test_capitalize() {
+    let mut ctx = BTreeMap::new();
+    let r = compute(r#"capitalize("nordine")"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(Primitive::String("Nordine".into()), r);
+}
+
+#[test]
+fn test_replace() {
+    let mut ctx = BTreeMap::new();
+    let r = compute(r#"replace("Hello, world! Welcome to the world of JavaScript.", "world", "universe")"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        Primitive::String(
+            "Hello, universe! Welcome to the world of JavaScript.".into()
+        ),
+        r
+    );
+    let r = compute(
+        r#"replace("AaAaAbbBBBb", "(?i)a+(?-i)b+", "xxx")"#,
+        &mut ctx,
+        "N/A",
+    )
+    .unwrap();
+    assert_eq!(Primitive::String("xxxBBBb".into()), r);
+    let r = compute(r#"replace("The event is on 12/31/2023. Another date is 31-12-2023. And another one is 2023.12.31.", "(\d{2})/(\d{2})/(\d{4})", "$2-$1-$3")"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        Primitive::String(
+            "The event is on 31-12-2023. Another date is 31-12-2023. And another one is 2023.12.31.".into()
+        ),
+        r
+    );
+}
+
+#[test]
+fn test_replace_all() {
+    let mut ctx = BTreeMap::new();
+    let r = compute(r#"replace_all("Hello, world! Welcome to the world of JavaScript.", "world", "universe")"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        Primitive::String(
+            "Hello, universe! Welcome to the universe of JavaScript.".into()
+        ),
+        r
+    );
+    let r = compute(r#"replace_all("AaAaAbbBBBb", "A", "b")"#, &mut ctx, "N/A")
+        .unwrap();
+    assert_eq!(Primitive::String("bababbbBBBb".into()), r);
+    let r = compute(r#"replace_all("The event is on 12/31/2023. Another date is 31-12-2023. And another one is 12/31/2023.", "(\d{2})/(\d{2})/(\d{4})", "$2-$1-$3")"#, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        Primitive::String(
+            "The event is on 31-12-2023. Another date is 31-12-2023. And another one is 31-12-2023.".into()
+        ),
+        r
+    );
+}
+#[test]
 fn test_is_match() {
     let mut ctx = BTreeMap::new();
     let r = compute(

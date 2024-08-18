@@ -450,10 +450,18 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
             parse_builtin(BuiltInFunctionType::Log),
             parse_builtin(BuiltInFunctionType::Sin),
             parse_builtin(BuiltInFunctionType::Cos),
+            parse_builtin(BuiltInFunctionType::ToUpper),
+            parse_builtin(BuiltInFunctionType::ToLower),
+            parse_builtin(BuiltInFunctionType::Capitalize),
+            parse_builtin(BuiltInFunctionType::Ceil),
+            parse_builtin(BuiltInFunctionType::Floor),
         )),
         alt((
             parse_builtin_many_args(BuiltInFunctionType::IsMatch),
             parse_builtin_many_args(BuiltInFunctionType::Match),
+            parse_builtin_many_args(BuiltInFunctionType::Replace),
+            parse_builtin_many_args(BuiltInFunctionType::Round),
+            parse_builtin_many_args(BuiltInFunctionType::ReplaceAll),
         )), // parse_builtin(BuiltInFunctionType::ReadLines),
     ))(s)
 }

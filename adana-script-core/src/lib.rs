@@ -2,10 +2,11 @@ pub mod primitive;
 use std::collections::BTreeMap;
 
 use constants::{
-    BREAK, DROP, ELSE, EULER_NUMBER, FALSE, FOR, IF, IN, IS_ARRAY, IS_BOOL,
-    IS_DOUBLE, IS_ERROR, IS_FUNCTION, IS_I8, IS_INT, IS_MATCH, IS_STRUCT,
-    IS_U8, MAKE_ERROR, MATCH, MULTILINE, NULL, PI, REQUIRE, RETURN, STRUCT,
-    TAU, TO_BINARY, TO_HEX, TRUE, WHILE,
+    BREAK, CAPITALIZE, CEIL, DROP, ELSE, EULER_NUMBER, FALSE, FLOOR, FOR, IF,
+    IN, IS_ARRAY, IS_BOOL, IS_DOUBLE, IS_ERROR, IS_FUNCTION, IS_I8, IS_INT,
+    IS_MATCH, IS_STRUCT, IS_U8, MAKE_ERROR, MATCH, MULTILINE, NULL, PI,
+    REPLACE, REPLACE_ALL, REQUIRE, RETURN, ROUND, STRUCT, TAU, TO_BINARY,
+    TO_HEX, TO_LOWER, TO_UPPER, TRUE, WHILE,
 };
 
 use primitive::Primitive;
@@ -48,6 +49,14 @@ pub mod constants {
     pub const TO_BINARY: &str = "to_binary";
     pub const TO_INT: &str = "to_int";
     pub const TO_BOOL: &str = "to_bool";
+    pub const TO_UPPER: &str = "to_upper";
+    pub const TO_LOWER: &str = "to_lower";
+    pub const CAPITALIZE: &str = "capitalize";
+    pub const REPLACE: &str = "replace";
+    pub const REPLACE_ALL: &str = "replace_all";
+    pub const FLOOR: &str = "floor";
+    pub const CEIL: &str = "ceil";
+    pub const ROUND: &str = "round";
     pub const TO_DOUBLE: &str = "to_double";
     pub const TO_STRING: &str = "to_string";
     pub const IS_ERROR: &str = "is_error";
@@ -194,6 +203,14 @@ pub enum BuiltInFunctionType {
     ToHex,
     ToDouble,
     ToBool,
+    ToUpper,
+    ToLower,
+    Capitalize,
+    Replace,
+    ReplaceAll,
+    Floor,
+    Round,
+    Ceil,
     ToString,
     Tan,
     Println,
@@ -293,6 +310,14 @@ impl BuiltInFunctionType {
             BuiltInFunctionType::ToBinary => TO_BINARY,
             BuiltInFunctionType::ToDouble => TO_DOUBLE,
             BuiltInFunctionType::ToBool => TO_BOOL,
+            BuiltInFunctionType::ToUpper => TO_UPPER,
+            BuiltInFunctionType::ToLower => TO_LOWER,
+            BuiltInFunctionType::Capitalize => CAPITALIZE,
+            BuiltInFunctionType::Replace => REPLACE,
+            BuiltInFunctionType::ReplaceAll => REPLACE_ALL,
+            BuiltInFunctionType::Floor => FLOOR,
+            BuiltInFunctionType::Ceil => CEIL,
+            BuiltInFunctionType::Round => ROUND,
             BuiltInFunctionType::ToString => TO_STRING,
             BuiltInFunctionType::IsError => IS_ERROR,
             BuiltInFunctionType::IsU8 => IS_U8,
@@ -352,6 +377,14 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     TO_INT,
     TO_DOUBLE,
     TO_HEX,
+    CEIL,
+    ROUND,
+    FLOOR,
+    TO_UPPER,
+    TO_LOWER,
+    REPLACE,
+    REPLACE_ALL,
+    CAPITALIZE,
     IS_MATCH,
     MATCH,
     TO_BINARY,

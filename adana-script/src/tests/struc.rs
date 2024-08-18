@@ -260,6 +260,44 @@ fn test_struct_access_key5() {
     let r = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::String("nordine".into()));
 }
+#[test]
+fn test_struct_access_key6() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        struct {
+            other_struct: struct {
+                name: () => {"nordine"},
+            },
+            age: 34,
+            members: ["natalie", "roger","fred"],
+        }.other_struct["name"]()
+
+       "#;
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("nordine".into()));
+}
+
+#[test]
+fn test_struct_access_key7() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        x= struct {
+            other_struct: struct {
+                name: struct {
+                    first_name: () => {"nordine"}
+                    last_name: () => {"bittich"}
+                    age: 36
+                },
+            },
+            age: 34,
+            members: ["natalie", "roger","fred"],
+        }
+        x.other_struct.name.first_name() + " " + x.other_struct["name"]["last_name"]() + ":" + x.other_struct["name"]["age"]
+
+       "#;
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("nordine bittich:36".into()));
+}
 
 #[test]
 fn test_struct_empty() {

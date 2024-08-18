@@ -14,10 +14,10 @@ use super::{ast::to_ast, require_dynamic_lib::require_dynamic_lib};
 use adana_script_core::{
     primitive::{
         Abs, Add, And, Array, BitShift, Cos, DisplayBinary, DisplayHex, Div,
-        Logarithm, Match, Mul, Neg, Not, Or, Pow, Primitive, RefPrimitive, Rem,
-        Sin, Sqrt, Sub, Tan, ToBool, ToNumber, TypeOf, TYPE_ARRAY, TYPE_BOOL,
-        TYPE_DOUBLE, TYPE_ERROR, TYPE_FUNCTION, TYPE_I8, TYPE_INT, TYPE_STRUCT,
-        TYPE_U8,
+        Logarithm, Mul, Neg, Not, Or, Pow, Primitive, RefPrimitive, Rem, Round,
+        Sin, Sqrt, StringManipulation, Sub, Tan, ToBool, ToNumber, TypeOf,
+        TYPE_ARRAY, TYPE_BOOL, TYPE_DOUBLE, TYPE_ERROR, TYPE_FUNCTION, TYPE_I8,
+        TYPE_INT, TYPE_STRUCT, TYPE_U8,
     },
     BuiltInFunctionType, Operator, TreeNodeValue, Value,
 };
@@ -461,6 +461,76 @@ fn compute_recur(
                     // }
                     adana_script_core::BuiltInFunctionType::TypeOf => {
                         Ok(v.type_of())
+                    }
+                    adana_script_core::BuiltInFunctionType::Floor => {
+                        Ok(v.floor())
+                    }
+                    adana_script_core::BuiltInFunctionType::Ceil => {
+                        Ok(v.ceil())
+                    }
+                    adana_script_core::BuiltInFunctionType::Round => match v {
+                        Primitive::Array(arr) => {
+                            if arr.is_empty() {
+                                return Ok(Primitive::Error(format!(
+                                    "Invalid argument len {}",
+                                    arr.len()
+                                )));
+                            }
+                            let s = &arr[0];
+                            let decimals = if arr.len() == 2 {
+                                &arr[1]
+                            } else {
+                                &Primitive::Int(2)
+                            };
+                            Ok(s.round(decimals))
+                        }
+                        _ => Ok(Primitive::Error(
+                            "invalid call to builtin fn match".to_string(),
+                        )),
+                    },
+                    adana_script_core::BuiltInFunctionType::ToUpper => {
+                        Ok(v.to_upper())
+                    }
+                    adana_script_core::BuiltInFunctionType::ToLower => {
+                        Ok(v.to_lower())
+                    }
+                    adana_script_core::BuiltInFunctionType::Capitalize => {
+                        Ok(v.capitalize())
+                    }
+
+                    adana_script_core::BuiltInFunctionType::Replace => {
+                        match v {
+                            Primitive::Array(arr) => {
+                                let [s, r, p] = &arr[0..=2] else {
+                                    return Ok(Primitive::Error(format!(
+                                        "Invalid argument len {}",
+                                        arr.len()
+                                    )));
+                                };
+                                Ok(s.replace(r, p))
+                            }
+                            _ => Ok(Primitive::Error(
+                                "invalid call to builtin fn replace"
+                                    .to_string(),
+                            )),
+                        }
+                    }
+                    adana_script_core::BuiltInFunctionType::ReplaceAll => {
+                        match v {
+                            Primitive::Array(arr) => {
+                                let [s, r, p] = &arr[0..=2] else {
+                                    return Ok(Primitive::Error(format!(
+                                        "Invalid argument len {}",
+                                        arr.len()
+                                    )));
+                                };
+                                Ok(s.replace_all(r, p))
+                            }
+                            _ => Ok(Primitive::Error(
+                                "invalid call to builtin fn replace_all"
+                                    .to_string(),
+                            )),
+                        }
                     }
                     adana_script_core::BuiltInFunctionType::Match => match v {
                         Primitive::Array(arr) => {

@@ -204,9 +204,14 @@ impl Primitive {
         Ok(v)
     }
 }
-pub trait Match {
+pub trait StringManipulation {
     fn match_regex(&self, regex: &Primitive) -> Self;
     fn is_match(&self, regex: &Primitive) -> Self;
+    fn replace(&self, regex: &Primitive, new_value: &Primitive) -> Self;
+    fn replace_all(&self, regex: &Primitive, new_value: &Primitive) -> Self;
+    fn to_upper(&self) -> Self;
+    fn to_lower(&self) -> Self;
+    fn capitalize(&self) -> Self;
 }
 
 pub trait TypeOf {
@@ -301,6 +306,11 @@ pub trait Div {
 
 pub trait Rem {
     fn rem(&self, rhs: &Self) -> Self;
+}
+pub trait Round {
+    fn floor(&self) -> Self;
+    fn round(&self, decimals: &Self) -> Self;
+    fn ceil(&self) -> Self;
 }
 // endregion traits
 
@@ -1730,12 +1740,78 @@ impl PartialOrd for Primitive {
     }
 }
 
-impl Match for Primitive {
+impl Round for Primitive {
+    fn floor(&self) -> Self {
+        match self {
+            Primitive::Ref(l) => {
+                let l = l.read().expect("FLOOR ERROR: could not acquire lock!");
+                l.floor()
+            }
+
+            Primitive::Int(i) => Primitive::Int(*i),
+            Primitive::I8(i) => Primitive::I8(*i),
+            Primitive::U8(i) => Primitive::U8(*i),
+            Primitive::Double(d) => Primitive::Double(d.floor()),
+
+            r => Primitive::Error(format!("illegal call to floor!! {r}")),
+        }
+    }
+
+    fn ceil(&self) -> Self {
+        match self {
+            Primitive::Ref(l) => {
+                let l = l.read().expect("CEIL ERROR: could not acquire lock!");
+                l.floor()
+            }
+
+            Primitive::Int(i) => Primitive::Int(*i),
+            Primitive::I8(i) => Primitive::I8(*i),
+            Primitive::U8(i) => Primitive::U8(*i),
+            Primitive::Double(d) => Primitive::Double(d.ceil()),
+
+            r => Primitive::Error(format!("illegal call to ceil!! {r}")),
+        }
+    }
+
+    fn round(&self, decimals: &Self) -> Self {
+        match (self, decimals) {
+            (Primitive::Ref(s), decimals) => {
+                let l = s.read().expect("ROUND ERROR: could not acquire lock!");
+                l.round(decimals)
+            }
+            (l, Primitive::Ref(decimals)) => {
+                let decimals = decimals
+                    .read()
+                    .expect("ROUND ERROR: could not acquire lock!");
+                l.round(&decimals)
+            }
+            (v @ Primitive::Double(_), Primitive::U8(u)) => {
+                v.round(&Primitive::Int(*u as i128))
+            }
+            (v @ Primitive::Double(_), Primitive::I8(u)) => {
+                v.round(&Primitive::Int(*u as i128))
+            }
+            (Primitive::Double(x), Primitive::Int(u)) => {
+                if u < &1 || u > &(u32::MAX as i128) {
+                    return Primitive::Error(format!(
+                        "illegal call to round!!  {u}"
+                    ));
+                }
+                let decimals = *u as u32;
+                let y = 10i32.pow(decimals) as f64;
+                Primitive::Double((x * y).round() / y)
+            }
+            (p, r) => {
+                Primitive::Error(format!("illegal call to round!!  {p} {r}"))
+            }
+        }
+    }
+}
+impl StringManipulation for Primitive {
     fn match_regex(&self, regex: &Primitive) -> Self {
         match self {
             Primitive::Ref(l) => {
-                let l =
-                    l.read().expect("TYPE_OF ERROR: could not acquire lock!");
+                let l = l.read().expect("MATCH ERROR: could not acquire lock!");
                 l.match_regex(regex)
             }
             v @ Primitive::String(s) => match regex {
@@ -1803,6 +1879,126 @@ impl Match for Primitive {
                 r => Primitive::Error(format!("bad regex!  {r}")),
             },
             p => Primitive::Error(format!("illegal call to is_match!!  {p}")),
+        }
+    }
+    fn replace(&self, regex: &Primitive, new_value: &Primitive) -> Self {
+        match self {
+            Primitive::Ref(l) => {
+                let l =
+                    l.read().expect("REPLACE ERROR: could not acquire lock!");
+                l.match_regex(regex)
+            }
+            v @ Primitive::String(s) => match (regex, new_value) {
+                (Primitive::Ref(regex), new_value) => {
+                    let r = regex
+                        .read()
+                        .expect("REPLACE ERROR: could not acquire lock!");
+                    v.replace(&r, new_value)
+                }
+                (regex, Primitive::Ref(new_value)) => {
+                    let r = new_value
+                        .read()
+                        .expect("REPLACE ERROR: could not acquire lock!");
+                    v.replace(regex, &r)
+                }
+                (Primitive::String(r), Primitive::String(new_value)) => {
+                    match regex::Regex::new(r) {
+                        Ok(re) => Primitive::String(
+                            re.replace(s, new_value).to_string(),
+                        ),
+                        Err(e) => {
+                            Primitive::Error(format!("replace error: {e}"))
+                        }
+                    }
+                }
+                (r, l) => {
+                    Primitive::Error(format!("bad call to replace!  {r} {l}"))
+                }
+            },
+            p => Primitive::Error(format!("illegal call to replace!!  {p}")),
+        }
+    }
+    fn replace_all(&self, regex: &Primitive, new_value: &Primitive) -> Self {
+        match self {
+            Primitive::Ref(l) => {
+                let l = l
+                    .read()
+                    .expect("REPLACE_ALL ERROR: could not acquire lock!");
+                l.match_regex(regex)
+            }
+            v @ Primitive::String(s) => match (regex, new_value) {
+                (Primitive::Ref(regex), new_value) => {
+                    let r = regex
+                        .read()
+                        .expect("REPLACE_ALL ERROR: could not acquire lock!");
+                    v.replace(&r, new_value)
+                }
+                (regex, Primitive::Ref(new_value)) => {
+                    let r = new_value
+                        .read()
+                        .expect("REPLACE_ALL ERROR: could not acquire lock!");
+                    v.replace(regex, &r)
+                }
+                (Primitive::String(r), Primitive::String(new_value)) => {
+                    match regex::Regex::new(r) {
+                        Ok(re) => Primitive::String(
+                            re.replace_all(s, new_value).to_string(),
+                        ),
+                        Err(e) => {
+                            Primitive::Error(format!("replace_all error: {e}"))
+                        }
+                    }
+                }
+                (r, l) => Primitive::Error(format!(
+                    "bad call to replace_all!  {r} {l}"
+                )),
+            },
+            p => {
+                Primitive::Error(format!("illegal call to replace_all!!  {p}"))
+            }
+        }
+    }
+    fn to_upper(&self) -> Self {
+        match self {
+            Primitive::Ref(l) => {
+                let l =
+                    l.read().expect("TO_UPPER ERROR: could not acquire lock!");
+                l.to_upper()
+            }
+            Primitive::String(s) => Primitive::String(s.to_uppercase()),
+            p => Primitive::Error(format!("illegal call to to_upper!!  {p}")),
+        }
+    }
+
+    fn to_lower(&self) -> Self {
+        match self {
+            Primitive::Ref(l) => {
+                let l =
+                    l.read().expect("TO_LOWER ERROR: could not acquire lock!");
+                l.to_upper()
+            }
+            Primitive::String(s) => Primitive::String(s.to_lowercase()),
+            p => Primitive::Error(format!("illegal call to to_lower!!  {p}")),
+        }
+    }
+
+    fn capitalize(&self) -> Self {
+        match self {
+            Primitive::Ref(l) => {
+                let l = l
+                    .read()
+                    .expect("CAPITALIZE ERROR: could not acquire lock!");
+                l.to_upper()
+            }
+            Primitive::String(s) => {
+                let mut c = s.chars();
+                let new_s = match c.next() {
+                    None => String::new(),
+                    Some(f) => f.to_uppercase().chain(c).collect(),
+                };
+                Primitive::String(new_s)
+            }
+            p => Primitive::Error(format!("illegal call to capitalize!!  {p}")),
         }
     }
 }
