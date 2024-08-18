@@ -144,7 +144,7 @@ pub enum Primitive {
 pub struct LibData {
     #[cfg(not(target_arch = "wasm32"))]
     #[allow(dead_code)]
-    data: Arc<Box<dyn Send + Any + Sync>>,
+    pub data: Arc<Box<dyn Send + Any + Sync>>,
 }
 
 pub type RefPrimitive = Arc<RwLock<Primitive>>;
