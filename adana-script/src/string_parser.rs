@@ -3,6 +3,7 @@ use std::borrow::Cow;
 /// copied from https://github.com/rust-bakery/nom/blob/7.1.3/examples/string.rs
 use nom::branch::alt;
 use nom::bytes::streaming::{is_not, take_while_m_n};
+use nom::character::complete::anychar;
 use nom::character::streaming::{char, multispace1};
 use nom::combinator::{map, map_opt, map_res, value, verify};
 use nom::error::{FromExternalError, ParseError};
@@ -84,6 +85,11 @@ fn parse_escaped_whitespace<'a, E: ParseError<&'a str>>(
 ) -> IResult<&'a str, &'a str, E> {
     preceded(char('\\'), multispace1)(input)
 }
+fn parse_escaped_anychar<'a, E: ParseError<&'a str>>(
+    input: &'a str,
+) -> IResult<&'a str, char, E> {
+    preceded(char('\\'), anychar)(input)
+}
 
 /// Parse a non-empty block of text that doesn't include \ or "
 fn parse_literal<'a, E: ParseError<&'a str>>(
@@ -108,6 +114,7 @@ enum StringFragment<'a> {
     Literal(&'a str),
     EscapedChar(char),
     EscapedWS,
+    EscapedAnychar(char),
 }
 
 /// Combine parse_literal, parse_escaped_whitespace, and parse_escaped_char
@@ -125,6 +132,7 @@ where
         map(parse_literal, StringFragment::Literal),
         map(parse_escaped_char, StringFragment::EscapedChar),
         value(StringFragment::EscapedWS, parse_escaped_whitespace),
+        map(parse_escaped_anychar, StringFragment::EscapedAnychar),
     ))(input)
 }
 
@@ -152,6 +160,10 @@ where
                     StringFragment::Literal(s) => string.push_str(s),
                     StringFragment::EscapedChar(c) => string.push(c),
                     StringFragment::EscapedWS => {}
+                    StringFragment::EscapedAnychar(c) => {
+                        string.push('\\');
+                        string.push(c)
+                    }
                 }
                 string
             },

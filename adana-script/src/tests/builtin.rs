@@ -77,7 +77,7 @@ fn test_is_match() {
     let mut ctx = BTreeMap::new();
     let r = compute(
         r#"
-      pattern = """(?i)a+(?-i)b+"""
+      pattern = "(?i)a+(?-i)b+"
       text = "AaAaAbbBBBb"
       is_match(text, pattern)
  
@@ -90,7 +90,7 @@ fn test_is_match() {
     let mut ctx = BTreeMap::new();
     let r = compute(
         r#"
-      pattern = """(\w+): \$(\d+)"""
+      pattern = "(\w+): \$(\d+)"
       text = "Item1: $100, Item2: $200, Item3: $300"
       is_match(text, pattern)
  
@@ -106,7 +106,7 @@ fn test_match() {
     let mut ctx = BTreeMap::new();
     let r = compute(
         r#"
-      pattern = """(?i)a+(?-i)b+"""
+      pattern = "(?i)a+(?-i)b+"
       text = "AaAaAbbBBBb"
       match(text, pattern)
  
@@ -122,7 +122,7 @@ fn test_match() {
     let mut ctx = BTreeMap::new();
     let r = compute(
         r#"
-      pattern = """(\w+): \$(\d+)"""
+      pattern = "(\w+): \$(\d+)"
       text = "Item1: $100, Item2: $200, Item3: $300"
       match(text, pattern)
  

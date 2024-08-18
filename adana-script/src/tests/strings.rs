@@ -37,6 +37,18 @@ fn test_string_escape() {
     );
 }
 #[test]
+fn test_string_regex() {
+    let expr = r#"
+        s = "(\w+): \$(\d+)"
+        "#;
+    let mut ctx = BTreeMap::new();
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        Primitive::String(r#"(\w+): \$(\d+)"#.to_string()),
+        ctx["s"].read().unwrap().clone()
+    );
+}
+#[test]
 fn test_string_block_with_parameters() {
     let expr = r#"
         name = "nordine"
