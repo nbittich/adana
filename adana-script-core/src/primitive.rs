@@ -1,12 +1,12 @@
+use anyhow::Result;
 use std::{
+    any::Any,
     cmp::Ordering,
     collections::BTreeMap,
     fmt::Display,
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
 };
-
-use anyhow::Result;
 
 use serde::{Deserialize, Serialize};
 
@@ -18,7 +18,6 @@ pub const TYPE_U8: &str = "u8";
 pub const TYPE_I8: &str = "i8";
 pub const TYPE_INT: &str = "int";
 pub const TYPE_BOOL: &str = "bool";
-pub const TYPE_POINTER: &str = "pointer";
 pub const TYPE_NULL: &str = "null";
 pub const TYPE_DOUBLE: &str = "double";
 pub const TYPE_STRING: &str = "string";
@@ -29,6 +28,7 @@ pub const TYPE_FUNCTION: &str = "function";
 pub const TYPE_UNIT: &str = "unit";
 pub const TYPE_STRUCT: &str = "struct";
 pub const TYPE_NO_RETURN: &str = "!";
+pub const TYPE_LIB_DATA: &str = "libdata";
 
 #[derive(Debug)]
 pub struct NativeLibrary {
@@ -40,10 +40,8 @@ pub struct NativeLibrary {
 }
 
 pub type NativeFunctionCallResult = anyhow::Result<Primitive>;
-pub type Compiler = dyn FnMut(
-    Value,
-    BTreeMap<String, RefPrimitive>,
-) -> NativeFunctionCallResult;
+pub type Compiler = dyn FnMut(Value, BTreeMap<String, RefPrimitive>) -> NativeFunctionCallResult
+    + Send;
 
 #[cfg(not(target_arch = "wasm32"))]
 #[allow(improper_ctypes_definitions)]
@@ -114,30 +112,6 @@ impl NativeLibrary {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-#[derive(Clone, Debug)]
-pub struct RawPointer(Option<*const u8>);
-
-impl RawPointer {
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn cast<T>(&self) -> Option<&T> {
-        self.0.map(|pointer| unsafe { &*(pointer as *const T) })
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn new<T>(data: T) -> RawPointer {
-        RawPointer(Some(Box::into_raw(Box::new(data)) as *const u8))
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn free<T>(&mut self) -> Result<(), &'static str> {
-        if let Some(pointer) = self.0.take() {
-            let _ = unsafe { Box::from_raw(pointer as *mut T) };
-            Ok(())
-        } else {
-            Err("raw pointer already freed")
-        }
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[repr(C)]
 pub enum Primitive {
@@ -164,8 +138,13 @@ pub enum Primitive {
     #[serde(skip_serializing, skip_deserializing)]
     NativeFunction(String, Arc<NativeLibrary>),
     #[serde(skip_serializing, skip_deserializing)]
+    LibData(LibData),
+}
+#[derive(Debug, Clone)]
+pub struct LibData {
     #[cfg(not(target_arch = "wasm32"))]
-    Pointer(RawPointer),
+    #[allow(dead_code)]
+    data: Arc<Box<dyn Send + Any + Sync>>,
 }
 
 pub type RefPrimitive = Arc<RwLock<Primitive>>;
@@ -230,8 +209,8 @@ impl Primitive {
                     "cannot convert native function to value"
                 ));
             }
-            Primitive::Pointer(_) => {
-                return Err(anyhow::anyhow!("illegal usage of pointer"))
+            Primitive::LibData(_) => {
+                return Err(anyhow::anyhow!("illegal usage of lib data"));
             }
         };
         Ok(v)
@@ -423,9 +402,6 @@ impl Display for Primitive {
             Primitive::Double(d) => write!(f, "{d}"),
             Primitive::Bool(b) => write!(f, "{b}"),
             Primitive::Error(e) => write!(f, "Err: {e}"),
-            Primitive::Pointer(p) => {
-                write!(f, "pointer {:p}", p)
-            }
             Primitive::String(s) => {
                 write!(f, "{s}")
             }
@@ -482,6 +458,7 @@ impl Display for Primitive {
             Primitive::NativeFunction(key, _) => {
                 write!(f, "__native_fn__{key}")
             }
+            Primitive::LibData(_) => write!(f, "__lib_data"),
         }
     }
 }
@@ -1772,7 +1749,7 @@ impl PartialOrd for Primitive {
             (Primitive::Error(_), _) => None,
             (Primitive::Unit, _) => None,
             (Primitive::Function { parameters: _, exprs: _ }, _) => None,
-            (Primitive::Pointer(_), _) => None,
+            (Primitive::LibData(_), _) => None,
         }
     }
 }
@@ -2065,7 +2042,7 @@ impl TypeOf for Primitive {
             Primitive::Unit => TYPE_UNIT,
             Primitive::NoReturn => TYPE_NO_RETURN,
             Primitive::EarlyReturn(v) => v.type_of_str(),
-            Primitive::Pointer(_) => TYPE_POINTER,
+            Primitive::LibData(_) => TYPE_LIB_DATA,
         }
     }
 
