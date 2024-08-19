@@ -180,15 +180,18 @@ pub enum Value {
         exprs: Vec<Value>,
     },
     Array(Vec<Value>),
-    ArrayAccess {
-        arr: Box<Value>,
-        index: Box<Value>,
-    },
     Struct(BTreeMap<String, Value>),
-    StructAccess {
-        struc: Box<Value>,
-        key: String,
+
+    MultiDepthAccess {
+        root: Box<Value>,
+        next_keys: Vec<KeyAccess>,
     },
+}
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum KeyAccess {
+    Index(usize),
+    Key(String),
+    Variable(Value),
 }
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum BuiltInFunctionType {
@@ -268,7 +271,7 @@ pub enum TreeNodeValue {
     Drop(Vec<Value>),
     VariableUnused,
     VariableAssign(Option<String>),
-    VariableArrayAssign { name: String, index: Value },
+    MultiDepthVariableAssign { root: Value, next_keys: Vec<KeyAccess> },
     Ops(Operator),
     Primitive(Primitive),
     VariableRef(String),
@@ -280,6 +283,7 @@ pub enum TreeNodeValue {
     Struct(BTreeMap<String, Value>),
     StructAccess { struc: Value, key: Primitive },
     ArrayAccess { index: Value, array: Value },
+    MultiDepthAccess { root: Value, keys: Vec<KeyAccess> },
     Function(Value),
     FunctionCall(Value),
     Foreach(Value),

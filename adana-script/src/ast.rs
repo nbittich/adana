@@ -386,6 +386,8 @@ pub fn to_ast(
                 curr_node_id,
             )
         }
+       Value::MultiDepthAccess { root, next_keys } => append_to_current_and_return(TreeNodeValue::MultiDepthAccess { root:*root, keys:next_keys}, tree, curr_node_id),
+
         Value::VariableExpr { name, expr } => {
             anyhow::ensure!(
                 tree.root().is_none(),
@@ -395,37 +397,10 @@ pub fn to_ast(
                 Ok(TreeNodeValue::VariableAssign(Some(n)))
             } else if let Value::VariableUnused = *name {
                 Ok(TreeNodeValue::VariableAssign(None))
-            } else if let Value::ArrayAccess { arr, index } = *name {
-                // let index = match *index {
-                //     Value::Integer(n) => Ok(Primitive::Int(n)),
-                //     Value::Variable(v) => variable_from_ctx(&v, false, ctx),
-                //     v => {
-                //         Err(anyhow::Error::msg(format!("invalid index {v:?}")))
-                //     }
-                // }?;
+            } else if let Value::MultiDepthAccess { root, next_keys} = *name {
+                Ok(TreeNodeValue:: MultiDepthVariableAssign{root: *root, next_keys})
 
-                if let Value::Variable(n) = *arr {
-                    Ok(TreeNodeValue::VariableArrayAssign {
-                        name: n,
-                        index: *index,
-                    })
-                } else {
-                    Err(anyhow::Error::msg(format!(
-                        "invalid variable expression {arr:?} => {expr:?}"
-                    )))
-                }
-            } else if let Value::StructAccess { struc, key } = *name {
-                if let Value::Variable(n) = *struc {
-                    Ok(TreeNodeValue::VariableArrayAssign {
-                        name: n,
-                        index: Value::String(key),
-                    })
-                } else {
-                    Err(anyhow::Error::msg(format!(
-                        "invalid variable expression {struc:?} => {expr:?}"
-                    )))
-                }
-            } else {
+            }  else {
                 // FIXME for my future self. x.y.z or x[0][1] is not yet supported
                 // for assignment
                 // We need Primitive::Ref to make it happen
@@ -508,52 +483,6 @@ pub fn to_ast(
             tree,
             curr_node_id,
         ),
-        Value::ArrayAccess { arr, index } => match (*arr, *index) {
-            (v, index @ Value::Integer(_)) => append_to_current_and_return(
-                TreeNodeValue::ArrayAccess { index, array: v },
-                tree,
-                curr_node_id,
-            ),
-            (v, index @ Value::U8(_)) => append_to_current_and_return(
-                TreeNodeValue::ArrayAccess { index, array: v },
-                tree,
-                curr_node_id,
-            ),
-            (v, index @ Value::I8(_)) => append_to_current_and_return(
-                TreeNodeValue::ArrayAccess { index, array: v },
-                tree,
-                curr_node_id,
-            ),
-            (v, variable @ Value::Variable(_)) => append_to_current_and_return(
-                TreeNodeValue::ArrayAccess { index: variable, array: v },
-                tree,
-                curr_node_id,
-            ),
-            (v, variable @ Value::String(_)) => append_to_current_and_return(
-                TreeNodeValue::ArrayAccess { index: variable, array: v },
-                tree,
-                curr_node_id,
-            ),
-            (v, variable @ Value::BlockParen(_)) => {
-                append_to_current_and_return(
-                    TreeNodeValue::ArrayAccess { index: variable, array: v },
-                    tree,
-                    curr_node_id,
-                )
-            }
-
-            (arr, index) => Err(anyhow::Error::msg(format!(
-                "illegal array access! array => {arr:?}, index=> {index:?}"
-            ))),
-        },
-        Value::StructAccess { struc, key } => append_to_current_and_return(
-            TreeNodeValue::StructAccess {
-                struc: *struc,
-                key: Primitive::String(key),
-            },
-            tree,
-            curr_node_id,
-        ),
         f @ Value::Function { parameters: _, exprs: _ } => {
             append_to_current_and_return(
                 TreeNodeValue::Function(f),
@@ -584,8 +513,7 @@ pub fn to_ast(
                 for variable in variables {
                     match variable {
                         v @ Value::Variable(_)
-                        | v @ Value::ArrayAccess { arr: _, index: _ }
-                        | v @ Value::StructAccess { struc: _, key: _ } => {
+                        | v @ Value::MultiDepthAccess { .. } => {
                             vars.push(v)
                         }
                         _ => {

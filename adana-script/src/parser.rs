@@ -15,7 +15,7 @@ use adana_script_core::{
     constants::{
         BREAK, DROP, ELSE, FOR, IF, IN, MULTILINE, NULL, RETURN, STRUCT, WHILE,
     },
-    FORBIDDEN_VARIABLE_NAME,
+    KeyAccess, FORBIDDEN_VARIABLE_NAME,
 };
 use adana_script_core::{BuiltInFunctionType, MathConstants, Operator, Value};
 
@@ -319,12 +319,7 @@ fn parse_fn_args(s: &str) -> Res<Vec<Value>> {
 fn parse_fn_call(s: &str) -> Res<Value> {
     map(
         pair(
-            alt((
-                parse_fn,
-                parse_struct_access,
-                parse_array_access,
-                parse_variable,
-            )),
+            alt((parse_fn, parse_multidepth_access, parse_variable)),
             map(parse_fn_args, Value::BlockParen),
         ),
         |(function, parameters)| Value::FunctionCall {
@@ -345,8 +340,7 @@ fn parse_foreach(s: &str) -> Res<Value> {
             alt((
                 parse_range,
                 parse_fn_call,
-                parse_struct_access,
-                parse_array_access,
+                parse_multidepth_access,
                 parse_array,
                 parse_fstring,
                 parse_string,
@@ -381,7 +375,7 @@ fn parse_drop(s: &str) -> Res<Value> {
     let parser = |p| {
         separated_list1(
             tag_no_space(","),
-            alt((parse_struct_access, parse_array_access, parse_variable)),
+            alt((parse_multidepth_access, parse_variable)),
         )(p)
     };
 
@@ -518,156 +512,91 @@ fn parse_array(s: &str) -> Res<Value> {
         Value::Array,
     )(s)
 }
-fn parse_array_access(s: &str) -> Res<Value> {
-    let (rest, mut array_access) = map(
-        pair(
-            alt((parse_array, parse_variable, parse_fstring, parse_string)),
-            preceded(
-                tag_no_space("["),
-                terminated(
-                    alt((
-                        map_parser(
-                            take_until("]"),
-                            map(many1(parse_value), |mut v| {
-                                if v.len() == 1 {
-                                    v.remove(0)
-                                } else {
-                                    Value::BlockParen(v)
-                                }
-                            }),
-                        ),
-                        parse_variable,
-                        parse_number,
-                    )),
-                    tag_no_space("]"),
-                ),
-            ),
-        ),
-        |(arr, idx)| Value::ArrayAccess {
-            arr: Box::new(arr),
-            index: Box::new(idx),
-        },
-    )(s)?;
 
-    let mut new_rest = rest;
-
-    // FIXME this is highly HACKY, fix me along with :463
-    'while_loop: while let Ok((rest, array)) = parse_array(new_rest) {
-        if let Value::Array(mut array) = array {
-            if array.len() == 1 && array.len() == 1 {
-                match array.remove(0) {
-                    v @ Value::Integer(_) => {
-                        array_access = Value::ArrayAccess {
-                            arr: Box::new(array_access),
-                            index: Box::new(v),
-                        };
-                    }
-                    v @ Value::U8(_) => {
-                        array_access = Value::ArrayAccess {
-                            arr: Box::new(array_access),
-                            index: Box::new(v),
-                        };
-                    }
-                    v @ Value::I8(_) => {
-                        array_access = Value::ArrayAccess {
-                            arr: Box::new(array_access),
-                            index: Box::new(v),
-                        };
-                    }
-                    Value::String(s) => {
-                        array_access = Value::StructAccess {
-                            struc: Box::new(array_access),
-                            key: s.to_string(),
-                        };
-                    }
-                    _ => break 'while_loop,
-                }
-                new_rest = rest;
-            }
-        }
-    }
-
-    Ok((new_rest, array_access))
-}
-
-fn parse_key_brackets(s: &str) -> Res<&str> {
+fn parse_key_brackets(s: &str) -> Res<KeyAccess> {
     preceded(
         tag("["),
         terminated(
-            delimited(tag("\""), parse_variable_str, tag("\"")),
+            map(delimited(tag("\""), parse_variable_str, tag("\"")), |x| {
+                KeyAccess::Key(x.to_string())
+            }),
             tag("]"),
         ),
     )(s)
 }
-fn parse_key_dots(s: &str) -> Res<&str> {
-    preceded(tag("."), parse_variable_str)(s)
+
+fn parse_variable_brackets(s: &str) -> Res<KeyAccess> {
+    preceded(
+        tag("["),
+        terminated(
+            map(
+                verify(parse_variable, |v| {
+                    matches!(v, Value::VariableRef(_) | Value::Variable(_))
+                }),
+                |x| KeyAccess::Variable(x),
+            ),
+            tag("]"),
+        ),
+    )(s)
+}
+fn parse_index_brackets(s: &str) -> Res<KeyAccess> {
+    preceded(
+        tag("["),
+        terminated(
+            map_parser(
+                recognize_float,
+                alt((
+                    map(all_consuming(U8), |u| KeyAccess::Index(u as usize)),
+                    map(all_consuming(I8), |u| KeyAccess::Index(u as usize)),
+                    map(all_consuming(I128), |u| KeyAccess::Index(u as usize)),
+                )),
+            ),
+            tag("]"),
+        ),
+    )(s)
+}
+fn parse_key_dots(s: &str) -> Res<KeyAccess> {
+    map(preceded(tag("."), parse_variable_str), |k| {
+        KeyAccess::Key(k.to_string())
+    })(s)
 }
 
-fn parse_struct_access(s: &str) -> Res<Value> {
-    let (res, mut struc_access) = map(
+fn parse_multidepth_access(s: &str) -> Res<Value> {
+    let (res, (root, mut next_keys)) = map(
         alt((
-            pair(alt((parse_struct, parse_variable)), parse_key_brackets),
-            pair(alt((parse_struct, parse_variable)), parse_key_dots),
-            pair(parse_array_access, parse_key_brackets),
-            pair(parse_array_access, parse_key_dots),
+            pair(
+                alt((parse_struct, parse_variable)),
+                alt((
+                    parse_key_brackets,
+                    parse_index_brackets,
+                    parse_variable_brackets,
+                    parse_key_dots,
+                )),
+            ),
+            pair(
+                alt((parse_array, parse_variable, parse_fstring, parse_string)),
+                alt((parse_variable_brackets, parse_index_brackets)),
+            ),
             pair(parse_builtin_fn, parse_key_dots),
         )),
-        |(s, key)| Value::StructAccess {
-            struc: Box::new(s),
-            key: String::from(key),
-        },
+        |(s, key)| (Box::new(s), vec![key]),
     )(s)?;
 
     let mut new_rest = res;
 
-    while let Ok((rest, key)) =
-        alt((parse_key_brackets, parse_key_dots))(new_rest)
+    while let Ok((rest, key)) = alt((
+        parse_key_brackets,
+        parse_index_brackets,
+        parse_variable_brackets,
+        parse_key_dots,
+    ))(new_rest)
     {
-        struc_access = Value::StructAccess {
-            struc: Box::new(struc_access),
-            key: String::from(key),
-        };
+        next_keys.push(key);
+
         new_rest = rest;
     }
 
-    // FIXME this is highly HACKY, fix me along with :393
-    'while_loop: while let Ok((rest, array)) = parse_array(new_rest) {
-        if let Value::Array(mut array) = array {
-            if array.len() == 1 {
-                match array.remove(0) {
-                    v @ Value::Integer(_) => {
-                        struc_access = Value::ArrayAccess {
-                            arr: Box::new(struc_access),
-                            index: Box::new(v),
-                        };
-                    }
-                    v @ Value::U8(_) => {
-                        struc_access = Value::ArrayAccess {
-                            arr: Box::new(struc_access),
-                            index: Box::new(v),
-                        };
-                    }
-
-                    v @ Value::I8(_) => {
-                        struc_access = Value::ArrayAccess {
-                            arr: Box::new(struc_access),
-                            index: Box::new(v),
-                        };
-                    }
-                    Value::String(s) => {
-                        struc_access = Value::StructAccess {
-                            struc: Box::new(struc_access),
-                            key: s.to_string(),
-                        };
-                    }
-                    _ => break 'while_loop,
-                }
-                new_rest = rest;
-            }
-        }
-    }
-
-    Ok((new_rest, struc_access))
+    Ok((new_rest, Value::MultiDepthAccess { root, next_keys }))
 }
 
 fn parse_implicit_multiply(s: &str) -> Res<Value> {
@@ -686,8 +615,7 @@ fn parse_value(s: &str) -> Res<Value> {
                 parse_implicit_multiply,
                 parse_struct,
                 parse_fn_call,
-                parse_struct_access,
-                parse_array_access,
+                parse_multidepth_access,
                 parse_array,
                 parse_range,
                 parse_number,
@@ -761,18 +689,14 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
         map(
             separated_pair(
                 pair(
-                    alt((
-                        parse_struct_access,
-                        parse_array_access,
-                        parse_variable,
-                    )),
+                    alt((parse_multidepth_access, parse_variable)),
                     opt(parse_operation),
                 ),
                 tag_no_space("="),
                 alt((
                     parse_fn_call,
                     parse_fn,
-                    parse_array_access,
+                    parse_multidepth_access,
                     //parse_struct_access, /* FIXME seems not necessary or
                     //                     and also buggy
                     //                     missing test */
@@ -801,8 +725,7 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
         alt((
             all_consuming(parse_fn_call),
             all_consuming(parse_fn),
-            all_consuming(parse_struct_access),
-            all_consuming(parse_array_access),
+            all_consuming(parse_multidepth_access),
             all_consuming(parse_struct),
             all_consuming(parse_fstring),
             all_consuming(parse_array),
