@@ -439,22 +439,9 @@ pub fn to_ast(
             _ => unreachable!("should never happen or it's a bug"),
         },
         Value::BuiltInFunction { fn_type, expr } => {
-            let fn_node = TreeNodeValue::BuiltInFunction(fn_type);
-            let node_id = if let Some(node_id) = curr_node_id {
-                let mut node = tree
-                    .get_mut(*node_id)
-                    .context("node id does not exist!")?;
+            let fn_node = TreeNodeValue::BuiltInFunction{fn_type, params: *expr};
+            append_to_current_and_return(fn_node, tree, curr_node_id)
 
-                let node = node.append(fn_node);
-                Some(node.node_id())
-            } else if let Some(mut root_node) = tree.root_mut() {
-                let node = root_node.append(fn_node);
-                Some(node.node_id())
-            } else {
-                Some(tree.set_root(fn_node))
-            };
-            to_ast(ctx, *expr, tree, &node_id)?;
-            Ok(node_id)
         }
         v @ Value::IfExpr { cond: _, exprs: _, else_expr: _ } => {
             let if_node = TreeNodeValue::IfExpr(v);

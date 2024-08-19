@@ -1,10 +1,11 @@
-use anyhow::{Context, Error};
+use anyhow::{anyhow, Context, Error};
 use slab_tree::{NodeRef, Tree};
 use std::{
     borrow::Borrow,
     fs::read_to_string,
     path::{Path, PathBuf},
     sync::Arc,
+    usize,
 };
 
 use crate::{parser::parse_instructions, prelude::BTreeMap};
@@ -19,7 +20,7 @@ use adana_script_core::{
         TYPE_ARRAY, TYPE_BOOL, TYPE_DOUBLE, TYPE_ERROR, TYPE_FUNCTION, TYPE_I8,
         TYPE_INT, TYPE_STRUCT, TYPE_U8,
     },
-    BuiltInFunctionType, Operator, TreeNodeValue, Value,
+    BuiltInFunctionType, KeyAccess, Operator, TreeNodeValue, Value,
 };
 
 /// copy existing functions in a new ctx
@@ -44,6 +45,274 @@ fn scoped_ctx(
 
     Ok(scope_ctx)
 }
+
+fn compute_key_access(
+    key: &KeyAccess,
+    ctx: &mut BTreeMap<String, RefPrimitive>,
+    shared_lib: impl AsRef<Path> + Copy,
+) -> anyhow::Result<KeyAccess> {
+    fn compute_key_access_ref(key: &Primitive) -> anyhow::Result<KeyAccess> {
+        match key {
+            Primitive::U8(u) => Ok(KeyAccess::Index(Primitive::U8(*u))),
+            Primitive::I8(u) => Ok(KeyAccess::Index(Primitive::I8(*u))),
+            Primitive::Int(u) => Ok(KeyAccess::Index(Primitive::Int(*u))),
+            Primitive::Ref(r) => {
+                let r = r
+                    .read()
+                    .map_err(|e| anyhow!("could not acquire lock {e}"))?;
+                compute_key_access_ref(&r)
+            }
+            Primitive::String(s) => {
+                Ok(KeyAccess::Key(Primitive::String(s.to_string())))
+            }
+            _ => Err(anyhow!("illegal key access {key:?}")),
+        }
+    }
+    match key {
+        KeyAccess::Index(_) | KeyAccess::Key(_) => Ok(key.clone()),
+        KeyAccess::Variable(v) => {
+            compute_key_access_ref(&compute_lazy(v.clone(), ctx, shared_lib)?)
+        }
+    }
+}
+//NORDINE
+fn handle_function_call(
+    mut function: Primitive,
+    parameters: &Box<Value>,
+    ctx: &mut BTreeMap<String, RefPrimitive>,
+    shared_lib: impl AsRef<Path> + Copy,
+) -> anyhow::Result<Primitive> {
+    if let Value::BlockParen(param_values) = parameters.borrow() {
+        // FIXME clone again
+        if let Primitive::Ref(r) = function {
+            function = r
+                .read()
+                .map_err(|e| {
+                    anyhow::format_err!("could not acquire lock in fn call{e}")
+                })?
+                .clone();
+        }
+        if let Primitive::Function { parameters: function_parameters, exprs } =
+            function
+        {
+            let mut scope_ctx = scoped_ctx(ctx)?;
+            for (i, param) in function_parameters.iter().enumerate() {
+                if let Some(value) = param_values.get(i) {
+                    if let Value::Variable(variable_from_fn_def) = param {
+                        let variable_from_fn_call =
+                            compute_lazy(value.clone(), ctx, shared_lib)?;
+                        scope_ctx.insert(
+                            variable_from_fn_def.clone(),
+                            variable_from_fn_call.ref_prim(),
+                        );
+                    }
+                } else {
+                    return Ok(Primitive::Error(format!(
+                        "missing parameter {param:?}"
+                    )));
+                }
+            }
+            // TODO remove this and replace Arc<Mutex<T>> by Arc<T>
+            // call function in a specific os thread with its own stack
+            // This was relative to a small stack allocated by musl
+            // But now it doesn't seem needed anymore
+            // let res = spawn(move || {}).join().map_err(|e| {
+            //     anyhow::Error::msg(format!(
+            //         "something wrong: {e:?}"
+            //     ))
+            // })??;
+            let res = compute_instructions(exprs, &mut scope_ctx, shared_lib)?;
+
+            if let Primitive::EarlyReturn(v) = res {
+                return Ok(*v);
+            }
+            Ok(res)
+        } else if let Primitive::NativeLibrary(lib) = function {
+            if cfg!(test) {
+                dbg!(&lib);
+            }
+            let mut parameters = vec![];
+            for param in param_values.iter() {
+                if let Value::Variable(_) = param {
+                    let variable_from_fn_call =
+                        compute_lazy(param.clone(), ctx, shared_lib)?;
+                    parameters.push(variable_from_fn_call);
+                }
+            }
+            if cfg!(test) {
+                dbg!(&parameters);
+            }
+            Ok(Primitive::Error("debug".into()))
+            //Ok(function(vec![Primitive::String("s".into())]))
+        } else if let Primitive::NativeFunction(key, lib) = function {
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                if cfg!(test) {
+                    dbg!(&key, &lib);
+                }
+                let mut parameters = vec![];
+
+                for param in param_values.iter() {
+                    let variable_from_fn_call =
+                        compute_lazy(param.clone(), ctx, shared_lib)?;
+                    parameters.push(variable_from_fn_call);
+                }
+                if cfg!(test) {
+                    dbg!(&parameters);
+                }
+
+                let mut scope_ctx = scoped_ctx(ctx)?;
+
+                let slb = shared_lib.as_ref().to_path_buf();
+                let fun = move |v, extra_ctx| {
+                    scope_ctx.extend(extra_ctx);
+                    compute_lazy(v, &mut scope_ctx, &slb)
+                };
+                unsafe {
+                    lib.call_function(key.as_str(), parameters, Box::new(fun))
+                }
+            }
+            #[cfg(target_arch = "wasm32")]
+            {
+                return Ok(Primitive::Error(format!("Loading native function {key} doesn't work in wasm context! {lib:?}")));
+            }
+        } else {
+            Ok(Primitive::Error(format!(" not a function: {function}")))
+        }
+    } else {
+        Ok(Primitive::Error(format!(
+            "invalid function call: {parameters:?} => {function:?}"
+        )))
+    }
+}
+
+fn compute_multidepth_access(
+    root: &Value,
+    keys: &Vec<KeyAccess>,
+    ctx: &mut BTreeMap<String, RefPrimitive>,
+    shared_lib: impl AsRef<Path> + Copy,
+) -> anyhow::Result<Primitive> {
+    fn compute_multidepth_access_primitive(
+        root: Primitive,
+        mut keys: Vec<&KeyAccess>,
+        ctx: &mut BTreeMap<String, RefPrimitive>,
+        shared_lib: impl AsRef<Path> + Copy,
+    ) -> anyhow::Result<Primitive> {
+        if keys.is_empty() {
+            return Err(anyhow::anyhow!(
+                "access error. not enough argument {keys:?}"
+            ));
+        }
+        match root {
+            Primitive::Ref(r) => {
+                let p = r.read().map_err(|e| {
+                    anyhow::anyhow!("could not acquire lock{e}")
+                })?;
+                compute_multidepth_access_primitive(
+                    p.clone(),
+                    keys,
+                    ctx,
+                    shared_lib,
+                )
+            }
+            v @ Primitive::String(_) => {
+                if keys.len() != 1 {
+                    return Err(anyhow::anyhow!(
+                        "string access error. too many argument {keys:?}"
+                    ));
+                }
+                let key = compute_key_access(keys.remove(0), ctx, shared_lib)?;
+                match key {
+                    KeyAccess::Index(i) => Ok(v.index_at(&i)),
+                    _ => Err(anyhow!(
+                        "cannot use that key in this context {key:?}"
+                    )),
+                }
+            }
+            v @ Primitive::Array(_) => {
+                let KeyAccess::Index(idx) =
+                    compute_key_access(keys.remove(0), ctx, shared_lib)?
+                else {
+                    return Err(anyhow!(
+                        "array can only be accessed with an idx {keys:?}"
+                    ));
+                };
+                let root_p = v.index_at(&idx);
+
+                if !keys.is_empty() {
+                    compute_multidepth_access_primitive(
+                        root_p, keys, ctx, shared_lib,
+                    )
+                } else {
+                    Ok(root_p)
+                }
+            }
+            Primitive::NativeLibrary(lib) => {
+                if keys.len() != 1 {
+                    return Err(anyhow!("too many arguments for native lib"));
+                }
+                let KeyAccess::Key(idx) =
+                    compute_key_access(keys.remove(0), ctx, shared_lib)?
+                else {
+                    return Err(anyhow!(
+                        "native lib can only be accessed with a key str {keys:?}"
+                    ));
+                };
+                Ok(Primitive::NativeFunction(idx.to_string(), lib))
+            }
+
+            v @ Primitive::Struct(_) => {
+                let KeyAccess::Key(idx) =
+                    compute_key_access(keys.remove(0), ctx, shared_lib)?
+                else {
+                    return Err(anyhow!(
+                        "array can only be accessed with a key {keys:?}"
+                    ));
+                };
+                let root_p = v.index_at(&idx);
+
+                if !keys.is_empty() {
+                    compute_multidepth_access_primitive(
+                        root_p, keys, ctx, shared_lib,
+                    )
+                } else {
+                    Ok(root_p)
+                }
+            }
+            _ => {
+                return Err(anyhow::anyhow!(
+                    "illegal multidepth access primitive {root:?}"
+                ))
+            }
+        }
+    }
+    let root_primitive = match root {
+        Value::String(s) => Primitive::String(s.to_string()),
+        v @ Value::FString(_, _)
+        | v @ Value::Variable(_)
+        | v @ Value::Array(_)
+        | v @ Value::Struct(_)
+        | v @ Value::BuiltInFunction {
+            fn_type: BuiltInFunctionType::Require,
+            ..
+        }
+        | v @ Value::FunctionCall { .. }
+        | v @ Value::VariableRef(_) => {
+            compute_lazy(v.clone(), ctx, shared_lib)?
+        }
+        v @ _ => {
+            return Err(anyhow::anyhow!("illegal multidepth access {v:?}"))
+        }
+    };
+
+    compute_multidepth_access_primitive(
+        root_primitive,
+        keys.iter().collect(),
+        ctx,
+        shared_lib,
+    )
+}
+
 fn compute_recur(
     node: Option<NodeRef<TreeNodeValue>>,
     ctx: &mut BTreeMap<String, RefPrimitive>,
@@ -310,8 +579,114 @@ fn compute_recur(
                 }
                 Ok(v)
             }
-            TreeNodeValue::BuiltInFunction(fn_type) => {
-                let v = compute_recur(node.first_child(), ctx, shared_lib)?;
+
+            TreeNodeValue::IfExpr(v) => {
+                let mut scoped_ctx = ctx.clone();
+                compute_instructions(
+                    vec![v.clone()],
+                    &mut scoped_ctx,
+                    shared_lib,
+                )
+            }
+            TreeNodeValue::WhileExpr(v) => {
+                let mut scoped_ctx = ctx.clone();
+                compute_instructions(
+                    vec![v.clone()],
+                    &mut scoped_ctx,
+                    shared_lib,
+                )
+            }
+            TreeNodeValue::Foreach(v) => {
+                let mut scoped_ctx = ctx.clone();
+                compute_instructions(
+                    vec![v.clone()],
+                    &mut scoped_ctx,
+                    shared_lib,
+                )
+            }
+            TreeNodeValue::Array(arr) => {
+                let mut primitives = vec![];
+                for v in arr {
+                    let primitive =
+                        compute_instructions(vec![v.clone()], ctx, shared_lib)?;
+                    match primitive {
+                        v @ Primitive::Error(_) => return Ok(v),
+                        Primitive::Unit => {
+                            return Ok(Primitive::Error(
+                                "cannot push unit () to array".to_string(),
+                            ))
+                        }
+                        _ => primitives.push(primitive),
+                    }
+                }
+                Ok(Primitive::Array(primitives))
+            }
+            TreeNodeValue::MultiDepthAccess { root, keys } => {
+                compute_multidepth_access(root, keys, ctx, shared_lib)
+            }
+            TreeNodeValue::MultiDepthVariableAssign { root, next_keys } => {
+                todo!()
+            }
+            TreeNodeValue::Struct(struc) => {
+                let mut primitives = BTreeMap::new();
+                for (k, v) in struc {
+                    if !k.starts_with('_') {
+                        let primitive = compute_instructions(
+                            vec![v.clone()],
+                            ctx,
+                            shared_lib,
+                        )?;
+                        match primitive {
+                            v @ Primitive::Error(_) => return Ok(v),
+                            Primitive::Unit => {
+                                return Ok(Primitive::Error(
+                                    "cannot push unit () to struct".to_string(),
+                                ))
+                            }
+                            _ => {
+                                primitives.insert(k.to_string(), primitive);
+                            }
+                        }
+                    }
+                }
+                Ok(Primitive::Struct(primitives))
+            }
+            // NORDINE5
+            // TreeNodeValue::VariableArrayAssign { name, index } => {
+            //     let index = compute_lazy(index.clone(), ctx, shared_lib)?;
+            //     let mut v = compute_recur(node.first_child(), ctx, shared_lib)?;
+            //     let mut array = ctx
+            //         .get_mut(name)
+            //         .context("array not found in context")?
+            //         .write()
+            //         .map_err(|e| {
+            //             anyhow::format_err!("could not acquire lock {e}")
+            //         })?;
+            //     Ok(array.swap_mem(&mut v, &index))
+            // }
+            TreeNodeValue::Function(Value::Function { parameters, exprs }) => {
+                if let Value::BlockParen(parameters) = parameters.borrow() {
+                    if !parameters.iter().all(|v| {
+                        matches!(v, Value::Variable(_))
+                         //   || matches!(v, Value::String(_))
+                            || matches!(v, Value::VariableUnused)
+                    }) {
+                        return Ok(Primitive::Error(format!(
+                            "not a valid parameter: {parameters:?}"
+                        )));
+                    }
+                    Ok(Primitive::Function {
+                        parameters: parameters.clone(),
+                        exprs: exprs.to_owned(),
+                    })
+                } else {
+                    Ok(Primitive::Error(format!(
+                        "not a valid function: {parameters:?}, {exprs:?}"
+                    )))
+                }
+            }
+            TreeNodeValue::BuiltInFunction { fn_type, params } => {
+                let v = compute_lazy(params.clone(), ctx, shared_lib)?;
                 match fn_type {
                     adana_script_core::BuiltInFunctionType::Sqrt => {
                         Ok(v.sqrt())
@@ -436,29 +811,7 @@ fn compute_recur(
                             )),
                         }
                     }
-                    // adana_script_core::BuiltInFunctionType::ReadLines => {
-                    //     match v {
-                    //         Primitive::String(file_path) => {
-                    //             if !PathBuf::from(file_path.as_str()).exists() {
-                    //                 Ok(Primitive::Error(format!(
-                    //                     "file {file_path} not found"
-                    //                 )))
-                    //             } else {
-                    //                 let file = File::open(file_path)?;
-                    //                 let reader = BufReader::new(file);
-                    //                 Ok(Primitive::Array(
-                    //                     reader
-                    //                         .lines()
-                    //                         .map(|s| s.map(Primitive::String))
-                    //                         .collect::<Result<Vec<_>, _>>()?,
-                    //                 ))
-                    //             }
-                    //         }
-                    //         _ => Ok(Primitive::Error(
-                    //             "wrong read lines call".to_string(),
-                    //         )),
-                    //     }
-                    // }
+
                     adana_script_core::BuiltInFunctionType::TypeOf => {
                         Ok(v.type_of())
                     }
@@ -595,376 +948,18 @@ fn compute_recur(
                     }
                 }
             }
-            TreeNodeValue::IfExpr(v) => {
-                let mut scoped_ctx = ctx.clone();
-                compute_instructions(
-                    vec![v.clone()],
-                    &mut scoped_ctx,
-                    shared_lib,
-                )
-            }
-            TreeNodeValue::WhileExpr(v) => {
-                let mut scoped_ctx = ctx.clone();
-                compute_instructions(
-                    vec![v.clone()],
-                    &mut scoped_ctx,
-                    shared_lib,
-                )
-            }
-            TreeNodeValue::Foreach(v) => {
-                let mut scoped_ctx = ctx.clone();
-                compute_instructions(
-                    vec![v.clone()],
-                    &mut scoped_ctx,
-                    shared_lib,
-                )
-            }
-            TreeNodeValue::Array(arr) => {
-                let mut primitives = vec![];
-                for v in arr {
-                    let primitive =
-                        compute_instructions(vec![v.clone()], ctx, shared_lib)?;
-                    match primitive {
-                        v @ Primitive::Error(_) => return Ok(v),
-                        Primitive::Unit => {
-                            return Ok(Primitive::Error(
-                                "cannot push unit () to array".to_string(),
-                            ))
-                        }
-                        _ => primitives.push(primitive),
-                    }
-                }
-                Ok(Primitive::Array(primitives))
-            }
-            TreeNodeValue::ArrayAccess { index, array } => {
-                let error_message = || {
-                    format!(
-                        "illegal index {index:?} for array access {array:?}"
-                    )
-                };
-                match (array, index) {
-                    (Value::Variable(v), index) => {
-                        let index =
-                            compute_lazy(index.clone(), ctx, shared_lib)?;
-                        let array = ctx
-                            .get(v)
-                            .context("array not found in context")?
-                            .read()
-                            .map_err(|e| {
-                                anyhow::Error::msg(format!(
-                                    "could not acquire lock {e}"
-                                ))
-                            })?;
-                        if let Primitive::NativeLibrary(lib) =
-                            array.as_ref_ok()?
-                        {
-                            Ok(Primitive::NativeFunction(
-                                index.to_string(),
-                                lib.clone(),
-                            ))
-                        } else {
-                            Ok(array.index_at(&index))
-                        }
-                    }
 
-                    (Value::String(v), index) => {
-                        let v = Primitive::String(v.clone());
-                        let index =
-                            compute_lazy(index.clone(), ctx, shared_lib)?;
-                        Ok(v.index_at(&index))
-                    }
-                    (Value::Array(array), index) => {
-                        let index =
-                            match compute_lazy(index.clone(), ctx, shared_lib)?
-                            {
-                                Primitive::Int(index) => index as usize,
-                                Primitive::U8(index) => index as usize,
-                                Primitive::I8(index) => index as usize,
-
-                                _ => {
-                                    return Err(anyhow::format_err!(
-                                    "COMPUTE: illegal array access! {index:?}"
-                                ))
-                                }
-                            };
-
-                        let index = index as usize;
-                        let value = array.get(index).context(error_message())?;
-                        if index < array.len() {
-                            let primitive = compute_instructions(
-                                vec![value.clone()],
-                                ctx,
-                                shared_lib,
-                            )?;
-                            return Ok(primitive);
-                        }
-                        Err(anyhow::Error::msg(error_message()))
-                    }
-                    (
-                        v @ Value::ArrayAccess { arr: _, index: _ }
-                        | v @ Value::StructAccess { struc: _, key: _ },
-                        index,
-                    ) => {
-                        let v = compute_lazy(v.clone(), ctx, shared_lib)?;
-                        let index =
-                            compute_lazy(index.clone(), ctx, shared_lib)?;
-                        match v {
-                            p @ Primitive::Array(_) => Ok(p.index_at(&index)),
-
-                            _ => Err(anyhow::Error::msg(error_message())),
-                        }
-                    }
-                    _ => Err(anyhow::Error::msg(error_message())),
-                }
-            }
-            TreeNodeValue::Struct(struc) => {
-                let mut primitives = BTreeMap::new();
-                for (k, v) in struc {
-                    if !k.starts_with('_') {
-                        let primitive = compute_instructions(
-                            vec![v.clone()],
-                            ctx,
-                            shared_lib,
-                        )?;
-                        match primitive {
-                            v @ Primitive::Error(_) => return Ok(v),
-                            Primitive::Unit => {
-                                return Ok(Primitive::Error(
-                                    "cannot push unit () to struct".to_string(),
-                                ))
-                            }
-                            _ => {
-                                primitives.insert(k.to_string(), primitive);
-                            }
-                        }
-                    }
-                }
-                Ok(Primitive::Struct(primitives))
-            }
-            TreeNodeValue::StructAccess { struc, key } => match (struc, key) {
-                (Value::Variable(v), key @ Primitive::String(k)) => {
-                    if cfg!(test) {
-                        dbg!(&ctx);
-                    }
-                    let struc = ctx
-                        .get(v)
-                        .context("struct not found in context")?
-                        .read()
-                        .map_err(|e| {
-                            anyhow::format_err!("could not acquire lock {e}")
-                        })?;
-                    if let Primitive::NativeLibrary(lib) = struc.as_ref_ok()? {
-                        Ok(Primitive::NativeFunction(k.clone(), lib.clone()))
-                    } else {
-                        Ok(struc.index_at(key))
-                    }
-                }
-                (
-                    v @ Value::BuiltInFunction {
-                        fn_type: BuiltInFunctionType::Require,
-                        ..
-                    },
-                    key @ Primitive::String(k),
-                ) => {
-                    let native_lib = compute_lazy(v.clone(), ctx, shared_lib)?;
-                    if let Primitive::NativeLibrary(lib) =
-                        native_lib.as_ref_ok()?
-                    {
-                        Ok(Primitive::NativeFunction(k.clone(), lib.clone()))
-                    } else {
-                        Err(anyhow::format_err!(
-                            "could not parse built in fn {key} => {native_lib:?}"
-                        ))
-                    }
-                }
-                (s @ Value::Struct(_), key @ Primitive::String(_))
-                | (
-                    s @ Value::StructAccess { struc: _, key: _ },
-                    key @ Primitive::String(_),
-                )
-                | (
-                    s @ Value::ArrayAccess { arr: _, index: _ },
-                    key @ Primitive::String(_),
-                ) => {
-                    let prim_s = compute_lazy(s.clone(), ctx, shared_lib)?;
-                    Ok(prim_s.index_at(key))
-                }
-                _ => Ok(Primitive::Error(format!(
-                    "Error struct access: struct {struc:?}, key {key} "
-                ))),
-            },
-            TreeNodeValue::VariableArrayAssign { name, index } => {
-                let index = compute_lazy(index.clone(), ctx, shared_lib)?;
-                let mut v = compute_recur(node.first_child(), ctx, shared_lib)?;
-                let mut array = ctx
-                    .get_mut(name)
-                    .context("array not found in context")?
-                    .write()
-                    .map_err(|e| {
-                        anyhow::format_err!("could not acquire lock {e}")
-                    })?;
-                Ok(array.swap_mem(&mut v, &index))
-            }
-            TreeNodeValue::Function(Value::Function { parameters, exprs }) => {
-                if let Value::BlockParen(parameters) = parameters.borrow() {
-                    if !parameters.iter().all(|v| {
-                        matches!(v, Value::Variable(_))
-                         //   || matches!(v, Value::String(_))
-                            || matches!(v, Value::VariableUnused)
-                    }) {
-                        return Ok(Primitive::Error(format!(
-                            "not a valid parameter: {parameters:?}"
-                        )));
-                    }
-                    Ok(Primitive::Function {
-                        parameters: parameters.clone(),
-                        exprs: exprs.to_owned(),
-                    })
-                } else {
-                    Ok(Primitive::Error(format!(
-                        "not a valid function: {parameters:?}, {exprs:?}"
-                    )))
-                }
-            }
             TreeNodeValue::FunctionCall(Value::FunctionCall {
                 parameters,
-                ref function,
+                function,
             }) => {
-                if let Value::BlockParen(param_values) = parameters.borrow() {
-                    let mut function = compute_instructions(
-                        vec![*function.clone()],
-                        ctx,
-                        shared_lib,
-                    )?;
+                let mut function = compute_instructions(
+                    vec![*function.clone()],
+                    ctx,
+                    shared_lib,
+                )?;
 
-                    // FIXME clone again
-                    if let Primitive::Ref(r) = function {
-                        function = r
-                            .read()
-                            .map_err(|e| {
-                                anyhow::format_err!(
-                                    "could not acquire lock in fn call{e}"
-                                )
-                            })?
-                            .clone();
-                    }
-                    if let Primitive::Function {
-                        parameters: function_parameters,
-                        exprs,
-                    } = function
-                    {
-                        let mut scope_ctx = scoped_ctx(ctx)?;
-                        for (i, param) in function_parameters.iter().enumerate()
-                        {
-                            if let Some(value) = param_values.get(i) {
-                                if let Value::Variable(variable_from_fn_def) =
-                                    param
-                                {
-                                    let variable_from_fn_call = compute_lazy(
-                                        value.clone(),
-                                        ctx,
-                                        shared_lib,
-                                    )?;
-                                    scope_ctx.insert(
-                                        variable_from_fn_def.clone(),
-                                        variable_from_fn_call.ref_prim(),
-                                    );
-                                }
-                            } else {
-                                return Ok(Primitive::Error(format!(
-                                    "missing parameter {param:?}"
-                                )));
-                            }
-                        }
-                        // TODO remove this and replace Arc<Mutex<T>> by Arc<T>
-                        // call function in a specific os thread with its own stack
-                        // This was relative to a small stack allocated by musl
-                        // But now it doesn't seem needed anymore
-                        // let res = spawn(move || {}).join().map_err(|e| {
-                        //     anyhow::Error::msg(format!(
-                        //         "something wrong: {e:?}"
-                        //     ))
-                        // })??;
-                        let res = compute_instructions(
-                            exprs,
-                            &mut scope_ctx,
-                            shared_lib,
-                        )?;
-
-                        if let Primitive::EarlyReturn(v) = res {
-                            return Ok(*v);
-                        }
-                        Ok(res)
-                    } else if let Primitive::NativeLibrary(lib) = function {
-                        if cfg!(test) {
-                            dbg!(&lib);
-                        }
-                        let mut parameters = vec![];
-                        for param in param_values.iter() {
-                            if let Value::Variable(_) = param {
-                                let variable_from_fn_call = compute_lazy(
-                                    param.clone(),
-                                    ctx,
-                                    shared_lib,
-                                )?;
-                                parameters.push(variable_from_fn_call);
-                            }
-                        }
-                        if cfg!(test) {
-                            dbg!(&parameters);
-                        }
-                        Ok(Primitive::Error("debug".into()))
-                        //Ok(function(vec![Primitive::String("s".into())]))
-                    } else if let Primitive::NativeFunction(key, lib) = function
-                    {
-                        #[cfg(not(target_arch = "wasm32"))]
-                        {
-                            if cfg!(test) {
-                                dbg!(&key, &lib);
-                            }
-                            let mut parameters = vec![];
-
-                            for param in param_values.iter() {
-                                let variable_from_fn_call = compute_lazy(
-                                    param.clone(),
-                                    ctx,
-                                    shared_lib,
-                                )?;
-                                parameters.push(variable_from_fn_call);
-                            }
-                            if cfg!(test) {
-                                dbg!(&parameters);
-                            }
-
-                            let mut scope_ctx = scoped_ctx(ctx)?;
-
-                            let slb = shared_lib.as_ref().to_path_buf();
-                            let fun = move |v, extra_ctx| {
-                                scope_ctx.extend(extra_ctx);
-                                compute_lazy(v, &mut scope_ctx, &slb)
-                            };
-                            unsafe {
-                                lib.call_function(
-                                    key.as_str(),
-                                    parameters,
-                                    Box::new(fun),
-                                )
-                            }
-                        }
-                        #[cfg(target_arch = "wasm32")]
-                        {
-                            return Ok(Primitive::Error(format!("Loading native function {key} doesn't work in wasm context! {lib:?}")));
-                        }
-                    } else {
-                        Ok(Primitive::Error(format!(
-                            " not a function: {function}"
-                        )))
-                    }
-                } else {
-                    Ok(Primitive::Error(format!(
-                        "invalid function call: {parameters:?} => {function:?}"
-                    )))
-                }
+                handle_function_call(function, parameters, ctx, shared_lib)
             }
             TreeNodeValue::FunctionCall(v) => Ok(Primitive::Error(format!(
                 "unexpected function call declaration: {v:?}"
@@ -982,36 +977,40 @@ fn compute_recur(
                         Variable(v) => {
                             ctx.remove(v);
                         }
-                        Value::StructAccess { struc, key } => {
-                            match struc.borrow(){
-                                Variable(s) => {
-                                     let struc = ctx.get_mut(s)
-                                         .ok_or_else(||anyhow::format_err!("ctx doesn't contains array {s}"))?;
-                                    let mut struc = struc.write()
-                                        .map_err(|e| anyhow::format_err!("DROP STRUC : could not acquire lock {e}"))?;
-                                   struc.remove(&Primitive::String(key.into()))?;
-                                }
-                                _ => return Ok(PrimErr(format!("only primitive within the ctx can be dropped {struc:?}")))
-                            }
+                        Value::MultiDepthAccess { root, next_keys } => {
+                            todo!()
                         }
-                        Value::ArrayAccess { arr, index } => {
-                            match arr.borrow(){
-                                Variable(s) => {
-                                     let array = ctx.get_mut(s)
-                                         .ok_or_else(||anyhow::format_err!("ctx doesn't contains array {s}"))?;
-                                    let mut array = array.write()
-                                        .map_err(|e| anyhow::format_err!("DROP ARRAY : could not acquire lock {e}"))?;
-                                    match index.borrow() {
-                                        Value::Integer(i) => { array.remove(&Int(*i))},
-                                        Value::U8(i) => { array.remove(&Primitive::U8(*i))},
-                                        Value::I8(i) => { array.remove(&Primitive::I8(*i))},
-                                        e => return Ok(PrimErr(format!("index not an int! {e:?}")))
-
-                                    }?;
-                                }
-                                _ => return Ok(PrimErr(format!("only primitive within the ctx can be dropped {arr:?}")))
-                            }
-                        }
+                        // todo delete me
+                        // Value::StructAccess { struc, key } => {
+                        //     match struc.borrow(){
+                        //         Variable(s) => {
+                        //              let struc = ctx.get_mut(s)
+                        //                  .ok_or_else(||anyhow::format_err!("ctx doesn't contains array {s}"))?;
+                        //             let mut struc = struc.write()
+                        //                 .map_err(|e| anyhow::format_err!("DROP STRUC : could not acquire lock {e}"))?;
+                        //            struc.remove(&Primitive::String(key.into()))?;
+                        //         }
+                        //         _ => return Ok(PrimErr(format!("only primitive within the ctx can be dropped {struc:?}")))
+                        //     }
+                        // }
+                        // Value::ArrayAccess { arr, index } => {
+                        //     match arr.borrow(){
+                        //         Variable(s) => {
+                        //              let array = ctx.get_mut(s)
+                        //                  .ok_or_else(||anyhow::format_err!("ctx doesn't contains array {s}"))?;
+                        //             let mut array = array.write()
+                        //                 .map_err(|e| anyhow::format_err!("DROP ARRAY : could not acquire lock {e}"))?;
+                        //             match index.borrow() {
+                        //                 Value::Integer(i) => { array.remove(&Int(*i))},
+                        //                 Value::U8(i) => { array.remove(&Primitive::U8(*i))},
+                        //                 Value::I8(i) => { array.remove(&Primitive::I8(*i))},
+                        //                 e => return Ok(PrimErr(format!("index not an int! {e:?}")))
+                        //
+                        //             }?;
+                        //         }
+                        //         _ => return Ok(PrimErr(format!("only primitive within the ctx can be dropped {arr:?}")))
+                        //     }
+                        // }
                         _ => {
                             return Err(Error::msg(format!(
                                 "ERROR DROP: not a valid variable {var:?}"
@@ -1036,6 +1035,14 @@ fn compute_recur(
     }
 }
 
+fn tree_node_to_tree(
+    value: TreeNodeValue,
+) -> anyhow::Result<Tree<TreeNodeValue>> {
+    let mut tree: Tree<TreeNodeValue> = Tree::new();
+    tree.set_root(value);
+
+    Ok(tree)
+}
 fn value_to_tree(
     value: Value,
     ctx: &mut BTreeMap<String, RefPrimitive>,

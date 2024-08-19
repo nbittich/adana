@@ -189,8 +189,8 @@ pub enum Value {
 }
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum KeyAccess {
-    Index(usize),
-    Key(String),
+    Index(Primitive),
+    Key(Primitive),
     Variable(Value),
 }
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -275,14 +275,12 @@ pub enum TreeNodeValue {
     Ops(Operator),
     Primitive(Primitive),
     VariableRef(String),
-    BuiltInFunction(BuiltInFunctionType),
+    BuiltInFunction { fn_type: BuiltInFunctionType, params: Value },
     IfExpr(Value),
     FString(String, Vec<(String, Value)>),
     WhileExpr(Value),
     Array(Vec<Value>),
     Struct(BTreeMap<String, Value>),
-    StructAccess { struc: Value, key: Primitive },
-    ArrayAccess { index: Value, array: Value },
     MultiDepthAccess { root: Value, keys: Vec<KeyAccess> },
     Function(Value),
     FunctionCall(Value),

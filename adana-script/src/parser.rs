@@ -15,6 +15,7 @@ use adana_script_core::{
     constants::{
         BREAK, DROP, ELSE, FOR, IF, IN, MULTILINE, NULL, RETURN, STRUCT, WHILE,
     },
+    primitive::Primitive,
     KeyAccess, FORBIDDEN_VARIABLE_NAME,
 };
 use adana_script_core::{BuiltInFunctionType, MathConstants, Operator, Value};
@@ -319,7 +320,7 @@ fn parse_fn_args(s: &str) -> Res<Vec<Value>> {
 fn parse_fn_call(s: &str) -> Res<Value> {
     map(
         pair(
-            alt((parse_fn, parse_multidepth_access, parse_variable)),
+            alt((parse_fn, parse_variable)),
             map(parse_fn_args, Value::BlockParen),
         ),
         |(function, parameters)| Value::FunctionCall {
@@ -339,8 +340,8 @@ fn parse_foreach(s: &str) -> Res<Value> {
             tag_no_space(IN),
             alt((
                 parse_range,
-                parse_fn_call,
                 parse_multidepth_access,
+                parse_fn_call,
                 parse_array,
                 parse_fstring,
                 parse_string,
@@ -518,7 +519,7 @@ fn parse_key_brackets(s: &str) -> Res<KeyAccess> {
         tag("["),
         terminated(
             map(delimited(tag("\""), parse_variable_str, tag("\"")), |x| {
-                KeyAccess::Key(x.to_string())
+                KeyAccess::Key(Primitive::String(x.to_string()))
             }),
             tag("]"),
         ),
@@ -546,9 +547,15 @@ fn parse_index_brackets(s: &str) -> Res<KeyAccess> {
             map_parser(
                 recognize_float,
                 alt((
-                    map(all_consuming(U8), |u| KeyAccess::Index(u as usize)),
-                    map(all_consuming(I8), |u| KeyAccess::Index(u as usize)),
-                    map(all_consuming(I128), |u| KeyAccess::Index(u as usize)),
+                    map(all_consuming(U8), |u| {
+                        KeyAccess::Index(Primitive::U8(u))
+                    }),
+                    map(all_consuming(I8), |u| {
+                        KeyAccess::Index(Primitive::I8(u))
+                    }),
+                    map(all_consuming(I128), |u| {
+                        KeyAccess::Index(Primitive::Int(u))
+                    }),
                 )),
             ),
             tag("]"),
@@ -557,7 +564,7 @@ fn parse_index_brackets(s: &str) -> Res<KeyAccess> {
 }
 fn parse_key_dots(s: &str) -> Res<KeyAccess> {
     map(preceded(tag("."), parse_variable_str), |k| {
-        KeyAccess::Key(k.to_string())
+        KeyAccess::Key(Primitive::String(k.to_string()))
     })(s)
 }
 
@@ -565,7 +572,7 @@ fn parse_multidepth_access(s: &str) -> Res<Value> {
     let (res, (root, mut next_keys)) = map(
         alt((
             pair(
-                alt((parse_struct, parse_variable)),
+                parse_builtin_fn,
                 alt((
                     parse_key_brackets,
                     parse_index_brackets,
@@ -574,10 +581,36 @@ fn parse_multidepth_access(s: &str) -> Res<Value> {
                 )),
             ),
             pair(
-                alt((parse_array, parse_variable, parse_fstring, parse_string)),
+                parse_fn_call,
+                alt((
+                    parse_key_brackets,
+                    parse_index_brackets,
+                    parse_variable_brackets,
+                    parse_key_dots,
+                )),
+            ),
+            pair(
+                parse_variable,
+                alt((
+                    parse_key_brackets,
+                    parse_index_brackets,
+                    parse_variable_brackets,
+                    parse_key_dots,
+                )),
+            ),
+            pair(
+                parse_struct,
+                alt((
+                    parse_key_brackets,
+                    parse_index_brackets,
+                    parse_variable_brackets,
+                    parse_key_dots,
+                )),
+            ),
+            pair(
+                alt((parse_array, parse_fstring, parse_string)),
                 alt((parse_variable_brackets, parse_index_brackets)),
             ),
-            pair(parse_builtin_fn, parse_key_dots),
         )),
         |(s, key)| (Box::new(s), vec![key]),
     )(s)?;
@@ -592,7 +625,6 @@ fn parse_multidepth_access(s: &str) -> Res<Value> {
     ))(new_rest)
     {
         next_keys.push(key);
-
         new_rest = rest;
     }
 
@@ -613,9 +645,9 @@ fn parse_value(s: &str) -> Res<Value> {
                 parse_block_paren,
                 parse_operation,
                 parse_implicit_multiply,
+                parse_multidepth_access,
                 parse_struct,
                 parse_fn_call,
-                parse_multidepth_access,
                 parse_array,
                 parse_range,
                 parse_number,
@@ -694,12 +726,9 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                 ),
                 tag_no_space("="),
                 alt((
+                    parse_multidepth_access,
                     parse_fn_call,
                     parse_fn,
-                    parse_multidepth_access,
-                    //parse_struct_access, /* FIXME seems not necessary or
-                    //                     and also buggy
-                    //                     missing test */
                     parse_struct,
                     parse_fstring,
                     parse_array,
