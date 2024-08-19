@@ -192,6 +192,7 @@ pub enum KeyAccess {
     Index(Primitive),
     Key(Primitive),
     Variable(Value),
+    FunctionCall { key: Box<KeyAccess>, parameters: Value },
 }
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum BuiltInFunctionType {

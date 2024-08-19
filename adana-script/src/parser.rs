@@ -515,57 +515,121 @@ fn parse_array(s: &str) -> Res<Value> {
 }
 
 fn parse_key_brackets(s: &str) -> Res<KeyAccess> {
-    preceded(
-        tag("["),
-        terminated(
-            map(delimited(tag("\""), parse_variable_str, tag("\"")), |x| {
-                KeyAccess::Key(Primitive::String(x.to_string()))
-            }),
-            tag("]"),
+    map(
+        pair(
+            preceded(
+                tag("["),
+                terminated(
+                    map(
+                        delimited(tag("\""), parse_variable_str, tag("\"")),
+                        |k| KeyAccess::Key(Primitive::String(k.to_string())),
+                    ),
+                    tag("]"),
+                ),
+            ),
+            opt(parse_fn_args),
         ),
+        |(k, params)| {
+            if let Some(params) = params {
+                KeyAccess::FunctionCall {
+                    parameters: Value::BlockParen(params),
+                    key: Box::new(k),
+                }
+            } else {
+                k
+            }
+        },
     )(s)
 }
 
 fn parse_variable_brackets(s: &str) -> Res<KeyAccess> {
-    preceded(
-        tag("["),
-        terminated(
-            map(
-                verify(parse_variable, |v| {
-                    matches!(v, Value::VariableRef(_) | Value::Variable(_))
-                }),
-                |x| KeyAccess::Variable(x),
+    map(
+        pair(
+            preceded(
+                tag("["),
+                terminated(
+                    map(
+                        verify(parse_variable, |v| {
+                            matches!(
+                                v,
+                                Value::VariableRef(_) | Value::Variable(_)
+                            )
+                        }),
+                        |k| KeyAccess::Variable(k),
+                    ),
+                    tag("]"),
+                ),
             ),
-            tag("]"),
+            opt(parse_fn_args),
         ),
+        |(k, params)| {
+            if let Some(params) = params {
+                KeyAccess::FunctionCall {
+                    parameters: Value::BlockParen(params),
+                    key: Box::new(k),
+                }
+            } else {
+                k
+            }
+        },
     )(s)
 }
 fn parse_index_brackets(s: &str) -> Res<KeyAccess> {
-    preceded(
-        tag("["),
-        terminated(
-            map_parser(
-                recognize_float,
-                alt((
-                    map(all_consuming(U8), |u| {
-                        KeyAccess::Index(Primitive::U8(u))
-                    }),
-                    map(all_consuming(I8), |u| {
-                        KeyAccess::Index(Primitive::I8(u))
-                    }),
-                    map(all_consuming(I128), |u| {
-                        KeyAccess::Index(Primitive::Int(u))
-                    }),
-                )),
+    map(
+        pair(
+            preceded(
+                tag("["),
+                terminated(
+                    map_parser(
+                        recognize_float,
+                        alt((
+                            map(all_consuming(U8), |u| {
+                                KeyAccess::Index(Primitive::U8(u))
+                            }),
+                            map(all_consuming(I8), |u| {
+                                KeyAccess::Index(Primitive::I8(u))
+                            }),
+                            map(all_consuming(I128), |u| {
+                                KeyAccess::Index(Primitive::Int(u))
+                            }),
+                        )),
+                    ),
+                    tag("]"),
+                ),
             ),
-            tag("]"),
+            opt(parse_fn_args),
         ),
+        |(k, params)| {
+            if let Some(params) = params {
+                KeyAccess::FunctionCall {
+                    parameters: Value::BlockParen(params),
+                    key: Box::new(k),
+                }
+            } else {
+                k
+            }
+        },
     )(s)
 }
 fn parse_key_dots(s: &str) -> Res<KeyAccess> {
-    map(preceded(tag("."), parse_variable_str), |k| {
-        KeyAccess::Key(Primitive::String(k.to_string()))
-    })(s)
+    map(
+        pair(
+            map(preceded(tag("."), parse_variable_str), |k| {
+                KeyAccess::Key(Primitive::String(k.to_string()))
+            }),
+            opt(parse_fn_args),
+        ),
+        |(k, params)| {
+            if let Some(params) = params {
+                KeyAccess::FunctionCall {
+                    parameters: Value::BlockParen(params),
+                    key: Box::new(k),
+                }
+            } else {
+                k
+            }
+        },
+    )(s)
 }
 
 fn parse_multidepth_access(s: &str) -> Res<Value> {

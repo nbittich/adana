@@ -398,7 +398,7 @@ pub fn to_ast(
             } else if let Value::VariableUnused = *name {
                 Ok(TreeNodeValue::VariableAssign(None))
             } else if let Value::MultiDepthAccess { root, next_keys} = *name {
-                Ok(TreeNodeValue:: MultiDepthVariableAssign{root: *root, next_keys})
+                Ok(TreeNodeValue::MultiDepthVariableAssign{root: *root, next_keys})
 
             }  else {
                 // FIXME for my future self. x.y.z or x[0][1] is not yet supported

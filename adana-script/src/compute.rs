@@ -69,7 +69,9 @@ fn compute_key_access(
         }
     }
     match key {
-        KeyAccess::Index(_) | KeyAccess::Key(_) => Ok(key.clone()),
+        KeyAccess::Index(_)
+        | KeyAccess::Key(_)
+        | KeyAccess::FunctionCall { .. } => Ok(key.clone()),
         KeyAccess::Variable(v) => {
             compute_key_access_ref(&compute_lazy(v.clone(), ctx, shared_lib)?)
         }
@@ -229,16 +231,56 @@ fn compute_multidepth_access(
                     )),
                 }
             }
+            Primitive::NativeLibrary(lib) => {
+                match compute_key_access(keys.remove(0), ctx, shared_lib)? {
+                    KeyAccess::Key(idx) => {
+                        Ok(Primitive::NativeFunction(idx.to_string(), lib))
+                    }
+                    KeyAccess::FunctionCall { key, parameters } => {
+                        let key = compute_key_access(&key, ctx, shared_lib)?;
+                        let KeyAccess::Key(idx) = key else {
+                            return Err(anyhow!( "native lib can only be accessed with a key str {keys:?}"));
+                        };
+                        let root_p= handle_function_call(Primitive::NativeFunction(idx.to_string(), lib), &Box::new(parameters), ctx, shared_lib)?;
+                        if !keys.is_empty() {
+                            compute_multidepth_access_primitive(
+                                root_p, keys, ctx, shared_lib,
+                            )
+                        } else {
+                            Ok(root_p)
+                        }
+                    },
+                    _ => Err(anyhow!(
+                        "native lib can only be accessed with a key str {keys:?}"
+                    ))
+                }
+            }
             v @ Primitive::Array(_) => {
-                let KeyAccess::Index(idx) =
-                    compute_key_access(keys.remove(0), ctx, shared_lib)?
-                else {
-                    return Err(anyhow!(
-                        "array can only be accessed with an idx {keys:?}"
-                    ));
-                };
-                let root_p = v.index_at(&idx);
+                let root_p = match compute_key_access(
+                    keys.remove(0),
+                    ctx,
+                    shared_lib,
+                )? {
+                    KeyAccess::Index(idx) => v.index_at(&idx),
+                    KeyAccess::FunctionCall { key, parameters } => {
+                        let key = compute_key_access(&key, ctx, shared_lib)?;
+                        let KeyAccess::Index(idx) = key else {
+                            return Err(anyhow!( "array can only be accessed with an idx  {keys:?}"));
+                        };
 
+                        handle_function_call(
+                            v.index_at(&idx),
+                            &Box::new(parameters),
+                            ctx,
+                            shared_lib,
+                        )?
+                    }
+                    _ => {
+                        return Err(anyhow!(
+                            "array can only be accessed with an idx  {keys:?}"
+                        ))
+                    }
+                };
                 if !keys.is_empty() {
                     compute_multidepth_access_primitive(
                         root_p, keys, ctx, shared_lib,
@@ -246,31 +288,34 @@ fn compute_multidepth_access(
                 } else {
                     Ok(root_p)
                 }
-            }
-            Primitive::NativeLibrary(lib) => {
-                if keys.len() != 1 {
-                    return Err(anyhow!("too many arguments for native lib"));
-                }
-                let KeyAccess::Key(idx) =
-                    compute_key_access(keys.remove(0), ctx, shared_lib)?
-                else {
-                    return Err(anyhow!(
-                        "native lib can only be accessed with a key str {keys:?}"
-                    ));
-                };
-                Ok(Primitive::NativeFunction(idx.to_string(), lib))
             }
 
             v @ Primitive::Struct(_) => {
-                let KeyAccess::Key(idx) =
-                    compute_key_access(keys.remove(0), ctx, shared_lib)?
-                else {
-                    return Err(anyhow!(
-                        "array can only be accessed with a key {keys:?}"
-                    ));
-                };
-                let root_p = v.index_at(&idx);
+                let root_p = match compute_key_access(
+                    keys.remove(0),
+                    ctx,
+                    shared_lib,
+                )? {
+                    KeyAccess::Key(idx) => v.index_at(&idx),
+                    KeyAccess::FunctionCall { key, parameters } => {
+                        let key = compute_key_access(&key, ctx, shared_lib)?;
+                        let KeyAccess::Key(idx) = key else {
+                            return Err(anyhow!( "struct can only be accessed with a key {keys:?}"));
+                        };
 
+                        handle_function_call(
+                            v.index_at(&idx),
+                            &Box::new(parameters),
+                            ctx,
+                            shared_lib,
+                        )?
+                    }
+                    _ => {
+                        return Err(anyhow!(
+                            "struct can only be accessed with a key {keys:?}"
+                        ))
+                    }
+                };
                 if !keys.is_empty() {
                     compute_multidepth_access_primitive(
                         root_p, keys, ctx, shared_lib,
@@ -279,11 +324,9 @@ fn compute_multidepth_access(
                     Ok(root_p)
                 }
             }
-            _ => {
-                return Err(anyhow::anyhow!(
-                    "illegal multidepth access primitive {root:?}"
-                ))
-            }
+            _ => Err(anyhow!(
+                "illegal usage of multidepth access {root:?} => {keys:?}"
+            )),
         }
     }
     let root_primitive = match root {
@@ -621,12 +664,7 @@ fn compute_recur(
                 }
                 Ok(Primitive::Array(primitives))
             }
-            TreeNodeValue::MultiDepthAccess { root, keys } => {
-                compute_multidepth_access(root, keys, ctx, shared_lib)
-            }
-            TreeNodeValue::MultiDepthVariableAssign { root, next_keys } => {
-                todo!()
-            }
+
             TreeNodeValue::Struct(struc) => {
                 let mut primitives = BTreeMap::new();
                 for (k, v) in struc {
@@ -650,6 +688,21 @@ fn compute_recur(
                     }
                 }
                 Ok(Primitive::Struct(primitives))
+            }
+            TreeNodeValue::MultiDepthAccess { root, keys } => {
+                compute_multidepth_access(root, keys, ctx, shared_lib)
+            }
+            TreeNodeValue::MultiDepthVariableAssign { root, next_keys } => {
+                if next_keys.is_empty() {
+                    return Err(anyhow!("not enough keys {next_keys:?}"));
+                }
+                let mut v = compute_recur(node.first_child(), ctx, shared_lib)?;
+                match root {
+                    Value::Variable(_) => todo!(),
+                    Value::VariableRef(_) => todo!(),
+                    _ => Ok(v),
+                }
+                // NORDINE 6
             }
             // NORDINE5
             // TreeNodeValue::VariableArrayAssign { name, index } => {
