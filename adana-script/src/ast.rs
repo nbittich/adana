@@ -401,9 +401,6 @@ pub fn to_ast(
                 Ok(TreeNodeValue::MultiDepthVariableAssign{root: *root, next_keys})
 
             }  else {
-                // FIXME for my future self. x.y.z or x[0][1] is not yet supported
-                // for assignment
-                // We need Primitive::Ref to make it happen
                 Err(anyhow::Error::msg(format!(
                     "AST ERROR: invalid variable expression {name:?} => {expr:?}",
                 )))

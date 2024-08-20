@@ -28,7 +28,7 @@ fn complex_struct_array_struct() {
              m: 12,
              y: ["hello", 3, struct {n: "world"}]
          }
-        x = x.y[0]  + " " + x.y[2]["n"] # FIXME HACKY
+        x = x.y[0]  + " " + x.y[2]["n"] 
 
         "#;
     let mut ctx = BTreeMap::new();
@@ -122,7 +122,7 @@ fn complex_struct_struct_struct_other() {
 fn simple_array_two_depth() {
     let expr = r#"
              z = [0, 2, "hello", [3," ", "world"]]
-             x = (z[2] + z[3][1] + z[3][2]) # FIXME requires parenthesises
+             x = z[2] + z[3][1] + z[3][2] 
         "#;
     let mut ctx = BTreeMap::new();
     let res = compute(expr, &mut ctx, "N/A").unwrap();

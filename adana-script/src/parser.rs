@@ -480,10 +480,25 @@ fn parse_struct_expr(s: &str) -> Res<Value> {
     ))(s)
 }
 pub(super) fn parse_struct(s: &str) -> Res<Value> {
-    let pair_key_value = |p| {
+    use nom::character::complete::char as charParser;
+    let parse_key = |p| {
+        preceded(
+            multispace0,
+            terminated(
+                map(
+                    preceded(
+                        opt(charParser('"')),
+                        terminated(parse_key_struct, opt(charParser('"'))),
+                    ),
+                    String::from,
+                ),
+                multispace0,
+            ),
+        )(p)
+    };
+    let pair_key_value = move|p| {
         separated_pair(
-            preceded(multispace0, terminated(map(preceded(opt(nom::character::complete::char('"')),terminated(parse_key_struct, 
-            opt(nom::character::complete::char('"')))), String::from), multispace0)),
+            parse_key,
             tag_no_space(":"),
             preceded(opt(comments),parse_struct_expr))
     }(p);
