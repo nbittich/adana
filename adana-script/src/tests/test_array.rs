@@ -239,6 +239,14 @@ fn test_array_access_from_fn_return() {
             Primitive::U8(4),
         ])
     );
+    let expr = r#"x = ()=> {[1,2,7,8,9]}() + 4
+        z="whatever"
+    "#;
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        ctx["z"].read().unwrap().clone(),
+        Primitive::String("whatever".to_string())
+    );
 }
 #[test]
 #[serial]
@@ -247,4 +255,18 @@ fn test_array_access_key_index() {
     let expr = r#"x = ()=> {[1,2,7,8,9]}()[3] + 4"#;
     let _ = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(ctx["x"].read().unwrap().clone(), Primitive::Int(12));
+    let expr = r#"x = ()=> {[1,2,7,8,9]}()[3] + 4
+        z="whatever" + "!" + ":)"
+        if z == "whatever!:)" {
+          z = "my test " + z
+        }else {
+          z = "no test"
+        }
+        "#;
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
+
+    assert_eq!(
+        ctx["z"].read().unwrap().clone(),
+        Primitive::String("my test whatever!:)".to_string())
+    );
 }

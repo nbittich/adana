@@ -817,7 +817,7 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                         tuple((
                             alt((parse_multidepth_access, parse_fn_call)),
                             parse_operation,
-                            parse_block_paren_opt,
+                            parse_expression,
                         )),
                         |(k, o, v)| Value::Expression(vec![k, o, v]),
                     ),

@@ -386,3 +386,19 @@ fn test_struc_access_key9() {
         Primitive::String("hello world".to_string())
     );
 }
+#[test]
+fn test_struc_access_key10() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"x= struct{x:"hello"}.x + " world" + "!" 
+      z = "whatever" + 9
+    "#;
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        ctx["x"].read().unwrap().clone(),
+        Primitive::String("hello world!".to_string())
+    );
+    assert_eq!(
+        ctx["z"].read().unwrap().clone(),
+        Primitive::String("whatever9".to_string())
+    );
+}
