@@ -811,6 +811,22 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                 alt((
                     all_consuming(parse_multidepth_access),
                     all_consuming(parse_fn_call),
+                    map(
+                        tuple((
+                            parse_fn_call,
+                            parse_operation,
+                            parse_block_paren_opt,
+                        )),
+                        |(k, o, v)| Value::Expression(vec![k, o, v]),
+                    ),
+                    map(
+                        tuple((
+                            parse_multidepth_access,
+                            parse_operation,
+                            parse_block_paren_opt,
+                        )),
+                        |(k, o, v)| Value::Expression(vec![k, o, v]),
+                    ),
                     parse_fn,
                     parse_struct,
                     parse_fstring,

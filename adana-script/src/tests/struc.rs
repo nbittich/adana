@@ -366,3 +366,13 @@ fn test_struct_from_readme_example() {
         ]))
     );
 }
+#[test]
+fn test_struc_access_key9() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"x= struct{x:"hello"}.x + " world""#;
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        ctx["x"].read().unwrap().clone(),
+        Primitive::String("hello world".to_string())
+    );
+}
