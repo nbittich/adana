@@ -310,3 +310,29 @@ fn test_struct_empty() {
     let r = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::String("nordine".into()));
 }
+
+#[test]
+fn test_struct_modify_content_type() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        s = struct { headers: struct{}}
+        s.headers["Content-Type"] = "application/json"
+        s.headers["Content-Type"]
+       "#;
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("application/json".into()));
+}
+
+#[test]
+fn test_struct_key_between_quotes() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        s = struct { headers: struct{
+           "Content-Type": "text/csv",
+            "other": "2"
+        }}
+         s.headers["Content-Type"] + s.headers.other
+       "#;
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("text/csv2".into()));
+}

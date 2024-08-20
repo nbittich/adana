@@ -482,7 +482,8 @@ fn parse_struct_expr(s: &str) -> Res<Value> {
 pub(super) fn parse_struct(s: &str) -> Res<Value> {
     let pair_key_value = |p| {
         separated_pair(
-            preceded(multispace0, terminated(map(parse_key_struct, String::from), multispace0)),
+            preceded(multispace0, terminated(map(preceded(opt(nom::character::complete::char('"')),terminated(parse_key_struct, 
+            opt(nom::character::complete::char('"')))), String::from), multispace0)),
             tag_no_space(":"),
             preceded(opt(comments),parse_struct_expr))
     }(p);
