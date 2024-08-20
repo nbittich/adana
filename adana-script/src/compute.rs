@@ -200,14 +200,20 @@ fn fold_multidepth(
         ctx: &mut BTreeMap<String, RefPrimitive>,
         shared_lib: impl AsRef<Path> + Copy,
     ) -> anyhow::Result<Primitive> {
-        let k = next_keys.remove(0);
-        let k = compute_key_access(&k, ctx, shared_lib)?;
         if matches!(new_value, Primitive::Error(_)) {
             return Ok(new_value.clone());
         }
+        let k = next_keys.remove(0);
+        let k = compute_key_access(&k, ctx, shared_lib)?;
         match k {
             KeyAccess::Index(key) | KeyAccess::Key(key) => {
                 if next_keys.is_empty() {
+                    if matches!(new_value, Primitive::Unit) {
+                        // handle drop as user cannot
+                        // construct a Primitive::Unit
+                        acc.remove(&key)?;
+                        return Ok(Primitive::Unit);
+                    }
                     let res = acc.swap_mem(new_value, &key);
                     if matches!(res, Primitive::Error(_)) {
                         return Ok(res);
@@ -238,21 +244,19 @@ fn fold_multidepth(
     }
     match root {
         Value::Variable(name) | Value::VariableRef(name) => {
-            let mut acc = {
-                let arr = ctx
-                    .get(name)
-                    .context("array not found in context")?
-                    .read()
-                    .map_err(|e| {
-                        anyhow::format_err!("could not acquire lock {e}")
-                    })?;
-                arr.clone()
-            };
+            let mut cloned_ctx = ctx.clone();
+            let mut acc = ctx
+                .get(name)
+                .context("array not found in context")?
+                .write()
+                .map_err(|e| {
+                    anyhow::format_err!("could not acquire lock {e}")
+                })?;
             let res = fold(
                 &mut acc,
                 &mut new_value,
                 next_keys.iter().collect(),
-                ctx,
+                &mut cloned_ctx,
                 shared_lib,
             )?;
 
@@ -1087,7 +1091,7 @@ fn compute_recur(
                             fold_multidepth(
                                 root,
                                 next_keys,
-                                Primitive::Null,
+                                Primitive::Unit,
                                 ctx,
                                 shared_lib,
                             )?;
