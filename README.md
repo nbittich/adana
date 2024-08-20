@@ -549,7 +549,10 @@ Example of defining a struct:
 ```javascript
 person = struct {
     name: "hello",
-    age: 20
+    age: 20,
+    headers: struct {
+      "Content-Type": "application/json"
+    }
 }
 
 person_service = struct {

@@ -336,3 +336,33 @@ fn test_struct_key_between_quotes() {
     let r = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::String("text/csv2".into()));
 }
+
+#[test]
+fn test_struct_from_readme_example() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+    person = struct {
+        name: "hello",
+        age: 20,
+        headers: struct {
+            "Content-Type": "application/json"
+        }
+    }
+    person
+    "#;
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        r,
+        Primitive::Struct(BTreeMap::from([
+            ("name".to_string(), Primitive::String("hello".to_string())),
+            ("age".to_string(), Primitive::U8(20)),
+            (
+                "headers".to_string(),
+                Primitive::Struct(BTreeMap::from([(
+                    "Content-Type".to_string(),
+                    Primitive::String("application/json".to_string())
+                )]))
+            )
+        ]))
+    );
+}
