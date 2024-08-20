@@ -375,4 +375,14 @@ fn test_struc_access_key9() {
         ctx["x"].read().unwrap().clone(),
         Primitive::String("hello world".to_string())
     );
+    let expr = r#"x= struct{
+                         x:"hello",
+                         y: 9
+                      }.x + " world"
+                      "#;
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        ctx["x"].read().unwrap().clone(),
+        Primitive::String("hello world".to_string())
+    );
 }
