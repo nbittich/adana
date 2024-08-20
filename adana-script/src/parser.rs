@@ -811,17 +811,11 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                 alt((
                     all_consuming(parse_multidepth_access),
                     all_consuming(parse_fn_call),
+                    // TODO maybe with tuple() this giant mess can be simplified e.g
+                    // tuple(alt(parser1, parser2,...))
                     map(
                         tuple((
-                            parse_fn_call,
-                            parse_operation,
-                            parse_block_paren_opt,
-                        )),
-                        |(k, o, v)| Value::Expression(vec![k, o, v]),
-                    ),
-                    map(
-                        tuple((
-                            parse_multidepth_access,
+                            alt((parse_multidepth_access, parse_fn_call)),
                             parse_operation,
                             parse_block_paren_opt,
                         )),
