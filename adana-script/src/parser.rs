@@ -558,7 +558,7 @@ fn parse_variable_brackets(s: &str) -> Res<KeyAccess> {
                                 Value::VariableRef(_) | Value::Variable(_)
                             )
                         }),
-                        |k| KeyAccess::Variable(k),
+                        KeyAccess::Variable,
                     ),
                     tag("]"),
                 ),

@@ -1,11 +1,10 @@
 use anyhow::{anyhow, Context, Error};
 use slab_tree::{NodeRef, Tree};
 use std::{
-    borrow::{Borrow, BorrowMut},
+    borrow::Borrow,
     fs::read_to_string,
     path::{Path, PathBuf},
     sync::Arc,
-    usize,
 };
 
 use crate::{parser::parse_instructions, prelude::BTreeMap};
@@ -204,7 +203,7 @@ fn fold_multidepth(
             return Ok(new_value.clone());
         }
         let k = next_keys.remove(0);
-        let k = compute_key_access(&k, ctx, shared_lib)?;
+        let k = compute_key_access(k, ctx, shared_lib)?;
         match k {
             KeyAccess::Index(key) | KeyAccess::Key(key) => {
                 if next_keys.is_empty() {
@@ -420,7 +419,7 @@ fn compute_multidepth_access(
         | v @ Value::VariableRef(_) => {
             compute_lazy(v.clone(), ctx, shared_lib)?
         }
-        v @ _ => {
+        v => {
             return Err(anyhow::anyhow!("illegal multidepth access {v:?}"))
         }
     };
@@ -1064,7 +1063,7 @@ fn compute_recur(
                 parameters,
                 function,
             }) => {
-                let mut function = compute_instructions(
+                let function = compute_instructions(
                     vec![*function.clone()],
                     ctx,
                     shared_lib,
