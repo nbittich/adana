@@ -187,6 +187,9 @@ fn parse_string(s: &str) -> Res<Value> {
     })(s)
 }
 
+fn parse_key_struct(s: &str) -> Res<&str> {
+    take_while1(|c: char| c.is_alphanumeric() || c == '_' || c == '-')(s)
+}
 fn parse_variable_str(s: &str) -> Res<&str> {
     let allowed_values = |s| {
         take_while1(|s: char| {
@@ -479,7 +482,7 @@ fn parse_struct_expr(s: &str) -> Res<Value> {
 pub(super) fn parse_struct(s: &str) -> Res<Value> {
     let pair_key_value = |p| {
         separated_pair(
-            preceded(multispace0, terminated(map(parse_variable_str, String::from), multispace0)),
+            preceded(multispace0, terminated(map(parse_key_struct, String::from), multispace0)),
             tag_no_space(":"),
             preceded(opt(comments),parse_struct_expr))
     }(p);
@@ -521,7 +524,7 @@ fn parse_key_brackets(s: &str) -> Res<KeyAccess> {
                 tag("["),
                 terminated(
                     map(
-                        delimited(tag("\""), parse_variable_str, tag("\"")),
+                        delimited(tag("\""), parse_key_struct, tag("\"")),
                         |k| KeyAccess::Key(Primitive::String(k.to_string())),
                     ),
                     tag("]"),

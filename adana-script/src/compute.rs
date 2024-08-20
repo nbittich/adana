@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Context, Error};
 use slab_tree::{NodeRef, Tree};
 use std::{
-    borrow::Borrow,
+    borrow::{Borrow, BorrowMut},
     fs::read_to_string,
     path::{Path, PathBuf},
     sync::Arc,
@@ -77,7 +77,6 @@ fn compute_key_access(
         }
     }
 }
-//NORDINE
 fn handle_function_call(
     mut function: Primitive,
     parameters: &Box<Value>,
@@ -187,7 +186,81 @@ fn handle_function_call(
         )))
     }
 }
+fn fold_multidepth(
+    root: &Value,
+    next_keys: &Vec<KeyAccess>,
+    mut new_value: Primitive,
+    ctx: &mut BTreeMap<String, RefPrimitive>,
+    shared_lib: impl AsRef<Path> + Copy,
+) -> anyhow::Result<Primitive> {
+    fn fold(
+        acc: &mut Primitive,
+        new_value: &mut Primitive,
+        mut next_keys: Vec<&KeyAccess>,
+        ctx: &mut BTreeMap<String, RefPrimitive>,
+        shared_lib: impl AsRef<Path> + Copy,
+    ) -> anyhow::Result<Primitive> {
+        let k = next_keys.remove(0);
+        let k = compute_key_access(&k, ctx, shared_lib)?;
+        if matches!(new_value, Primitive::Error(_)) {
+            return Ok(new_value.clone());
+        }
+        match k {
+            KeyAccess::Index(key) | KeyAccess::Key(key) => {
+                if next_keys.is_empty() {
+                    let res = acc.swap_mem(new_value, &key);
+                    if matches!(res, Primitive::Error(_)) {
+                        return Ok(res);
+                    }
+                } else {
+                    let mut new_value = fold(
+                        &mut acc.index_at(&key),
+                        new_value,
+                        next_keys,
+                        ctx,
+                        shared_lib,
+                    )?;
+                    if matches!(new_value, Primitive::Error(_)) {
+                        return Ok(new_value);
+                    }
+                    acc.swap_mem(&mut new_value, &key);
+                }
+            }
+            KeyAccess::FunctionCall { .. } | KeyAccess::Variable(_) => {
+                return Err(anyhow!("illegal assignement {next_keys:?} "))
+            }
+        }
+        Ok(acc.clone())
+    }
 
+    if next_keys.is_empty() {
+        return Err(anyhow!("not enough keys {next_keys:?}"));
+    }
+    match root {
+        Value::Variable(name) | Value::VariableRef(name) => {
+            let mut acc = {
+                let arr = ctx
+                    .get(name)
+                    .context("array not found in context")?
+                    .read()
+                    .map_err(|e| {
+                        anyhow::format_err!("could not acquire lock {e}")
+                    })?;
+                arr.clone()
+            };
+            let res = fold(
+                &mut acc,
+                &mut new_value,
+                next_keys.iter().collect(),
+                ctx,
+                shared_lib,
+            )?;
+
+            Ok(res)
+        }
+        _ => Ok(new_value),
+    }
+}
 fn compute_multidepth_access(
     root: &Value,
     keys: &Vec<KeyAccess>,
@@ -693,30 +766,11 @@ fn compute_recur(
                 compute_multidepth_access(root, keys, ctx, shared_lib)
             }
             TreeNodeValue::MultiDepthVariableAssign { root, next_keys } => {
-                if next_keys.is_empty() {
-                    return Err(anyhow!("not enough keys {next_keys:?}"));
-                }
-                let mut v = compute_recur(node.first_child(), ctx, shared_lib)?;
-                match root {
-                    Value::Variable(_) => todo!(),
-                    Value::VariableRef(_) => todo!(),
-                    _ => Ok(v),
-                }
-                // NORDINE 6
+                let new_value =
+                    compute_recur(node.first_child(), ctx, shared_lib)?;
+                fold_multidepth(root, next_keys, new_value, ctx, shared_lib)
             }
-            // NORDINE5
-            // TreeNodeValue::VariableArrayAssign { name, index } => {
-            //     let index = compute_lazy(index.clone(), ctx, shared_lib)?;
-            //     let mut v = compute_recur(node.first_child(), ctx, shared_lib)?;
-            //     let mut array = ctx
-            //         .get_mut(name)
-            //         .context("array not found in context")?
-            //         .write()
-            //         .map_err(|e| {
-            //             anyhow::format_err!("could not acquire lock {e}")
-            //         })?;
-            //     Ok(array.swap_mem(&mut v, &index))
-            // }
+
             TreeNodeValue::Function(Value::Function { parameters, exprs }) => {
                 if let Value::BlockParen(parameters) = parameters.borrow() {
                     if !parameters.iter().all(|v| {
@@ -1023,7 +1077,6 @@ fn compute_recur(
             TreeNodeValue::Break => Ok(Primitive::NoReturn),
             TreeNodeValue::Null => Ok(Primitive::Null),
             TreeNodeValue::Drop(variables) => {
-                pub use Primitive::{Error as PrimErr, Int};
                 pub use Value::Variable;
                 for var in variables {
                     match var {
@@ -1031,39 +1084,14 @@ fn compute_recur(
                             ctx.remove(v);
                         }
                         Value::MultiDepthAccess { root, next_keys } => {
-                            todo!()
+                            fold_multidepth(
+                                root,
+                                next_keys,
+                                Primitive::Null,
+                                ctx,
+                                shared_lib,
+                            )?;
                         }
-                        // todo delete me
-                        // Value::StructAccess { struc, key } => {
-                        //     match struc.borrow(){
-                        //         Variable(s) => {
-                        //              let struc = ctx.get_mut(s)
-                        //                  .ok_or_else(||anyhow::format_err!("ctx doesn't contains array {s}"))?;
-                        //             let mut struc = struc.write()
-                        //                 .map_err(|e| anyhow::format_err!("DROP STRUC : could not acquire lock {e}"))?;
-                        //            struc.remove(&Primitive::String(key.into()))?;
-                        //         }
-                        //         _ => return Ok(PrimErr(format!("only primitive within the ctx can be dropped {struc:?}")))
-                        //     }
-                        // }
-                        // Value::ArrayAccess { arr, index } => {
-                        //     match arr.borrow(){
-                        //         Variable(s) => {
-                        //              let array = ctx.get_mut(s)
-                        //                  .ok_or_else(||anyhow::format_err!("ctx doesn't contains array {s}"))?;
-                        //             let mut array = array.write()
-                        //                 .map_err(|e| anyhow::format_err!("DROP ARRAY : could not acquire lock {e}"))?;
-                        //             match index.borrow() {
-                        //                 Value::Integer(i) => { array.remove(&Int(*i))},
-                        //                 Value::U8(i) => { array.remove(&Primitive::U8(*i))},
-                        //                 Value::I8(i) => { array.remove(&Primitive::I8(*i))},
-                        //                 e => return Ok(PrimErr(format!("index not an int! {e:?}")))
-                        //
-                        //             }?;
-                        //         }
-                        //         _ => return Ok(PrimErr(format!("only primitive within the ctx can be dropped {arr:?}")))
-                        //     }
-                        // }
                         _ => {
                             return Err(Error::msg(format!(
                                 "ERROR DROP: not a valid variable {var:?}"
