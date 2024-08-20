@@ -793,8 +793,8 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                 ),
                 tag_no_space("="),
                 alt((
-                    parse_multidepth_access,
-                    parse_fn_call,
+                    all_consuming(parse_multidepth_access),
+                    all_consuming(parse_fn_call),
                     parse_fn,
                     parse_struct,
                     parse_fstring,

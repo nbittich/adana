@@ -304,7 +304,7 @@ fn compute_multidepth_access(
                 match key {
                     KeyAccess::Index(i) => Ok(v.index_at(&i)),
                     _ => Err(anyhow!(
-                        "cannot use that key in this context {key:?}"
+                        "cannot use that key in this context {key:?} {v:?}"
                     )),
                 }
             }
