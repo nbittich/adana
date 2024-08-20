@@ -2,10 +2,11 @@ use std::collections::BTreeMap;
 
 use crate::parser::parse_instructions;
 use adana_script_core::{
-    BuiltInFunctionType, Operator,
+    primitive::Primitive,
+    BuiltInFunctionType, KeyAccess, Operator,
     Value::{
         self, BlockParen, Expression, Function, Operation, Variable,
-        VariableExpr, WhileExpr, U8,
+        VariableExpr, WhileExpr,
     },
 };
 
@@ -161,20 +162,22 @@ fn test_parse_break() {
                         exprs: vec![
                             VariableExpr {
                                 name: Box::new(Variable("k".to_string(),)),
-                                expr: Box::new(Value::ArrayAccess {
-                                    arr: Box::new(Variable("m".to_string(),)),
-                                    index: Box::new(Variable(
-                                        "count".to_string(),
-                                    )),
+                                expr: Box::new(Value::MultiDepthAccess {
+                                    root: Box::new(Variable("m".to_string(),)),
+                                    next_keys: vec![KeyAccess::Variable(
+                                        Value::Variable("count".to_string())
+                                    )],
                                 },)
                             },
                             Value::IfExpr {
                                 cond: Box::new(BlockParen(vec![
-                                    Value::ArrayAccess {
-                                        arr: Box::new(Variable(
+                                    Value::MultiDepthAccess {
+                                        root: Box::new(Variable(
                                             "k".to_string(),
                                         )),
-                                        index: Box::new(U8(0,)),
+                                        next_keys: vec![KeyAccess::Index(
+                                            Primitive::U8(0)
+                                        )],
                                     },
                                     Operation(Operator::Equal,),
                                     Variable("key".to_string(),),
@@ -464,9 +467,9 @@ fn test_array_fn_access() {
             },
             Value::FunctionCall {
                 parameters: Box::new(Value::BlockParen(vec![Value::U8(5)])),
-                function: Box::new(Value::ArrayAccess {
-                    arr: Box::new(Value::Variable("n".into())),
-                    index: Box::new(Value::U8(2))
+                function: Box::new(Value::MultiDepthAccess {
+                    root: Box::new(Value::Variable("n".into())),
+                    next_keys: vec![KeyAccess::Index(Primitive::U8(2))],
                 })
             }
         ]
@@ -547,9 +550,9 @@ fn test_comments_end_arr() {
         ins,
         vec![Value::FunctionCall {
             parameters: Box::new(Value::BlockParen(vec![],)),
-            function: Box::new(Value::ArrayAccess {
-                arr: Box::new(Value::Variable("x".to_string(),)),
-                index: Box::new(Value::U8(1,)),
+            function: Box::new(Value::MultiDepthAccess {
+                root: Box::new(Value::Variable("x".to_string(),)),
+                next_keys: vec![KeyAccess::Index(Primitive::U8(1))],
             }),
         }]
     );
@@ -602,18 +605,24 @@ fn test_struct_access_1() {
             },
             Value::BuiltInFunction {
                 fn_type: BuiltInFunctionType::Println,
-                expr: Box::new(Value::BlockParen(vec![Value::StructAccess {
-                    struc: Box::new(Value::Variable("person".to_string(),)),
-                    key: "age".to_string(),
-                },],)),
+                expr: Box::new(Value::BlockParen(vec![
+                    Value::MultiDepthAccess {
+                        root: Box::new(Value::Variable("person".to_string(),)),
+                        next_keys: vec![KeyAccess::Key(Primitive::String(
+                            "age".to_string()
+                        ))],
+                    },
+                ],)),
             },
             Value::VariableExpr {
                 name: Box::new(Value::Variable("x".to_string())),
                 expr: Box::new(Value::Array(vec![
                     Value::U8(9),
-                    Value::StructAccess {
-                        struc: Box::new(Value::Variable("person".to_string())),
-                        key: "name".to_string()
+                    Value::MultiDepthAccess {
+                        root: Box::new(Value::Variable("person".to_string())),
+                        next_keys: vec![KeyAccess::Key(Primitive::String(
+                            "name".to_string()
+                        ))],
                     }
                 ]))
             }
@@ -631,9 +640,9 @@ fn test_parser_array_directly_access() {
         v,
         vec![VariableExpr {
             name: Box::new(Variable("x".into()),),
-            expr: Box::new(ArrayAccess {
-                arr: Box::new(Array(vec![U8(1,), U8(2,), U8(3,),],)),
-                index: Box::new(U8(0,)),
+            expr: Box::new(MultiDepthAccess {
+                root: Box::new(Array(vec![U8(1,), U8(2,), U8(3,),],)),
+                next_keys: vec![KeyAccess::Index(Primitive::U8(0))]
             }),
         }]
     )

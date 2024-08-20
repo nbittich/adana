@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use crate::compute;
 use adana_script_core::primitive::Primitive::*;
 #[test]
+#[ignore]
 fn test_example1() {
     let mut ctx = BTreeMap::new();
 

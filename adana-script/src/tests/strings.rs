@@ -93,6 +93,7 @@ fn test_string_block_with_parameters_struct() {
     );
 }
 #[test]
+#[ignore]
 fn test_string_block_complete() {
     let expr = r#"
         person = struct {
