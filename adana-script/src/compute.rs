@@ -78,11 +78,11 @@ fn compute_key_access(
 }
 fn handle_function_call(
     mut function: Primitive,
-    parameters: &Box<Value>,
+    parameters: &Value,
     ctx: &mut BTreeMap<String, RefPrimitive>,
     shared_lib: impl AsRef<Path> + Copy,
 ) -> anyhow::Result<Primitive> {
-    if let Value::BlockParen(param_values) = parameters.borrow() {
+    if let Value::BlockParen(param_values) = parameters {
         // FIXME clone again
         if let Primitive::Ref(r) = function {
             function = r
@@ -266,7 +266,7 @@ fn fold_multidepth(
 }
 fn compute_multidepth_access(
     root: &Value,
-    keys: &Vec<KeyAccess>,
+    keys: &[KeyAccess],
     ctx: &mut BTreeMap<String, RefPrimitive>,
     shared_lib: impl AsRef<Path> + Copy,
 ) -> anyhow::Result<Primitive> {
@@ -419,9 +419,7 @@ fn compute_multidepth_access(
         | v @ Value::VariableRef(_) => {
             compute_lazy(v.clone(), ctx, shared_lib)?
         }
-        v => {
-            return Err(anyhow::anyhow!("illegal multidepth access {v:?}"))
-        }
+        v => return Err(anyhow::anyhow!("illegal multidepth access {v:?}")),
     };
 
     compute_multidepth_access_primitive(
@@ -1119,14 +1117,6 @@ fn compute_recur(
     }
 }
 
-fn tree_node_to_tree(
-    value: TreeNodeValue,
-) -> anyhow::Result<Tree<TreeNodeValue>> {
-    let mut tree: Tree<TreeNodeValue> = Tree::new();
-    tree.set_root(value);
-
-    Ok(tree)
-}
 fn value_to_tree(
     value: Value,
     ctx: &mut BTreeMap<String, RefPrimitive>,

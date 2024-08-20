@@ -111,12 +111,11 @@ fn complex_struct_struct_struct_other() {
     let mut ctx = BTreeMap::new();
     let res = compute(expr, &mut ctx, "N/A").unwrap();
 
-    //
-    // assert_eq!(
-    //     ctx["x"].read().unwrap().clone(),
-    //     Primitive::String("hello world".into())
-    // );
-    // assert_eq!(res, Primitive::String("hello world".into()));
+    assert_eq!(
+        ctx["x"].read().unwrap().clone(),
+        Primitive::String("hello world".into())
+    );
+    assert_eq!(res, Primitive::String("hello world".into()));
 }
 
 #[test]
