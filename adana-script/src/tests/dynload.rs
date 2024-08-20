@@ -45,7 +45,6 @@ fn callback_dynamic_lib_test() {
 
 #[test]
 #[serial]
-#[ignore]
 fn complex_callback_dynamic_lib_test() {
     let file_path = r#"
      lib = require("libplugin_example.so")
