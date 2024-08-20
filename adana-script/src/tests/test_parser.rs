@@ -465,12 +465,12 @@ fn test_array_fn_access() {
                     Value::Variable("x".into())
                 ]))
             },
-            Value::FunctionCall {
-                parameters: Box::new(Value::BlockParen(vec![Value::U8(5)])),
-                function: Box::new(Value::MultiDepthAccess {
-                    root: Box::new(Value::Variable("n".into())),
-                    next_keys: vec![KeyAccess::Index(Primitive::U8(2))],
-                })
+            Value::MultiDepthAccess {
+                root: Box::new(Value::Variable("n".into())),
+                next_keys: vec![KeyAccess::FunctionCall {
+                    key: Box::new(KeyAccess::Index(Primitive::U8(2))),
+                    parameters: Value::BlockParen(vec![Value::U8(5)])
+                }]
             }
         ]
     );
@@ -548,12 +548,12 @@ fn test_comments_end_arr() {
     assert_eq!("", r);
     assert_eq!(
         ins,
-        vec![Value::FunctionCall {
-            parameters: Box::new(Value::BlockParen(vec![],)),
-            function: Box::new(Value::MultiDepthAccess {
-                root: Box::new(Value::Variable("x".to_string(),)),
-                next_keys: vec![KeyAccess::Index(Primitive::U8(1))],
-            }),
+        vec![Value::MultiDepthAccess {
+            root: Box::new(Value::Variable("x".to_string(),)),
+            next_keys: vec![KeyAccess::FunctionCall {
+                key: Box::new(KeyAccess::Index(Primitive::U8(1))),
+                parameters: Value::BlockParen(vec![],)
+            }]
         }]
     );
     let expr = r#"x =[1, ()=> {print("hello")}] # doesn't work"#;
