@@ -1,14 +1,16 @@
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
+
+#[cfg(not(target_arch = "wasm32"))]
+use std::any::Any;
+
 use std::{
-    any::Any,
     cmp::Ordering,
     collections::BTreeMap,
     fmt::Display,
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
 };
-
-use serde::{Deserialize, Serialize};
 
 use super::{constants::NULL, Value};
 
@@ -143,7 +145,6 @@ pub enum Primitive {
 #[derive(Debug, Clone)]
 pub struct LibData {
     #[cfg(not(target_arch = "wasm32"))]
-    #[allow(dead_code)]
     pub data: Arc<Box<dyn Send + Any + Sync>>,
 }
 
