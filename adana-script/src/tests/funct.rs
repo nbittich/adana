@@ -104,7 +104,6 @@ fn test_basic_map() {
 
 #[test]
 #[serial_test::serial]
-#[ignore]
 fn test_override_map() {
     let script = r#"
         include("file_tests/test_fn.adana")
@@ -129,7 +128,6 @@ fn test_override_map() {
 
 #[test]
 #[serial_test::serial]
-#[ignore]
 fn test_drop() {
     let script = r#"
         include("file_tests/test_fn.adana")
