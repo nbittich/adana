@@ -175,8 +175,8 @@ fn test_parse_break() {
                                         root: Box::new(Variable(
                                             "k".to_string(),
                                         )),
-                                        next_keys: vec![KeyAccess::Index(
-                                            Primitive::U8(0)
+                                        next_keys: vec![KeyAccess::Variable(
+                                            Value::U8(0)
                                         )],
                                     },
                                     Operation(Operator::Equal,),
@@ -468,7 +468,7 @@ fn test_array_fn_access() {
             Value::MultiDepthAccess {
                 root: Box::new(Value::Variable("n".into())),
                 next_keys: vec![KeyAccess::FunctionCall {
-                    key: Box::new(KeyAccess::Index(Primitive::U8(2))),
+                    key: Box::new(KeyAccess::Variable(Value::U8(2))),
                     parameters: Value::BlockParen(vec![Value::U8(5)])
                 }]
             }
@@ -551,7 +551,7 @@ fn test_comments_end_arr() {
         vec![Value::MultiDepthAccess {
             root: Box::new(Value::Variable("x".to_string(),)),
             next_keys: vec![KeyAccess::FunctionCall {
-                key: Box::new(KeyAccess::Index(Primitive::U8(1))),
+                key: Box::new(KeyAccess::Variable(Value::U8(1))),
                 parameters: Value::BlockParen(vec![],)
             }]
         }]
@@ -642,7 +642,7 @@ fn test_parser_array_directly_access() {
             name: Box::new(Variable("x".into()),),
             expr: Box::new(MultiDepthAccess {
                 root: Box::new(Array(vec![U8(1,), U8(2,), U8(3,),],)),
-                next_keys: vec![KeyAccess::Index(Primitive::U8(0))]
+                next_keys: vec![KeyAccess::Variable(Value::U8(0))]
             }),
         }]
     )

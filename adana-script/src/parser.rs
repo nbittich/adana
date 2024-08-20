@@ -581,23 +581,23 @@ fn parse_index_brackets(s: &str) -> Res<KeyAccess> {
     map(
         pair(
             preceded(
-                tag("["),
+                tag_no_space("["),
                 terminated(
-                    map_parser(
-                        recognize_float,
-                        alt((
-                            map(all_consuming(U8), |u| {
-                                KeyAccess::Index(Primitive::U8(u))
+                    alt((
+                        map_parser(
+                            take_until("]"),
+                            map(many1(parse_value), |mut v| {
+                                if v.len() == 1 {
+                                    v.remove(0)
+                                } else {
+                                    Value::BlockParen(v)
+                                }
                             }),
-                            map(all_consuming(I8), |u| {
-                                KeyAccess::Index(Primitive::I8(u))
-                            }),
-                            map(all_consuming(I128), |u| {
-                                KeyAccess::Index(Primitive::Int(u))
-                            }),
-                        )),
-                    ),
-                    tag("]"),
+                        ),
+                        parse_variable,
+                        parse_number,
+                    )),
+                    tag_no_space("]"),
                 ),
             ),
             opt(parse_fn_args),
@@ -606,10 +606,10 @@ fn parse_index_brackets(s: &str) -> Res<KeyAccess> {
             if let Some(params) = params {
                 KeyAccess::FunctionCall {
                     parameters: Value::BlockParen(params),
-                    key: Box::new(k),
+                    key: Box::new(KeyAccess::Variable(k)),
                 }
             } else {
-                k
+                KeyAccess::Variable(k)
             }
         },
     )(s)
