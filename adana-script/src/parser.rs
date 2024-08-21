@@ -455,6 +455,10 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
             parse_builtin(BuiltInFunctionType::Floor),
         )),
         alt((
+            parse_builtin(BuiltInFunctionType::Jsonify),
+            parse_builtin(BuiltInFunctionType::ParseJson),
+        )),
+        alt((
             parse_builtin_many_args(BuiltInFunctionType::IsMatch),
             parse_builtin_many_args(BuiltInFunctionType::Match),
             parse_builtin_many_args(BuiltInFunctionType::Replace),
@@ -742,6 +746,9 @@ fn parse_value(s: &str) -> Res<Value> {
                 parse_variable,
                 parse_constant,
                 parse_null,
+                parse_drop,
+                parse_early_return,
+                parse_break,
             )),
             opt(comments),
         ),
@@ -810,6 +817,7 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                 tag_no_space("="),
                 alt((
                     all_consuming(parse_multidepth_access),
+                    all_consuming(parse_builtin_fn),
                     all_consuming(parse_fn_call),
                     // TODO maybe with tuple() this giant mess can be simplified e.g
                     // tuple(alt(parser1, parser2,...))
@@ -926,21 +934,21 @@ fn parse_early_return(s: &str) -> Res<Value> {
 
 pub fn parse_instructions(instructions: &str) -> Res<Vec<Value>> {
     let (instructions, _) = opt(comments)(instructions)?;
+
     let instructions = instructions.trim();
     if instructions.is_empty() {
         return Ok((instructions, vec![Value::NoOp]));
     }
+
     terminated(
         many1(preceded(
             opt(comments),
             alt((
+                all_consuming(parse_value),
                 parse_foreach,
                 parse_while_statement,
                 parse_if_statement,
-                parse_break,
-                parse_early_return,
                 parse_simple_instruction,
-                parse_drop,
             )),
         )),
         opt(comments),

@@ -14,10 +14,10 @@ use super::{ast::to_ast, require_dynamic_lib::require_dynamic_lib};
 use adana_script_core::{
     primitive::{
         Abs, Add, And, Array, BitShift, Cos, DisplayBinary, DisplayHex, Div,
-        Logarithm, Mul, Neg, Not, Or, Pow, Primitive, RefPrimitive, Rem, Round,
-        Sin, Sqrt, StringManipulation, Sub, Tan, ToBool, ToNumber, TypeOf,
-        TYPE_ARRAY, TYPE_BOOL, TYPE_DOUBLE, TYPE_ERROR, TYPE_FUNCTION, TYPE_I8,
-        TYPE_INT, TYPE_STRUCT, TYPE_U8,
+        Json, Logarithm, Mul, Neg, Not, Or, Pow, Primitive, RefPrimitive, Rem,
+        Round, Sin, Sqrt, StringManipulation, Sub, Tan, ToBool, ToNumber,
+        TypeOf, TYPE_ARRAY, TYPE_BOOL, TYPE_DOUBLE, TYPE_ERROR, TYPE_FUNCTION,
+        TYPE_I8, TYPE_INT, TYPE_STRUCT, TYPE_U8,
     },
     BuiltInFunctionType, KeyAccess, Operator, TreeNodeValue, Value,
 };
@@ -1053,6 +1053,12 @@ fn compute_recur(
                     }
                     adana_script_core::BuiltInFunctionType::MakeError => {
                         Ok(Primitive::Error(v.to_string()))
+                    }
+                    adana_script_core::BuiltInFunctionType::Jsonify => {
+                        Ok(Primitive::String(v.to_json()?))
+                    }
+                    adana_script_core::BuiltInFunctionType::ParseJson => {
+                        Primitive::from_json(&v.to_string())
                     }
                 }
             }

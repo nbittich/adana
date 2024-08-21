@@ -12,7 +12,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use super::{constants::NULL, Value};
+use crate::{constants::NULL, Value};
 
 const MAX_U32_AS_I128: i128 = u32::MAX as i128;
 
