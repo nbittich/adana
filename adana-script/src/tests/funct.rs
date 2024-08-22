@@ -318,3 +318,28 @@ fn test_array_access_fn_call() {
         Primitive::String("hello nordine".into())
     );
 }
+
+#[test]
+fn test_regression_struct_with_builtin() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        h= (req) => {
+            println(req)
+      	    return "hello bro!" 
+      	}
+        h("hello")
+
+    "#;
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("hello bro!".into()));
+    let expr = r#"
+        h= (req) => {
+            println(req)
+      	    return "hello bro!" 
+      	}
+        h(struct {})
+
+    "#;
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("hello bro!".into()));
+}
