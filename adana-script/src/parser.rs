@@ -164,7 +164,7 @@ fn parse_fstring(s: &str) -> Res<Value> {
     )(param_rest)
     {
         param_rest = pr;
-        match parse_expression(param_str) {
+        match parse_complex_expression(param_str) {
             Ok((_, param_value)) => {
                 parameters.push((format!("${{{param_str}}}"), param_value));
             }
