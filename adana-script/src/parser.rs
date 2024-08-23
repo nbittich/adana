@@ -812,26 +812,7 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                     opt(parse_operation),
                 ),
                 tag_no_space("="),
-                alt((
-                    all_consuming(parse_multidepth_access),
-                    all_consuming(parse_builtin_fn),
-                    all_consuming(parse_fn_call),
-                    // TODO maybe with tuple() this giant mess can be simplified e.g
-                    // tuple(alt(parser1, parser2,...))
-                    map(
-                        tuple((
-                            alt((parse_multidepth_access, parse_fn_call)),
-                            parse_operation,
-                            parse_expression,
-                        )),
-                        |(k, o, v)| Value::Expression(vec![k, o, v]),
-                    ),
-                    parse_fn,
-                    parse_struct,
-                    parse_fstring,
-                    parse_array,
-                    parse_expression,
-                )),
+                parse_complex_expression,
             ),
             |((variable, mut operator), expr)| {
                 if let Some(operator) = operator.take() {
@@ -849,15 +830,7 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                 }
             },
         ),
-        alt((
-            all_consuming(parse_fn_call),
-            all_consuming(parse_fn),
-            all_consuming(parse_multidepth_access),
-            all_consuming(parse_struct),
-            all_consuming(parse_fstring),
-            all_consuming(parse_array),
-            parse_expression,
-        )),
+        parse_complex_expression,
     ))(s)
 }
 
@@ -923,8 +896,32 @@ where
 fn parse_break(s: &str) -> Res<Value> {
     map(tag_no_space(BREAK), |_| Value::Break)(s)
 }
+// CONTEXT: this should maybe replace parse_expression
+fn parse_complex_expression(s: &str) -> Res<Value> {
+    alt((
+        all_consuming(parse_multidepth_access),
+        all_consuming(parse_builtin_fn),
+        all_consuming(parse_fn_call),
+        // TODO maybe with tuple() this giant mess can be simplified e.g
+        // tuple(alt(parser1, parser2,...))
+        map(
+            tuple((
+                alt((parse_multidepth_access, parse_fn_call)),
+                parse_operation,
+                parse_expression,
+            )),
+            |(k, o, v)| Value::Expression(vec![k, o, v]),
+        ),
+        parse_fn,
+        parse_struct,
+        parse_fstring,
+        parse_array,
+        parse_expression,
+    ))(s)
+}
+
 fn parse_early_return(s: &str) -> Res<Value> {
-    map(preceded(tag_no_space(RETURN), opt(parse_expression)), |v| {
+    map(preceded(tag_no_space(RETURN), opt(parse_complex_expression)), |v| {
         Value::EarlyReturn(Box::new(v))
     })(s)
 }
