@@ -161,15 +161,7 @@ impl Primitive {
             Primitive::I8(i) => Value::I8(i),
             Primitive::Int(i) => Value::Integer(i),
             Primitive::Bool(b) => Value::Bool(b),
-            Primitive::Ref(r) => {
-                let r = r
-                    .read()
-                    .map_err(|e| {
-                        anyhow::format_err!("could not acquire lock {e}")
-                    })?
-                    .clone();
-                r.to_value()?
-            }
+            v @ Primitive::Ref(_) => Value::Primitive(v),
             Primitive::Null => Value::Null,
             Primitive::Double(d) => Value::Decimal(d),
             Primitive::String(s) => Value::String(s),
