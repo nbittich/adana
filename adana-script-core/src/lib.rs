@@ -125,6 +125,7 @@ impl MathConstants {
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Value {
     Break,
+    Primitive(Primitive),
     EarlyReturn(Box<Option<Value>>),
     Drop(Box<Value>),
     Expression(Vec<Value>),
