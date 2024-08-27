@@ -156,57 +156,9 @@ impl Primitive {
         Arc::new(RwLock::new(self))
     }
     pub fn to_value(self) -> anyhow::Result<Value> {
-        let v = match self {
-            Primitive::U8(u) => Value::U8(u),
-            Primitive::I8(i) => Value::I8(i),
-            Primitive::Int(i) => Value::Integer(i),
-            Primitive::Bool(b) => Value::Bool(b),
-            v @ Primitive::Ref(_) => Value::Primitive(v),
-            Primitive::Null => Value::Null,
-            Primitive::Double(d) => Value::Decimal(d),
-            Primitive::String(s) => Value::String(s),
-            Primitive::Array(a) => {
-                let mut vek = vec![];
-                for p in a {
-                    let p = p.to_value()?;
-                    vek.push(p);
-                }
-                Value::Array(vek)
-            }
-            Primitive::Struct(s) => {
-                let mut map = BTreeMap::new();
-                for (k, v) in s {
-                    let p = v.to_value()?;
-                    map.insert(k, p);
-                }
-                Value::Struct(map)
-            }
-            Primitive::Error(e) => return Err(anyhow::format_err!("{e}")),
-            Primitive::Function { parameters, exprs } => Value::Function {
-                parameters: Box::new(Value::BlockParen(parameters)),
-                exprs,
-            },
-            Primitive::Unit => Value::NoOp,
-            Primitive::NoReturn => Value::NoOp,
-            Primitive::EarlyReturn(e) => {
-                let v = e.to_value()?;
-                Value::EarlyReturn(Box::new(Some(v)))
-            }
-            Primitive::NativeLibrary(_) => {
-                return Err(anyhow::anyhow!(
-                    "cannot convert native lib to value"
-                ));
-            }
-            Primitive::NativeFunction(_method, _lib) => {
-                return Err(anyhow::anyhow!(
-                    "cannot convert native function to value"
-                ));
-            }
-            Primitive::LibData(_) => {
-                return Err(anyhow::anyhow!("illegal usage of lib data"));
-            }
-        };
-        Ok(v)
+        // code was more complex than that before libhttp. I forgot why,
+        // and probably this simplification shouldn't cause any problem
+        Ok(Value::Primitive(self))
     }
 }
 pub trait StringManipulation {
