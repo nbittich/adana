@@ -17,7 +17,7 @@ jobs:
           toolchain: stable
           targets: x86_64-unknown-linux-gnu
       - run: wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-      - run: apt-get update && apt-get install -y google-chrome-stable
+      - run: sudo apt-get update && sudo apt-get install -y google-chrome-stable
       - run: git checkout -B pr_check
       - run: rustup component add clippy
       - run: cargo install cargo-release
