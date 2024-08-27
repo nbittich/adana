@@ -17,6 +17,10 @@ jobs:
           toolchain: stable
           #        targets: x86_64-unknown-linux-musl
       - run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+      - run: |
+          cargo build --release --manifest-path ./adana-script/dynamic_lib/example_lib_src/Cargo.toml
+          rm ./adana-script/dynamic_lib/libplugin_example.so
+          cp ./adana-script/dynamic_lib/example_lib_src/target/release/libplugin_example.so ./adana-script/dynamic_lib/libplugin_example.so
       - run: cargo test #--verbose -- --nocapture
       - run: wasm-pack test --headless --firefox ./adana-script-wasm
       - run: wasm-pack test --headless --chrome ./adana-script-wasm
