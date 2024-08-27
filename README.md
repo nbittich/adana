@@ -105,7 +105,6 @@ You can put them after the last statement or before any useful code, for example
  # this will be ignored by the repl
 
  println("hello world!") # this is also ok
-
 ```
 
 <hr>
@@ -121,7 +120,6 @@ fancy_string = multiline {
     "\t\ton several\n" +
     "lines\n"
 }
-
 ```
 
 Multiline is useful when you want to process different instructions in several lines:
@@ -133,7 +131,6 @@ complex_math_stuff = multiline {
     + 300 / 3
     * 400 % 2 - (1 * 10^3)
 }
-
 ```
 
 <hr>
@@ -150,7 +147,7 @@ This is a string block. you can use stuff like "string"
 there, nothing will stop you"""
 ```
 
-Like in javascript, you can add parameters to an f-string:
+Like in javascript, you can embed expressions to an f-string:
 
 ```javascript
 person = struct {
@@ -177,7 +174,7 @@ ${person.wasup(person.age)}"""
 There are 22 operators & 3 constants:
 
 | **operator** | **description**  |
-| ------------ | ---------------- |
+|--------------|------------------|
 | `+`          | add              |
 | `-`          | subtract         |
 | `/`          | divide           |
@@ -200,6 +197,10 @@ There are 22 operators & 3 constants:
 | `>>`         | bitwise rshift   |
 | `==`         | equal            |
 | `()`         | parenthesis      |
+
+
+| **constant** | **description**  |
+|--------------|------------------|
 | `π`          | PI number        |
 | `γ`          | EULER number     |
 | `τ`          | TAU number       |
@@ -220,7 +221,6 @@ Example:
  5 * (5+ 1/ (3.1 ^2) * 9) ^3. # 1046.084549281999
  2² # 4
  2³ # 8
-
 ```
 
 You can apply an operator before re-assigning a variable, like:
@@ -232,8 +232,6 @@ x-=2 # 1
 x*=4 # 4
 x%=3 # 1
 x/=0.5 # 2
-
-
 ```
 
 It is legal in some circumstances to use the multiply operator implicitly.
@@ -271,10 +269,9 @@ It could be simplified as such:
  total = vat * sub_total1 # 12100
  sub_total2 = 500 * vat # 605
  sub_total1 += sub_total2 # 10605
-
 ```
 
-It's also possible to use the special variable name "\_" to notify the language that this value
+It's also possible to use the special variable name `_` to notify the language that this value
 is not used and doesn't have to be stored in context:
 
 ```python
@@ -313,25 +310,23 @@ p = 0
 for _ in 0..&x {
   p = p+1
 }
-
 ```
 
 ```go
 x = 99
 y = &x
 x = 100 # now y == 100
-
 ```
 
 <hr>
 
 ### Plugins
 
-It is possible to load plugins written in rust dyanmically.
-Because Rust doesn't have a stable ABI yet, the plugin must be built with the same version that
+It is possible to load plugins written in Rust dynamically.
+Because [Rust doesn't have a stable ABI yet](https://www.reddit.com/r/rust/comments/ss2p6c/what_does_it_mean_when_people_say_that_rust_does/), the plugin must be built with the same version that
 was used to build adana.
 
-The rust version is specified when running the repl.
+The Rust version is specified when running the repl.
 
 To load a library dynamically, you can either specify a relative path, or an
 absolute path. In case of a relative path, it should be relative to the
@@ -340,7 +335,7 @@ shared lib path (by default: `$HOME/.local/share/adana/db`).
 You can override this by providing a path when starting the repl (e.g: `adana -slp /tmp`).
 
 If the path is a directory, it will try to build it using `cargo`, so you
-need to have rust installed on your machine.
+need to have Rust installed on your machine.
 
 If it is an `.so` file, it will automatically load it.
 
@@ -348,7 +343,7 @@ An example of plugin can be found in this repo (`dynamic_lib/example_lib_src`).
 
 For example:
 
-- Copy the SO file in tmp: `cp dynamic_lib/libplugin_example.so /tmp/`
+- Copy the `.so` file in tmp: `cp dynamic_lib/libplugin_example.so /tmp/`
 - Run and override the lib path: `adana -slp /tmp`
 - Execute the following:
 
@@ -374,7 +369,6 @@ You can use it in this way:
 ```
 fs = require("@std/fs")
 fs.api_description() # description of the api
-
 ```
 
 If it is not installed yet, you will see instructions on how to install it, e.g:
@@ -404,7 +398,7 @@ count = 0
 while(count < 10) {
     println(count)
     count = count + 1
-   }
+}
 ```
 
 ```
@@ -445,6 +439,7 @@ s = struct {
     age: 34,
     members: ["natalie", "roger","fred"]
 }
+
 for  id, entry in s {
      println("Id: "+id +" Key: "+entry.key + " Value: " + to_string(entry.value))
 }
@@ -460,7 +455,6 @@ for (index,a in arr) {
  total = total + a
  idx_total = idx_total + index
 }
-
 ```
 
 You can break if you match a certain condition within a while:
@@ -483,14 +477,12 @@ It is possible to define a range like so "start..end" (end exclusive),
 or "start..=end" (end inclusive):
 
 ```javascript
-
 x = 0..10 # [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 x = 0..=10 # [0,1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 for i in 1..=10 {
   println("print 10 times this message")
 }
-
 ```
 
 <hr>
@@ -507,7 +499,6 @@ if age > 12  {
 } else {
     println("dunno")
 }
-
 ```
 
 <hr>
@@ -575,7 +566,6 @@ println(person["age"])
 
 age=person.age # age contains "age"
 println(person.age)
-
 ```
 
 ### Manipulate arrays
@@ -796,18 +786,16 @@ Here is a list of built-in functions available:
 There are two built-in functions for matching a regex against a string:
 
 ```python
-      pattern = """(?i)a+(?-i)b+"""
-      text = "AaAaAbbBBBb"
-      is_match(text, pattern) # true
-
+pattern = """(?i)a+(?-i)b+"""
+text = "AaAaAbbBBBb"
+is_match(text, pattern) # true
 ```
 
 ```python
-      # match [["Item1: $100", "Item1", "100"], ["Item2: $200", "Item2", "200"], ["Item3: $300", "Item3", "300"]]
-      pattern = """(\w+): \$(\d+)"""
-      text = "Item1: $100, Item2: $200, Item3: $300"
-      match(text, pattern)
-
+# match [["Item1: $100", "Item1", "100"], ["Item2: $200", "Item2", "200"], ["Item3: $300", "Item3", "300"]]
+pattern = """(\w+): \$(\d+)"""
+text = "Item1: $100, Item2: $200, Item3: $300"
+match(text, pattern)
 ```
 
 <hr>
