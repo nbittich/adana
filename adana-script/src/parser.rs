@@ -894,7 +894,7 @@ where
                 tag_no_space("{"),
                 terminated(opt(&parser), tag_no_space("}")),
             ),
-            |exprs| if let Some(exprs) = exprs { exprs } else { vec![] },
+            |exprs| exprs.unwrap_or_default(),
         )(s)
     }
 }
