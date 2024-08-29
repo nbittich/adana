@@ -310,3 +310,279 @@ fn test_struct_empty() {
     let r = compute(expr, &mut ctx, "N/A").unwrap();
     assert_eq!(r, Primitive::String("nordine".into()));
 }
+
+#[test]
+fn test_struct_modify_content_type() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        s = struct { headers: struct{}}
+        s.headers["Content-Type"] = "application/json"
+        s.headers["Content-Type"]
+       "#;
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("application/json".into()));
+}
+
+#[test]
+fn test_struct_key_between_quotes() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+        s = struct { headers: struct{
+           "Content-Type": "text/csv",
+            "other": "2"
+        }}
+         s.headers["Content-Type"] + s.headers.other
+       "#;
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(r, Primitive::String("text/csv2".into()));
+}
+
+#[test]
+fn test_struct_from_readme_example() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+    person = struct {
+        name: "hello",
+        age: 20,
+        headers: struct {
+            "Content-Type": "application/json"
+        }
+    }
+    person
+    "#;
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        r,
+        Primitive::Struct(BTreeMap::from([
+            ("name".to_string(), Primitive::String("hello".to_string())),
+            ("age".to_string(), Primitive::U8(20)),
+            (
+                "headers".to_string(),
+                Primitive::Struct(BTreeMap::from([(
+                    "Content-Type".to_string(),
+                    Primitive::String("application/json".to_string())
+                )]))
+            )
+        ]))
+    );
+}
+#[test]
+fn test_struc_access_key9() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"x= struct{x:"hello"}.x + " world""#;
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        ctx["x"].read().unwrap().clone(),
+        Primitive::String("hello world".to_string())
+    );
+    let expr = r#"x= struct{
+                         x:"hello",
+                         y: 9
+                      }.x + " world"
+                      "#;
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        ctx["x"].read().unwrap().clone(),
+        Primitive::String("hello world".to_string())
+    );
+}
+#[test]
+fn test_struc_access_key10() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"x= struct{x:"hello"}.x + " world" + "!" 
+      z = "whatever" + 9
+    "#;
+    let _ = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        ctx["x"].read().unwrap().clone(),
+        Primitive::String("hello world!".to_string())
+    );
+    assert_eq!(
+        ctx["z"].read().unwrap().clone(),
+        Primitive::String("whatever9".to_string())
+    );
+}
+#[test]
+fn test_struc_access_key11() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+    settings = struct {
+    static: struct {},
+    middlewares: [
+        struct {
+      	    path: "/hello/:name",
+      	    handler: (req) => {
+                println(req)
+      	        return struct {
+                status: 200,
+                body: struct { response: """hello ${req.params.name}!""" },
+                headers: struct { "Content-Type": "application/json"}
+                }
+      	    },
+            method: "GET"
+        },
+        struct {
+      	    path: "/",
+      	    handler: (req) => {
+                println(req)
+      	        return "hello bro!"
+        },
+            method: "GET"
+        }
+     ]
+    }
+    settings.middlewares[0].handler(struct {params: struct {name: "nordine"}})
+    "#;
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        r,
+        Primitive::Struct(BTreeMap::from([
+            (
+                "body".to_string(),
+                Primitive::Struct(BTreeMap::from([(
+                    "response".to_string(),
+                    Primitive::String("hello nordine!".to_string())
+                ),]))
+            ),
+            ("status".to_string(), Primitive::U8(200)),
+            (
+                "headers".to_string(),
+                Primitive::Struct(BTreeMap::from([(
+                    "Content-Type".to_string(),
+                    Primitive::String("application/json".to_string())
+                )]))
+            )
+        ]))
+    );
+}
+
+#[test]
+fn test_struc_access_key12() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+    handler =  (req) => {
+                println(req)
+                return struct {
+                status: 200,
+                body: struct { response: """hello ${req.params.name}!""" },
+                headers: struct { "Content-Type": "application/json"}
+                }
+                
+    }
+    handler(struct {params: struct {name: "nordine"}})
+    "#;
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        r,
+        Primitive::Struct(BTreeMap::from([
+            (
+                "body".to_string(),
+                Primitive::Struct(BTreeMap::from([(
+                    "response".to_string(),
+                    Primitive::String("hello nordine!".to_string())
+                ),]))
+            ),
+            ("status".to_string(), Primitive::U8(200)),
+            (
+                "headers".to_string(),
+                Primitive::Struct(BTreeMap::from([(
+                    "Content-Type".to_string(),
+                    Primitive::String("application/json".to_string())
+                )]))
+            )
+        ]))
+    );
+}
+
+#[test]
+fn test_struc_access_key13() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+    settings = struct {
+    static: struct {},
+    middlewares: [
+        struct {
+      	    path: "/hello/:name",
+      	    handler: (req) => {
+                println(req)
+      	        res= struct {
+                status: 200,
+                body: struct { response: """hello ${req.params.name}!""" },
+                headers: struct { "Content-Type": "application/json"}
+                }
+                return res
+      	    },
+            method: "GET"
+        },
+        struct {
+      	    path: "/",
+      	    handler: (req) => {
+                println(req)
+      	        return "hello bro!"
+        },
+            method: "GET"
+        }
+     ]
+    }
+    settings.middlewares[0].handler(struct {params: struct {name: "nordine"}})
+    "#;
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        r,
+        Primitive::Struct(BTreeMap::from([
+            (
+                "body".to_string(),
+                Primitive::Struct(BTreeMap::from([(
+                    "response".to_string(),
+                    Primitive::String("hello nordine!".to_string())
+                ),]))
+            ),
+            ("status".to_string(), Primitive::U8(200)),
+            (
+                "headers".to_string(),
+                Primitive::Struct(BTreeMap::from([(
+                    "Content-Type".to_string(),
+                    Primitive::String("application/json".to_string())
+                )]))
+            )
+        ]))
+    );
+}
+#[test]
+fn test_struc_access_key14() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"
+    handler =  (req) => {
+                println(req)
+                res= struct {
+                status: 200,
+                body: struct { response: """hello ${req.params.name}!""" },
+                headers: struct { "Content-Type": "application/json"}
+                }
+                return res
+                
+    }
+    handler(struct {params: struct {name: "nordine"}})
+    "#;
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        r,
+        Primitive::Struct(BTreeMap::from([
+            (
+                "body".to_string(),
+                Primitive::Struct(BTreeMap::from([(
+                    "response".to_string(),
+                    Primitive::String("hello nordine!".to_string())
+                ),]))
+            ),
+            ("status".to_string(), Primitive::U8(200)),
+            (
+                "headers".to_string(),
+                Primitive::Struct(BTreeMap::from([(
+                    "Content-Type".to_string(),
+                    Primitive::String("application/json".to_string())
+                )]))
+            )
+        ]))
+    );
+}

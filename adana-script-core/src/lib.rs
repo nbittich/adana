@@ -4,12 +4,12 @@ use std::collections::BTreeMap;
 use constants::{
     BREAK, CAPITALIZE, CEIL, DROP, ELSE, EULER_NUMBER, FALSE, FLOOR, FOR, IF,
     IN, IS_ARRAY, IS_BOOL, IS_DOUBLE, IS_ERROR, IS_FUNCTION, IS_I8, IS_INT,
-    IS_MATCH, IS_STRUCT, IS_U8, MAKE_ERROR, MATCH, MULTILINE, NULL, PI,
-    REPLACE, REPLACE_ALL, REQUIRE, RETURN, ROUND, STRUCT, TAU, TO_BINARY,
-    TO_HEX, TO_LOWER, TO_UPPER, TRUE, WHILE,
+    IS_MATCH, IS_STRUCT, IS_U8, JSONIFY, MAKE_ERROR, MATCH, MULTILINE, NULL,
+    PARSE_JSON, PI, REPLACE, REPLACE_ALL, REQUIRE, RETURN, ROUND, STRUCT, TAU,
+    TO_BINARY, TO_HEX, TO_LOWER, TO_UPPER, TRUE, WHILE,
 };
+pub use primitive::Primitive;
 
-use primitive::Primitive;
 use serde::{Deserialize, Serialize};
 use strum::EnumCount;
 
@@ -68,6 +68,8 @@ pub mod constants {
     pub const IS_FUNCTION: &str = "is_function";
     pub const IS_ARRAY: &str = "is_array";
     pub const IS_STRUCT: &str = "is_struct";
+    pub const JSONIFY: &str = "jsonify";
+    pub const PARSE_JSON: &str = "parse_json";
     pub const MAKE_ERROR: &str = "make_err";
     pub const ABS: &str = "abs";
     pub const LENGTH: &str = "length";
@@ -123,6 +125,7 @@ impl MathConstants {
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Value {
     Break,
+    Primitive(Primitive),
     EarlyReturn(Box<Option<Value>>),
     Drop(Box<Value>),
     Expression(Vec<Value>),
@@ -180,15 +183,19 @@ pub enum Value {
         exprs: Vec<Value>,
     },
     Array(Vec<Value>),
-    ArrayAccess {
-        arr: Box<Value>,
-        index: Box<Value>,
-    },
     Struct(BTreeMap<String, Value>),
-    StructAccess {
-        struc: Box<Value>,
-        key: String,
+
+    MultiDepthAccess {
+        root: Box<Value>,
+        next_keys: Vec<KeyAccess>,
     },
+}
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum KeyAccess {
+    Index(Primitive),
+    Key(Primitive),
+    Variable(Value),
+    FunctionCall { key: Box<KeyAccess>, parameters: Value },
 }
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum BuiltInFunctionType {
@@ -232,6 +239,8 @@ pub enum BuiltInFunctionType {
     IsDouble,
     IsFunction,
     IsArray,
+    ParseJson,
+    Jsonify,
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Serialize, Deserialize)]
@@ -268,18 +277,17 @@ pub enum TreeNodeValue {
     Drop(Vec<Value>),
     VariableUnused,
     VariableAssign(Option<String>),
-    VariableArrayAssign { name: String, index: Value },
+    MultiDepthVariableAssign { root: Value, next_keys: Vec<KeyAccess> },
     Ops(Operator),
     Primitive(Primitive),
     VariableRef(String),
-    BuiltInFunction(BuiltInFunctionType),
+    BuiltInFunction { fn_type: BuiltInFunctionType, params: Value },
     IfExpr(Value),
     FString(String, Vec<(String, Value)>),
     WhileExpr(Value),
     Array(Vec<Value>),
     Struct(BTreeMap<String, Value>),
-    StructAccess { struc: Value, key: Primitive },
-    ArrayAccess { index: Value, array: Value },
+    MultiDepthAccess { root: Value, keys: Vec<KeyAccess> },
     Function(Value),
     FunctionCall(Value),
     Foreach(Value),
@@ -329,6 +337,8 @@ impl BuiltInFunctionType {
             BuiltInFunctionType::IsFunction => IS_FUNCTION,
             BuiltInFunctionType::IsArray => IS_ARRAY,
             BuiltInFunctionType::MakeError => MAKE_ERROR,
+            BuiltInFunctionType::Jsonify => JSONIFY,
+            BuiltInFunctionType::ParseJson => PARSE_JSON,
         }
     }
 }
@@ -399,6 +409,8 @@ pub const FORBIDDEN_VARIABLE_NAME: &[&str] = &[
     IS_BOOL,
     IS_ARRAY,
     MAKE_ERROR,
+    JSONIFY,
+    PARSE_JSON,
     EVAL,
     TO_BOOL,
     SQRT,

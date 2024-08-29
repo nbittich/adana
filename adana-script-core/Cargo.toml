@@ -17,12 +17,17 @@ exclude.workspace = true
 anyhow.workspace = true
 serde.workspace = true
 strum.workspace = true
-regex = { workspace = true, features = [
+regex = { workspace = true, default-features = false, features = [
+  "std",
   "unicode",
   "unicode-age",
   "unicode-bool",
   "unicode-case",
   "unicode-perl",
+  "unicode-gencat",
+  "unicode-script",
+  "unicode-segment",
 ] }
+serde_json.workspace = true
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 libloading.workspace = true

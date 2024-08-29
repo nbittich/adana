@@ -540,7 +540,10 @@ Example of defining a struct:
 ```javascript
 person = struct {
     name: "hello",
-    age: 20
+    age: 20,
+    headers: struct {
+      "Content-Type": "application/json"
+    }
 }
 
 person_service = struct {
@@ -780,6 +783,8 @@ Here is a list of built-in functions available:
 | match       | match regex                  | `match("AaAaAbbBBBb", "(?i)a+(?-i)b+")`          |
 | replace     | replace                      | `replace("AaAaAbbBBBb", "(?i)a+(?-i)b+", "xxx")` |
 | replace_all | replace all                  | `replace_all("AaAaAbbBBBb", "A", "b")`           |
+| jsonify     | jsonify value                | `jsonify(struct {a: 9})`                         |
+| parse_json  | parse a json string          | `parse_json("""{"a": 9}""")`                     |
 
 #### Matching regexes
 

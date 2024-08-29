@@ -86,6 +86,105 @@ fn test_ceil() {
     assert_eq!(Primitive::Double(5.), r);
 }
 #[test]
+fn test_parse_json() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"parse_json("""{"a": 9}""")"#;
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        r,
+        Primitive::Struct(BTreeMap::from([(
+            "a".to_string(),
+            Primitive::Int(9)
+        )]))
+    );
+    let expr = r#"
+       struct {
+            firstName: "Nordine",
+            lastName: "Bittich",
+            age: 400,
+            notes: [1034,1032,3.18,"hello",3334],
+            skills: struct {
+                programming: "🔥",
+                sport:  "⚽",
+            }
+        }
+    "#;
+    let expect = compute(expr, &mut ctx, "N/A").unwrap();
+    let expr = r#"
+      s= parse_json("""{
+        "age": 400,
+        "firstName": "Nordine",
+        "lastName": "Bittich",
+        "notes": [
+            1034,
+            1032,
+            3.18,
+            "hello",
+            3334
+        ],
+        "skills": {
+            "programming": "🔥",
+            "sport": "⚽"
+        }
+        }""")
+    "#;
+    let curr = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(curr, expect);
+}
+#[test]
+fn test_jsonify() {
+    let mut ctx = BTreeMap::new();
+    let expr = r#"jsonify(struct {a: 9})"#;
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        r,
+        Primitive::String(
+            r#"{
+  "a": 9
+}"#
+            .to_string()
+        )
+    );
+
+    let expr = r#"
+        s = struct {
+            firstName: "Nordine",
+            lastName: "Bittich",
+            age: 36,
+            notes: [1,2,3.18,"hello",4],
+            skills: struct {
+                programming: "🔥",
+                sport:  "⚽",        
+            }
+        }
+        jsonify(s)
+    "#;
+    let r = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(
+        Primitive::String(
+            r#"{
+  "age": 36,
+  "firstName": "Nordine",
+  "lastName": "Bittich",
+  "notes": [
+    1,
+    2,
+    3.18,
+    "hello",
+    4
+  ],
+  "skills": {
+    "programming": "🔥",
+    "sport": "⚽"
+  }
+}"#
+            .to_string()
+        ),
+        r
+    );
+}
+
+#[test]
 fn test_round() {
     let mut ctx = BTreeMap::new();
     let r = compute(r#"round(4.46790, 2)"#, &mut ctx, "N/A").unwrap();

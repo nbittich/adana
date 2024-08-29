@@ -1,3 +1,9 @@
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
+
+#[cfg(not(target_arch = "wasm32"))]
+use std::any::Any;
+
 use std::{
     cmp::Ordering,
     collections::BTreeMap,
@@ -6,11 +12,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use anyhow::Result;
-
-use serde::{Deserialize, Serialize};
-
-use super::{constants::NULL, Value};
+use crate::{constants::NULL, Value};
 
 const MAX_U32_AS_I128: i128 = u32::MAX as i128;
 
@@ -28,6 +30,7 @@ pub const TYPE_FUNCTION: &str = "function";
 pub const TYPE_UNIT: &str = "unit";
 pub const TYPE_STRUCT: &str = "struct";
 pub const TYPE_NO_RETURN: &str = "!";
+pub const TYPE_LIB_DATA: &str = "libdata";
 
 #[derive(Debug)]
 pub struct NativeLibrary {
@@ -136,6 +139,13 @@ pub enum Primitive {
     NativeLibrary(Arc<NativeLibrary>),
     #[serde(skip_serializing, skip_deserializing)]
     NativeFunction(String, Arc<NativeLibrary>),
+    #[serde(skip_serializing, skip_deserializing)]
+    LibData(LibData),
+}
+#[derive(Debug, Clone)]
+pub struct LibData {
+    #[cfg(not(target_arch = "wasm32"))]
+    pub data: Arc<Box<dyn Send + Any + Sync>>,
 }
 
 pub type RefPrimitive = Arc<RwLock<Primitive>>;
@@ -146,62 +156,9 @@ impl Primitive {
         Arc::new(RwLock::new(self))
     }
     pub fn to_value(self) -> anyhow::Result<Value> {
-        let v = match self {
-            Primitive::U8(u) => Value::U8(u),
-            Primitive::I8(i) => Value::I8(i),
-            Primitive::Int(i) => Value::Integer(i),
-            Primitive::Bool(b) => Value::Bool(b),
-            Primitive::Ref(r) => {
-                let r = r
-                    .read()
-                    .map_err(|e| {
-                        anyhow::format_err!("could not acquire lock {e}")
-                    })?
-                    .clone();
-                r.to_value()?
-            }
-            Primitive::Null => Value::Null,
-            Primitive::Double(d) => Value::Decimal(d),
-            Primitive::String(s) => Value::String(s),
-            Primitive::Array(a) => {
-                let mut vek = vec![];
-                for p in a {
-                    let p = p.to_value()?;
-                    vek.push(p);
-                }
-                Value::Array(vek)
-            }
-            Primitive::Struct(s) => {
-                let mut map = BTreeMap::new();
-                for (k, v) in s {
-                    let p = v.to_value()?;
-                    map.insert(k, p);
-                }
-                Value::Struct(map)
-            }
-            Primitive::Error(e) => return Err(anyhow::format_err!("{e}")),
-            Primitive::Function { parameters, exprs } => Value::Function {
-                parameters: Box::new(Value::BlockParen(parameters)),
-                exprs,
-            },
-            Primitive::Unit => Value::NoOp,
-            Primitive::NoReturn => Value::NoOp,
-            Primitive::EarlyReturn(e) => {
-                let v = e.to_value()?;
-                Value::EarlyReturn(Box::new(Some(v)))
-            }
-            Primitive::NativeLibrary(_) => {
-                return Err(anyhow::anyhow!(
-                    "cannot convert native lib to value"
-                ));
-            }
-            Primitive::NativeFunction(_method, _lib) => {
-                return Err(anyhow::anyhow!(
-                    "cannot convert native function to value"
-                ));
-            }
-        };
-        Ok(v)
+        // code was more complex than that before libhttp. I forgot why,
+        // and probably this simplification shouldn't cause any problem
+        Ok(Value::Primitive(self))
     }
 }
 pub trait StringManipulation {
@@ -446,6 +403,7 @@ impl Display for Primitive {
             Primitive::NativeFunction(key, _) => {
                 write!(f, "__native_fn__{key}")
             }
+            Primitive::LibData(_) => write!(f, "__lib_data"),
         }
     }
 }
@@ -1736,6 +1694,7 @@ impl PartialOrd for Primitive {
             (Primitive::Error(_), _) => None,
             (Primitive::Unit, _) => None,
             (Primitive::Function { parameters: _, exprs: _ }, _) => None,
+            (Primitive::LibData(_), _) => None,
         }
     }
 }
@@ -2028,6 +1987,7 @@ impl TypeOf for Primitive {
             Primitive::Unit => TYPE_UNIT,
             Primitive::NoReturn => TYPE_NO_RETURN,
             Primitive::EarlyReturn(v) => v.type_of_str(),
+            Primitive::LibData(_) => TYPE_LIB_DATA,
         }
     }
 
