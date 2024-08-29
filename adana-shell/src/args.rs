@@ -3,6 +3,7 @@ use anyhow::Context;
 pub enum Argument {
     InMemory,
     Execute(String),
+    Daemon,
     ScriptPath(String),
     DbPath(String),
     NoFallbackInMemory,
@@ -54,6 +55,17 @@ pub fn parse_args(
                     "cannot have db path & in memory at the same time!"
                 );
                 arguments.push(Argument::InMemory);
+            }
+            "--daemon" | "-d" => {
+                anyhow::ensure!(
+                    !arguments.iter().any(|a| matches!(a, Argument::InMemory)),
+                    "daemon should be specified only once!"
+                );
+                anyhow::ensure!(
+                    arguments.iter().any(|a| matches!(a, Argument::ScriptPath(_))),
+                    "script path must be specified first when having the daemon feature on! "
+                );
+                arguments.push(Argument::Daemon);
             }
             "--no-fallback" | "-nofb" => {
                 anyhow::ensure!(

@@ -12,6 +12,7 @@ use nu_ansi_term::Color::LightBlue;
 use nu_ansi_term::Style;
 use rustyline::error::ReadlineError;
 use std::collections::BTreeMap;
+use std::time::Duration;
 use std::{
     borrow::Cow,
     path::{Path, PathBuf},
@@ -95,6 +96,7 @@ fn main() -> anyhow::Result<()> {
             None
         }
     });
+    let is_daemon = args.iter().any(|a| matches!(a, Argument::Daemon));
 
     let mut direct_execution_script = args.iter().find_map(|a| {
         if let Argument::Execute(script) = a {
@@ -104,6 +106,10 @@ fn main() -> anyhow::Result<()> {
         }
     });
 
+    ctrlc::set_handler(|| {
+        debug!("catch CTRL-C! DO NOT REMOVE this. receive ctrl+c signal 2");
+        std::process::exit(0);
+    })?;
     let script = if let Some(script_path) = script_path {
         let pb = PathBuf::from(&script_path);
         if !pb.exists() {
@@ -132,6 +138,7 @@ fn main() -> anyhow::Result<()> {
     } else {
         direct_execution_script.take()
     };
+
     if let Some(script) = script {
         let mut script_context = BTreeMap::new();
 
@@ -147,12 +154,14 @@ fn main() -> anyhow::Result<()> {
             Ok(calc) => println!("{calc}"),
             Err(calc_err) => eprintln!("Error: {calc_err:?}"),
         }
+        if is_daemon {
+            loop {
+                std::thread::sleep(Duration::from_millis(50));
+            }
+        }
         return Ok(());
     }
 
-    ctrlc::set_handler(|| {
-        debug!("catch CTRL-C! DO NOT REMOVE this. receive ctrl+c signal 2")
-    })?;
     clear_terminal();
     println!("{PKG_NAME} v{VERSION} (rust version: {RUST_VERSION})");
     println!("shared lib path: {path_to_shared_lib:?}");

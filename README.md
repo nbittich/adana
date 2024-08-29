@@ -713,7 +713,7 @@ fact(10)
 You can dynamically load a script written in adana in the repl.
 Assuming you've cloned the repo and you use docker, here's an example of how to do it.
 
-Note that the extension can be anything.
+Note that the extension must be `.adana`.
 
 - map the example directory as a docker volume:
 
@@ -883,6 +883,9 @@ RUST_LOG=adana=debug adana
 ```
 # using file
 adana -sp /path/to/script.adana
+
+# using file with --daemon feature
+adana -sp /path/to/script.adana -d
 
 # using code
 adana -e 1+1
