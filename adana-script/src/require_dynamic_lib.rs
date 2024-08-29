@@ -1,6 +1,6 @@
 #[cfg(not(target_arch = "wasm32"))]
 const STD_DOWNLOAD_URI: &str =
-    "https://github.com/nbittich/adana-std/releases/download/0.18.1/adana-std.tar.gz";
+    "https://github.com/nbittich/adana-std/releases/download/0.18.2/adana-std.tar.gz";
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::process::{Command, Stdio};
@@ -56,7 +56,7 @@ fn try_from_path(
 
 Try to install it like so:
     - rm -f /tmp/adana-std.tar.gz && wget -P /tmp {STD_DOWNLOAD_URI}
-    - rm -rf {sl}/adana-std && mkdir {sl}/adana-std && tar xvzf /tmp/adana-std.tar.gz -C {sl}/adana-std
+    - rm -rf {sl}/adana-std && mkdir -p {sl}/adana-std && tar xvzf /tmp/adana-std.tar.gz -C {sl}/adana-std
 
                 "#
                 );
