@@ -889,7 +889,13 @@ where
     F: Fn(&str) -> Res<Vec<Value>>,
 {
     move |s| {
-        preceded(tag_no_space("{"), terminated(&parser, tag_no_space("}")))(s)
+        map(
+            preceded(
+                tag_no_space("{"),
+                terminated(opt(&parser), tag_no_space("}")),
+            ),
+            |exprs| if let Some(exprs) = exprs { exprs } else { vec![] },
+        )(s)
     }
 }
 

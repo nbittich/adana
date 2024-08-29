@@ -4,6 +4,7 @@ mod builtin;
 mod chaining;
 mod drop;
 mod dynload;
+mod empty_block;
 mod examples;
 mod file;
 mod foreach;
