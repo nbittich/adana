@@ -356,13 +356,10 @@ fn parse_foreach(s: &str) -> Res<Value> {
         preceded(
             tag_no_space(FOR),
             pair(
-                alt((
-                    preceded(
-                        tag_no_space("("),
-                        terminated(parse_for_expr_header, tag_no_space(")")),
-                    ),
-                    parse_for_expr_header,
-                )),
+                preceded(
+                    opt(tag_no_space("(")),
+                    terminated(parse_for_expr_header, opt(tag_no_space(")"))),
+                ),
                 parse_block(parse_instructions),
             ),
         ),
