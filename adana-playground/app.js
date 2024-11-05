@@ -1,5 +1,10 @@
 import { EXAMPLES } from "./examples.js";
-
+const LOGS = [];
+console.log = function () {
+  for (const a of arguments) {
+    LOGS.push(a);
+  }
+};
 async function loadWasmContext() {
   const module = await import("./pkg/adana_script_wasm.js");
   await module.default();
@@ -36,15 +41,6 @@ async function run() {
 
   const out = document.querySelector("#out");
   out.value = "";
-
-  let logs = [];
-
-  console.log = function () {
-    for (const a of arguments) {
-      logs.push(a);
-    }
-  };
-
   const select = document.querySelector("#examples");
   for (const example of EXAMPLES) {
     const option = document.createElement("option");
@@ -64,7 +60,7 @@ async function run() {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     toggleForm(form, true);
-    logs = [];
+    LOGS.length = 0;
     out.classList.remove("text-danger");
 
     const data = new FormData(e.target);
@@ -76,7 +72,7 @@ async function run() {
       // let res = compute(data.get("code") || "", ctx); // use this instead if you create memory from javascript
       let res = compute(data.get("code") || "");
       // console.log(res);
-      out.value = logs.join("");
+      out.value = LOGS.join("");
       toggleForm(form, false);
     } catch (e) {
       out.classList.add("text-danger");
