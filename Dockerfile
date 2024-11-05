@@ -1,4 +1,4 @@
-FROM rust:1.81-bookworm as builder
+FROM rust:1.82-bookworm as builder
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ COPY . .
 
 RUN cargo build --release 
 
-FROM rust:1.81-slim-bookworm
+FROM rust:1.82-slim-bookworm
 
 ENV RUST_LOG=info
 
