@@ -27,13 +27,13 @@ pub(super) fn comments(s: &str) -> Res<Vec<&str>> {
     )(s)
 }
 
-fn tag_no_space<'a>(t: &'a str) -> impl Fn(&'a str) -> Res<&'a str> {
+fn tag_no_space<'a>(t: &'a str) -> impl Fn(&'a str) -> Res<'a, &'a str> {
     move |s: &str| delimited(multispace0, tag(t), multispace0)(s)
 }
 
 fn tag_no_space_opt<'a>(
     t: &'a str,
-) -> impl Fn(&'a str) -> Res<Option<&'a str>> {
+) -> impl Fn(&'a str) -> Res<'a, Option<&'a str>> {
     move |s: &str| opt(tag_no_space(t))(s)
 }
 
@@ -239,9 +239,9 @@ fn parse_block_paren_opt(s: &str) -> Res<Value> {
 fn parse_paren<'a, F>(
     parser: F,
     paren_opt: bool,
-) -> impl Fn(&'a str) -> Res<Value>
+) -> impl Fn(&'a str) -> Res<'a, Value>
 where
-    F: Fn(&'a str) -> Res<Vec<Value>>,
+    F: Fn(&'a str) -> Res<'a, Vec<Value>>,
 {
     move |s| {
         let parser = map(&parser, Value::BlockParen);
@@ -388,7 +388,7 @@ fn parse_drop(s: &str) -> Res<Value> {
 fn parse_builtin_fn(s: &str) -> Res<Value> {
     fn parse_builtin<'a>(
         fn_type: BuiltInFunctionType,
-    ) -> impl Fn(&'a str) -> Res<Value> {
+    ) -> impl Fn(&'a str) -> Res<'a, Value> {
         move |s: &str| {
             map(
                 preceded(tag_no_space(fn_type.as_str()), parse_block_paren),
@@ -398,7 +398,7 @@ fn parse_builtin_fn(s: &str) -> Res<Value> {
     }
     fn parse_builtin_many_args<'a>(
         fn_type: BuiltInFunctionType,
-    ) -> impl Fn(&'a str) -> Res<Value> {
+    ) -> impl Fn(&'a str) -> Res<'a, Value> {
         move |s: &str| {
             map(
                 preceded(tag_no_space(fn_type.as_str()), parse_fn_args),
@@ -750,7 +750,7 @@ fn parse_value(s: &str) -> Res<Value> {
 }
 
 fn parse_operation(s: &str) -> Res<Value> {
-    fn parse_op<'a>(operation: Operator) -> impl Fn(&'a str) -> Res<Value> {
+    fn parse_op<'a>(operation: Operator) -> impl Fn(&'a str) -> Res<'a, Value> {
         move |s| {
             map(tag_no_space(operation.as_str()), |_| {
                 Value::Operation(operation)

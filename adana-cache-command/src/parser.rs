@@ -209,7 +209,9 @@ fn help_command(command: &str) -> Res<CacheCommand> {
     extract_no_args(tag_no_case(HELP), |_| CacheCommand::Help)(command)
 }
 
-fn tag_no_space_no_case<'a>(t: &'a str) -> impl Fn(&'a str) -> Res<&'a str> {
+fn tag_no_space_no_case<'a>(
+    t: &'a str,
+) -> impl Fn(&'a str) -> Res<'a, &'a str> {
     move |s: &str| delimited(multispace0, tag_no_case(t), multispace0)(s)
 }
 
@@ -237,7 +239,7 @@ fn extract_no_args<'a, F, M>(
     mapper: M,
 ) -> impl Fn(&'a str) -> Res<'a, CacheCommand<'a>>
 where
-    F: Fn(&'a str) -> Res<&'a str>,
+    F: Fn(&'a str) -> Res<'a, &'a str>,
     M: Fn(&'a str) -> CacheCommand<'a>,
 {
     move |s| {
@@ -250,9 +252,9 @@ where
         )(s)
     }
 }
-fn extract_key<'a, F>(parser: F) -> impl Fn(&'a str) -> Res<&'a str>
+fn extract_key<'a, F>(parser: F) -> impl Fn(&'a str) -> Res<'a, &'a str>
 where
-    F: Fn(&'a str) -> Res<&'a str>,
+    F: Fn(&'a str) -> Res<'a, &'a str>,
 {
     move |s: &str| preceded(&parser, extract_command)(s)
 }
