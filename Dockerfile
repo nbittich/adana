@@ -10,7 +10,7 @@ COPY . .
 
 RUN cargo build --release 
 
-FROM rust:1.82-slim-bookworm
+FROM rust:1.83-slim-bookworm
 
 ENV RUST_LOG=info
 
