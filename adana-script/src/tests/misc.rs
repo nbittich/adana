@@ -50,7 +50,14 @@ fn test_compute_assign_with_ctx() {
 
     assert_eq!(ctx["y"].read().unwrap().clone(), Primitive::Double(10.));
 }
+#[test]
+fn test_mul_by_zero() {
+    let expr = "6*0";
+    let mut ctx = BTreeMap::from([]);
 
+    let res = compute(expr, &mut ctx, "N/A").unwrap();
+    assert_eq!(Primitive::Int(0), res);
+}
 #[test]
 fn test_variable() {
     let expr = "x*5+9*y/8";

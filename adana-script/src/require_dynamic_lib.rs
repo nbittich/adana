@@ -1,6 +1,6 @@
 #[cfg(not(target_arch = "wasm32"))]
 const STD_DOWNLOAD_URI: &str =
-    "https://github.com/nbittich/adana-std/releases/download/0.18.5/adana-std.tar.gz";
+    "https://github.com/nbittich/adana-std/releases/download/0.18.6/adana-std.tar.gz";
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::process::{Command, Stdio};

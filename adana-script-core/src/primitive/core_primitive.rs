@@ -931,13 +931,13 @@ impl Mul for Primitive {
                 l.mul(&r)
             }
 
-            (Primitive::U8(l), Primitive::U8(r)) if r != 0 => {
+            (Primitive::U8(l), Primitive::U8(r)) => {
                 Primitive::Int(l as i128 * r as i128)
             }
-            (Primitive::U8(l), Primitive::I8(r)) if r != 0 => {
+            (Primitive::U8(l), Primitive::I8(r)) => {
                 Primitive::Int(l as i128 * r as i128)
             }
-            (Primitive::U8(l), Primitive::Int(r)) if r != 0 => {
+            (Primitive::U8(l), Primitive::Int(r)) => {
                 Primitive::Int(l as i128 * r)
             }
             (Primitive::U8(l), Primitive::Double(r)) => {
@@ -947,13 +947,13 @@ impl Mul for Primitive {
                 Primitive::Array(multiply_array(r, l as i128))
             }
 
-            (Primitive::I8(l), Primitive::U8(r)) if r != 0 => {
+            (Primitive::I8(l), Primitive::U8(r)) => {
                 Primitive::Int(l as i128 * r as i128)
             }
-            (Primitive::I8(l), Primitive::I8(r)) if r != 0 => {
+            (Primitive::I8(l), Primitive::I8(r)) => {
                 Primitive::Int(l as i128 * r as i128)
             }
-            (Primitive::I8(l), Primitive::Int(r)) if r != 0 => {
+            (Primitive::I8(l), Primitive::Int(r)) => {
                 Primitive::Int(l as i128 * r)
             }
             (Primitive::I8(l), Primitive::Double(r)) => {
