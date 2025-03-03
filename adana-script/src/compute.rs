@@ -1188,7 +1188,7 @@ fn compute_instructions(
                             p => result = p,
                         }
                     }
-                } else { match else_expr { Some(else_expr) => {
+                } else if let Some(else_expr) = else_expr {
                     let mut scoped_ctx = ctx.clone();
 
                     for instruction in else_expr {
@@ -1202,7 +1202,7 @@ fn compute_instructions(
                             p => result = p,
                         }
                     }
-                } _ => {}}}
+                }
             }
             Value::WhileExpr { cond, exprs } => {
                 let mut scoped_ctx = ctx.clone();
