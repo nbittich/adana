@@ -91,11 +91,11 @@ where
     }
 
     fn tree_names(&self) -> Vec<String> {
-        if let Some(guard) = self.get_guard() {
+        match self.get_guard() { Some(guard) => {
             guard.tree_names()
-        } else {
+        } _ => {
             vec![]
-        }
+        }}
     }
 
     fn drop_tree(&mut self, tree_name: &str) -> bool {
@@ -170,19 +170,19 @@ impl<K: Key, V: Value> Op<K, V> for FileDb<K, V> {
     }
 
     fn keys(&self) -> Vec<K> {
-        if let Some(guard) = self.get_guard() {
+        match self.get_guard() { Some(guard) => {
             guard.keys()
-        } else {
+        } _ => {
             vec![]
-        }
+        }}
     }
 
     fn list_all(&self) -> BTreeMap<K, V> {
-        if let Some(guard) = self.get_guard() {
+        match self.get_guard() { Some(guard) => {
             guard.list_all()
-        } else {
+        } _ => {
             BTreeMap::default()
-        }
+        }}
     }
 }
 
@@ -222,25 +222,23 @@ where
                 match event {
                     Notify::Update => {
                         debug!("receive update!");
-                        if let Err(e) =
-                            Self::__flush(Arc::clone(&clone), &file_lock)
-                        {
+                        match Self::__flush(Arc::clone(&clone), &file_lock)
+                        { Err(e) => {
                             error!("could not flush db. Err: '{e}'.");
-                        } else {
+                        } _ => {
                             trace!("sync done");
-                        }
+                        }}
                     }
                     Notify::FullFlush => {
                         debug!("receive full flush!");
-                        if let Err(e) =
-                            Self::__flush(Arc::clone(&clone), &file_lock)
-                        {
+                        match Self::__flush(Arc::clone(&clone), &file_lock)
+                        { Err(e) => {
                             error!("could not flush db. Err: '{e}'.");
-                        } else if let Err(e) = file_lock.flush() {
+                        } _ => { match file_lock.flush() { Err(e) => {
                             error!("could not write on file lock {e}");
-                        } else {
+                        } _ => {
                             trace!("full flush done");
-                        }
+                        }}}}
                     }
                     Notify::Stop => {
                         debug!("receive stop!");

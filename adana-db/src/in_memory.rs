@@ -136,12 +136,12 @@ impl<K: Key + Clone, V: Value + Clone> DbOp<K, V> for InMemoryDb<K, V> {
     }
 
     fn clear_tree(&mut self, tree_name: &str) -> bool {
-        if let Some(tree) = self.trees.get_mut(tree_name) {
+        match self.trees.get_mut(tree_name) { Some(tree) => {
             tree.clear();
             true
-        } else {
+        } _ => {
             false
-        }
+        }}
     }
 
     fn merge_trees(

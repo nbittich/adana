@@ -394,18 +394,18 @@ pub fn to_ast(
                 tree.root().is_none(),
                 "invalid variable assignment, tree root is not none"
             );
-            let variable_assign_node = if let Value::Variable(n) = *name {
+            let variable_assign_node = match *name { Value::Variable(n) => {
                 Ok(TreeNodeValue::VariableAssign(Some(n)))
-            } else if let Value::VariableUnused = *name {
+            } _ => { match *name { Value::VariableUnused => {
                 Ok(TreeNodeValue::VariableAssign(None))
-            } else if let Value::MultiDepthAccess { root, next_keys} = *name {
+            } _ => { match *name { Value::MultiDepthAccess { root, next_keys} => {
                 Ok(TreeNodeValue::MultiDepthVariableAssign{root: *root, next_keys})
 
-            }  else {
+            } _ => {
                 Err(anyhow::Error::msg(format!(
                     "AST ERROR: invalid variable expression {name:?} => {expr:?}",
                 )))
-            }?;
+            }}}}}}?;
 
             let node_id = Some(tree.set_root(variable_assign_node));
 
@@ -493,7 +493,7 @@ pub fn to_ast(
             curr_node_id,
         ),
         Value::Drop(v) => {
-            if let Value::BlockParen(variables) = *v {
+            match *v { Value::BlockParen(variables) => {
                 let mut vars = Vec::with_capacity(variables.len());
                 for variable in variables {
                     match variable {
@@ -513,9 +513,9 @@ pub fn to_ast(
                     tree,
                     curr_node_id,
                 )
-            } else {
+            } _ => {
                 Err(anyhow::Error::msg(format!("drop must be in paren: {v:?}")))
-            }
+            }}
         }
         Value::EarlyReturn(v) => append_to_current_and_return(
             TreeNodeValue::EarlyReturn(*v),

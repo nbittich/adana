@@ -550,14 +550,14 @@ fn parse_key_brackets(s: &str) -> Res<KeyAccess> {
             opt(parse_fn_args),
         ),
         |(k, params)| {
-            if let Some(params) = params {
+            match params { Some(params) => {
                 KeyAccess::FunctionCall {
                     parameters: Value::BlockParen(params),
                     key: Box::new(k),
                 }
-            } else {
+            } _ => {
                 k
-            }
+            }}
         },
     )(s)
 }
@@ -583,14 +583,14 @@ fn parse_variable_brackets(s: &str) -> Res<KeyAccess> {
             opt(parse_fn_args),
         ),
         |(k, params)| {
-            if let Some(params) = params {
+            match params { Some(params) => {
                 KeyAccess::FunctionCall {
                     parameters: Value::BlockParen(params),
                     key: Box::new(k),
                 }
-            } else {
+            } _ => {
                 k
-            }
+            }}
         },
     )(s)
 }
@@ -620,14 +620,14 @@ fn parse_index_brackets(s: &str) -> Res<KeyAccess> {
             opt(parse_fn_args),
         ),
         |(k, params)| {
-            if let Some(params) = params {
+            match params { Some(params) => {
                 KeyAccess::FunctionCall {
                     parameters: Value::BlockParen(params),
                     key: Box::new(KeyAccess::Variable(k)),
                 }
-            } else {
+            } _ => {
                 KeyAccess::Variable(k)
-            }
+            }}
         },
     )(s)
 }
@@ -640,14 +640,14 @@ fn parse_key_dots(s: &str) -> Res<KeyAccess> {
             opt(parse_fn_args),
         ),
         |(k, params)| {
-            if let Some(params) = params {
+            match params { Some(params) => {
                 KeyAccess::FunctionCall {
                     parameters: Value::BlockParen(params),
                     key: Box::new(k),
                 }
-            } else {
+            } _ => {
                 k
-            }
+            }}
         },
     )(s)
 }
@@ -812,19 +812,19 @@ fn parse_simple_instruction(s: &str) -> Res<Value> {
                 parse_complex_expression,
             ),
             |((variable, mut operator), expr)| {
-                if let Some(operator) = operator.take() {
+                match operator.take() { Some(operator) => {
                     Value::VariableExpr {
                         name: Box::new(variable.clone()),
                         expr: Box::new(Value::Expression(vec![
                             variable, operator, expr,
                         ])),
                     }
-                } else {
+                } _ => {
                     Value::VariableExpr {
                         name: Box::new(variable),
                         expr: Box::new(expr),
                     }
-                }
+                }}
             },
         ),
         parse_complex_expression,

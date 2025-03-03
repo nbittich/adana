@@ -135,5 +135,5 @@ fn test_complex_math_wise() {
     assert_eq!(r, Primitive::Int(((30 * 9) & (9 - 5 / !3)) as i128));
 
     let r = compute(r#"30*9 @9 -5/~3 << 1"#, &mut ctx, "N/A").unwrap();
-    assert_eq!(r, Primitive::Int(((30 * 9) & (9 - 5 / !3) << 1) as i128));
+    assert_eq!(r, Primitive::Int(((30 * 9) & ((9 - 5 / !3) << 1)) as i128));
 }

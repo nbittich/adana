@@ -167,11 +167,11 @@ mod test {
         let file_db: Db<u64, String> =
             Db::open(Config::new(Some("/tmp/adana.db"), false, false)).unwrap();
 
-        let mut file_db = if let Db::FileBased(file_db) = file_db {
+        let mut file_db = match file_db { Db::FileBased(file_db) => {
             file_db
-        } else {
+        } _ => {
             panic!("error, should be file db")
-        };
+        }};
         file_db.open_tree("rust");
 
         for i in 1..100u64 {
@@ -185,11 +185,11 @@ mod test {
         let file_db: Db<u64, String> =
             Db::open(Config::new(Some("/tmp/adana.db"), false, false)).unwrap();
 
-        let mut file_db = if let Db::FileBased(file_db) = file_db {
+        let mut file_db = match file_db { Db::FileBased(file_db) => {
             file_db
-        } else {
+        } _ => {
             panic!("error, should be file db")
-        };
+        }};
 
         file_db.open_tree("rust");
 

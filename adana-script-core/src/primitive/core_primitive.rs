@@ -59,11 +59,11 @@ impl NativeLibrary {
     /// # Safety
     /// trust me bro
     #[cfg(not(target_arch = "wasm32"))]
-    pub unsafe fn new(path: &Path) -> anyhow::Result<NativeLibrary> {
+    pub unsafe fn new(path: &Path) -> anyhow::Result<NativeLibrary> { unsafe {
         let lib = libloading::Library::new(path)
             .map_err(|e| anyhow::format_err!("could not load lib, {e}"))?;
         Ok(NativeLibrary { lib, path: path.to_path_buf() })
-    }
+    }}
 
     #[cfg(target_arch = "wasm32")]
     pub fn new(_path: &Path) -> anyhow::Result<NativeLibrary> {
@@ -80,10 +80,10 @@ impl NativeLibrary {
     pub unsafe fn get_function(
         &self,
         key: &str,
-    ) -> anyhow::Result<NativeFunction> {
+    ) -> anyhow::Result<NativeFunction> { unsafe {
         let r = self.lib.get(key.as_bytes())?;
         Ok(r)
-    }
+    }}
 
     #[cfg(target_arch = "wasm32")]
     pub fn get_function(&self, _key: &str) -> anyhow::Result<NativeFunction> {
@@ -98,10 +98,10 @@ impl NativeLibrary {
         key: &str,
         params: Vec<Primitive>,
         compiler: Box<Compiler>,
-    ) -> anyhow::Result<Primitive> {
+    ) -> anyhow::Result<Primitive> { unsafe {
         let fun = self.get_function(key)?;
         fun(params, compiler)
-    }
+    }}
 
     #[cfg(target_arch = "wasm32")]
     pub fn call_function(
@@ -2299,11 +2299,11 @@ impl Array for Primitive {
                 }
             }
             (Primitive::Struct(struc), Primitive::String(key)) => {
-                if let Some(_p) = struc.remove(key) {
+                match struc.remove(key) { Some(_p) => {
                     Ok(())
-                } else {
+                } _ => {
                     Err(anyhow::Error::msg("key doesn't exist"))
-                }
+                }}
             }
             _ => Err(anyhow::Error::msg("illegal access to array!!!")),
         }

@@ -55,14 +55,14 @@ impl FileLock {
         if Path::exists(&_lock_p) {
             let pid = Self::read_pid(&path);
 
-            if let Ok(pid) = pid {
+            match pid { Ok(pid) => {
                 if pid_exists(pid) {
                     error!("{pid} exist!");
                     return Err(FileLockError::PidExist(pid));
                 }
-            } else {
+            } _ => {
                 return Err(FileLockError::PidFileDoesntExist);
-            }
+            }}
 
             // otherwise, we create a file lock to force cleanup
             let _ = {

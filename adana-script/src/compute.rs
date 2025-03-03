@@ -92,9 +92,8 @@ fn handle_function_call(
                 })?
                 .clone();
         }
-        if let Primitive::Function { parameters: function_parameters, exprs } =
-            function
-        {
+        match function
+        { Primitive::Function { parameters: function_parameters, exprs } => {
             let mut scope_ctx = scoped_ctx(ctx)?;
             for (i, param) in function_parameters.iter().enumerate() {
                 if let Some(value) = param_values.get(i) {
@@ -127,7 +126,7 @@ fn handle_function_call(
                 return Ok(*v);
             }
             Ok(res)
-        } else if let Primitive::NativeLibrary(lib) = function {
+        } _ => { match function { Primitive::NativeLibrary(lib) => {
             if cfg!(test) {
                 dbg!(&lib);
             }
@@ -144,7 +143,7 @@ fn handle_function_call(
             }
             Ok(Primitive::Error("debug".into()))
             //Ok(function(vec![Primitive::String("s".into())]))
-        } else if let Primitive::NativeFunction(key, lib) = function {
+        } _ => { match function { Primitive::NativeFunction(key, lib) => {
             #[cfg(not(target_arch = "wasm32"))]
             {
                 if cfg!(test) {
@@ -176,9 +175,9 @@ fn handle_function_call(
             {
                 return Ok(Primitive::Error(format!("Loading native function {key} doesn't work in wasm context! {lib:?}")));
             }
-        } else {
+        } _ => {
             Ok(Primitive::Error(format!(" not a function: {function}")))
-        }
+        }}}}}}
     } else {
         Ok(Primitive::Error(format!(
             "invalid function call: {parameters:?} => {function:?}"
@@ -805,11 +804,11 @@ fn compute_recur(
                     adana_script_core::BuiltInFunctionType::Sin => Ok(v.sin()),
                     adana_script_core::BuiltInFunctionType::Cos => Ok(v.cos()),
                     adana_script_core::BuiltInFunctionType::Eval => {
-                        if let Primitive::String(script) = v {
+                        match v { Primitive::String(script) => {
                             compute(&script, ctx, shared_lib)
-                        } else {
+                        } _ => {
                             Ok(Primitive::Error(format!("invalid script {v}")))
-                        }
+                        }}
                     }
                     adana_script_core::BuiltInFunctionType::Tan => Ok(v.tan()),
                     adana_script_core::BuiltInFunctionType::ToInt => {
@@ -1164,11 +1163,11 @@ fn compute_instructions(
         match instruction {
             v @ Value::EarlyReturn(_) => {
                 let res = compute_lazy(v, ctx, shared_lib)?;
-                if let Primitive::EarlyReturn(r) = res {
+                match res { Primitive::EarlyReturn(r) => {
                     return Ok(*r);
-                } else {
+                } _ => {
                     return Err(anyhow::Error::msg("bug! fixme"));
-                }
+                }}
             }
             Value::IfExpr { cond, exprs, else_expr } => {
                 let cond = compute_lazy(*cond, ctx, shared_lib)?;
@@ -1189,7 +1188,7 @@ fn compute_instructions(
                             p => result = p,
                         }
                     }
-                } else if let Some(else_expr) = else_expr {
+                } else { match else_expr { Some(else_expr) => {
                     let mut scoped_ctx = ctx.clone();
 
                     for instruction in else_expr {
@@ -1203,7 +1202,7 @@ fn compute_instructions(
                             p => result = p,
                         }
                     }
-                }
+                } _ => {}}}
             }
             Value::WhileExpr { cond, exprs } => {
                 let mut scoped_ctx = ctx.clone();
