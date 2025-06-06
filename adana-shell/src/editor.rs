@@ -9,7 +9,7 @@ use rustyline::{
     Cmd, CompletionType, Config, EditMode, Editor, KeyEvent, Movement,
 };
 use rustyline_derive::*;
-use std::path::{Path, PathBuf, MAIN_SEPARATOR};
+use std::path::{MAIN_SEPARATOR, Path, PathBuf};
 use std::process::Command;
 
 use adana_script_core::constants::PI;
@@ -81,8 +81,8 @@ pub fn read_line(
             }
             Err(e) => {
                 debug!(
-                "Could not determine git current branch. Is git installed? {e}"
-            );
+                    "Could not determine git current branch. Is git installed? {e}"
+                );
                 None
             }
         }
@@ -90,7 +90,7 @@ pub fn read_line(
     if let Some((w, _)) = rl.dimensions() {
         let path = if let Some(path) = &path { path } else { "" };
         let branch = if let Some(branch) = &branch { branch } else { "" };
-        let real_w = w / 2;
+        let real_w = (w / 2) as usize;
         if real_w > character_count {
             line += &format!(
                 "{}{}",
