@@ -14,7 +14,7 @@ crate-type = ["dylib"]
 adana-script-core = { path = "./../../../adana-script-core" }
 #adana-script-core = { git = "https://github.com/nbittich/adana-script-core.git", branch = "feature/bitwise-and-new-ints" }
 
-anyhow = "1.0.79"
+anyhow = "1.0.98"
 
 [profile.release]
 opt-level = 'z'   # Optimize for size.
