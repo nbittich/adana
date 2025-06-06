@@ -116,12 +116,30 @@ impl MathConstants {
         concat!(pi!(), euler_number!(), tau!())
     }
 
-    pub const fn _get_variants(
-    ) -> &'static [&'static MathConstants; MathConstants::COUNT] {
+    pub const fn _get_variants()
+    -> &'static [&'static MathConstants; MathConstants::COUNT] {
         &[&MathConstants::Pi, &MathConstants::EulerNumber, &MathConstants::Tau]
     }
 }
 
+impl Value {
+    pub fn is_divisible_or_multipliable(&self) -> bool {
+        matches!(
+            self,
+            Value::Primitive(_)
+                | Value::U8(_)
+                | Value::I8(_)
+                | Value::Integer(_)
+                | Value::Decimal(_)
+                | Value::Const(_)
+                | Value::Array(_)
+                | Value::MultiDepthAccess { .. }
+                | Value::Variable(_)
+                | Value::VariableNegate(_)
+                | Value::VariableRef(_)
+        )
+    }
+}
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Value {
     Break,

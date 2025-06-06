@@ -12,7 +12,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use crate::{constants::NULL, Value};
+use crate::{Value, constants::NULL};
 
 const MAX_U32_AS_I128: i128 = u32::MAX as i128;
 
@@ -59,11 +59,13 @@ impl NativeLibrary {
     /// # Safety
     /// trust me bro
     #[cfg(not(target_arch = "wasm32"))]
-    pub unsafe fn new(path: &Path) -> anyhow::Result<NativeLibrary> { unsafe {
-        let lib = libloading::Library::new(path)
-            .map_err(|e| anyhow::format_err!("could not load lib, {e}"))?;
-        Ok(NativeLibrary { lib, path: path.to_path_buf() })
-    }}
+    pub unsafe fn new(path: &Path) -> anyhow::Result<NativeLibrary> {
+        unsafe {
+            let lib = libloading::Library::new(path)
+                .map_err(|e| anyhow::format_err!("could not load lib, {e}"))?;
+            Ok(NativeLibrary { lib, path: path.to_path_buf() })
+        }
+    }
 
     #[cfg(target_arch = "wasm32")]
     pub fn new(_path: &Path) -> anyhow::Result<NativeLibrary> {
@@ -80,10 +82,12 @@ impl NativeLibrary {
     pub unsafe fn get_function(
         &self,
         key: &str,
-    ) -> anyhow::Result<NativeFunction> { unsafe {
-        let r = self.lib.get(key.as_bytes())?;
-        Ok(r)
-    }}
+    ) -> anyhow::Result<NativeFunction> {
+        unsafe {
+            let r = self.lib.get(key.as_bytes())?;
+            Ok(r)
+        }
+    }
 
     #[cfg(target_arch = "wasm32")]
     pub fn get_function(&self, _key: &str) -> anyhow::Result<NativeFunction> {
@@ -98,10 +102,12 @@ impl NativeLibrary {
         key: &str,
         params: Vec<Primitive>,
         compiler: Box<Compiler>,
-    ) -> anyhow::Result<Primitive> { unsafe {
-        let fun = self.get_function(key)?;
-        fun(params, compiler)
-    }}
+    ) -> anyhow::Result<Primitive> {
+        unsafe {
+            let fun = self.get_function(key)?;
+            fun(params, compiler)
+        }
+    }
 
     #[cfg(target_arch = "wasm32")]
     pub fn call_function(
@@ -286,7 +292,9 @@ impl Primitive {
     }
     pub fn is_greater_or_equal(&self, other: &Primitive) -> Primitive {
         match self.partial_cmp(other) {
-            Some(Ordering::Greater) | Some(Ordering::Equal) => Primitive::Bool(true),
+            Some(Ordering::Greater) | Some(Ordering::Equal) => {
+                Primitive::Bool(true)
+            }
             Some(Ordering::Less) => Primitive::Bool(false),
             None => Primitive::Error(format!(
                 "call to is_greater_or_equal() for two different types {self} => {other}"
@@ -305,7 +313,9 @@ impl Primitive {
     }
     pub fn is_less_or_equal(&self, other: &Primitive) -> Primitive {
         match self.partial_cmp(other) {
-            Some(Ordering::Less) | Some(Ordering::Equal) => Primitive::Bool(true),
+            Some(Ordering::Less) | Some(Ordering::Equal) => {
+                Primitive::Bool(true)
+            }
             Some(Ordering::Greater) => Primitive::Bool(false),
             None => Primitive::Error(format!(
                 "call to is_less_or_equal() for two different types {self} => {other}"
@@ -315,10 +325,16 @@ impl Primitive {
     pub fn is_equal(&self, other: &Primitive) -> Primitive {
         match self.partial_cmp(other) {
             Some(Ordering::Equal) => Primitive::Bool(true),
-            Some(Ordering::Less) | Some(Ordering::Greater) => Primitive::Bool(false),
+            Some(Ordering::Less) | Some(Ordering::Greater) => {
+                Primitive::Bool(false)
+            }
             None => match (self, other) {
-                (Primitive::Null, _) | (_, Primitive::Null) => Primitive::Bool(false),
-                (Primitive::Struct(_), Primitive::Struct(_)) => Primitive::Bool(false),
+                (Primitive::Null, _) | (_, Primitive::Null) => {
+                    Primitive::Bool(false)
+                }
+                (Primitive::Struct(_), Primitive::Struct(_)) => {
+                    Primitive::Bool(false)
+                }
                 _ => Primitive::Error(format!(
                     "call to is_equal() for two different types {self} => {other}"
                 )),
@@ -2299,11 +2315,10 @@ impl Array for Primitive {
                 }
             }
             (Primitive::Struct(struc), Primitive::String(key)) => {
-                match struc.remove(key) { Some(_p) => {
-                    Ok(())
-                } _ => {
-                    Err(anyhow::Error::msg("key doesn't exist"))
-                }}
+                match struc.remove(key) {
+                    Some(_p) => Ok(()),
+                    _ => Err(anyhow::Error::msg("key doesn't exist")),
+                }
             }
             _ => Err(anyhow::Error::msg("illegal access to array!!!")),
         }

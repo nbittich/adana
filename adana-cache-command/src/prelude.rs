@@ -1,4 +1,5 @@
 pub use nom::{
+    IResult, Parser,
     branch::alt,
     bytes::complete::{
         tag, tag_no_case, take_till1, take_until, take_until1, take_while,
@@ -8,6 +9,5 @@ pub use nom::{
     combinator::{cut, map, opt, rest, verify},
     multi::{many0, separated_list0},
     sequence::{delimited, pair, preceded, separated_pair, terminated},
-    IResult, Parser,
 };
 pub type Res<'a, T> = IResult<&'a str, T>;

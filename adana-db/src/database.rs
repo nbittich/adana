@@ -12,7 +12,7 @@ use serde::de::DeserializeOwned;
 const ADANA_DB_DIR: &str = "adana/db";
 
 use super::{
-    file_lock, FileDb, FileLock, FileLockError, InMemoryDb, Key, Value,
+    FileDb, FileLock, FileLockError, InMemoryDb, Key, Value, file_lock,
 };
 
 fn get_default_db_path() -> Option<Box<Path>> {
@@ -105,8 +105,8 @@ where
                             Ok(inner_db) => Ok(Db::InMemory(inner_db)),
                             Err(e) => {
                                 eprintln!(
-                                        "Warning! {e:?} \nAttempt to deserialize db, could be because it is the first time you use it\n",
-                                    );
+                                    "Warning! {e:?} \nAttempt to deserialize db, could be because it is the first time you use it\n",
+                                );
                                 Self::in_memory_fallback(e)
                             }
                         }
@@ -127,8 +127,8 @@ where
                             Ok(inner_db) => Arc::new(Mutex::new(inner_db)),
                             Err(e) => {
                                 eprintln!(
-                                        "Warning! {e:?} \nAttempt to deserialize db, could be because it is the first time you use it\n",
-                                    );
+                                    "Warning! {e:?} \nAttempt to deserialize db, could be because it is the first time you use it\n",
+                                );
                                 Arc::new(Mutex::new(Default::default()))
                             }
                         }
@@ -167,11 +167,12 @@ mod test {
         let file_db: Db<u64, String> =
             Db::open(Config::new(Some("/tmp/adana.db"), false, false)).unwrap();
 
-        let mut file_db = match file_db { Db::FileBased(file_db) => {
-            file_db
-        } _ => {
-            panic!("error, should be file db")
-        }};
+        let mut file_db = match file_db {
+            Db::FileBased(file_db) => file_db,
+            _ => {
+                panic!("error, should be file db")
+            }
+        };
         file_db.open_tree("rust");
 
         for i in 1..100u64 {
@@ -185,11 +186,12 @@ mod test {
         let file_db: Db<u64, String> =
             Db::open(Config::new(Some("/tmp/adana.db"), false, false)).unwrap();
 
-        let mut file_db = match file_db { Db::FileBased(file_db) => {
-            file_db
-        } _ => {
-            panic!("error, should be file db")
-        }};
+        let mut file_db = match file_db {
+            Db::FileBased(file_db) => file_db,
+            _ => {
+                panic!("error, should be file db")
+            }
+        };
 
         file_db.open_tree("rust");
 

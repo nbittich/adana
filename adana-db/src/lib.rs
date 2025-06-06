@@ -74,7 +74,7 @@ pub trait DbOp<K: Key, V: Value>: Op<K, V> {
     ) -> Option<()>;
 
     fn merge_current_tree_with(&mut self, tree_name_source: &str)
-        -> Option<()>;
+    -> Option<()>;
 
     fn apply_batch(&mut self, batch: Batch<K, V>) -> Option<()>;
 

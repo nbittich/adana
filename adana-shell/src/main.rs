@@ -42,29 +42,17 @@ fn main() -> anyhow::Result<()> {
         let fallback_in_memory =
             args.iter().any(|a| !matches!(a, Argument::NoFallbackInMemory));
         let db_path = args.iter().find_map(|a| {
-            if let Argument::DbPath(path) = a {
-                Some(path)
-            } else {
-                None
-            }
+            if let Argument::DbPath(path) = a { Some(path) } else { None }
         });
         Config::new(db_path, in_memory, fallback_in_memory)
     };
 
     let history_path = args.iter().find_map(|a| {
-        if let Argument::HistoryPath(path) = a {
-            Some(path)
-        } else {
-            None
-        }
+        if let Argument::HistoryPath(path) = a { Some(path) } else { None }
     });
 
     let default_cache = args.iter().find_map(|a| {
-        if let Argument::DefaultCache(dc) = a {
-            Some(dc.clone())
-        } else {
-            None
-        }
+        if let Argument::DefaultCache(dc) = a { Some(dc.clone()) } else { None }
     });
 
     let path_to_shared_lib: PathBuf = args
@@ -90,11 +78,7 @@ fn main() -> anyhow::Result<()> {
         .context("ERR: shared lib path could not be built")?;
 
     let script_path = args.iter().find_map(|a| {
-        if let Argument::ScriptPath(path) = a {
-            Some(path)
-        } else {
-            None
-        }
+        if let Argument::ScriptPath(path) = a { Some(path) } else { None }
     });
     let is_daemon = args.iter().any(|a| matches!(a, Argument::Daemon));
 

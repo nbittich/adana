@@ -2,8 +2,8 @@ use std::{
     collections::BTreeMap,
     path::PathBuf,
     sync::{
-        mpsc::{Receiver, Sender},
         Arc, Mutex, MutexGuard,
+        mpsc::{Receiver, Sender},
     },
     thread::JoinHandle,
     vec,
@@ -91,11 +91,12 @@ where
     }
 
     fn tree_names(&self) -> Vec<String> {
-        match self.get_guard() { Some(guard) => {
-            guard.tree_names()
-        } _ => {
-            vec![]
-        }}
+        match self.get_guard() {
+            Some(guard) => guard.tree_names(),
+            _ => {
+                vec![]
+            }
+        }
     }
 
     fn drop_tree(&mut self, tree_name: &str) -> bool {
@@ -170,19 +171,19 @@ impl<K: Key, V: Value> Op<K, V> for FileDb<K, V> {
     }
 
     fn keys(&self) -> Vec<K> {
-        match self.get_guard() { Some(guard) => {
-            guard.keys()
-        } _ => {
-            vec![]
-        }}
+        match self.get_guard() {
+            Some(guard) => guard.keys(),
+            _ => {
+                vec![]
+            }
+        }
     }
 
     fn list_all(&self) -> BTreeMap<K, V> {
-        match self.get_guard() { Some(guard) => {
-            guard.list_all()
-        } _ => {
-            BTreeMap::default()
-        }}
+        match self.get_guard() {
+            Some(guard) => guard.list_all(),
+            _ => BTreeMap::default(),
+        }
     }
 }
 
@@ -222,23 +223,30 @@ where
                 match event {
                     Notify::Update => {
                         debug!("receive update!");
-                        match Self::__flush(Arc::clone(&clone), &file_lock)
-                        { Err(e) => {
-                            error!("could not flush db. Err: '{e}'.");
-                        } _ => {
-                            trace!("sync done");
-                        }}
+                        match Self::__flush(Arc::clone(&clone), &file_lock) {
+                            Err(e) => {
+                                error!("could not flush db. Err: '{e}'.");
+                            }
+                            _ => {
+                                trace!("sync done");
+                            }
+                        }
                     }
                     Notify::FullFlush => {
                         debug!("receive full flush!");
-                        match Self::__flush(Arc::clone(&clone), &file_lock)
-                        { Err(e) => {
-                            error!("could not flush db. Err: '{e}'.");
-                        } _ => { match file_lock.flush() { Err(e) => {
-                            error!("could not write on file lock {e}");
-                        } _ => {
-                            trace!("full flush done");
-                        }}}}
+                        match Self::__flush(Arc::clone(&clone), &file_lock) {
+                            Err(e) => {
+                                error!("could not flush db. Err: '{e}'.");
+                            }
+                            _ => match file_lock.flush() {
+                                Err(e) => {
+                                    error!("could not write on file lock {e}");
+                                }
+                                _ => {
+                                    trace!("full flush done");
+                                }
+                            },
+                        }
                     }
                     Notify::Stop => {
                         debug!("receive stop!");

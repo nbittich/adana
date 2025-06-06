@@ -100,7 +100,7 @@ pub fn read_line(
         } else {
             let shorter_path = {
                 // we try to keep only the last part of the path
-                path.split(MAIN_SEPARATOR).last().unwrap_or_default()
+                path.split(MAIN_SEPARATOR).next_back().unwrap_or_default()
             };
 
             if real_w > curr_cache.len() + branch.len() + shorter_path.len() {

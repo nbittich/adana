@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use anyhow::anyhow;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use super::Primitive;
 

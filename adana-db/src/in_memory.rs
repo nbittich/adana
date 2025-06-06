@@ -6,7 +6,7 @@ pub const DEFAULT_TREE: &str = "__adana_default";
 
 pub const SCRIPT_CACHE_KEY: &str = "__SCRIPT_CACHE";
 
-use super::{tree::Tree, DbOp, Key, Op, Value};
+use super::{DbOp, Key, Op, Value, tree::Tree};
 
 type InnerMap<K, V> = BTreeMap<String, Tree<K, V>>;
 
@@ -136,12 +136,13 @@ impl<K: Key + Clone, V: Value + Clone> DbOp<K, V> for InMemoryDb<K, V> {
     }
 
     fn clear_tree(&mut self, tree_name: &str) -> bool {
-        match self.trees.get_mut(tree_name) { Some(tree) => {
-            tree.clear();
-            true
-        } _ => {
-            false
-        }}
+        match self.trees.get_mut(tree_name) {
+            Some(tree) => {
+                tree.clear();
+                true
+            }
+            _ => false,
+        }
     }
 
     fn merge_trees(

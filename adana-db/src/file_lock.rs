@@ -1,6 +1,6 @@
 use std::{
     fmt::Display,
-    fs::{remove_file, File},
+    fs::{File, remove_file},
     io::{BufReader, BufWriter, Write},
     path::{Path, PathBuf},
 };
@@ -55,14 +55,17 @@ impl FileLock {
         if Path::exists(&_lock_p) {
             let pid = Self::read_pid(&path);
 
-            match pid { Ok(pid) => {
-                if pid_exists(pid) {
-                    error!("{pid} exist!");
-                    return Err(FileLockError::PidExist(pid));
+            match pid {
+                Ok(pid) => {
+                    if pid_exists(pid) {
+                        error!("{pid} exist!");
+                        return Err(FileLockError::PidExist(pid));
+                    }
                 }
-            } _ => {
-                return Err(FileLockError::PidFileDoesntExist);
-            }}
+                _ => {
+                    return Err(FileLockError::PidFileDoesntExist);
+                }
+            }
 
             // otherwise, we create a file lock to force cleanup
             let _ = {
@@ -177,9 +180,10 @@ mod test {
         let open_file_twice = FileLock::open(path);
 
         if let Err(e) = open_file_twice {
-            assert!(e
-                .to_string()
-                .starts_with("Could not acquire lock (pid exists: "));
+            assert!(
+                e.to_string()
+                    .starts_with("Could not acquire lock (pid exists: ")
+            );
         }
     }
 }

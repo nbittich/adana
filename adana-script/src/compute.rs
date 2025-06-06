@@ -92,92 +92,113 @@ fn handle_function_call(
                 })?
                 .clone();
         }
-        match function
-        { Primitive::Function { parameters: function_parameters, exprs } => {
-            let mut scope_ctx = scoped_ctx(ctx)?;
-            for (i, param) in function_parameters.iter().enumerate() {
-                if let Some(value) = param_values.get(i) {
-                    if let Value::Variable(variable_from_fn_def) = param {
-                        let variable_from_fn_call =
-                            compute_lazy(value.clone(), ctx, shared_lib)?;
-                        scope_ctx.insert(
-                            variable_from_fn_def.clone(),
-                            variable_from_fn_call.ref_prim(),
-                        );
-                    }
-                } else {
-                    return Ok(Primitive::Error(format!(
-                        "missing parameter {param:?}"
-                    )));
-                }
-            }
-            // TODO remove this and replace Arc<Mutex<T>> by Arc<T>
-            // call function in a specific os thread with its own stack
-            // This was relative to a small stack allocated by musl
-            // But now it doesn't seem needed anymore
-            // let res = spawn(move || {}).join().map_err(|e| {
-            //     anyhow::Error::msg(format!(
-            //         "something wrong: {e:?}"
-            //     ))
-            // })??;
-            let res = compute_instructions(exprs, &mut scope_ctx, shared_lib)?;
-
-            if let Primitive::EarlyReturn(v) = res {
-                return Ok(*v);
-            }
-            Ok(res)
-        } _ => { match function { Primitive::NativeLibrary(lib) => {
-            if cfg!(test) {
-                dbg!(&lib);
-            }
-            let mut parameters = vec![];
-            for param in param_values.iter() {
-                if let Value::Variable(_) = param {
-                    let variable_from_fn_call =
-                        compute_lazy(param.clone(), ctx, shared_lib)?;
-                    parameters.push(variable_from_fn_call);
-                }
-            }
-            if cfg!(test) {
-                dbg!(&parameters);
-            }
-            Ok(Primitive::Error("debug".into()))
-            //Ok(function(vec![Primitive::String("s".into())]))
-        } _ => { match function { Primitive::NativeFunction(key, lib) => {
-            #[cfg(not(target_arch = "wasm32"))]
-            {
-                if cfg!(test) {
-                    dbg!(&key, &lib);
-                }
-                let mut parameters = vec![];
-
-                for param in param_values.iter() {
-                    let variable_from_fn_call =
-                        compute_lazy(param.clone(), ctx, shared_lib)?;
-                    parameters.push(variable_from_fn_call);
-                }
-                if cfg!(test) {
-                    dbg!(&parameters);
-                }
-
+        match function {
+            Primitive::Function { parameters: function_parameters, exprs } => {
                 let mut scope_ctx = scoped_ctx(ctx)?;
+                for (i, param) in function_parameters.iter().enumerate() {
+                    if let Some(value) = param_values.get(i) {
+                        if let Value::Variable(variable_from_fn_def) = param {
+                            let variable_from_fn_call =
+                                compute_lazy(value.clone(), ctx, shared_lib)?;
+                            scope_ctx.insert(
+                                variable_from_fn_def.clone(),
+                                variable_from_fn_call.ref_prim(),
+                            );
+                        }
+                    } else {
+                        return Ok(Primitive::Error(format!(
+                            "missing parameter {param:?}"
+                        )));
+                    }
+                }
+                // TODO remove this and replace Arc<Mutex<T>> by Arc<T>
+                // call function in a specific os thread with its own stack
+                // This was relative to a small stack allocated by musl
+                // But now it doesn't seem needed anymore
+                // let res = spawn(move || {}).join().map_err(|e| {
+                //     anyhow::Error::msg(format!(
+                //         "something wrong: {e:?}"
+                //     ))
+                // })??;
+                let res =
+                    compute_instructions(exprs, &mut scope_ctx, shared_lib)?;
 
-                let slb = shared_lib.as_ref().to_path_buf();
-                let fun = move |v, extra_ctx| {
-                    scope_ctx.extend(extra_ctx);
-                    compute_lazy(v, &mut scope_ctx, &slb)
-                };
-                unsafe {
-                    lib.call_function(key.as_str(), parameters, Box::new(fun))
+                if let Primitive::EarlyReturn(v) = res {
+                    return Ok(*v);
+                }
+                Ok(res)
+            }
+            _ => {
+                match function {
+                    Primitive::NativeLibrary(lib) => {
+                        if cfg!(test) {
+                            dbg!(&lib);
+                        }
+                        let mut parameters = vec![];
+                        for param in param_values.iter() {
+                            if let Value::Variable(_) = param {
+                                let variable_from_fn_call = compute_lazy(
+                                    param.clone(),
+                                    ctx,
+                                    shared_lib,
+                                )?;
+                                parameters.push(variable_from_fn_call);
+                            }
+                        }
+                        if cfg!(test) {
+                            dbg!(&parameters);
+                        }
+                        Ok(Primitive::Error("debug".into()))
+                        //Ok(function(vec![Primitive::String("s".into())]))
+                    }
+                    _ => match function {
+                        Primitive::NativeFunction(key, lib) => {
+                            #[cfg(not(target_arch = "wasm32"))]
+                            {
+                                if cfg!(test) {
+                                    dbg!(&key, &lib);
+                                }
+                                let mut parameters = vec![];
+
+                                for param in param_values.iter() {
+                                    let variable_from_fn_call = compute_lazy(
+                                        param.clone(),
+                                        ctx,
+                                        shared_lib,
+                                    )?;
+                                    parameters.push(variable_from_fn_call);
+                                }
+                                if cfg!(test) {
+                                    dbg!(&parameters);
+                                }
+
+                                let mut scope_ctx = scoped_ctx(ctx)?;
+
+                                let slb = shared_lib.as_ref().to_path_buf();
+                                let fun = move |v, extra_ctx| {
+                                    scope_ctx.extend(extra_ctx);
+                                    compute_lazy(v, &mut scope_ctx, &slb)
+                                };
+                                unsafe {
+                                    lib.call_function(
+                                        key.as_str(),
+                                        parameters,
+                                        Box::new(fun),
+                                    )
+                                }
+                            }
+                            #[cfg(target_arch = "wasm32")]
+                            {
+                                return Ok(Primitive::Error(format!("Loading native function {key} doesn't work in wasm context! {lib:?}")));
+                            }
+                        }
+                        _ => Ok(Primitive::Error(format!(
+                            " not a function: {function}"
+                        ))),
+                    },
                 }
             }
-            #[cfg(target_arch = "wasm32")]
-            {
-                return Ok(Primitive::Error(format!("Loading native function {key} doesn't work in wasm context! {lib:?}")));
-            }
-        } _ => {
-            Ok(Primitive::Error(format!(" not a function: {function}")))
-        }}}}}}
+        }
     } else {
         Ok(Primitive::Error(format!(
             "invalid function call: {parameters:?} => {function:?}"
@@ -803,13 +824,14 @@ fn compute_recur(
                     adana_script_core::BuiltInFunctionType::Ln => Ok(v.ln()),
                     adana_script_core::BuiltInFunctionType::Sin => Ok(v.sin()),
                     adana_script_core::BuiltInFunctionType::Cos => Ok(v.cos()),
-                    adana_script_core::BuiltInFunctionType::Eval => {
-                        match v { Primitive::String(script) => {
+                    adana_script_core::BuiltInFunctionType::Eval => match v {
+                        Primitive::String(script) => {
                             compute(&script, ctx, shared_lib)
-                        } _ => {
+                        }
+                        _ => {
                             Ok(Primitive::Error(format!("invalid script {v}")))
-                        }}
-                    }
+                        }
+                    },
                     adana_script_core::BuiltInFunctionType::Tan => Ok(v.tan()),
                     adana_script_core::BuiltInFunctionType::ToInt => {
                         Ok(v.to_int())
@@ -1163,11 +1185,14 @@ fn compute_instructions(
         match instruction {
             v @ Value::EarlyReturn(_) => {
                 let res = compute_lazy(v, ctx, shared_lib)?;
-                match res { Primitive::EarlyReturn(r) => {
-                    return Ok(*r);
-                } _ => {
-                    return Err(anyhow::Error::msg("bug! fixme"));
-                }}
+                match res {
+                    Primitive::EarlyReturn(r) => {
+                        return Ok(*r);
+                    }
+                    _ => {
+                        return Err(anyhow::Error::msg("bug! fixme"));
+                    }
+                }
             }
             Value::IfExpr { cond, exprs, else_expr } => {
                 let cond = compute_lazy(*cond, ctx, shared_lib)?;

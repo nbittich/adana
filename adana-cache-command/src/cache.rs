@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, fs::File, io::BufReader, path::Path};
 
-use adana_db::{Batch, DbOp, Op, Tree, DEFAULT_TREE, SCRIPT_CACHE_KEY};
+use adana_db::{Batch, DEFAULT_TREE, DbOp, Op, SCRIPT_CACHE_KEY, Tree};
 use serde::{Deserialize, Serialize};
 
 const DEFAULT_CACHE_KEY: &str = "$___DEF_CACHE_KEY_LOC___$";
@@ -64,11 +64,7 @@ pub fn insert_value(
     let aliases: Vec<&str> = aliases
         .iter()
         .filter_map(|alias| {
-            if keys.contains(&alias.to_string()) {
-                None
-            } else {
-                Some(*alias)
-            }
+            if keys.contains(&alias.to_string()) { None } else { Some(*alias) }
         })
         .collect();
 

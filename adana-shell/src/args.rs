@@ -62,7 +62,9 @@ pub fn parse_args(
                     "daemon should be specified only once!"
                 );
                 anyhow::ensure!(
-                    arguments.iter().any(|a| matches!(a, Argument::ScriptPath(_))),
+                    arguments
+                        .iter()
+                        .any(|a| matches!(a, Argument::ScriptPath(_))),
                     "script path must be specified first when having the daemon feature on! "
                 );
                 arguments.push(Argument::Daemon);

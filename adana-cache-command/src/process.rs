@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, path::PathBuf};
 
-use crate::reserved_keywords::{check_reserved_keyword, CACHE_COMMAND_DOC};
+use crate::reserved_keywords::{CACHE_COMMAND_DOC, check_reserved_keyword};
 use adana_db::{DbOp, SCRIPT_CACHE_KEY};
 use adana_script::print_ast;
 use adana_script_core::primitive::RefPrimitive;
@@ -10,8 +10,8 @@ use nu_ansi_term::Color::*;
 use regex::Regex;
 
 use super::{
-    cache::*, clear_terminal, os_command::exec_command, parser::parse_command,
-    CacheCommand,
+    CacheCommand, cache::*, clear_terminal, os_command::exec_command,
+    parser::parse_command,
 };
 
 const BACKUP_FILE_NAME: &str = "adanadb.json";
@@ -81,7 +81,7 @@ pub fn process_command(
                         return Err(anyhow::Error::msg(format!(
                             "{}",
                             Red.paint("could not alias! Wrong combination")
-                        )))
+                        )));
                     }
                 }
             }
