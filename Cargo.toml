@@ -10,7 +10,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.18.7"
+version = "0.18.8"
 authors = ["Nordine Bittich"]
 description = "namespaces aliases for command lines & basic scripting language"
 homepage = "https://github.com/nbittich/adana"
@@ -52,10 +52,10 @@ web-sys = "0.3.77"
 js-sys = "0.3.77"
 
 # workspace specific libs
-adana-script-core = { version = "0.18.7", path = "./adana-script-core" }
-adana-script = { version = "0.18.7", path = "./adana-script" }
-adana-db = { version = "0.18.7", path = "./adana-db" }
-adana-cache-command = { version = "0.18.7", path = "./adana-cache-command" }
+adana-script-core = { version = "0.18.8", path = "./adana-script-core" }
+adana-script = { version = "0.18.8", path = "./adana-script" }
+adana-db = { version = "0.18.8", path = "./adana-db" }
+adana-cache-command = { version = "0.18.8", path = "./adana-cache-command" }
 
 # Config for 'cargo dist'
 [workspace.metadata.dist]
