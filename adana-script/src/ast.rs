@@ -133,7 +133,7 @@ pub fn to_ast(
                     .or_else(filter_op(Operator::BitwiseRShift, operations))
                     .or_else(filter_op(Operator::Add, operations))
                     .or_else(filter_op(Operator::Subtr, operations))
-                    .or_else(filter_op(Operator::Mult, operations))
+                    //.or_else(filter_op(Operator::Mult, operations))
                     .or_else(filter_op(Operator::Mod, operations))
                     .or_else(filter_op(Operator::Div, operations))
                     .or_else(filter_op(Operator::Pow, operations))
